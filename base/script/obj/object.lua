@@ -5,38 +5,38 @@ local box2 = require 'vec.box2'
 local game = require 'base.script.singleton.game'
 local animsys = require 'base.script.singleton.animsys'
 
-local GameObject = class()
+local Object = class()
 
-GameObject.solid = true
-GameObject.collidesWithWorld = true
-GameObject.collidesWithObjects = true
-GameObject.useGravity = true
-GameObject.friction = 1		-- additive, not scalar
-GameObject.seq = 'stand'
-GameObject.drawMirror = false
+Object.solid = true
+Object.collidesWithWorld = true
+Object.collidesWithObjects = true
+Object.useGravity = true
+Object.friction = 1		-- additive, not scalar
+Object.seq = 'stand'
+Object.drawMirror = false
 
 -- used to evaluate whose touch function to run first
-GameObject.preTouchPriority = 0
-GameObject.touchPriority = 0
+Object.preTouchPriority = 0
+Object.touchPriority = 0
 
 -- used to evaluate who gets priority when pushing
-GameObject.pushPriority = 0
+Object.pushPriority = 0
 
 -- used to init the per-object bbox.  don't manip this plz
-GameObject.bbox = box2(-.4, 0, .4, .8)
+Object.bbox = box2(-.4, 0, .4, .8)
 
 -- useful vars to have around that I should just put in util.lua
-GameObject.touchEntFields = {'touchEntUp', 'touchEntDown', 'touchEntLeft', 'touchEntRight'}
-GameObject.touchEntHorzFields = {'touchEntLeft', 'touchEntRight'}
-GameObject.touchEntVertFields = {'touchEntUp', 'touchEntDown'}
+Object.touchEntFields = {'touchEntUp', 'touchEntDown', 'touchEntLeft', 'touchEntRight'}
+Object.touchEntHorzFields = {'touchEntLeft', 'touchEntRight'}
+Object.touchEntVertFields = {'touchEntUp', 'touchEntDown'}
 
 
 -- my attempt to make the animation system more flexible:
-GameObject.seqStartTime = 0	-- time offset at which the sequence starts
-GameObject.seqNext = nil		-- this says what sequence comes next.  it means I need some return info from the animation update.
+Object.seqStartTime = 0	-- time offset at which the sequence starts
+Object.seqNext = nil		-- this says what sequence comes next.  it means I need some return info from the animation update.
 
 
-function GameObject:init(args)
+function Object:init(args)
 
 	-- [[ without ffi
 	self.pos = vec2()
@@ -62,7 +62,7 @@ function GameObject:init(args)
 	self:link()
 end
 
-function GameObject:unlink()
+function Object:unlink()
 	local numtiles = #self.tiles
 	for i=1,numtiles do
 		local tile = self.tiles[i]
@@ -77,7 +77,7 @@ function GameObject:unlink()
 	end
 end
 
-function GameObject:link()
+function Object:link()
 	local level = game.level
 	local minx = self.pos[1] + self.bbox.min[1] - level.pos[1]
 	local miny = self.pos[2] + self.bbox.min[2] - level.pos[2]
@@ -103,7 +103,7 @@ function GameObject:link()
 	end
 end
 
-function GameObject:update(dt)
+function Object:update(dt)
 
 	self.lastpos[1], self.lastpos[2] = self.pos[1], self.pos[2]
 
@@ -182,24 +182,24 @@ function GameObject:update(dt)
 	
 end
 
-function GameObject:setSeq(seq, seqNext)
+function Object:setSeq(seq, seqNext)
 	self.seqNext = seqNext
 	if self.seq == seq then return end	-- don't reset it when continually setting it
 	self.seq = seq
 	self.seqStartTime = game.time
 end
 
-function GameObject:setPos(x,y)
+function Object:setPos(x,y)
 	self:unlink()
 	self.pos[1], self.pos[2] = x,y
 	self:link()
 end
 
-function GameObject:moveToPos(x,y)
+function Object:moveToPos(x,y)
 	self:move(x - self.pos[1], y - self.pos[2])
 end
 
-function GameObject:move(moveX, moveY)
+function Object:move(moveX, moveY)
 	local level = game.level
 	local epsilon = .0001
 	
@@ -596,7 +596,7 @@ function GameObject:move(moveX, moveY)
 end
 
 -- default pretouch routine: player precedence
-function GameObject:pretouch(other, side)
+function Object:pretouch(other, side)
 	-- kick ignore 
 	if other == self.kickedBy and self.kickHandicapTime >= game.time then
 		return true
@@ -606,7 +606,7 @@ end
 --[[
 give the kicker a temp non-collide window
 --]]
-function GameObject:hasBeenKicked(other)
+function Object:hasBeenKicked(other)
 	self.kickedBy = other
 	self.kickHandicapTime = game.time + .5
 end
@@ -617,7 +617,7 @@ other: who is kicking
 dx: their intended left/right kick direction
 dy: their intended up/down kick direction
 --]]
-function GameObject:playerKick(other, dx, dy)
+function Object:playerKick(other, dx, dy)
 	local holderLookDir = 0
 	if other.drawMirror then
 		holderLookDir = -1
@@ -637,7 +637,7 @@ function GameObject:playerKick(other, dx, dy)
 	self:hasBeenKicked(other)
 end
 
-function GameObject:draw(R, viewBBox, holdOverride)
+function Object:draw(R, viewBBox, holdOverride)
 	-- heldby means re-rendering the obj to keep it in frame sync with the player	
 	if self.heldby and not holdOverride then return end
 	
@@ -674,7 +674,13 @@ function GameObject:draw(R, viewBBox, holdOverride)
 		sx = tex.width/16
 		sy = tex.height/16
 	end
-	
+
+	-- rotation center
+	local rcx, rcy = 0, 0
+	if self.rotCenter then
+		rcx, rcy = self.rotCenter[1], self.rotCenter[2]
+	end
+
 	R:quad(
 		self.pos[1]-sx*.5,
 		self.pos[2],
@@ -684,12 +690,13 @@ function GameObject:draw(R, viewBBox, holdOverride)
 		self.angle,
 		cr,cg,cb,ca,
 		self.shader,
-		self.uniforms)
+		self.uniforms,
+		rcx, rcy)
 end
 
 local sounds = require 'base.script.singleton.sounds'
 
-function GameObject:playSound(name)	
+function Object:playSound(name)	
 	-- clientside ...
 	local source = game:getNextAudioSource()
 	if source then
@@ -719,4 +726,4 @@ function GameObject:playSound(name)
 	end
 end
 
-return GameObject
+return Object

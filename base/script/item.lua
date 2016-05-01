@@ -1,6 +1,6 @@
 local class = require 'ext.class'
 local vec2 = require 'vec.vec2'
-local GameObject = require 'base.script.obj.object'
+local Object = require 'base.script.obj.object'
 
 --[[
 'items' are overlays in rendering (called from Player's draw)
@@ -11,7 +11,9 @@ local PlayerItem = class()
 
 function PlayerItem:init(args)
 	self.pos = vec2()
-	if args.pos then self.pos:set(args.pos[1], args.pos[2]) end
+	if args then
+		if args.pos then self.pos:set(args.pos[1], args.pos[2]) end
+	end
 end
 
 function PlayerItem:drawItem(player, R, viewBBox)
@@ -23,7 +25,7 @@ function PlayerItem:drawItem(player, R, viewBBox)
 	end
 	self.pos[2] = player.pos[2] + self.drawOffset[2]
 	
-	GameObject.draw(self, R, viewBBox)
+	Object.draw(self, R, viewBBox)
 end
 
 return PlayerItem

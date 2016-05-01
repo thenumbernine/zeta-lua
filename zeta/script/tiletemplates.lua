@@ -1,3 +1,3 @@
 return {
-	{color=0x00ffff, name='sea'},
+	{color=0x00ffff, name='cave'},
 }

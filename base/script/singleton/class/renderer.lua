@@ -1,4 +1,5 @@
 local ffi = require 'ffi'
+local vec2 = require 'vec.vec2'
 local class = require 'ext.class'
 local modio = require 'base.script.singleton.modio'
 
@@ -9,6 +10,13 @@ do
 	local GLRenderer = class(Renderer)
 	GLRenderer.glname = 'gl'
 	Renderer.requireClasses.gl = GLRenderer
+
+	local uvs = {
+		vec2(0,0),
+		vec2(1,0),
+		vec2(1,1),
+		vec2(0,1),
+	}
 
 	local GLTex2D
 	local GLProgram
@@ -52,8 +60,12 @@ do
 		angle,
 		r,g,b,a,
 		shader,
-		uniforms
+		uniforms,
+		rcx, rcy
 	)
+		rcx = rcx or 0
+		rcy = rcy or 0
+		
 		if shader then
 			gl.glUseProgram(shader.id)
 			if uniforms then
@@ -99,7 +111,9 @@ do
 			gl.glTexCoord2f(tx + tw * uv[1], ty + th * uv[2])
 			local rx, ry = w * uv[1], h * uv[2]
 			if angle then
+				rx, ry = rx - rcx, ry - rcy
 				rx, ry = rx * costh - ry * sinth, rx * sinth + ry * costh
+				rx, ry = rx + rcx, ry + rcy
 			end
 			gl.glVertex2f(x + rx, y + ry)
 		end

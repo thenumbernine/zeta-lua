@@ -32,6 +32,10 @@ return {
 			climb_fwd={'climb1_fwd', 'climb2_fwd', freq=4},
 		},
 	},
+	-- single-frame sprites
+	{name='geemer', dir='geemer', frames={stand='stand.png'}},
+	{name='blaster', dir='blaster', frames={stand='stand.png'}},
+	{name='blaster-shot', dir='blaster-shot', frames={stand='stand.png'}},
 	-- tiles	
 	{name='tile-metal', dir='tile-metal', frames={stand='stand.png'}},
 }

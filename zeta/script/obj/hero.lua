@@ -41,13 +41,17 @@ inventory:
 
 --]]
 local class = require 'ext.class'
+local table = require 'ext.table'
 local Player = require 'base.script.obj.player'
 local game = require 'base.script.singleton.game'
 local box2 = require 'vec.box2'
+local addTakesDamage = require 'zeta.script.obj.takesdamage'
 
 local Hero = class(Player)
+addTakesDamage(Hero)
 
 Hero.sprite = 'hero'
+Hero.health = 10
 
 Hero.inputUpDownLast = 0
 Hero.inputRun = false
@@ -62,15 +66,15 @@ Hero.preTouchPriority = 10
 Hero.touchPriority = 10
 Hero.pushPriority = 1
 
+Hero.nextShootTime = -1
+
 function Hero:init(args)
 	Hero.super.init(self, args)
-	
+	self.items = table()	
 	if args.color then
 --		self.color = {unpack(args.color)}
 	end
 end
-
-Hero.invincibleEndTime = -1
 
 function Hero:refreshSize()
 	if not self.ducking then
@@ -107,8 +111,13 @@ function Hero:setHeld(other, kick)
 	end
 end
 
+-- TODO isn't this handled by PlayerItem:drawItem ?
 function Hero:updateHeldPosition()
-	self.holding.pos[2] = self.pos[2] + .125
+	if not self.ducking then
+		self.holding.pos[2] = self.pos[2] + .125
+	else
+		self.holding.pos[2] = self.pos[2] - .5
+	end
 	
 	self.holding.drawMirror = self.drawMirror
 	local side
@@ -181,13 +190,13 @@ function Hero:update(dt)
 	self.viewPos[1] = self.viewPos[1] + .5 *  (self.pos[1] - self.viewPos[1])
 	self.viewPos[2] = self.viewPos[2] + .9 *  (self.pos[2] - self.viewPos[2])
 
-	self.inputRun = self.inputShoot or self.inputShootAux
+	self.inputRun = self.inputJumpAux
 
 	-- horz vels
-	local walkVel = 4
-	local runVel = 6
+	local walkVel = 5
+	local runVel = 7
 	-- climb vel
-	local climbVel = 4
+	local climbVel = 5
 	
 	if self.climbing then
 		self.useGravity = false
@@ -228,14 +237,12 @@ function Hero:update(dt)
 		self:setHeld(nil, false)
 	end	
 	
-	if self.item and self.item.update then 
-		self.item:update(self, dt)
+	if self.weapon and self.weapon.update then 
+		self.weapon:update(self, dt)
 	end
 	
-	-- if we pushed run1 or run2 ...
-	if (self.inputShoot and not self.inputShootLast)
-	or (self.inputShootAux and not self.inputShootAuxLast)
-	then
+	-- if we pushed the pickup-item button 
+	if self.inputShootAux and not self.inputShootAuxLast then
 		-- try to pick something up ...
 		
 		if not self.holding and self.collidedLeft and not self.touchEntLeft then
@@ -279,10 +286,17 @@ function Hero:update(dt)
 				end
 			end
 		end	
-		
-		-- see if we have a powerup
-		if self.item and self.item.onShoot then
-			self.item:onShoot(self)
+	end
+
+	-- see if we have a weapon to shoot
+	if self.inputShoot 
+	--and not self.inputShootLast 
+	then
+		if self.weapon
+		and self.weapon.onShoot
+		and self.nextShootTime < game.time
+		then
+			self.weapon:onShoot(self)
 		end
 	end
 
@@ -414,7 +428,7 @@ function Hero:update(dt)
 	--]]
 	if self.onground or self.climbing or self.swimming then
 		if self.swimming then
-			if (self.inputJump or self.inputJumpAux) and (self.inputSwimTime + self.swimDelay < game.time) then
+			if self.inputJump and (self.inputSwimTime + self.swimDelay < game.time) then
 				self:playSound('swim')
 			
 				self.onground = false
@@ -424,7 +438,7 @@ function Hero:update(dt)
 				self.inputSwimTime = game.time
 			end
 		
-		elseif self.inputJump or (self.holding and self.inputJumpAux) then
+		elseif self.inputJump then
 			if not self.inputJumpLast and self.inputJumpTime < game.time then
 				self:playSound('jump')
 			
@@ -463,15 +477,15 @@ function Hero:update(dt)
 	end
 
 	local jumpDuration = .15
-	if self.inputJump or self.inputJumpAux or self.swimming then
+	if self.inputJump or self.swimming then
 		--if self.vel[2] < 0 then self.inputJumpTime = nil end		-- doesn't work well with swimming
 		if self.inputJumpTime + jumpDuration >= game.time then
 			if self.inputJump then
 				self.vel[2] = 20
-			elseif self.inputJumpAux then
-				self.vel[2] = 16
 			end
-			self.vel[2] = self.vel[2] + self.jumpVel
+			if self.swimming then
+				self.vel[2] = self.vel[2] + self.jumpVel
+			end
 		end
 	end
 
@@ -486,17 +500,6 @@ function Hero:update(dt)
 	self.ongroundLast = self.onground
 end
 
-function Hero:hit()
-	if self.invincibleEndTime >= game.time then return end
-	self.item = nil
-	-- TODO take damage
-	self:die()
-end
-function Hero:hitByEnemy(other) self:hit(other) end
-function Hero:hitByShell(other) self:hit(other) end
-function Hero:hitByBlast(other) self:hit(other) end
-
-
 function Hero:die()
 	-- nothing atm
 	if self.dead then return end
@@ -507,7 +510,8 @@ function Hero:die()
 	self.climbing = false
 	self.ducking = false
 	self.solid = false
-	self.item = nil
+	self.weapon = nil
+	self.items = table()
 	self.collidesWithWorld = false
 	self.collidesWithObjects = false
 	self.dead = true
@@ -523,6 +527,10 @@ function Hero:respawn()
 	self.dead = nil
 	self.vel[1], self.vel[2] = 0,0
 	self:setPos(unpack(game:getStartPos()))
+end
+
+function Hero:hit()
+	self.invincibleEndTime = game.time + 2
 end
 
 function Hero:draw(R, viewBBox, holdOverride)
@@ -597,8 +605,8 @@ function Hero:draw(R, viewBBox, holdOverride)
 	
 	Hero.super.draw(self, R, viewBBox, holdOverride)
 
-	if self.item then
-		self.item:drawItem(self, R, viewBBox)
+	if self.weapon then
+		self.weapon:drawItem(self, R, viewBBox)
 	end
 end
 

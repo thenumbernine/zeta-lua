@@ -1,12 +1,5 @@
 local vec2 = require 'vec.vec2'
 
-uvs = {
-	vec2(0,0),
-	vec2(1,0),
-	vec2(1,1),
-	vec2(0,1),
-}
-
 dirs = {
 	up = vec2(0,1),
 	down = vec2(0,-1),
