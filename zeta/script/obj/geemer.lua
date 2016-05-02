@@ -56,4 +56,17 @@ function Geemer:draw(...)
 	end
 end
 
+function Geemer:die()
+	-- puff of smoke	
+	local Puff = require 'zeta.script.obj.puff'
+	Puff.puffAt(self.pos:unpack())
+	-- spawn a random item
+	do	--if math.random(10) == 1 then
+		local Heart = require 'zeta.script.obj.heart'
+		Heart{pos=self.pos}
+	end
+	-- get rid of self
+	self.remove = true
+end
+
 return Geemer

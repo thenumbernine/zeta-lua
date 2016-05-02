@@ -32,10 +32,23 @@ return {
 			climb_fwd={'climb1_fwd', 'climb2_fwd', freq=4},
 		},
 	},
+	{
+		name='heart',
+		dir='heart',
+		frames={
+			stand1='stand1.png',
+			stand2='stand2.png',
+			stand3='stand3.png',
+		},
+		seqs={
+			stand={'stand1','stand2','stand3', freq=16},
+		},
+	},
 	-- single-frame sprites
-	{name='geemer', dir='geemer', frames={stand='stand.png'}},
 	{name='blaster', dir='blaster', frames={stand='stand.png'}},
 	{name='blaster-shot', dir='blaster-shot', frames={stand='stand.png'}},
+	{name='geemer', dir='geemer', frames={stand='stand.png'}},
+	{name='puff', dir='puff', frames={stand='stand.png'}},
 	-- tiles	
 	{name='tile-metal', dir='tile-metal', frames={stand='stand.png'}},
 }

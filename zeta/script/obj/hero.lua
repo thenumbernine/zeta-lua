@@ -52,6 +52,7 @@ addTakesDamage(Hero)
 
 Hero.sprite = 'hero'
 Hero.health = 10
+Hero.maxHealth = 10
 
 Hero.inputUpDownLast = 0
 Hero.inputRun = false
@@ -195,6 +196,7 @@ function Hero:update(dt)
 
 	-- horz vels
 	local walkVel = 5
+	local crawlVel = 3
 	local runVel = 7
 	-- climb vel
 	local climbVel = 5
@@ -387,7 +389,9 @@ function Hero:update(dt)
 			-- movement in air or when walking
 			if self.inputLeftRight ~= 0 then
 				local moveVel = walkVel
-				if self.inputRun then
+				if self.ducking then
+					moveVel = crawlVel
+				elseif self.inputRun then
 					moveVel = runVel
 					if self.onground then
 						self.inputMaxSpeedTime = self.inputMaxSpeedTime + dt
