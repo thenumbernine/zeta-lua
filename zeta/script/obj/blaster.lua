@@ -32,8 +32,8 @@ local BlasterShot = (function()
 		self.remove = true
 	end
 
-	function BlasterShot:touch(other, side)
-		if other == self.owner then return end
+	function BlasterShot:pretouch(other, side)
+		if other == self.owner then return true end
 		if other.takeDamage then
 			other:takeDamage(self.damage, self.owner, self, side)
 			self.collidesWithWorld = false
@@ -63,21 +63,18 @@ local BlasterInv = (function()
 	local BlasterInv = class(OverlayObject)
 	BlasterInv.sprite = 'blaster'
 	BlasterInv.weapon = true
-	BlasterInv.shootDelay = .3
+	BlasterInv.shootDelay = .05
 
 	function BlasterInv:init(...)
 		BlasterInv.super.init(self, ...)
 		self.drawOffset = vec2()
+		self.rotCenter = vec2()
 	end
 
 	function BlasterInv:onShoot(player)
+		if player.inputShootLast then return end
 		player.nextShootTime = game.time + self.shootDelay
 		local pos = player.pos + vec2(0, .25)
-		if self.drawMirror then
-			pos[1] = pos[1] - self.drawOffset[1]
-		else
-			pos[1] = pos[1] + self.drawOffset[1]
-		end
 		pos[2] = pos[2] + self.drawOffset[2]
 		local vel = vec2()
 		if player.drawMirror then
@@ -85,21 +82,35 @@ local BlasterInv = (function()
 		else
 			vel[1] = 1
 		end
-		if player.inputUpDown > 0 then
-			vel[2] = 1
-			if player.inputLeftRight == 0 then
+		if player.inputUpDown ~= 0 then
+			if player.inputUpDown > 0 then
+				-- if we're holding up then shoot up
+				vel[2] = 1
+			end
+			if not player.onground then
+				if player.inputUpDown < 0 then
+					-- if we're holding down and jumping then shoot down
+					vel[2] = -1
+				end
+			end
+			-- if we're holding down ... but not left/right ... then duck and shoot left/right
+			if player.inputLeftRight == 0 and player.inputUpDown > 0 then
+				vel[1] = 0
+			end
+			if not player.onground and player.inputLeftRight == 0 and player.inputUpDown < 0 then
 				vel[1] = 0
 			end
 		end	
-		vel = vel * 30
+		vel = vel * 50
 		BlasterShot{
 			owner = player,
 			pos = pos,
 			vel = vel,
 		}
 	end
-	BlasterInv.rotCenter = {.5, .5}
 	function BlasterInv:drawItem(player, R, viewBBox)
+		self.rotCenter[1] = self.drawMirror and 1 or 0
+		self.rotCenter[2] = .5
 		self.drawOffset = vec2(.5,0)
 		if not player.ducking then
 			self.drawOffset[2] = .5
@@ -138,7 +149,6 @@ local Blaster = (function()
 	function Blaster:give(player, side)
 		local invObj = BlasterInv()
 		player.items:insert(invObj)
-		player.nextShootTime = game.time + BlasterInv.shootDelay
 		player.weapon = invObj
 	end
 

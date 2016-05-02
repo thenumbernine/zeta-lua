@@ -163,6 +163,7 @@ function Hero:tryToStand()
 	end
 	if not cantStand then
 		self.ducking = false
+		self.lookingUp = false
 	end
 	return not self.ducking
 end
@@ -201,6 +202,7 @@ function Hero:update(dt)
 	if self.climbing then
 		self.useGravity = false
 		self.ducking = false
+		self.lookingUp = false
 		self.inputMaxSpeedTime = nil
 	else
 		self.useGravity = true
@@ -372,7 +374,13 @@ function Hero:update(dt)
 		self.vel[2] = self.inputUpDown * climbVel
 	else
 		-- friction when on ground and when not walking ... or when looking up or down
-		if self.onground and (self.inputLeftRight == 0 or self.inputUpDown < 0 or self.ducking) then
+		if self.onground and (
+			self.inputLeftRight == 0
+			--or self.inputUpDown < 0
+			--or self.ducking
+			--or self.lookingUp
+			)
+		then
 			self.inputMaxSpeedTime = nil
 			-- friction used to be here but I moved it to GameObject for everyone
 		else
@@ -454,16 +462,25 @@ function Hero:update(dt)
 		end
 	end
 	
-	if self.onground then
+	if self.onground and self.inputLeftRight == 0 then
 		if self.inputUpDown < 0 then
 			if not self.ducking then
 				self.ducking = true
+			end
+		elseif self.inputUpDown > 0 then
+			if not self.lookingUp then
+				self.lookingUp = true
 			end
 		else
 			self:tryToStand()
 		end
 	end
-	
+	if self.ducking or self.lookingUp then
+		if self.inputLeftRight ~= 0 then 
+			self.drawMirror = self.inputLeftRight < 0
+		end
+	end
+
 	-- test doors
 	if self.onground and self.inputUpDown > 0 and self.inputUpDownLast <= 0 and self.vel[1] == 0 then
 		local tile = level:getTile(self.pos[1] - level.pos[1], self.pos[2] - level.pos[2])
@@ -481,7 +498,7 @@ function Hero:update(dt)
 		--if self.vel[2] < 0 then self.inputJumpTime = nil end		-- doesn't work well with swimming
 		if self.inputJumpTime + jumpDuration >= game.time then
 			if self.inputJump then
-				self.vel[2] = 20
+				self.vel[2] = 15
 			end
 			if self.swimming then
 				self.vel[2] = self.vel[2] + self.jumpVel
@@ -509,6 +526,7 @@ function Hero:die()
 	self.warping = false
 	self.climbing = false
 	self.ducking = false
+	self.lookingUp = false
 	self.solid = false
 	self.weapon = nil
 	self.items = table()
@@ -559,6 +577,8 @@ function Hero:draw(R, viewBBox, holdOverride)
 		else
 			if self.ducking then
 				self.seq = 'duck'
+			elseif self.lookingUp then
+				self.seq = 'lookup'
 			else
 				if self.onground then
 					if not self.warping and self.inputLeftRight ~= 0 then
@@ -572,7 +592,7 @@ function Hero:draw(R, viewBBox, holdOverride)
 							self.seq = 'walk'
 						end
 					else
-						if self.warping or self.inputUpDown > 0 then
+						if self.warping then
 							self.seq = 'lookup'
 						else
 							self.seq = 'stand'

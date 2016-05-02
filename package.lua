@@ -6,8 +6,6 @@ local lfs = require 'lfs'
 -- TODO make sure name has no spaces/symbols, or is properly escaped for all these cp commands: 
 local name = 'DumpWorld'	-- or whatever you want to call the .app
 
-local luajitPath = io.readproc('which luajit'):trim()
-
 local function mkdir(dir)
 	print('mkdir '..dir)
 	lfs.mkdir(dir)
@@ -27,10 +25,8 @@ end
 
 -- the platform-independent stuff:
 local function copyBody(destDir)
-	mkdir(destDir)
 	-- basically copy everything except 'dist'
 	-- if you wanted to get specific, only cop what inside 'init.lua' says the dir search paths uses
-	exec('cp '..luajitPath..' '..destDir)
 	exec('cp init.lua '..destDir)
 	-- internal project folders
 	for _,dir in ipairs{'base','brightmoon','mario','metroid','zeta'} do
@@ -66,14 +62,31 @@ local function makeWin64()
 	mkdir(win64Dir)
 	local runBat = win64Dir..'/run.bat'
 	file[runBat] = [[
-LUA_PATH="data/?.lua;data/?/?.lua"
-LUAJIT_LIBPATH=data
-data/luajit.exe
+set LUA_PATH = "data/?.lua;data/?/?.lua"
+set LUAJIT_LIBPATH = "data"
+data\luajit.exe
 ]]
 
 	local dataDir = win64Dir..'/data'
 	mkdir(dataDir)
+
+	-- copy luajit
+	exec('cp ../ufo/bin/Windows/x64/luajit.exe '..dataDir)
+	exec('cp ../ufo/bin/Windows/x64/luajit.dll '..dataDir)
+	exec('cp ../ufo/bin/Windows/x64/luajit.lib '..dataDir)
+
+	-- copy body
 	copyBody(dataDir)
+
+	-- copy ffi wind64 so's
+	mkdir(dataDir..'/bin')
+	mkdir(dataDir..'/bin/Windows')
+	mkdir(dataDir..'/bin/Windows/x64')
+	for _,fn in ipairs{'sdl','png'} do
+		for _,ext in ipairs{'dll','lib','pdb'} do
+			exec('cp ../ufo/bin/Windows/x64/'..fn..'.'..ext..' '..dataDir..'/bin/Windows/x64')
+		end
+	end
 end
 
 local function makeOSX()
@@ -131,7 +144,15 @@ export LUAJIT_LIBPATH=.
 	exec('chmod +x '..runSh)
 
 	local resourcesDir = contentsDir..'/Resources'
+	mkdir(resourcesDir)
+
+	-- copy luajit
+	local luajitPath = io.readproc('which luajit'):trim()
+	exec('cp '..luajitPath..' '..resourcesDir)
+
+	-- copy body
 	copyBody(resourcesDir)
+	
 	-- ffi osx so's
 	mkdir(resourcesDir..'/bin')
 	mkdir(resourcesDir..'/bin/OSX')
@@ -141,3 +162,4 @@ export LUAJIT_LIBPATH=.
 end
 
 makeOSX()
+makeWin64()

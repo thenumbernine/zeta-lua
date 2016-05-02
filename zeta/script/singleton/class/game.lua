@@ -3,7 +3,7 @@ local Game = require 'base.script.singleton.class.game'
 
 local ZetaGame = class(Game)
 ZetaGame.name = 'ZetaGame'
-ZetaGame.gravity = -100
+ZetaGame.gravity = -40
 ZetaGame.maxFallVel = 16
 
 -- if enough games are just going to override this ...
