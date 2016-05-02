@@ -17,6 +17,7 @@ local BlasterShot = (function()
 		BlasterShot.super.init(self, args, ...)
 		self.owner = args.owner
 		self:playSound('shoot')
+		setTimeout(.2, function() self.remove = true end)
 	end
 
 	function BlasterShot:touchTile(tile, side)
@@ -101,7 +102,7 @@ local BlasterInv = (function()
 				vel[1] = 0
 			end
 		end	
-		vel = vel * 50
+		vel = vel * 35
 		BlasterShot{
 			owner = player,
 			pos = pos,
@@ -113,7 +114,7 @@ local BlasterInv = (function()
 		self.rotCenter[2] = .5
 		self.drawOffset = vec2(.5,0)
 		if not player.ducking then
-			self.drawOffset[2] = .5
+			self.drawOffset[2] = .75
 		else
 			self.drawOffset[2] = 0
 		end

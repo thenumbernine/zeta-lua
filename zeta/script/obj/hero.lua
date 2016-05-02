@@ -525,23 +525,27 @@ function Hero:die()
 	-- nothing atm
 	if self.dead then return end
 	if self.heldby then self.heldby:setHeld(nil) end
-	self:playSound('die')
+	self:playSound('explode2')
 	self:setHeld(nil, false)
 	self.warping = false
 	self.climbing = false
 	self.ducking = false
 	self.lookingUp = false
 	self.solid = false
-	self.weapon = nil
-	self.items = table()
 	self.collidesWithWorld = false
 	self.collidesWithObjects = false
 	self.dead = true
-	self.respawnTime = game.time + 1
 	self.vel[1], self.vel[2] = 0, 20
+	
+	-- if we're respawning, keep items and weapon?
+	-- but really I should be restarting the whole level
+	--self.weapon = nil
+	--self.items = table()
+	self.respawnTime = game.time + 1
 end
 
 function Hero:respawn()
+	self.health = self.maxHealth
 	self.respawnTime = nil
 	self.solid = nil
 	self.collidesWithWorld = nil
@@ -552,10 +556,14 @@ function Hero:respawn()
 end
 
 function Hero:hit()
-	self.invincibleEndTime = game.time + 2
+	self.invincibleEndTime = game.time + 1
 end
 
 function Hero:draw(R, viewBBox, holdOverride)
+	local gui = require 'base.script.singleton.gui'
+	gui.font:drawUnpacked(viewBBox.min[1], viewBBox.min[2]+2, 1, -1, self.health .. '/' .. self.maxHealth)
+	local gl = R.gl
+	gl.glEnable(gl.GL_TEXTURE_2D)
 
 	if self.invincibleEndTime >= game.time then
 		if math.floor(game.time * 8) % 2 == 0 then

@@ -8,7 +8,7 @@ Heart.solid = false
 
 function Heart:init(...)
 	Heart.super.init(self, ...)
-	setTimeout(3, function() self.remove = true end)
+	setTimeout(10, function() self.remove = true end)
 end
 
 function Heart:give(player, side)
