@@ -13,21 +13,6 @@ inputJumpAux - run button.  or maybe just a 'use aux item' + speed booster, etc.
 
 when you pick up an item, you're holding it...
 
-inventory:
-- armor - negates damage, environmental effects
-- legs
-	- running speed / jumping height
-- visor options:
-	- visible
-	- infrared
-	- motion
-	- x-ray?
-- arms
-	- climbing
-	- carrying / heavier objects
-- jetpack?
-- grappling hook?
-
 - primary attack:
 	- weapon
 - secondary attack:	
@@ -45,14 +30,12 @@ local table = require 'ext.table'
 local Player = require 'base.script.obj.player'
 local game = require 'base.script.singleton.game'
 local box2 = require 'vec.box2'
-local addTakesDamage = require 'zeta.script.obj.takesdamage'
+local takesDamageBehavior = require 'zeta.script.obj.takesdamage'
 
-local Hero = class(Player)
-addTakesDamage(Hero)
+local Hero = class(takesDamageBehavior(Player))
 
 Hero.sprite = 'hero'
-Hero.health = 10
-Hero.maxHealth = 10
+Hero.maxHealth = 5
 
 Hero.inputUpDownLast = 0
 Hero.inputRun = false
@@ -229,8 +212,10 @@ function Hero:update(dt)
 	end
 
 	if self.dead then
-		if game.time > self.respawnTime then
-			self:respawn()
+		if self.respawnTime then
+			if game.time > self.respawnTime then
+				self:respawn()
+			end
 		end
 		return
 	end
@@ -467,15 +452,15 @@ function Hero:update(dt)
 	end
 	
 	if self.onground and self.inputLeftRight == 0 then
-		if self.inputUpDown < 0 then
+		if self.inputUpDown < 0 and self.inputUpDownLast >= 0 then
 			if not self.ducking then
 				self.ducking = true
 			end
-		elseif self.inputUpDown > 0 then
+		elseif self.inputUpDown > 0 and self.inputUpDownLast <= 0 then
 			if not self.lookingUp then
 				self.lookingUp = true
 			end
-		else
+		elseif self.inputUpDown == 0 then 
 			self:tryToStand()
 		end
 	end
@@ -521,7 +506,7 @@ function Hero:update(dt)
 	self.ongroundLast = self.onground
 end
 
-function Hero:die()
+function Hero:die(damage, attacker, inflicter, side)
 	-- nothing atm
 	if self.dead then return end
 	if self.heldby then self.heldby:setHeld(nil) end
@@ -532,16 +517,16 @@ function Hero:die()
 	self.ducking = false
 	self.lookingUp = false
 	self.solid = false
-	self.collidesWithWorld = false
 	self.collidesWithObjects = false
 	self.dead = true
-	self.vel[1], self.vel[2] = 0, 20
 	
 	-- if we're respawning, keep items and weapon?
 	-- but really I should be restarting the whole level
 	--self.weapon = nil
 	--self.items = table()
-	self.respawnTime = game.time + 1
+	--self.respawnTime = game.time + 1
+
+	setTimeout(1, game.reset, game)
 end
 
 function Hero:respawn()
@@ -555,7 +540,7 @@ function Hero:respawn()
 	self:setPos(unpack(game:getStartPos()))
 end
 
-function Hero:hit()
+function Hero:hit(damage, attacker, inflicter, side)
 	self.invincibleEndTime = game.time + 1
 end
 

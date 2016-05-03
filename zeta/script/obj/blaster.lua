@@ -7,7 +7,7 @@ local BlasterShot = (function()
 	local box2 = require 'vec.box2'
 
 	local BlasterShot = class(GameObject)
-	BlasterShot.bbox = box2(-.2, 0, .2, .4)
+	BlasterShot.bbox = box2(-.1, 0, .1, .2)
 	BlasterShot.sprite = 'blaster-shot'
 	BlasterShot.useGravity = false
 	BlasterShot.solid = false
@@ -34,6 +34,7 @@ local BlasterShot = (function()
 	end
 
 	function BlasterShot:pretouch(other, side)
+		if self.remove then return end	-- only hit one object
 		if other == self.owner then return true end
 		if other.takeDamage then
 			other:takeDamage(self.damage, self.owner, self, side)
@@ -88,7 +89,7 @@ local BlasterInv = (function()
 				-- if we're holding up then shoot up
 				vel[2] = 1
 			end
-			if not player.onground then
+			if not (player.ducking and player.onground) then
 				if player.inputUpDown < 0 then
 					-- if we're holding down and jumping then shoot down
 					vel[2] = -1

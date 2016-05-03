@@ -1,9 +1,9 @@
 local class = require 'ext.class'
-local GameObject = require 'base.script.obj.object'
+local Object = require 'base.script.obj.object'
 local game = require 'base.script.singleton.game'
 
 
-local SpinParticle = class(GameObject)
+local SpinParticle = class(Object)
 SpinParticle.sprite = 'spinblock'
 SpinParticle.seq = 'particle'
 

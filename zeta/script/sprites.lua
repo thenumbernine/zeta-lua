@@ -47,7 +47,7 @@ return {
 	-- single-frame sprites
 	{name='blaster', dir='blaster', frames={stand='stand.png'}},
 	{name='blaster-shot', dir='blaster-shot', frames={stand='stand.png'}},
-	{name='geemer', dir='geemer', frames={stand='stand.png'}},
+	{name='geemer', dir='geemer', frames={stand='stand.png', chunk='chunk.png'}},
 	{name='puff', dir='puff', frames={stand='stand.png'}},
 	-- tiles	
 	{name='tile-metal', dir='tile-metal', frames={stand='stand.png'}},

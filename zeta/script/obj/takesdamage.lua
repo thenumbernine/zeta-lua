@@ -3,12 +3,18 @@ local math = require 'ext.math'
 local Object = require 'base.script.obj.object'
 local game = require 'base.script.singleton.game'
 
-local function addTakesDamage(classObj)
-	classObj.health = classObj.health or 1
-	classObj.maxHealth = classObj.health
-	classObj.invincibleEndTime = -1
+local function takesDamageBehavior(parentClass)
+	local TakesDamageTemplate = class(parentClass)
+	
+	TakesDamageTemplate.maxHealth = TakesDamageTemplate.maxHealth or 1
+	TakesDamageTemplate.invincibleEndTime = -1
 
-	function classObj:takeDamage(damage, inflicter, attacker, side)
+	function TakesDamageTemplate:init(...)
+		TakesDamageTemplate.super.init(self, ...)
+		self.health = self.maxHealth
+	end
+
+	function TakesDamageTemplate:takeDamage(damage, attacker, inflicter, side)
 		if self.invincibleEndTime >= game.time then return end
 		
 		local FloatText = require 'zeta.script.obj.floattext'
@@ -17,18 +23,22 @@ local function addTakesDamage(classObj)
 		self.health = math.clamp(self.health - damage, 0, self.maxHealth)
 		if damage >= 0 then
 			if self.health > 0 then 
-				self:hit(damage, inflicter, attacker, side)
+				if self.hit then
+					self:hit(damage, attacker, inflicter, side)
+				end
 			else
 				self:playSound('explode1')
-				self:die(damage, inflicter, attacker, side)
+				self:die(damage, attacker, inflicter, side)
 			end
 		end
 	end
 
-	function classObj:die()
+	function TakesDamageTemplate:die(damage, attacker, inflicter, side)
 		self.remove = true
 		self:playSound('explode2')
 	end
+
+	return TakesDamageTemplate
 end
 
-return addTakesDamage
+return takesDamageBehavior

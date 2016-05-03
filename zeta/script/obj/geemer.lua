@@ -1,13 +1,14 @@
 local class = require 'ext.class'
 local Object = require 'base.script.obj.object'
-local addTakesDamage = require 'zeta.script.obj.takesdamage'
+local takesDamageBehavior = require 'zeta.script.obj.takesdamage'
 local game = require 'base.script.singleton.game'
 
-local Geemer = class(Object)
-addTakesDamage(Geemer)
+local Geemer = class(takesDamageBehavior(Object))
 Geemer.sprite = 'geemer'
 Geemer.solid = true
-Geemer.health = 1
+Geemer.color = {.4,.7,.4,1}
+
+Geemer.maxHealth = 1
 
 Geemer.attackDist = 5
 Geemer.jumpVel = 10
@@ -16,6 +17,70 @@ Geemer.runVel = 7
 Geemer.alertDist = 10
 Geemer.nextShakeTime = -1
 Geemer.shakeEndTime = -1
+
+Geemer.states = {
+	searching = function(self)
+		self.irritatedAt = nil
+		if self.onground or self.stuckPos then 
+			for _,player in ipairs(game.players) do
+				local delta = player.pos - self.pos
+				local len = delta:length()
+				
+				-- if the player is within their range then attack 
+				if len < self.attackDist 
+				-- or if the player is directl below them then attack. TODO traceline as well?
+				or (math.abs(delta[1]) < 3 and player.pos[2] > self.ymin and player.pos[2] < self.ymax)
+				then
+					self.madAt = player 
+					break
+				elseif len < self.alertDist then
+					self.irritatedAt = player
+				end
+			end
+		
+			-- if something made us angry
+			if self.madAt
+			-- if we're looking for free space
+			or self.avoiding
+			then
+				local delta = (self.madAt or self.avoiding).pos - self.pos
+				local len = delta:length()
+				setTimeout(math.random() * .4, function()
+					local avoiding = not self.madAt and self.avoiding
+					local jumpVel = avoiding and 5 or self.jumpVel
+					local runVel = avoiding and 3 or self.runVel
+					runVel = runVel * (math.random() * .3 + .7)
+					jumpVel = jumpVel * (math.random() * .2 + .8)
+
+					-- jump at player
+					self.vel[2] = jumpVel
+					self.vel[1] = delta[1] > 0 and runVel or -runVel
+					-- if we're on a wall then don't jump into the wa
+					if (self.vel[1] > 0 and self.stuckSide == 'right')
+					or (self.vel[1] < 0 and self.stuckSide == 'left')
+					then
+						self.vel[1] = -self.vel[1]
+					end
+
+					--self.madAt = nil
+					self.avoiding = nil
+					self.angle = nil
+					self.useGravity = true
+					self.stuckPos = nil
+					self.stuckSide = nil
+					self.state = self.states.searching
+				end)
+				self.state = nil
+			elseif self.irritatedAt then
+				-- shake and let him know you're irritated
+				if game.time > self.nextShakeTime then
+					self.shakeEndTime = game.time + 1 + math.random()
+					self.nextShakeTime = game.time + 3 + 2 * math.random()
+				end
+			end
+		end
+	end,
+}
 
 function Geemer:init(...)
 	Geemer.super.init(self, ...)
@@ -36,6 +101,7 @@ function Geemer:init(...)
 		end
 	end
 
+	self.state = self.states.searching
 
 	-- taken from thwomp code
 	-- this determines the visible range below the geemer
@@ -64,40 +130,13 @@ end
 
 function Geemer:update(dt)
 	Geemer.super.update(self, dt)
+	if self.state then self:state() end
+end
 
-	if self.onground or self.stuckPos then 
-		for _,player in ipairs(game.players) do
-			local delta = player.pos - self.pos
-			local len = delta:length()
-			-- if something made us angry
-			if self.mad
-			-- if the player is within their range then attack 
-			or len < self.attackDist 
-			-- or if the player is directl below them then attack. TODO traceline as well?
-			or (math.abs(delta[1]) < 3 and player.pos[2] > self.ymin and player.pos[2] < self.ymax)
-			then
-				-- jump at player
-				self.vel[2] = self.jumpVel
-				self.vel[1] = delta[1] > 0 and self.runVel or -self.runVel
-				-- if we're on a wall then don't jump into the wa
-				if (self.vel[1] > 0 and self.stuckSide == 'right')
-				or (self.vel[1] < 0 and self.stuckSide == 'left')
-				then
-					self.vel[1] = -self.vel[1]
-				end
-
-				self.angle = nil
-				self.useGravity = true
-				self.stuckPos = nil
-				self.stuckSide = nil
-			elseif len < self.alertDist then
-				-- shake and let him know you're irritated
-				if game.time > self.nextShakeTime then
-					self.shakeEndTime = game.time + 1 + math.random()
-					self.nextShakeTime = game.time + 3 + 2 * math.random()
-				end
-			end
-		end
+function Geemer:pretouch(other, side)
+	if other:isa(Geemer) then
+		self.avoiding = other
+		return true
 	end
 end
 
@@ -120,10 +159,22 @@ function Geemer:draw(...)
 	end
 end
 
-function Geemer:die()
+function Geemer:hit(damage, attacker, inflicter, side)
+	self.vel = self.vel + (self.pos - inflicter.pos):normalize() * 5
+	self.madAt = attacker
+end
+
+function Geemer:die(damage, attacker, inflicter, side)
 	-- puff of smoke	
-	local Puff = require 'zeta.script.obj.puff'
-	Puff.puffAt(self.pos:unpack())
+	--local Puff = require 'zeta.script.obj.puff'
+	--Puff.puffAt(self.pos:unpack())
+	local GeemerChunk = require 'zeta.script.obj.geemerchunk'
+	GeemerChunk.makeAt{
+		pos = self.pos,
+		-- should be inflicter.pos, but the shot needs to stop at the surface for that to happen
+		dir = (self.pos - attacker.pos):normalize(),
+		color = self.color,
+	}
 	-- spawn a random item
 	if math.random(10) == 1 then
 		local Heart = require 'zeta.script.obj.heart'
@@ -136,7 +187,7 @@ function Geemer:die()
 		if other:isa(Geemer) then
 			local delta = other.pos - self.pos
 			if delta:length() < 2.5 then
-				other.mad = true
+				other.madAt = attacker
 			end
 		end
 	end

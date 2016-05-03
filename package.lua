@@ -1,5 +1,8 @@
 #!/usr/bin/env lua -lluarocks.require
 -- script to make an .app package
+
+local target = ...
+
 require 'ext'
 local lfs = require 'lfs'
 
@@ -57,44 +60,49 @@ end
 mkdir('dist')
 
 -- the windows-specific stuff:
-local function makeWin64()
-	local win64Dir = 'dist/win64'
-	mkdir(win64Dir)
-	local runBat = win64Dir..'/run.bat'
+local function makeWin(arch)
+	assert(arch == 'x86' or arch == 'x64', "expected arch to be x86 or x64")
+	local bits = assert( ({x86='32',x64='64'})[arch] )
+	local osDir = 'dist/win'..bits
+	mkdir(osDir)
+	local runBat = osDir..'/run.bat'
 	file[runBat] = [[
-set LUA_PATH = "data/?.lua;data/?/?.lua"
-set LUAJIT_LIBPATH = "data"
-data\luajit.exe
+cd data
+set LUA_PATH=./?.lua;./?/?.lua
+set LUAJIT_LIBPATH=.
+bin\Windows\]]..arch..[[\luajit.exe init.lua > out.txt 2> err.txt
+cd ..
 ]]
 
-	local dataDir = win64Dir..'/data'
+	local dataDir = osDir..'/data'
 	mkdir(dataDir)
-
+	mkdir(dataDir..'/bin')
+	mkdir(dataDir..'/bin/Windows')
+	local binDir = dataDir..'/bin/Windows/'..arch
+	mkdir(binDir)
+	
 	-- copy luajit
-	exec('cp ../ufo/bin/Windows/x64/luajit.exe '..dataDir)
-	exec('cp ../ufo/bin/Windows/x64/luajit.dll '..dataDir)
-	exec('cp ../ufo/bin/Windows/x64/luajit.lib '..dataDir)
+	exec('cp ../ufo/bin/Windows/'..arch..'/luajit.exe '..binDir)
+	exec('cp ../ufo/bin/Windows/'..arch..'/luajit.dll '..binDir)
+	exec('cp ../ufo/bin/Windows/'..arch..'/luajit.lib '..binDir)
 
 	-- copy body
 	copyBody(dataDir)
 
-	-- copy ffi wind64 so's
-	mkdir(dataDir..'/bin')
-	mkdir(dataDir..'/bin/Windows')
-	mkdir(dataDir..'/bin/Windows/x64')
-	for _,fn in ipairs{'sdl','png'} do
+	-- copy ffi windows dlls's
+	for _,fn in ipairs{'sdl','png','regal'} do
 		for _,ext in ipairs{'dll','lib','pdb'} do
-			exec('cp ../ufo/bin/Windows/x64/'..fn..'.'..ext..' '..dataDir..'/bin/Windows/x64')
+			exec('cp ../ufo/bin/Windows/'..arch..'/'..fn..'.'..ext..' '..binDir)
 		end
 	end
 end
 
 local function makeOSX()
 	-- the osx-specific stuff:
-	local osxDir = 'dist/osx'
-	mkdir(osxDir)
-	mkdir(osxDir..'/'..name..'.app')
-	local contentsDir = osxDir..'/'..name..'.app/Contents'
+	local osDir = 'dist/osx'
+	mkdir(osDir)
+	mkdir(osDir..'/'..name..'.app')
+	local contentsDir = osDir..'/'..name..'.app/Contents'
 	mkdir(contentsDir)
 	file[contentsDir..'/PkgInfo'] = 'APPLhect'
 	file[contentsDir..'/Info.plist'] = [[
@@ -138,7 +146,7 @@ local function makeOSX()
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $DIR/../Resources
 export LUA_PATH="./?.lua;./?/?.lua"
-export LUAJIT_LIBPATH=.
+export LUAJIT_LIBPATH="."
 ./luajit init.lua > out.txt 2> err.txt
 ]]
 	exec('chmod +x '..runSh)
@@ -161,5 +169,7 @@ export LUAJIT_LIBPATH=.
 	end
 end
 
-makeOSX()
-makeWin64()
+
+if target == 'all' or target == 'osx' then makeOSX() end
+if target == 'all' or target == 'win32' then makeWin('x86') end
+if target == 'all' or target == 'win64' then makeWin('x64') end

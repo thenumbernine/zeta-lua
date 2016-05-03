@@ -1,0 +1,112 @@
+metrovania plus crafting ...
+
+buttons:
+	- up/down to aim, left/right to move
+	- L/R: inventory prev / next.  one slot for empty inventory.
+		- inventory holds *everything*, including craft objects.
+	
+	- B: jump
+	- Y: shoot
+	- X: pick up (if current inventory is empty) / put down (if it's full)
+	- A: use inventory item.  
+		- for weapons/armor: this equips it.
+		- for aux things like grappling hook, speed booster, jetpack, etc, this uses it.
+
+- how to craft? designated locations (like aquaria)? or anywhere?
+
+stats:
+	- attack (+ to damage)
+	- defense (- to damage ... with a minimum?)
+	- health
+	- jump height? or only special mod for high jump boots?
+	- running max speed? or only special mod for speed boost?
+
+items:
+	- health boost
+		- craft: 1 green tentacle + 1 emerald
+	- attack boost (temporary)
+		- craft: 1 red tentacle + 1 ruby 
+	- flare (lighting)
+	- grenades
+	- cloak (temporary)
+	- shield boost (temporary)
+
+ammo:
+	- plasma
+		craft to create: 1 emerald -> 50 plasma, 1 ruby -> 200 plasma
+	- petrol
+		craft to create: oil
+	- electricity
+		craft to create: 1 sapphire
+	- bullets
+	- grenades
+	- missiles
+
+weapons:
+	- blaster 
+		weight: light
+		damage type: projectile + electricity
+		craft to create: 1 emerald, 1 ruby, 1 blaster frame
+		ammo: plasma
+	- flamethrower (heat)
+		ammo: petrol
+	- freeze weapon (ice)
+		ammo: electricity
+	- minigun (projectile)
+		ammo: bullets
+	- grenade launcher (splash)
+		ammo: grenades
+	- rocket launcher (/homing? as a modifier?) (projectile + splash)
+		ammo: missiles
+	- electricity gun / tesla coil (electricity)
+		ammo: electricity
+	- plasma rifle / rapid fire (projectile + electricity)
+		ammo: plasma
+	- skillsaw
+		ammo: electricity
+	- close range sword (heat + electricity)
+		ammo: ?
+	- heat ray (heat)
+		ammo: ? 
+
+modifiers:
+	- grappling hook
+	- shield
+	- jetpack
+	- visors:
+		- infrared
+		- motion
+		- x-ray
+
+inventory:
+	- armor
+		types:
+		- reduce plasma damage
+		- reduce explosion damage
+		- reduce projectile damage
+		- reduce heat damage
+		- reduce ice damage
+	- legs:
+		- speed shoes
+		- high jump boots
+	- arms:
+		- ledge pull-up ? only certain walls?
+		- touch & go? only certain walls?
+		- lifting objects / upgrade for heavier?
+
+materials found on their own:
+	emerald
+	ruby
+	sapphire	
+	blaster frame
+	oil
+
+enemies:
+	aliens:
+	green geemer -> 10% green tentacle 
+	red geemer -> 10% red tentacle 
+	
+	machines:
+	turret -> 10% metal 
+	flying sentry -> 10% metal
+
