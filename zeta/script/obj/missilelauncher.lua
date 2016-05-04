@@ -91,9 +91,9 @@ end)()
 
 local MissileLauncherItem = (function()
 	local class = require 'ext.class'
-	local InvWeapon  = require 'zeta.script.obj.invweapon'
+	local Weapon  = require 'zeta.script.obj.weapon'
 	
-	local MissileLauncherItem = class(InvWeapon)
+	local MissileLauncherItem = class(Weapon)
 	MissileLauncherItem.sprite = 'missilelauncher'
 	MissileLauncherItem.shotDelay = .5
 	MissileLauncherItem.rotCenter = {.25,.5}

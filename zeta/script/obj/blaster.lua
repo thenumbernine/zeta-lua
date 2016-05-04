@@ -65,10 +65,10 @@ end)()
 
 local BlasterItem = (function()
 	local class = require 'ext.class'
-	local InvWeapon = require 'zeta.script.obj.invweapon'
+	local Weapon = require 'zeta.script.obj.weapon'
 	local game = require 'base.script.singleton.game'
 	
-	local BlasterItem = class(InvWeapon)
+	local BlasterItem = class(Weapon)
 	BlasterItem.sprite = 'blaster'
 	BlasterItem.shotDelay = .05
 	BlasterItem.shotClass = BlasterShot
