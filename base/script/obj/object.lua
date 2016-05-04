@@ -679,6 +679,11 @@ function Object:draw(R, viewBBox, holdOverride)
 	local rcx, rcy = 0, 0
 	if self.rotCenter then
 		rcx, rcy = self.rotCenter[1], self.rotCenter[2]
+		if self.drawMirror then
+			rcx = 1 - rcx
+		end
+		rcx = rcx * sx
+		rcy = rcy * sy
 	end
 
 	R:quad(

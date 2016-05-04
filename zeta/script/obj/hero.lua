@@ -55,6 +55,7 @@ Hero.nextShootTime = -1
 function Hero:init(args)
 	Hero.super.init(self, args)
 	self.items = table()	
+	self.itemIndex = 1
 	if args.color then
 --		self.color = {unpack(args.color)}
 	end
@@ -497,12 +498,23 @@ function Hero:update(dt)
 
 	self:refreshSize()
 
+	if #self.items > 0 then
+		if self.inputPageUp and not self.inputPageUpLast then
+			self.itemIndex = self.itemIndex % #self.items + 1
+		end
+		if self.inputPageDown and not self.inputPageDownLast then
+			self.itemIndex = (self.itemIndex - 2) % #self.items + 1
+		end
+	end
+
 	self.inputUpDownLast = self.inputUpDown
 	self.inputRunLast = self.inputRun
 	self.inputShootLast = self.inputShoot
 	self.inputShootAuxLast = self.inputShootAux
 	self.inputJumpLast = self.inputJump
 	self.inputJumpAuxLast = self.inputJumpAux
+	self.inputPageUpLast = self.inputPageUp
+	self.inputPageDownLast = self.inputPageDown
 	self.ongroundLast = self.onground
 end
 
@@ -524,6 +536,7 @@ function Hero:die(damage, attacker, inflicter, side)
 	-- but really I should be restarting the whole level
 	--self.weapon = nil
 	--self.items = table()
+	--self.itemIndex = 1
 	--self.respawnTime = game.time + 1
 
 	setTimeout(1, game.reset, game)
@@ -545,10 +558,28 @@ function Hero:hit(damage, attacker, inflicter, side)
 end
 
 function Hero:draw(R, viewBBox, holdOverride)
+	-- draw gui
+	-- health:
 	local gui = require 'base.script.singleton.gui'
 	gui.font:drawUnpacked(viewBBox.min[1], viewBBox.min[2]+2, 1, -1, self.health .. '/' .. self.maxHealth)
 	local gl = R.gl
 	gl.glEnable(gl.GL_TEXTURE_2D)
+
+	-- items:
+	local Object = require 'base.script.obj.object'
+	for i,item in ipairs(self.items) do
+		Object.draw({
+			sprite = item.sprite,
+			pos = viewBBox.min + vec2(1,2+i),
+			angle = 0,
+		}, R, viewBBox)
+		if i == self.itemIndex then
+			gui.font:drawUnpacked(viewBBox.min[1]+1.5, viewBBox.min[2]+3+i, 1, -1, 'X')
+		end
+		if item == self.weapon then
+			gui.font:drawUnpacked(viewBBox.min[1]+2, viewBBox.min[2]+3+i, 1, -1, 'W')
+		end
+	end
 
 	if self.invincibleEndTime >= game.time then
 		if math.floor(game.time * 8) % 2 == 0 then

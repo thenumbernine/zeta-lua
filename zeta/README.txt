@@ -42,11 +42,10 @@ ammo:
 	- grenades
 	- missiles
 
-weapons:
+weapons (not crafted):
 	- blaster 
 		weight: light
 		damage type: projectile + electricity
-		craft to create: 1 emerald, 1 ruby, 1 blaster frame
 		ammo: plasma
 	- flamethrower (heat)
 		ammo: petrol
@@ -69,7 +68,14 @@ weapons:
 	- heat ray (heat)
 		ammo: ? 
 
-modifiers:
+modifiers (not crafted):
+	- ammo capacity
+		- plasma
+		- petrol
+		- electricity
+		- bullets
+		- grenades
+		- missiles
 	- grappling hook
 	- shield
 	- jetpack
@@ -78,7 +84,7 @@ modifiers:
 		- motion
 		- x-ray
 
-inventory:
+inventory (not crafted):
 	- armor
 		types:
 		- reduce plasma damage
@@ -94,7 +100,7 @@ inventory:
 		- touch & go? only certain walls?
 		- lifting objects / upgrade for heavier?
 
-materials found on their own:
+craft materials, found on their own:
 	emerald
 	ruby
 	sapphire	

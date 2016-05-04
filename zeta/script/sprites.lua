@@ -44,11 +44,36 @@ return {
 			stand={'stand1','stand2','stand3', freq=16},
 		},
 	},
-	-- single-frame sprites
+		
+		-- weapons
+	
 	{name='blaster', dir='blaster', frames={stand='stand.png'}},
 	{name='blaster-shot', dir='blaster-shot', frames={stand='stand.png'}},
+	
+	{name='missilelauncher', dir='missilelauncher', frames={stand='stand.png'}},
+	{name='missile', dir='missile', frames={stand='stand.png'}},
+	{
+		name='missileblast',
+		dir='missileblast',
+		frames={
+			stand1='stand.png',
+			stand2='stand2.png',
+			stand3='stand3.png',
+			stand4='stand4.png',
+			stand5='stand5.png',
+			stand6='stand6.png',
+		},
+		seqs={
+			stand={'stand1', 'stand2', 'stand3', 'stand4', 'stand5', 'stand6', freq=8},
+		},
+	},
+	
+	{name='minigun', dir='minigun', frames={stand='stand.png'}},
+		-- enemies
 	{name='geemer', dir='geemer', frames={stand='stand.png', chunk='chunk.png'}},
+		-- etc
 	{name='puff', dir='puff', frames={stand='stand.png'}},
+	
 	-- tiles	
 	{name='tile-metal', dir='tile-metal', frames={stand='stand.png'}},
 }

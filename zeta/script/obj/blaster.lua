@@ -2,21 +2,30 @@
 
 local BlasterShot = (function()
 	local class = require 'ext.class'
-	local GameObject = require 'base.script.obj.object'
+	local Object = require 'base.script.obj.object'
 	local game = require 'base.script.singleton.game'
 	local box2 = require 'vec.box2'
 
-	local BlasterShot = class(GameObject)
+	local BlasterShot = class(Object)
 	BlasterShot.bbox = box2(-.1, 0, .1, .2)
 	BlasterShot.sprite = 'blaster-shot'
 	BlasterShot.useGravity = false
 	BlasterShot.solid = false
+	BlasterShot.speed = 35
 	BlasterShot.damage = 1
+	BlasterShot.rotCenter = {.5, .5}
 
 	function BlasterShot:init(args, ...)
+		args.vel = args.dir * self.speed
 		BlasterShot.super.init(self, args, ...)
-		self.owner = args.owner
+		
+		self.shooter = args.shooter
+		self:hasBeenKicked(args.shooter)
 		self:playSound('shoot')
+		
+		self.angle = self.shooter.weapon.angle
+		self.drawMirror = self.shooter.weapon.drawMirror
+		
 		setTimeout(.2, function() self.remove = true end)
 	end
 
@@ -35,20 +44,17 @@ local BlasterShot = (function()
 
 	function BlasterShot:pretouch(other, side)
 		if self.remove then return end	-- only hit one object
-		if other == self.owner then return true end
+		if other == self.shooter then return true end
 		if other.takeDamage then
-			other:takeDamage(self.damage, self.owner, self, side)
+			other:takeDamage(self.damage, self.shooter, self, side)
+		end
+		if other.takeDamage or other.solid then
 			self.collidesWithWorld = false
 			self.collidesWithObjects = false
 			self.remove = true
 			return
 		end
-		if other.solid then
-			self.collidesWithWorld = false
-			self.collidesWithObjects = false
-			self.remove = true
-			return
-		end
+		return true
 	end
 
 	return BlasterShot
@@ -57,104 +63,28 @@ end)()
 -- inventory object:
 
 local BlasterInv = (function()
-	local vec2 = require 'vec.vec2'
 	local class = require 'ext.class'
-	local OverlayObject = require 'base.script.item'
-	local game = require 'base.script.singleton.game'
-
-	local BlasterInv = class(OverlayObject)
-	BlasterInv.sprite = 'blaster'
-	BlasterInv.weapon = true
-	BlasterInv.shootDelay = .05
-
-	function BlasterInv:init(...)
-		BlasterInv.super.init(self, ...)
-		self.drawOffset = vec2()
-		self.rotCenter = vec2()
-	end
-
-	function BlasterInv:onShoot(player)
-		if player.inputShootLast then return end
-		player.nextShootTime = game.time + self.shootDelay
-		local pos = player.pos + vec2(0, .25)
-		pos[2] = pos[2] + self.drawOffset[2]
-		local vel = vec2()
-		if player.drawMirror then
-			vel[1] = -1
-		else
-			vel[1] = 1
-		end
-		if player.inputUpDown ~= 0 then
-			if player.inputUpDown > 0 then
-				-- if we're holding up then shoot up
-				vel[2] = 1
-			end
-			if not (player.ducking and player.onground) then
-				if player.inputUpDown < 0 then
-					-- if we're holding down and jumping then shoot down
-					vel[2] = -1
-				end
-			end
-			-- if we're holding down ... but not left/right ... then duck and shoot left/right
-			if player.inputLeftRight == 0 and player.inputUpDown > 0 then
-				vel[1] = 0
-			end
-			if not player.onground and player.inputLeftRight == 0 and player.inputUpDown < 0 then
-				vel[1] = 0
-			end
-		end	
-		vel = vel * 35
-		BlasterShot{
-			owner = player,
-			pos = pos,
-			vel = vel,
-		}
-	end
-	function BlasterInv:drawItem(player, R, viewBBox)
-		self.rotCenter[1] = self.drawMirror and 1 or 0
-		self.rotCenter[2] = .5
-		self.drawOffset = vec2(.5,0)
-		if not player.ducking then
-			self.drawOffset[2] = .75
-		else
-			self.drawOffset[2] = 0
-		end
+	local InvWeapon = require 'zeta.script.obj.invweapon'
 	
-		if player.inputUpDown > 0 then
-			if player.inputLeftRight == 0 then
-				self.angle = 90
-			else
-				self.angle = 45
-			end
-		else
-			self.angle = 0
-		end
-		self.drawMirror = player.drawMirror
-		if self.drawMirror then self.angle = -self.angle end
-
-		BlasterInv.super.drawItem(self, player, R, viewBBox)
-	end
-
+	local BlasterInv = class(InvWeapon)
+	BlasterInv.sprite = 'blaster'
+	BlasterInv.shotDelay = .05
+	BlasterInv.shotClass = BlasterShot
 	return BlasterInv
 end)()
 
 -- world object
 
-local Blaster = (function()
+local BlasterItem = (function()
 	local class = require 'ext.class'
-	local Item = require 'zeta.script.obj.item'
-	local game = require 'base.script.singleton.game'
+	local ItemInv = require 'zeta.script.obj.iteminv'
 
-	local Blaster = class(Item)
-	Blaster.sprite = 'blaster'
-
-	function Blaster:give(player, side)
-		local invObj = BlasterInv()
-		player.items:insert(invObj)
-		player.weapon = invObj
-	end
-
-	return Blaster
+	local BlasterItem = class(ItemInv)
+	
+	BlasterItem.sprite = 'blaster'
+	BlasterItem.invClass = BlasterInv
+	
+	return BlasterItem
 end)()
 
-return Blaster
+return BlasterItem

@@ -309,6 +309,10 @@ function GLApp:event(event)
 				player.inputJump = press
 			elseif event.key.keysym.sym == sdl.SDLK_d then	-- spinjump
 				player.inputJumpAux = press
+			elseif event.key.keysym.sym == sdl.SDLK_a then	-- inventory up
+				player.inputPageUp = press
+			elseif event.key.keysym.sym == sdl.SDLK_z then	-- inventory down
+				player.inputPageDown = press
 			end
 		elseif event.type == sdl.SDL_MOUSEMOTION then
 			local wx, wy = self:size()

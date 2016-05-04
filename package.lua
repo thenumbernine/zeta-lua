@@ -28,11 +28,16 @@ end
 
 -- the platform-independent stuff:
 local function copyBody(destDir)
-	-- basically copy everything except 'dist'
-	-- if you wanted to get specific, only cop what inside 'init.lua' says the dir search paths uses
 	exec('cp init.lua '..destDir)
 	-- internal project folders
-	for _,dir in ipairs{'base','brightmoon','mario','metroid','zeta'} do
+	for _,dir in ipairs{
+		-- TODO enable according to which is used init.lua & its deps
+		'base',
+		--'brightmoon',
+		--'mario',
+		--'metroid',
+		'zeta',
+	} do
 		exec('cp -R '..dir..' '..destDir)
 	end
 	-- external project folders
