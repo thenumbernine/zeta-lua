@@ -52,8 +52,8 @@ local Missile = (function()
 	end
 
 	function Missile:touchTile(tile, side)
-		if tile and tile.solid and tile.onShoot then
-			tile:onShoot(self, side)
+		if tile and tile.solid and tile.onHit then
+			tile:onHit(self, side)
 		end
 		self:blast()
 	end
@@ -89,26 +89,15 @@ local Missile = (function()
 	return Missile
 end)()
 
-local MissileLauncherInv = (function()
-	local class = require 'ext.class'
-	local InvWeapon = require 'zeta.script.obj.invweapon'
-	
-	local MissileLauncherInv = class(InvWeapon)
-	MissileLauncherInv.sprite = 'missilelauncher'
-	MissileLauncherInv.shotDelay = .5
-	MissileLauncherInv.shotVel = 50
-	MissileLauncherInv.shotClass = Missile
-	MissileLauncherInv.rotCenter = {.25,.5}
-	return MissileLauncherInv
-end)()
-
 local MissileLauncherItem = (function()
 	local class = require 'ext.class'
-	local ItemInv  = require 'zeta.script.obj.iteminv'
+	local InvWeapon  = require 'zeta.script.obj.invweapon'
 	
-	local MissileLauncherItem = class(ItemInv)
+	local MissileLauncherItem = class(InvWeapon)
 	MissileLauncherItem.sprite = 'missilelauncher'
-	MissileLauncherItem.invClass = MissileLauncherInv
+	MissileLauncherItem.shotDelay = .5
+	MissileLauncherItem.rotCenter = {.25,.5}
+	MissileLauncherItem.shotClass = Missile 
 	
 	return MissileLauncherItem
 end)()

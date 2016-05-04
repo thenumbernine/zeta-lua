@@ -3,16 +3,15 @@ local Item = require 'zeta.script.obj.item'
 
 local Heart = class(Item)
 Heart.sprite = 'heart'
-Heart.useGravity = false
-Heart.solid = false
 
 function Heart:init(...)
 	Heart.super.init(self, ...)
-	setTimeout(10, function() self.remove = true end)
+--	setTimeout(60, function() self.remove = true end)
 end
 
-function Heart:give(player, side)
+function Heart:onUse(player)
 	player.health = math.min(player.health + 1, player.maxHealth)
+	self.remove = true
 end
 
 return Heart

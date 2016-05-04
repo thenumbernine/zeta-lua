@@ -55,7 +55,7 @@ Hero.nextShootTime = -1
 function Hero:init(args)
 	Hero.super.init(self, args)
 	self.items = table()	
-	self.itemIndex = 1
+	self.holding = nil
 	if args.color then
 --		self.color = {unpack(args.color)}
 	end
@@ -69,35 +69,52 @@ function Hero:refreshSize()
 	end
 end
 
-function Hero:setHeld(other, kick)
+function Hero:setHeld(other)
 	if self.holding and self.holding ~= other then
-		if kick ~= false then
-			self:playSound('kick')
-			self.holding:playerKick(self, self.inputLeftRight, self.inputUpDown)
+		--self.holding:playerKick(self, self.inputLeftRight, self.inputUpDown)
+		self.holding.vel[1] = self.vel[1]
+		self.holding.vel[2] = self.vel[2]
+-- TODO make holdable items solid=false
+-- otherwise they fall into the floor
+-- also, fix pretouch() for picking up items
+self.holding.pos[1] = self.pos[1]
+self.holding.pos[2] = self.pos[2]
+		self.holding:hasBeenKicked(self)
+		
+		self.items:removeObject(self.holding)
+		if self.weapon == self.holding then
+			self.weapon = nil	-- TODO switch to next weapon?
 		end
 
 		self.holding.heldby = nil
-		--self.holding.collidesWithObjects = nil
+		self.holding.collidesWithObjects = nil
 		self.holding.collidesWithWorld = nil
-		self.holding = nil
+		self.holding = nil	
 	end
 	
 	if other then
 		if other.heldby then
 			if other.heldby == self then return end	-- we're already holding it?
-			other.heldby:setHeld(nil, false)	-- out of their hands!	... without the kick too
+			other.heldby:setHeld(nil)	-- out of their hands!	... without the kick too
 		end
 	
 		if other.playerGrab then other:playerGrab(self) end
 		self.holding = other
 		self.holding.heldby = self
-		--self.holding.collidesWithObjects = false
+		self.holding.collidesWithObjects = false
 		self.holding.collidesWithWorld = false
+		
+		self.nextHoldTime = game.time + .1
 	end
 end
 
 -- TODO isn't this handled by PlayerItem:drawItem ?
 function Hero:updateHeldPosition()
+	if self.holding.updateHeldPosition then
+		self.holding:updateHeldPosition()
+		return
+	end
+	
 	if not self.ducking then
 		self.holding.pos[2] = self.pos[2] + .125
 	else
@@ -123,16 +140,23 @@ Hero.idleBounceVel = 10
 
 function Hero:pretouch(other, side)
 	if Hero.super.pretouch(self, other, side) then return true end
-	
-	if self.inputRun	-- if we're holding the grab button
-	and not self.holding	-- and we're not holding anything atm
-	and other.canCarry		-- and we can carry the other object
-	and (not other.canBeHeldBy or other:canBeHeldBy(self))	-- ... refined "can carry" test
-	then
-		self:setHeld(other)
+
+	-- pretouch is called upon movement into an object
+	-- i want this to run any time
+	if self.inputShootAux and not self.inputShootAuxLast then
+		if other.canCarry
+		and (not other.canBeHeldBy or other:canBeHeldBy(self))	-- ... refined "can carry" test
+		then
+			--self.holdCandidate = other
+			--self.holdCandidatePos = vec2(self.pos:unpack())
+			self:setHeld(other)
+		end
 	end
 	
-	if other == self.holding then return true end	-- skip push collisions
+	-- skip push collisions
+	for _,item in ipairs(self.items) do
+		if other == item then return true end	
+	end
 end
 
 function Hero:tryToStand()
@@ -162,7 +186,7 @@ function Hero:endWarp(destX, destY, canCarryThru)
 	self.solid = true
 	self.warping = false
 	if not canCarryThru then	-- by default don't allow folks to carry things through warps
-		self:setHeld(nil, false)
+		self:setHeld(nil)
 	end
 	self.pos[1], self.pos[2] = destX, destY
 end
@@ -224,58 +248,83 @@ function Hero:update(dt)
 	if self.warping then return end
 	
 	if self.holding and self.holding.remove then
-		self:setHeld(nil, false)
-	end	
-	
-	if self.weapon and self.weapon.update then 
-		self.weapon:update(self, dt)
+		self:setHeld(nil)
 	end
+	if self.weapon and self.weapon.remove then
+		self.weapon = nil
+	end
+	for i=#self.items,1,-1 do
+		if self.items[i].remove then self.items:remove(i) end
+	end
+
+--	if self.weapon and self.weapon.update then 
+--		self.weapon:update(dt, self)
+--	end
 	
 	-- if we pushed the pickup-item button 
 	if self.inputShootAux and not self.inputShootAuxLast then
-		-- try to pick something up ...
-		
-		if not self.holding and self.collidedLeft and not self.touchEntLeft then
-			local x = self.pos[1] + self.bbox.min[1] - .5 - level.pos[1]
-			for y=math.floor(self.pos[2] + self.bbox.min[2] - level.pos[2]),math.floor(self.pos[2] + self.bbox.max[2] - level.pos[2]) do
-				local tile = level:getTile(x,y)
-				if tile and tile.onCarry then
-					tile:onCarry(self)
-					if self.holding then break end
+	
+		-- if we're already holding something -- set it down
+
+		if self.holding then
+
+			if game.time > self.nextHoldTime then
+				self:setHeld(nil)
+			end
+
+		-- try to pick up a tile ...
+		else
+			--[[ if we're standing on something we can pick up ...
+			if self.holdCandidate 
+			and self.holdCandidatePos == self.pos
+			then
+				self.holdCandidate = nil
+				self.holdCandidatePos = nil
+				self:setHeld(self.holdCandidate)
+			end
+			--]]
+			if self.collidedLeft and not self.touchEntLeft then
+				local x = self.pos[1] + self.bbox.min[1] - .5 - level.pos[1]
+				for y=math.floor(self.pos[2] + self.bbox.min[2] - level.pos[2]),math.floor(self.pos[2] + self.bbox.max[2] - level.pos[2]) do
+					local tile = level:getTile(x,y)
+					if tile and tile.onCarry then
+						tile:onCarry(self)
+						if self.holding then break end
+					end
 				end
 			end
+			if self.collidedRight and not self.touchEntRight then
+				local x = self.pos[1] + self.bbox.max[1] + .5 - level.pos[1]
+				for y=math.floor(self.pos[2] + self.bbox.min[2] - level.pos[2]),math.floor(self.pos[2] + self.bbox.max[2] - level.pos[2]) do
+					local tile = level:getTile(x,y)
+					if tile and tile.onCarry then
+						tile:onCarry(self)
+						if self.holding then break end
+					end
+				end
+			end
+			-- TODO evaluate from center outwards? rather than left to right
+			if self.collidedDown and not self.touchEntDown then
+				local y = self.pos[2] + self.bbox.min[1] - .5 - level.pos[1]
+				for x=math.floor(self.pos[1] + self.bbox.min[1] - level.pos[2]),math.floor(self.pos[1] + self.bbox.max[1] - level.pos[2]) do
+					local tile = level:getTile(x,y)
+					if tile and tile.onCarry then
+						tile:onCarry(self)
+						if self.holding then break end
+					end
+				end
+			end
+			if self.collidedUp and not self.touchEntUp then
+				local y = self.pos[2] + self.bbox.max[1] + .5 - level.pos[2]
+				for x=math.floor(self.pos[1] + self.bbox.min[1] - level.pos[1]),math.floor(self.pos[1] + self.bbox.max[1] - level.pos[1]) do
+					local tile = level:getTile(x,y)
+					if tile and tile.onCarry then
+						tile:onCarry(self)
+						if self.holding then break end
+					end
+				end
+			end	
 		end
-		if not self.holding and self.collidedRight and not self.touchEntRight then
-			local x = self.pos[1] + self.bbox.max[1] + .5 - level.pos[1]
-			for y=math.floor(self.pos[2] + self.bbox.min[2] - level.pos[2]),math.floor(self.pos[2] + self.bbox.max[2] - level.pos[2]) do
-				local tile = level:getTile(x,y)
-				if tile and tile.onCarry then
-					tile:onCarry(self)
-					if self.holding then break end
-				end
-			end
-		end
-		-- TODO evaluate from center outwards? rather than left to right
-		if not self.holding and self.collidedDown and not self.touchEntDown then
-			local y = self.pos[2] + self.bbox.min[1] - .5 - level.pos[1]
-			for x=math.floor(self.pos[1] + self.bbox.min[1] - level.pos[2]),math.floor(self.pos[1] + self.bbox.max[1] - level.pos[2]) do
-				local tile = level:getTile(x,y)
-				if tile and tile.onCarry then
-					tile:onCarry(self)
-					if self.holding then break end
-				end
-			end
-		end
-		if not self.holding and self.collidedUp and not self.touchEntUp then
-			local y = self.pos[2] + self.bbox.max[1] + .5 - level.pos[2]
-			for x=math.floor(self.pos[1] + self.bbox.min[1] - level.pos[1]),math.floor(self.pos[1] + self.bbox.max[1] - level.pos[1]) do
-				local tile = level:getTile(x,y)
-				if tile and tile.onCarry then
-					tile:onCarry(self)
-					if self.holding then break end
-				end
-			end
-		end	
 	end
 
 	-- see if we have a weapon to shoot
@@ -283,10 +332,20 @@ function Hero:update(dt)
 	--and not self.inputShootLast 
 	then
 		if self.weapon
-		and self.weapon.onShoot
+		and self.weapon.onUse
 		and self.nextShootTime < game.time
 		then
-			self.weapon:onShoot(self)
+			self.weapon:onUse(self)
+		end
+	end
+
+	if self.inputJumpAux
+	then
+		if self.holding
+		and self.holding ~= self.weapon
+		and self.holding.onUse
+		then
+			self.holding:onUse(self)
 		end
 	end
 
@@ -345,18 +404,16 @@ function Hero:update(dt)
 		end
 	end
 	--]]
-	
+
+--[[
 	if self.holding then
 		self.holding.vel[1] = self.vel[1]
 		self.holding.vel[2] = self.vel[2]
-		if self.inputRun then
-			-- NOTICE this is done in Hero:draw just to make sure objs are displayed in the same relative frame as the player
-			self:updateHeldPosition()
-		else
-			self:setHeld(nil)	-- legitimate kick
-		end
+		-- NOTICE this is done in Hero:draw just to make sure objs are displayed in the same relative frame as the player
+		self:updateHeldPosition()
 	end
-	
+--]]
+
 	if self.climbing then
 		self.vel[1] = self.inputLeftRight * climbVel
 		self.vel[2] = self.inputUpDown * climbVel
@@ -498,12 +555,34 @@ function Hero:update(dt)
 
 	self:refreshSize()
 
-	if #self.items > 0 then
-		if self.inputPageUp and not self.inputPageUpLast then
-			self.itemIndex = self.itemIndex % #self.items + 1
-		end
-		if self.inputPageDown and not self.inputPageDownLast then
-			self.itemIndex = (self.itemIndex - 2) % #self.items + 1
+	local pageUpPress = self.inputPageUp and not self.inputPageUpLast
+	local pageDownPress = self.inputPageDown and not self.inputPageDownLast
+	if pageUpPress or pageDownPress then
+		-- if we're holding an object that can't be stored, don't bother
+		if not self.holding or self.holding.canStoreInv then
+			
+			local _, itemIndex = self.items:find(nil, function(item)
+				return item == self.holding
+			end)
+			itemIndex = itemIndex or 0 
+			if pageUpPress then
+				itemIndex = (itemIndex + 1) % (#self.items + 1)
+			elseif pageDownPress then
+				itemIndex = (itemIndex - 1) % (#self.items + 1)
+			end
+			
+			if self.holding and self.holding.canStoreInv then
+				self.holding:onStoreInv()
+			end
+			
+				-- TODO onHoldHide/onHoldShow ?
+			local newHeld = self.items[itemIndex]
+		
+			if newHeld and newHeld.onRestoreInv then
+				newHeld:onRestoreEnv()
+			end
+
+			self:setHeld(newHeld)
 		end
 	end
 
@@ -523,7 +602,7 @@ function Hero:die(damage, attacker, inflicter, side)
 	if self.dead then return end
 	if self.heldby then self.heldby:setHeld(nil) end
 	self:playSound('explode2')
-	self:setHeld(nil, false)
+	self:setHeld(nil)
 	self.warping = false
 	self.climbing = false
 	self.ducking = false
@@ -536,7 +615,6 @@ function Hero:die(damage, attacker, inflicter, side)
 	-- but really I should be restarting the whole level
 	--self.weapon = nil
 	--self.items = table()
-	--self.itemIndex = 1
 	--self.respawnTime = game.time + 1
 
 	setTimeout(1, game.reset, game)
@@ -573,7 +651,7 @@ function Hero:draw(R, viewBBox, holdOverride)
 			pos = viewBBox.min + vec2(1,2+i),
 			angle = 0,
 		}, R, viewBBox)
-		if i == self.itemIndex then
+		if item == self.holding then
 			gui.font:drawUnpacked(viewBBox.min[1]+1.5, viewBBox.min[2]+3+i, 1, -1, 'X')
 		end
 		if item == self.weapon then
@@ -644,18 +722,19 @@ function Hero:draw(R, viewBBox, holdOverride)
 			end
 		end
 	end
+
+	Hero.super.draw(self, R, viewBBox, holdOverride)
 	
+	if self.weapon and self.weapon ~= self.holding then
+		self.weapon:updateHeldPosition(R, viewBBox, true)
+		self.weapon:draw(R, viewBBox, true)	
+	end
+
 	if self.holding then
-		-- update position
-		self:updateHeldPosition()
+		self:updateHeldPosition(R, viewBBox)
 		self.holding:draw(R, viewBBox, true)
 	end
 	
-	Hero.super.draw(self, R, viewBBox, holdOverride)
-
-	if self.weapon then
-		self.weapon:drawItem(self, R, viewBBox)
-	end
 end
 
 return Hero

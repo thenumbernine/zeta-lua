@@ -1,11 +1,14 @@
 local class = require 'ext.class'
 local vec2 = require 'vec.vec2'
-local InvObject = require 'zeta.script.obj.invobject'
+local Item = require 'zeta.script.obj.item'
+local OverlayObject = require 'base.script.item'
 local game = require 'base.script.singleton.game'
 
-local InvWeapon = class(InvObject)
-InvWeapon.weapon = true
+local InvWeapon = class(Item)
+
+InvWeapon.isWeapon = true
 InvWeapon.rotCenter = {0, .5}
+
 function InvWeapon:init(...)
 	InvWeapon.super.init(self, ...)
 	self.drawOffset = vec2()
@@ -46,7 +49,7 @@ end
 
 InvWeapon.shotDelay = nil
 InvWeapon.shotClass = nil
-function InvWeapon:onShoot(player)
+function InvWeapon:onUse(player)
 	if player.inputShootLast then return end
 	player.nextShootTime = game.time + self.shotDelay
 
@@ -58,7 +61,8 @@ function InvWeapon:onShoot(player)
 	}
 end
 
-function InvWeapon:drawItem(player, R, viewBBox)
+function InvWeapon:updateHeldPosition(R, viewBBox)
+	local player = self.heldby
 	self.drawOffset = vec2(.5,0)
 	if not player.ducking then
 		self.drawOffset[2] = .75
@@ -87,7 +91,7 @@ function InvWeapon:drawItem(player, R, viewBBox)
 	self.drawMirror = player.drawMirror
 	if self.drawMirror then self.angle = -self.angle end
 
-	InvWeapon.super.drawItem(self, player, R, viewBBox)
+	OverlayObject.drawItem(self, player, R, viewBBox)
 end
 
 return InvWeapon

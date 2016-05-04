@@ -3,8 +3,9 @@ metrovania plus crafting ...
 buttons:
 	- up/down to aim, left/right to move
 	- L/R: inventory prev / next.  one slot for empty inventory.
-		- inventory holds *everything*, including craft objects.
-	
+		- inventory holds *everything*, including craft objects (Minecraft-style).
+	... or we can do L/R for weapon select, then start + arrows for item select (like in Cave Story) 
+
 	- B: jump
 	- Y: shoot
 	- X: pick up (if current inventory is empty) / put down (if it's full)
@@ -116,3 +117,16 @@ enemies:
 	turret -> 10% metal 
 	flying sentry -> 10% metal
 
+
+
+inspirations:
+
+Super Mario World (1990.11.21)
+Super Metroid (1994.03.19)
+Abuse (1996.02.29)
+Castlevania: Symphony of the Night (Super Metroid) (1997.03.20)
+
+Cave Story (Super Metroid) (2004.12.20)
+Aquaria (Super Metroid) (2007.12.07)
+Spelunky (Super Mario World, La-Mulana, Rick Dangerous, Spelunker) (2008.12.21)
+Minecraft (Dwarf Fortress) (2009.03.17)

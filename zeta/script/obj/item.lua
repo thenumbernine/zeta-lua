@@ -3,15 +3,15 @@ local Object = require 'base.script.obj.object'
 local Hero = require 'zeta.script.obj.hero'
 
 local Item = class(Object)
+Item.canCarry = true
 Item.solid = false
 
-function Item:touch(other, side)
-	if self.remove then return end
-	if other:isa(Hero) then
-		self:give(other, side)
-		self:playSound('powerup')
-		self.remove = true
+function Item:playerGrab(player, side)
+	player.items:insert(self)
+	if self.isWeapon then
+		player.weapon = self
 	end
+	self:playSound('powerup')
 end
 
 return Item

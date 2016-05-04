@@ -31,8 +31,9 @@ local BlasterShot = (function()
 
 	function BlasterShot:touchTile(tile, side)
 		-- generalize this for all projectiles
-		if tile.onShoot then
-			tile:onShoot(self, side)
+		-- TODO onHit?
+		if tile.onHit then
+			tile:onHit(self, side)
 		end
 		
 		self.vel[1] = 0
@@ -60,30 +61,18 @@ local BlasterShot = (function()
 	return BlasterShot
 end)()
 
--- inventory object:
-
-local BlasterInv = (function()
-	local class = require 'ext.class'
-	local InvWeapon = require 'zeta.script.obj.invweapon'
-	
-	local BlasterInv = class(InvWeapon)
-	BlasterInv.sprite = 'blaster'
-	BlasterInv.shotDelay = .05
-	BlasterInv.shotClass = BlasterShot
-	return BlasterInv
-end)()
-
 -- world object
 
 local BlasterItem = (function()
 	local class = require 'ext.class'
-	local ItemInv = require 'zeta.script.obj.iteminv'
-
-	local BlasterItem = class(ItemInv)
+	local InvWeapon = require 'zeta.script.obj.invweapon'
+	local game = require 'base.script.singleton.game'
 	
+	local BlasterItem = class(InvWeapon)
 	BlasterItem.sprite = 'blaster'
-	BlasterItem.invClass = BlasterInv
-	
+	BlasterItem.shotDelay = .05
+	BlasterItem.shotClass = BlasterShot
+
 	return BlasterItem
 end)()
 
