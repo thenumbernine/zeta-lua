@@ -11,6 +11,7 @@ end
 
 function Heart:onUse(player)
 	player.health = math.min(player.health + 1, player.maxHealth)
+	self:playSound('powerup')
 	self.remove = true
 end
 

@@ -32,6 +32,7 @@ return {
 			climb_fwd={'climb1_fwd', 'climb2_fwd', freq=4},
 		},
 	},
+	
 	{
 		name='heart',
 		dir='heart',
@@ -44,7 +45,19 @@ return {
 			stand={'stand1','stand2','stand3', freq=16},
 		},
 	},
-		
+	{
+		name='attack-bonus',
+		dir='attack-bonus',
+		frames={
+			stand1='stand1.png',
+			stand2='stand2.png',
+			stand3='stand3.png',
+		},
+		seqs={
+			stand={'stand1','stand2','stand3', freq=16},
+		},
+	},
+			
 		-- weapons
 	
 	{name='blaster', dir='blaster', frames={stand='stand.png'}},

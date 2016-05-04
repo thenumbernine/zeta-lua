@@ -12,7 +12,6 @@ function Item:playerGrab(player, side)
 	if self.isWeapon then
 		player.weapon = self
 	end
-	self:playSound('powerup')
 end
 
 return Item

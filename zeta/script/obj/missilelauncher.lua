@@ -42,7 +42,11 @@ local Missile = (function()
 		if self.remove then return end
 		if other == self.shooter then return true end
 		if other.takeDamage then
-			other:takeDamage(self.damage, self.shooter, self, side)
+			local damage = self.damage
+			if self.shooter and self.shooter.attackBonus then
+				damage = damage + self.shooter.attackBonus
+			end
+			other:takeDamage(damage, self.shooter, self, side)
 		end
 		if other.takeDamgae or other.solid then
 			self:blast(other)
@@ -66,7 +70,11 @@ local Missile = (function()
 				local delta = other.pos - self.pos
 				if delta:length() < 2 then
 				-- TODO and traceline ...
-					other:takeDamage(self.splashDamage, self.shooter, self, side)
+					local damage = self.splashDamage
+					if self.shooter and self.shooter.attackBonus then
+						damage = damage + self.shooter.attackBonus
+					end				
+					other:takeDamage(damage, self.shooter, self, side)
 				end
 			end
 		end

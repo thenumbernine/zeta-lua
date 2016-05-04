@@ -27,10 +27,10 @@ items:
 		- craft: 1 green tentacle + 1 emerald
 	- attack boost (temporary)
 		- craft: 1 red tentacle + 1 ruby 
+	- shield boost (temporary)
+	- cloak (temporary)
 	- flare (lighting)
 	- grenades
-	- cloak (temporary)
-	- shield boost (temporary)
 
 ammo:
 	- plasma
@@ -47,7 +47,7 @@ weapons (not crafted):
 	- blaster 
 		weight: light
 		damage type: projectile + electricity
-		ammo: plasma
+		ammo: plasma (slowly recharges, initial capacity 10 or 50 or so)
 	- flamethrower (heat)
 		ammo: petrol
 	- freeze weapon (ice)
@@ -61,10 +61,10 @@ weapons (not crafted):
 	- electricity gun / tesla coil (electricity)
 		ammo: electricity
 	- plasma rifle / rapid fire (projectile + electricity)
-		ammo: plasma
+		ammo: plasma (added capacity to 100 or 200 or so)
 	- skillsaw
 		ammo: electricity
-	- close range sword (heat + electricity)
+	- Halo sword (heat + electricity)
 		ammo: ?
 	- heat ray (heat)
 		ammo: ? 
@@ -109,11 +109,13 @@ craft materials, found on their own:
 	oil
 
 enemies:
-	aliens:
 	green geemer -> 10% green tentacle 
 	red geemer -> 10% red tentacle 
-	
-	machines:
+	venus fly trap / hides in background
+	some sort of close-range guy who walks slowly
+	bats or something that swoops from ceiling
+	sawblades from mario world / cave story egg zone
+
 	turret -> 10% metal 
 	flying sentry -> 10% metal
 

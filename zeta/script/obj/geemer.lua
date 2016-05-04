@@ -176,9 +176,13 @@ function Geemer:die(damage, attacker, inflicter, side)
 		color = self.color,
 	}
 	-- spawn a random item
-	if math.random(10) == 1 then
+	local r = math.random(10)
+	if r == 1 then
 		local Heart = require 'zeta.script.obj.heart'
 		Heart{pos=self.pos}
+	elseif r == 2 then
+		local AttackBonus = require 'zeta.script.obj.attackbonus'
+		AttackBonus{pos=self.pos}
 	end
 	-- get rid of self
 	self.remove = true

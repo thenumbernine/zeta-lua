@@ -651,14 +651,14 @@ function Hero:draw(R, viewBBox, holdOverride)
 	for i,item in ipairs(self.items) do
 		Object.draw({
 			sprite = item.sprite,
-			pos = viewBBox.min + vec2(1,2+i),
+			pos = viewBBox.min + vec2(1,2+.5*i),
 			angle = 0,
 		}, R, viewBBox)
 		if item == self.holding then
-			gui.font:drawUnpacked(viewBBox.min[1]+1.5, viewBBox.min[2]+3+i, 1, -1, 'X')
+			gui.font:drawUnpacked(viewBBox.min[1]+1.5, viewBBox.min[2]+3+.5*i, 1, -1, '<')
 		end
 		if item == self.weapon then
-			gui.font:drawUnpacked(viewBBox.min[1]+2, viewBBox.min[2]+3+i, 1, -1, 'W')
+			gui.font:drawUnpacked(viewBBox.min[1]+2, viewBBox.min[2]+3+.5*i, 1, -1, 'W')
 		end
 	end
 

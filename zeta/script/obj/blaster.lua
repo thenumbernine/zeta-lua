@@ -47,7 +47,11 @@ local BlasterShot = (function()
 		if self.remove then return end	-- only hit one object
 		if other == self.shooter then return true end
 		if other.takeDamage then
-			other:takeDamage(self.damage, self.shooter, self, side)
+			local damage = self.damage
+			if self.shooter and self.shooter.attackBonus then
+				damage = damage + self.shooter.attackBonus
+			end
+			other:takeDamage(damage, self.shooter, self, side)
 		end
 		if other.takeDamage or other.solid then
 			self.collidesWithWorld = false
