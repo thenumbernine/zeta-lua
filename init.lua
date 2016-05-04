@@ -35,7 +35,7 @@ modio.search:insert(1, 'zeta')
 modio.levelcfg = {
 	path = 'start',
 	template = 'cave',
-	music = 'music/maridia.wav',
+--	music = 'music/maridia.wav',
 }
 --]]
 

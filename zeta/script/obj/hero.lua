@@ -74,13 +74,10 @@ function Hero:setHeld(other)
 		--self.holding:playerKick(self, self.inputLeftRight, self.inputUpDown)
 		self.holding.vel[1] = self.vel[1]
 		self.holding.vel[2] = self.vel[2]
--- TODO make holdable items solid=false
--- otherwise they fall into the floor
--- also, fix pretouch() for picking up items
 self.holding.pos[1] = self.pos[1]
 self.holding.pos[2] = self.pos[2]
 		self.holding:hasBeenKicked(self)
-		
+	
 		self.items:removeObject(self.holding)
 		if self.weapon == self.holding then
 			self.weapon = nil	-- TODO switch to next weapon?
@@ -94,7 +91,7 @@ self.holding.pos[2] = self.pos[2]
 	
 	if other then
 		if other.heldby then
-			if other.heldby == self then return end	-- we're already holding it?
+--			if other.heldby == self then return end	-- we're already holding it?
 			other.heldby:setHeld(nil)	-- out of their hands!	... without the kick too
 		end
 	
@@ -141,22 +138,12 @@ Hero.idleBounceVel = 10
 function Hero:pretouch(other, side)
 	if Hero.super.pretouch(self, other, side) then return true end
 
-	-- pretouch is called upon movement into an object
-	-- i want this to run any time
-	if self.inputShootAux and not self.inputShootAuxLast then
-		if other.canCarry
-		and (not other.canBeHeldBy or other:canBeHeldBy(self))	-- ... refined "can carry" test
-		then
-			--self.holdCandidate = other
-			--self.holdCandidatePos = vec2(self.pos:unpack())
-			self:setHeld(other)
-		end
-	end
-	
 	-- skip push collisions
 	for _,item in ipairs(self.items) do
 		if other == item then return true end	
 	end
+	if other == self.holding then return true end
+	if other == self.weapon then return true end
 end
 
 function Hero:tryToStand()
@@ -254,7 +241,9 @@ function Hero:update(dt)
 		self.weapon = nil
 	end
 	for i=#self.items,1,-1 do
-		if self.items[i].remove then self.items:remove(i) end
+		if self.items[i].remove then 
+			self.items:remove(i)
+		end
 	end
 
 --	if self.weapon and self.weapon.update then 
@@ -267,13 +256,33 @@ function Hero:update(dt)
 		-- if we're already holding something -- set it down
 
 		if self.holding then
-
+			
 			if game.time > self.nextHoldTime then
 				self:setHeld(nil)
 			end
 
 		-- try to pick up a tile ...
 		else
+			-- pretouch is called upon movement into an object
+			-- i want this to run any time
+			for _,other in ipairs(game.objs) do
+				if other ~= self
+				and not other.remove
+				and not other.heldby
+				and other.canCarry
+				and (not other.canBeHeldBy or other:canBeHeldBy(self))	-- ... refined "can carry" test
+				and self.pos[1] + self.bbox.min[1] <= other.pos[1] + other.bbox.max[1]
+				and self.pos[1] + self.bbox.max[1] >= other.pos[1] + other.bbox.min[1]
+				and self.pos[2] + self.bbox.min[2] <= other.pos[2] + other.bbox.max[2]
+				and self.pos[2] + self.bbox.max[2] >= other.pos[2] + other.bbox.min[2]
+				then
+					--self.holdCandidate = other
+					--self.holdCandidatePos = vec2(self.pos:unpack())
+					self:setHeld(other)
+					break
+				end
+			end
+			
 			--[[ if we're standing on something we can pick up ...
 			if self.holdCandidate 
 			and self.holdCandidatePos == self.pos
@@ -332,10 +341,10 @@ function Hero:update(dt)
 	--and not self.inputShootLast 
 	then
 		if self.weapon
-		and self.weapon.onUse
+		and self.weapon.onShoot
 		and self.nextShootTime < game.time
 		then
-			self.weapon:onUse(self)
+			self.weapon:onShoot(self)
 		end
 	end
 
@@ -404,15 +413,6 @@ function Hero:update(dt)
 		end
 	end
 	--]]
-
---[[
-	if self.holding then
-		self.holding.vel[1] = self.vel[1]
-		self.holding.vel[2] = self.vel[2]
-		-- NOTICE this is done in Hero:draw just to make sure objs are displayed in the same relative frame as the player
-		self:updateHeldPosition()
-	end
---]]
 
 	if self.climbing then
 		self.vel[1] = self.inputLeftRight * climbVel
@@ -560,8 +560,7 @@ function Hero:update(dt)
 	if pageUpPress or pageDownPress then
 		-- if we're holding an object that can't be stored, don't bother
 		if not self.holding or self.holding.canStoreInv then
-			
-			local _, itemIndex = self.items:find(nil, function(item)
+			local itemIndex = self.items:find(nil, function(item)
 				return item == self.holding
 			end)
 			itemIndex = itemIndex or 0 
@@ -570,19 +569,23 @@ function Hero:update(dt)
 			elseif pageDownPress then
 				itemIndex = (itemIndex - 1) % (#self.items + 1)
 			end
-			
-			if self.holding and self.holding.canStoreInv then
-				self.holding:onStoreInv()
-			end
-			
-				-- TODO onHoldHide/onHoldShow ?
-			local newHeld = self.items[itemIndex]
 		
-			if newHeld and newHeld.onRestoreInv then
+			if self.holding then
+				if self.holding.canStoreInv and self.holding.onStoreInv then
+					self.holding:onStoreInv()
+				end
+				self.holding = nil
+			end
+
+			-- TODO onHoldHide/onHoldShow ?
+			local newHeld = self.items[itemIndex]
+			if newHeld and newHeld.canStoreInv and newHeld.onRestoreInv then
 				newHeld:onRestoreEnv()
 			end
 
-			self:setHeld(newHeld)
+			--self:setHeld(newHeld)
+			self.holding = newHeld
+		
 		end
 	end
 
@@ -734,7 +737,21 @@ function Hero:draw(R, viewBBox, holdOverride)
 		self:updateHeldPosition(R, viewBBox)
 		self.holding:draw(R, viewBBox, true)
 	end
-	
+
+	for _,item in ipairs(self.items) do
+		if item ~= self.holding
+		and item ~= self.weapon
+		then
+			if item.updateHeldPosition then
+				item:updateHeldPosition(R, viewBBox, true)
+			else
+				item.pos[1] = self.pos[1]
+				item.pos[2] = self.pos[2]
+				item.vel[1] = self.vel[1]
+				item.vel[2] = self.vel[2]
+			end
+		end
+	end
 end
 
 return Hero

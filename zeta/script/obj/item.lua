@@ -5,6 +5,7 @@ local Hero = require 'zeta.script.obj.hero'
 local Item = class(Object)
 Item.canCarry = true
 Item.solid = false
+Item.canStoreInv = true
 
 function Item:playerGrab(player, side)
 	player.items:insert(self)

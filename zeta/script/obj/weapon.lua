@@ -47,9 +47,13 @@ function InvWeapon:getShotPosDir(player)
 	return pos, dir
 end
 
+function InvWeapon:onUse(player)
+	player.weapon = self
+end
+
 InvWeapon.shotDelay = nil
 InvWeapon.shotClass = nil
-function InvWeapon:onUse(player)
+function InvWeapon:onShoot(player)
 	if player.inputShootLast then return end
 	player.nextShootTime = game.time + self.shotDelay
 
