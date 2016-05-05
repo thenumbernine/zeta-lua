@@ -23,9 +23,12 @@ local BlasterShot = (function()
 		self:hasBeenKicked(args.shooter)
 		self:playSound('shoot')
 		
-		self.angle = self.shooter.weapon.angle
-		self.drawMirror = self.shooter.weapon.drawMirror
-		
+		--self.angle = self.shooter.weapon.angle
+		--self.drawMirror = self.shooter.weapon.drawMirror
+		self.angle = math.deg(math.atan2(args.dir[2], args.dir[1]))
+		self.drawMirror = args.dir[1] < 0
+		if self.drawMirror then self.angle = -self.angle end
+
 		setTimeout(.2, function() self.remove = true end)
 	end
 

@@ -9,4 +9,5 @@ return {
 	{color=0x00cfff, spawn=require 'zeta.script.obj.defensebonus'},
 	{color=0xff7f00, spawn=require 'zeta.script.obj.geemer'},
 	{color=0xff3f00, spawn=require 'zeta.script.obj.redgeemer'},
+	{color=0xff3f3f, spawn=require 'zeta.script.obj.turret'},
 }
