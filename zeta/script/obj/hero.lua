@@ -747,7 +747,7 @@ function Hero:draw(R, viewBBox, holdOverride)
 						self.seq = 'jump-arms'
 					else
 						if self.inputMaxSpeedTime >= self.timeToMaxSpeed and not self.holding then
-							self.seq = 'jump_arms'
+							self.seq = 'jump-arms'
 						else
 							if self.vel[2] > 0 then
 								self.seq = 'jump'
