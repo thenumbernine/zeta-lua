@@ -15,24 +15,45 @@ function AnimationSystem:load(sprite)
 	if not sprite.seqs then sprite.seqs = {} end
 	self.sprites[sprite.name] = sprite
 	local newframes = {}
-	for framename,srcframefile in pairs(sprite.frames) do
-		-- mod search
-		framefile = modio:find(dir .. srcframefile)
-		if not framefile then
-			error("unable to find file for sprite " .. dir .. srcframefile)
-		end
 	
-		-- add in any single-frame sequences corresponding with individual frames
-		if not sprite.seqs[framename] then
-			sprite.seqs[framename] = {framename}
+	-- create implicit frames of all files
+	for _,mod in ipairs(modio.search) do
+		local dirobj = file[mod..'/'..dir]
+		if dirobj then
+			for framefile in dirobj() do
+				local framename, ext = io.getfileext(framefile)
+				-- TODO make sure it's a file?  or at least has a proper extension?
+				if not sprite.seqs[framename] then
+					sprite.seqs[framename] = {framename}
+				end
+
+				local tex = texsys:load(mod..'/'..dir..'/'..framefile)
+				newframes[framename] = {name=framename, file=framename, tex=tex}
+			end
 		end
-		
-		-- load the textures
-		local tex = texsys:load(framefile)
-		-- map the name=>file to name=>frame info, with frame info containing the name, file, texture
-		--  texture size is in tex.width, tex.height
-		newframes[framename] = {name=framename, file=framefile, tex=tex}
 	end
+
+	if sprite.frames then
+		for framename,srcframefile in pairs(sprite.frames) do
+			-- mod search
+			framefile = modio:find(dir .. srcframefile)
+			if not framefile then
+				error("unable to find file for sprite " .. dir .. srcframefile)
+			end
+		
+			-- add in any single-frame sequences corresponding with individual frames
+			if not sprite.seqs[framename] then
+				sprite.seqs[framename] = {framename}
+			end
+			
+			-- load the textures
+			local tex = texsys:load(framefile)
+			-- map the name=>file to name=>frame info, with frame info containing the name, file, texture
+			--  texture size is in tex.width, tex.height
+			newframes[framename] = {name=framename, file=framefile, tex=tex}
+		end
+	end
+	
 	sprite.frames = newframes
 end
 
