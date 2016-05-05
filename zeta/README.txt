@@ -61,7 +61,7 @@ weapons (not crafted):
 		ammo: missiles
 	- electricity gun / tesla coil (electricity)
 		ammo: electricity
-	- plasma rifle / rapid fire (projectile + electricity)
+	* plasma rifle / rapid fire (projectile + electricity)
 		ammo: plasma (added capacity to 100 or 200 or so)
 	- skillsaw
 		ammo: electricity
@@ -89,10 +89,13 @@ modifiers (not crafted):
 inventory (not crafted):
 	- armor
 		types:
+		- reduce biological damage (monster touch)
 		- reduce plasma damage
 		- reduce explosion damage
 		- reduce projectile damage
-		- reduce heat damage
+		- reduce acid damage (environment / radsuit / slime)
+		- reduce heat damage ... heat weapons? hear air? heat magma?
+		- water breathe time?
 		- reduce ice damage
 	- legs:
 		- speed shoes
