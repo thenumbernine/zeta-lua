@@ -93,6 +93,23 @@ return {
 		},
 	},
 	
+	{name='plasma-rifle', dir='plasma-rifle', frames={stand='stand.png'}},
+	{name='plasma-shot', dir='plasma-shot', frames={stand='stand.png'}},
+	{
+		name='plasma-blast',
+		dir='plasma-blast',
+		frames={
+			stand1='stand1.png',
+			stand2='stand2.png',
+			stand3='stand3.png',
+			stand4='stand4.png',
+			stand5='stand5.png',
+		},
+		seqs={
+			stand={'stand1', 'stand2', 'stand3', 'stand4', 'stand5', freq=8},
+		},
+	},
+
 	{name='minigun', dir='minigun', frames={stand='stand.png'}},
 		-- enemies
 	{name='geemer', dir='geemer', frames={stand='stand.png', chunk='chunk.png'}},

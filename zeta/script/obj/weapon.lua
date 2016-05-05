@@ -11,11 +11,11 @@ InvWeapon.rotCenter = {0, .5}
 
 function InvWeapon:init(...)
 	InvWeapon.super.init(self, ...)
-	self.drawOffset = vec2()
 end
 
+InvWeapon.shotOffset = vec2(0, .25)
 function InvWeapon:getShotPosDir(player)
-	local pos = player.pos + vec2(0, .25)
+	local pos = player.pos + self.shotOffset
 	pos[2] = pos[2] + self.drawOffset[2]
 	local dir = vec2()
 	if player.drawMirror then
@@ -54,7 +54,7 @@ end
 InvWeapon.shotDelay = nil
 InvWeapon.shotClass = nil
 function InvWeapon:onShoot(player)
-	if player.inputShootLast then return end
+	if player.inputShootLast and not self.rapidFire then return end
 	player.nextShootTime = game.time + self.shotDelay
 
 	local pos, dir = self:getShotPosDir(player)
@@ -65,14 +65,11 @@ function InvWeapon:onShoot(player)
 	}
 end
 
+InvWeapon.drawOffsetStanding = vec2(.5, .75)
+InvWeapon.drawOffsetDucking = vec2(.5, 0)
 function InvWeapon:updateHeldPosition(R, viewBBox)
 	local player = self.heldby
-	self.drawOffset = vec2(.5,0)
-	if not player.ducking then
-		self.drawOffset[2] = .75
-	else
-		self.drawOffset[2] = 0
-	end
+	self.drawOffset = player.ducking and self.drawOffsetDucking or self.drawOffsetStanding
 
 	self.angle = 0
 	if player.inputUpDown ~= 0 then

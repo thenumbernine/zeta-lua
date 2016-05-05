@@ -313,6 +313,13 @@ function GLApp:event(event)
 				player.inputPageUp = press
 			elseif event.key.keysym.sym == sdl.SDLK_z then	-- inventory down
 				player.inputPageDown = press
+			elseif event.key.keysym.sym == sdl.SDLK_RETURN then
+				player.inputPause = press
+				-- i'm lazy so I'm putting this here.  I don't know if I want to keep it ...
+				if player.inputPause and not player.inputPauseLast then
+					game.paused = not game.paused
+				end
+				player.inputPauseLast = player.inputPause
 			end
 		elseif event.type == sdl.SDL_MOUSEMOTION then
 			local wx, wy = self:size()
@@ -333,8 +340,9 @@ function GLApp:update()
 	sysLastTime = sysThisTime
 	sysThisTime = sdl.SDL_GetTicks() / 1000
 	local sysDeltaTime = sysThisTime - sysLastTime
-	
-	do	--if sysThisTime > 5 then
+
+	if not game.paused then
+	--if sysThisTime > 5 then
 	
 		frameAccumTime = frameAccumTime + sysDeltaTime
 		if frameAccumTime >= fixedDeltaTime then

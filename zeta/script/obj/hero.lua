@@ -384,9 +384,7 @@ function Hero:update(dt)
 		end
 		if canClimb then
 			if self.inputUpDown ~= 0 then		-- push up/down to get on a climbable surface
-				if not self.holding then
-					self.climbing = true
-				end
+				self.climbing = true
 			end
 		else
 			self.climbing = nil		-- move off of it to fall off!

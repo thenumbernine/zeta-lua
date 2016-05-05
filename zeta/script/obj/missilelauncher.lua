@@ -72,17 +72,16 @@ local Missile = (function()
 		end
 	
 		self.sprite = 'missileblast'
+		self.seqStartTime = game.time
 		self.pos[2] = self.pos[2] - 1
 		self.angle = nil
 
-		-- TODO reset frame counter...
 		self.collidesWithWorld = false
 		self.colldiesWithObjects = false
 		self.vel[1], self.vel[2] = 0, 0
 		
 		Puff.puffAt(self.pos[1], self.pos[2]+.25)
 	
-		self.seqStartTime = game.time
 		self.removeTime = game.time + .75
 	end
 	

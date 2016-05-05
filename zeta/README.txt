@@ -16,27 +16,28 @@ buttons:
 - how to craft? designated locations (like aquaria)? or anywhere?
 
 stats:
-	- attack (+ to damage)
-	- defense (- to damage ... with a minimum?)
-	- health
+	* attack (+ to damage)
+	* defense (- to damage ... with a minimum?)
+	* health
 	- jump height? or only special mod for high jump boots?
 	- running max speed? or only special mod for speed boost?
 
 items:
-	- health boost
+	* health boost
 		- craft: 1 green tentacle + 1 emerald
-	- attack boost (temporary)
+	* attack boost (temporary)
 		- craft: 1 red tentacle + 1 ruby 
-	- shield boost (temporary)
+	* shield boost (temporary)
+		- craft: 1 red tentacle + 1 emeralde
+	- grenades
 	- cloak (temporary)
 	- flare (lighting)
-	- grenades
 
 ammo:
 	- plasma
 		craft to create: 1 emerald -> 50 plasma, 1 ruby -> 200 plasma
 	- petrol
-		craft to create: oil
+		craft to create: 1 oil
 	- electricity
 		craft to create: 1 sapphire
 	- bullets
@@ -44,7 +45,7 @@ ammo:
 	- missiles
 
 weapons (not crafted):
-	- blaster 
+	* blaster 
 		weight: light
 		damage type: projectile + electricity
 		ammo: plasma (slowly recharges, initial capacity 10 or 50 or so)
@@ -56,7 +57,7 @@ weapons (not crafted):
 		ammo: bullets
 	- grenade launcher (splash)
 		ammo: grenades
-	- rocket launcher (/homing? as a modifier?) (projectile + splash)
+	* rocket launcher (/homing? as a modifier?) (projectile + splash)
 		ammo: missiles
 	- electricity gun / tesla coil (electricity)
 		ammo: electricity
