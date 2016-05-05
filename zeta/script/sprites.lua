@@ -57,7 +57,19 @@ return {
 			stand={'stand1','stand2','stand3', freq=16},
 		},
 	},
-			
+	{
+		name='defense-bonus',
+		dir='defense-bonus',
+		frames={
+			stand1='stand1.png',
+			stand2='stand2.png',
+			stand3='stand3.png',
+		},
+		seqs={
+			stand={'stand1','stand2','stand3', freq=16},
+		},
+	},
+		
 		-- weapons
 	
 	{name='blaster', dir='blaster', frames={stand='stand.png'}},
@@ -89,4 +101,5 @@ return {
 	
 	-- tiles	
 	{name='tile-metal', dir='tile-metal', frames={stand='stand.png'}},
+	{name='tile-ladder', dir='tile-ladder', frames={stand='stand.png'}},
 }

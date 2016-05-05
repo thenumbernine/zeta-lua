@@ -8,7 +8,21 @@ Item.solid = false
 Item.canStoreInv = true
 
 function Item:playerGrab(player, side)
-	player.items:insert(self)
+	-- add item to player
+	do
+		local found = false
+		for _,items in ipairs(player.items) do
+			if items[1].class == self.class then
+				items:insert(self)
+				found = true
+				break
+			end
+		end
+		if not found then
+			player.items:insert(table{self})
+		end
+	end
+	
 	if self.isWeapon then
 		player.weapon = self
 	end

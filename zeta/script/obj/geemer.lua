@@ -180,9 +180,6 @@ function Geemer:die(damage, attacker, inflicter, side)
 	if r == 1 then
 		local Heart = require 'zeta.script.obj.heart'
 		Heart{pos=self.pos}
-	elseif r == 2 then
-		local AttackBonus = require 'zeta.script.obj.attackbonus'
-		AttackBonus{pos=self.pos}
 	end
 	-- get rid of self
 	self.remove = true

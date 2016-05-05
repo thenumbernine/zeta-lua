@@ -8,8 +8,8 @@ up - go through doors
 down - duck / crawl
 inputShoot - shoot
 inputJump - jump
-inputShootAux - carry object ... toggle, like spelunky.  not hold, like mario.
-inputJumpAux - run button.  or maybe just a 'use aux item' + speed booster, etc.
+inputShootAux - pick up / put down object 
+inputJumpAux - use selected item / run 
 
 when you pick up an item, you're holding it...
 
@@ -54,7 +54,7 @@ Hero.nextShootTime = -1
 
 function Hero:init(args)
 	Hero.super.init(self, args)
-	self.items = table()	
+	self.items = table()	-- self.items = {{obj1, ...}, {obj2, ...}, ...} for each unique class
 	self.holding = nil
 	if args.color then
 --		self.color = {unpack(args.color)}
@@ -77,8 +77,15 @@ function Hero:setHeld(other)
 self.holding.pos[1] = self.pos[1]
 self.holding.pos[2] = self.pos[2]
 		self.holding:hasBeenKicked(self)
-	
-		self.items:removeObject(self.holding)
+		
+		-- true for any Item subclass, who calls Item:playerGrab
+		for j=#self.items,1,-1 do
+			self.items[j]:removeObject(self.holding)
+			if #self.items[j] == 0 then
+				self.items:remove(j)
+			end
+		end
+		
 		if self.weapon == self.holding then
 			self.weapon = nil	-- TODO switch to next weapon?
 		end
@@ -139,8 +146,10 @@ function Hero:pretouch(other, side)
 	if Hero.super.pretouch(self, other, side) then return true end
 
 	-- skip push collisions
-	for _,item in ipairs(self.items) do
-		if other == item then return true end	
+	for _,items in ipairs(self.items) do
+		for _,item in ipairs(items) do
+			if other == item then return true end
+		end
 	end
 	if other == self.holding then return true end
 	if other == self.weapon then return true end
@@ -239,11 +248,6 @@ function Hero:update(dt)
 	end
 	if self.weapon and self.weapon.remove then
 		self.weapon = nil
-	end
-	for i=#self.items,1,-1 do
-		if self.items[i].remove then 
-			self.items:remove(i)
-		end
 	end
 
 --	if self.weapon and self.weapon.update then 
@@ -417,6 +421,9 @@ function Hero:update(dt)
 	if self.climbing then
 		self.vel[1] = self.inputLeftRight * climbVel
 		self.vel[2] = self.inputUpDown * climbVel
+		if self.inputLeftRight ~= 0 then
+			self.drawMirror = self.inputLeftRight < 0
+		end
 	else
 		-- friction when on ground and when not walking ... or when looking up or down
 		if self.onground and (
@@ -560,8 +567,8 @@ function Hero:update(dt)
 	if pageUpPress or pageDownPress then
 		-- if we're holding an object that can't be stored, don't bother
 		if not self.holding or self.holding.canStoreInv then
-			local itemIndex = self.items:find(nil, function(item)
-				return item == self.holding
+			local itemIndex = self.items:find(nil, function(items)
+				return items:find(self.holding)
 			end)
 			itemIndex = itemIndex or 0 
 			if pageUpPress then
@@ -578,7 +585,10 @@ function Hero:update(dt)
 			end
 
 			-- TODO onHoldHide/onHoldShow ?
-			local newHeld = self.items[itemIndex]
+			local newHeld
+			if itemIndex > 0 then
+				newHeld = self.items[itemIndex][1]
+			end
 			if newHeld and newHeld.canStoreInv and newHeld.onRestoreInv then
 				newHeld:onRestoreEnv()
 			end
@@ -586,6 +596,19 @@ function Hero:update(dt)
 			--self:setHeld(newHeld)
 			self.holding = newHeld
 		
+		end
+	end
+
+	-- clean out the removed items
+	for j=#self.items,1,-1 do
+		local items = self.items[j]
+		for i=#items,1,-1 do
+			if items[i].remove then
+				items:remove(i)
+			end
+		end
+		if #items == 0 then
+			self.items:remove(j)
 		end
 	end
 
@@ -638,6 +661,14 @@ function Hero:hit(damage, attacker, inflicter, side)
 	self.invincibleEndTime = game.time + 1
 end
 
+function Hero:modifyDamageGiven(damage, receiver, inflicter, side)
+	return math.max(0, damage + (self.attackBonus or 0))
+end
+
+function Hero:modifyDamageTaken(damage, attacker, inflicter, side)
+	return math.max(0, damage - (self.defenseBonus or 0))
+end
+
 function Hero:draw(R, viewBBox, holdOverride)
 	-- draw gui
 	-- health:
@@ -648,17 +679,23 @@ function Hero:draw(R, viewBBox, holdOverride)
 
 	-- items:
 	local Object = require 'base.script.obj.object'
-	for i,item in ipairs(self.items) do
+	for i,items in ipairs(self.items) do
+		i = i + 1
+		local item = items[1]
 		Object.draw({
 			sprite = item.sprite,
+			seq = item.invSeq,
 			pos = viewBBox.min + vec2(1,2+.5*i),
 			angle = 0,
 		}, R, viewBBox)
-		if item == self.holding then
+		if items:find(self.holding) then
 			gui.font:drawUnpacked(viewBBox.min[1]+1.5, viewBBox.min[2]+3+.5*i, 1, -1, '<')
 		end
-		if item == self.weapon then
+		if items:find(self.weapon) then
 			gui.font:drawUnpacked(viewBBox.min[1]+2, viewBBox.min[2]+3+.5*i, 1, -1, 'W')
+		end
+		if #items > 1 then
+			gui.font:drawUnpacked(viewBBox.min[1]+2.5, viewBBox.min[2]+3+.5*i, 1, -1, 'x'..#items)
 		end
 	end
 
@@ -738,17 +775,19 @@ function Hero:draw(R, viewBBox, holdOverride)
 		self.holding:draw(R, viewBBox, true)
 	end
 
-	for _,item in ipairs(self.items) do
-		if item ~= self.holding
-		and item ~= self.weapon
-		then
-			if item.updateHeldPosition then
-				item:updateHeldPosition(R, viewBBox, true)
-			else
-				item.pos[1] = self.pos[1]
-				item.pos[2] = self.pos[2]
-				item.vel[1] = self.vel[1]
-				item.vel[2] = self.vel[2]
+	for _,items in ipairs(self.items) do
+		for _,item in ipairs(items) do
+			if item ~= self.holding
+			and item ~= self.weapon
+			then
+				if item.updateHeldPosition then
+					item:updateHeldPosition(R, viewBBox, true)
+				else
+					item.pos[1] = self.pos[1]
+					item.pos[2] = self.pos[2]
+					item.vel[1] = self.vel[1]
+					item.vel[2] = self.vel[2]
+				end
 			end
 		end
 	end
