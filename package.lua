@@ -169,7 +169,7 @@ export LUAJIT_LIBPATH="."
 	-- ffi osx so's
 	mkdir(resourcesDir..'/bin')
 	mkdir(resourcesDir..'/bin/OSX')
-	for _,fn in ipairs{'sdl','libpng'} do
+	for _,fn in ipairs{'sdl','libpng','libalut'} do
 		exec('cp ../bin/OSX/'..fn..'.dylib '..resourcesDir..'/bin/OSX')
 	end
 end

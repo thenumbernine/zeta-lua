@@ -4,7 +4,7 @@ require 'ext'
 local modio = require 'base.script.singleton.modio'
 modio.search = table{'base'}
 
---[[ mario
+-- [[ mario
 modio.search:insert(1, 'mario')
 modio.levelcfg = {
 	--path = 'doors',
@@ -13,8 +13,9 @@ modio.levelcfg = {
 	--path = 'lifttest',
 	--path = 'mine',
 	--path = 'mine2',
+	path = 'testing',
 	--path = 'pswitch-fluids',
-	path = 'pswitch-platform',	-- color profile is tweaked?
+	--path = 'pswitch-platform',	-- color profile is tweaked?
 	--path = 'race',
 	template = 'cave',
 	music = 'music/overworld.wav',
@@ -30,7 +31,7 @@ modio.levelcfg = {
 }
 --]]
 
--- [[ zeta
+--[[ zeta
 modio.search:insert(1, 'zeta')
 modio.levelcfg = {
 	path = 'start',
