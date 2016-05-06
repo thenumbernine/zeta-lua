@@ -11,7 +11,7 @@ Geemer.color = {.4,.7,.4,1}
 Geemer.maxHealth = 1
 
 Geemer.attackDist = 5
-Geemer.jumpVel = 10
+Geemer.jumpVel = 11
 Geemer.runVel = 7
 
 Geemer.alertDist = 10
@@ -20,6 +20,11 @@ Geemer.shakeEndTime = -1
 
 Geemer.states = {
 	searching = function(self)
+	
+		if self.jumpBaseVelX then
+			self.vel[1] = self.jumpBaseVelX
+		end
+
 		self.irritatedAt = nil
 		if self.onground or self.stuckPos then 
 			for _,player in ipairs(game.players) do
@@ -61,6 +66,7 @@ Geemer.states = {
 					then
 						self.vel[1] = -self.vel[1]
 					end
+					self.jumpBaseVelX = self.vel[1]
 
 					--self.madAt = nil
 					self.avoiding = nil

@@ -199,7 +199,7 @@ function Object:moveToPos(x,y)
 	self:move(x - self.pos[1], y - self.pos[2])
 end
 
---local debugDraw = table()
+local debugDraw = table()
 
 function Object:move(moveX, moveY)
 	local level = game.level
@@ -233,20 +233,21 @@ function Object:move(moveX, moveY)
 					local testPlane
 
 					if tile.planes and #tile.planes > 0 then
+						local plane = tile.planes[1]
 						if moveY < 0 then
-							testPlane = tile.planes[1][2] > 0
+							testPlane = plane[2] > 0
 						else
-							testPlane = tile.planes[1][2] < 0
+							testPlane = plane[2] < 0
 						end
 						if testPlane then
-							local plane = tile.planes[1]
 							local cx
 							if plane[1] > 0 then
 								cx = self.pos[1] + self.bbox.min[1] - (tile.pos[1] + level.pos[1])
 							else
 								cx = self.pos[1] + self.bbox.max[1] - (tile.pos[1] + level.pos[1])
 							end
-							if cx >= 0 and cx <= 1 then
+							cx = math.clamp(cx, 0, 1)
+							do --if cx >= -epsilon and cx <= 1+epsilon then
 								local cy = -(cx * plane[1] + plane[3]) / plane[2]
 								local edge
 								if moveY < 0 then
@@ -391,7 +392,8 @@ function Object:move(moveX, moveY)
 								cx = self.pos[1] + self.bbox.max[1] - (tile.pos[1] + level.pos[1])
 							end
 --print('tile slope collision cx=',cx)							
-							if cx >= 0 and cx <= 1 then
+							cx = math.clamp(cx, 0, 1)
+							do --if cx >= -epsilon and cx <= 1+epsilon then
 								local cy = -(cx * plane[1] + plane[3]) / plane[2]
 								self.pos[2] = (cy + tile.pos[2] + level.pos[2]) - self.bbox.min[2] + epsilon
 --print('left/right plane push up/down to',self.pos,'bbox',self.bbox + self.pos)
@@ -419,17 +421,29 @@ function Object:move(moveX, moveY)
 						end
 					--]]
 					else
--- TODO ... if there's a tile on the side of this tile that is solid, then don't test
--- this will keep blocks in the floor from snagging collisions when walking up diagonals
+						-- if there's a tile on the side of this tile that is solid, then don't test
+						-- this will keep blocks in the floor from snagging collisions when walking up diagonals
+						-- (only collide exposed planes)
 						local nextTile
-						if moveX < 0 then
-							nextTile = level:getTile(x+1,y)
-						else
-							nextTile = level:getTile(x-1,y)
-						end
 						local sideCantBeHit
-						if nextTile.solid then
-							sideCantBeHit = true
+						if moveX < 0 then
+							-- if we're moving left, and the tile to this tile's right is solid on its left side, then ignore this tile
+							nextTile = level:getTile(x+1,y)
+							local plane = nextTile.planes and nextTile.planes[1]
+							if not plane then
+								sideCantBeHit = nextTile.solid
+							else
+								sideCantBeHit = plane[1] > 0 and plane[2] > 0
+							end
+						else
+							-- moving right, check tile to the left for solid on its right side
+							nextTile = level:getTile(x-1,y)
+							local plane = nextTile.planes and nextTile.planes[1]
+							if not plane then
+								sideCantBeHit = nextTile.solid
+							else
+								sideCantBeHit = plane[1] < 0 and plane[2] > 0 
+							end
 						end
 						if not sideCantBeHit then
 							if moveX < 0 then
