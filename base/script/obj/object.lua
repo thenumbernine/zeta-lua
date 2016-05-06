@@ -224,8 +224,16 @@ function Object:move(moveX, moveY)
 			oppositeSide = 'down'
 			y = math.floor(self.pos[2] + self.bbox.max[2] - level.pos[2])
 		end
-		
-		for x = math.floor(self.pos[1] + self.bbox.min[1] - level.pos[1]), math.floor(self.pos[1] + self.bbox.max[1] - level.pos[1]) do
+
+		-- need to search x in the correct order or else player skips n the air when running downhill at 27 degrees to the right
+		local x1 = math.floor(self.pos[1] + self.bbox.min[1] - level.pos[1])
+		local x2 = math.floor(self.pos[1] + self.bbox.max[1] - level.pos[1])
+		local xstep = 1
+		if moveX > 0 then
+			x1,x2 = x2,x1
+			xstep = -1
+		end
+		for x = x1,x2,xstep do
 			local tile = level:getTile(x,y)
 			if tile then
 				if self.collidesWithWorld and tile.solid then
@@ -256,7 +264,7 @@ function Object:move(moveX, moveY)
 									edge = self.bbox.max[2] + epsilon
 								end
 								local destY = (cy + tile.pos[2] + level.pos[2]) - edge
-								self.pos[2] = math.max(self.pos[2], destY)
+								self.pos[2] = destY
 --print('up/down plane push to',self.pos,'bbox',self.bbox + self.pos)
 								collides = true
 							end
