@@ -38,7 +38,7 @@ function InvWeapon:getShotPosDir(player)
 		if player.inputLeftRight == 0 and player.inputUpDown > 0 then
 			dir[1] = 0
 		end
-		if not player.onground and player.inputLeftRight == 0 and player.inputUpDown < 0 then
+		if (not player.onground or player.climbing) and player.inputLeftRight == 0 and player.inputUpDown < 0 then
 			dir[1] = 0
 		end
 	end	
@@ -82,7 +82,7 @@ function InvWeapon:updateHeldPosition(R, viewBBox)
 			end
 		end
 		if (player.inputLeftRight == 0 and player.inputUpDown > 0)
-		or (not player.onground and player.inputLeftRight == 0 and player.inputUpDown < 0)
+		or ((not player.onground or player.climbing) and player.inputLeftRight == 0 and player.inputUpDown < 0)
 		then
 			-- change the 45's to 90's
 			self.angle = self.angle * 2

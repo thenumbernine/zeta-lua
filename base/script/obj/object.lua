@@ -264,7 +264,7 @@ function Object:move(moveX, moveY)
 									edge = self.bbox.max[2] + epsilon
 								end
 								local destY = (cy + tile.pos[2] + level.pos[2]) - edge
-								self.pos[2] = destY
+								self.pos[2] = destY --(moveY > 0 and math.min or math.max)(self.pos[2], destY)
 --print('up/down plane push to',self.pos,'bbox',self.bbox + self.pos)
 								collides = true
 							end
@@ -272,13 +272,15 @@ function Object:move(moveX, moveY)
 					end
 					if not testPlane then
 						-- TODO push precedence
+						local destY
 						if moveY < 0 then
 							local oymax = y + 1 + level.pos[2]
-							self.pos[2] = oymax - self.bbox.min[2] + epsilon
+							destY = oymax - self.bbox.min[2] + epsilon
 						else
 							local oymin = y + level.pos[2]
-							self.pos[2] = oymin - self.bbox.max[2] - epsilon
+							destY = oymin - self.bbox.max[2] - epsilon
 						end
+						self.pos[2] = (moveY > 0 and math.min or math.max)(self.pos[2], destY)
 --print('up/down block push to',self.pos,'bbox',self.bbox + self.pos)
 						collides = true
 					end

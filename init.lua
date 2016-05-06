@@ -4,7 +4,7 @@ require 'ext'
 local modio = require 'base.script.singleton.modio'
 modio.search = table{'base'}
 
--- [[ mario
+--[[ mario
 modio.search:insert(1, 'mario')
 modio.levelcfg = {
 	--path = 'doors',
@@ -31,7 +31,7 @@ modio.levelcfg = {
 }
 --]]
 
---[[ zeta
+-- [[ zeta
 modio.search:insert(1, 'zeta')
 modio.levelcfg = {
 	path = 'start',

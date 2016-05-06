@@ -30,7 +30,7 @@ end
 
 function Turret:update(dt)
 	Turret.super.update(self, dt)
-
+	if self.health == 0 then return end
 	-- look for player
 	-- shoot at player
 	for _,player in ipairs(game.players) do
@@ -46,6 +46,7 @@ local BlasterShot = require 'zeta.script.obj.blaster'.shotClass
 Turret.nextShootTime = -1
 Turret.shotDelay = .3
 function Turret:shootAt(player)
+	if self.health == 0 then return end
 	if self.nextShootTime >= game.time then return end
 	self.nextShootTime = game.time + self.shotDelay
 
@@ -57,15 +58,29 @@ function Turret:shootAt(player)
 	}
 end
 
+function Turret:die()
+	self.sprite = 'missileblast'
+	self.seqStartTime = game.time
+	self.removeTime = game.time + .75
+	self.pos[2] = self.pos[2] - 1
+	self.angle = nil
+
+	self.collidesWithWorld = false
+	self.collidesWithObjects = false
+
+	self:playSound('explode2')
+end
+
 function Turret:draw(R, viewBBox, ...)
 	-- draw base underneath
-	local angle = self.angle
-	self.sprite = 'turret-base'
-	self.angle = self.stuckAngle
-	Turret.super.draw(self, R, viewBBox, ...)
-	self.sprite = nil
-	self.angle = angle
-
+	if self.health > 0 then
+		local angle = self.angle
+		self.sprite = 'turret-base'
+		self.angle = self.stuckAngle
+		Turret.super.draw(self, R, viewBBox, ...)
+		self.sprite = nil
+		self.angle = angle
+	end
 	Turret.super.draw(self, R, viewBBox, ...)
 end
 
