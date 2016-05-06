@@ -255,7 +255,8 @@ function Object:move(moveX, moveY)
 								else
 									edge = self.bbox.max[2] + epsilon
 								end
-								self.pos[2] = (cy + tile.pos[2] + level.pos[2]) - edge
+								local destY = (cy + tile.pos[2] + level.pos[2]) - edge
+								self.pos[2] = destY 
 --print('up/down plane push to',self.pos,'bbox',self.bbox + self.pos)
 								collides = true
 							end
@@ -395,7 +396,8 @@ function Object:move(moveX, moveY)
 							cx = math.clamp(cx, 0, 1)
 							do --if cx >= -epsilon and cx <= 1+epsilon then
 								local cy = -(cx * plane[1] + plane[3]) / plane[2]
-								self.pos[2] = (cy + tile.pos[2] + level.pos[2]) - self.bbox.min[2] + epsilon
+								local destY = (cy + tile.pos[2] + level.pos[2]) - self.bbox.min[2]
+								self.pos[2] = math.max(self.pos[2], destY)
 --print('left/right plane push up/down to',self.pos,'bbox',self.bbox + self.pos)
 								self.vel[2] = 0
 								self.collidedDown = true
