@@ -256,7 +256,7 @@ function Object:move(moveX, moveY)
 									edge = self.bbox.max[2] + epsilon
 								end
 								local destY = (cy + tile.pos[2] + level.pos[2]) - edge
-								self.pos[2] = destY 
+								self.pos[2] = math.max(self.pos[2], destY)
 --print('up/down plane push to',self.pos,'bbox',self.bbox + self.pos)
 								collides = true
 							end
