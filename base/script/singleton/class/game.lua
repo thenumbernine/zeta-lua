@@ -28,6 +28,8 @@ function Game:glInit(R)
 	gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
 end
 
+Game.viewSize = 10
+
 function Game:init()
 	self:resetObjects()
 	
@@ -36,7 +38,7 @@ function Game:init()
 	audio:setDistanceModel('linear clamped')
 	for i=1,32 do	-- 31 for DirectSound, 32 for iphone, infinite for all else?
 		local src = AudioSource()
-		src:setReferenceDistance(10)	-- viewSize
+		src:setReferenceDistance(self.viewSize)
 		src:setMaxDistance(self.maxAudioDist)
 		src:setRolloffFactor(1)
 		self.audioSources[i] = src
@@ -181,8 +183,7 @@ function Game:render(preDrawCallback)
 
 		gl.glViewport(viewX * windowWidth / divX, viewY * windowHeight / divY, viewWidth, viewHeight)
 	
-		local viewSize = 10
-		
+		local viewSize = self.viewSize
 		R:ortho(-aspectRatio * viewSize, aspectRatio * viewSize, -viewSize, viewSize, -100, 100)
 		R:viewPos(player.viewPos[1], player.viewPos[2])
 		

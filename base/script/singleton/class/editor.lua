@@ -12,7 +12,7 @@ local EmptyTile = require 'base.script.tile.empty'
 
 local function makeTile(tileClass)
 	local tile = tileClass{pos={0,0}}
-	tile.color = {1,1,1,.5}
+	tile.color = {1,1,1,.5}	
 	return tile
 end
 
@@ -93,6 +93,18 @@ function Editor:event(event)
 	end
 
 	if not self.active then return end
+
+	if event.type == sdl.SDL_KEYDOWN
+	or event.type == sdl.SDL_KEYUP
+	then
+		local buttonDown = event.type == sdl.SDL_KEYDOWN
+		if event.key.keysym.sym == sdl.SDLK_u then
+			if buttonDown then
+				self:save()
+				return true
+			end
+		end
+	end
 end
 
 function Editor:update()
@@ -157,14 +169,16 @@ function Editor:update()
 			elseif self.mode == 'Template' then
 				if self.shiftDown then
 					for index,templateOption in ipairs(self.templateOptions) do
-						if templateOption.bgtex == tile.bgtex then
+						if templateOption.name == tile.template then
 							self.selectedTemplateIndex = index
 						end
 					end
 				else
 					local templateOption = self.templateOptions[self.selectedTemplateIndex]
 					if templateOption then
-						tile.bgtex = templateOption.bgtex
+						tile.template = templateOption.name
+						game.level:alignTileTemplates(x,y,x,y)
+						tile.bgtex = game.level.templateInfos[templateOption.name].bgtex
 					end
 				end
 			elseif self.mode == 'Spawn' then
@@ -201,8 +215,8 @@ function Editor:update()
 	end
 end
 
-Editor.tileBackColor = {0,0,0,.25}
-Editor.tileSelColor = {1,0,0,.25}
+Editor.tileBackColor = {0,0,0,.5}
+Editor.tileSelColor = {1,0,0,.5}
 function Editor:draw(R, viewBBox)
 	if not self.active then return end
 	
@@ -250,6 +264,25 @@ function Editor:draw(R, viewBBox)
 		if tile then
 			tile.pos[1] = x
 			tile.pos[2] = y
+		
+			if tile.usesTemplate then
+				local templateOption = self.templateOptions[self.selectedTemplateIndex]
+				local templateInfo = templateOption and game.level.templateInfos[templateOption.name]
+				if templateInfo then
+					local neighborName = 'c'
+					if not tile.diag then
+						neighborName = 'ur'
+					elseif tile.diag == 1 then
+						neighborName = 'ur-diag45'
+					elseif tile.diag == 2 then
+						neighborName = 'ur2-diag27'
+					end
+					tile.tex = (select(2, table.find(templateInfo.neighbors, nil, function(neighbor)
+						return neighbor.name == neighborName 
+					end)) or {}).tex
+				end
+			end
+
 			tile:draw(R, viewBBox)
 		end
 		
@@ -261,7 +294,7 @@ function Editor:draw(R, viewBBox)
 		end
 	end
 	
-	y = y - 2 * (1 + 3 * space)
+	y = y - (1 + 3 * space)
 	x = viewBBox.min[1] + space
 	for index,templateOption in ipairs(self.templateOptions) do
 		gl.glUseProgram(0)
@@ -286,7 +319,7 @@ function Editor:draw(R, viewBBox)
 		local tex = templateOption.bgtex
 		if tex then
 			gl.glBindTexture(gl.GL_TEXTURE_2D, tex.id)
-			R:quad(x,y,1,1,0,0,1,1,0,1,1,1,.25)
+			R:quad(x,y,1,1,0,0,1,1,0,1,1,1,.5)
 		end
 		
 		x = x + 1 + 3 * space
@@ -297,7 +330,7 @@ function Editor:draw(R, viewBBox)
 		end
 	end
 	
-	y = y - 2 * (1 + 3 * space)
+	y = y - (1 + 3 * space)
 	x = viewBBox.min[1] + space
 	for index,spawnOption in ipairs(self.spawnOptions) do
 		gl.glUseProgram(0)
@@ -322,7 +355,7 @@ function Editor:draw(R, viewBBox)
 		local tex = animsys:getTex(spawnOption.spawn.sprite, 'stand')
 		if tex then
 			gl.glBindTexture(gl.GL_TEXTURE_2D, tex.id)
-			R:quad(x,y,1,1,0,1,1,-1,0,1,1,1,.25)
+			R:quad(x,y,1,1,0,1,1,-1,0,1,1,1,.5)
 		end
 		
 		x = x + 1 + 3 * space
@@ -350,6 +383,60 @@ function Editor:draw(R, viewBBox)
 			R:quad(x-sx*.5,y,sx,sy,0,1,1,-1,0,1,1,1,.5)
 		end
 	end
+end
+
+local Image = require 'image'
+local bit = require 'bit'
+local table = require 'ext.table'
+function Editor:save()
+	print('saving...')
+	-- save color file
+	-- if any tiles have colors to them
+
+	-- save template file
+	
+	-- save tile file
+	local level = game.level
+	local tileImage = Image(level.size[1], level.size[2], 3, 'unsigned char')
+	for j=0,level.size[2]-1 do
+		for i=0,level.size[1]-1 do
+			local x = i+1
+			local y = level.size[2]-j
+			local tile = level.tile[x][y]
+			-- based on metatable, lookup in level.tilekeys
+			local keyIndex, key
+			for _,startPos in ipairs(level.startPositions) do
+				if startPos[1] == x+.5 and startPos[2] == y then
+					keyIndex, key = table.find(level.tilekeys, nil, function(tilekey)
+						return tilekey.startPos
+					end)
+				end
+			end
+			if not key then
+				keyIndex, key = table.find(level.tilekeys, nil, function(tilekey)
+					return getmetatable(tile) == tilekey.tile
+				end)
+			end
+			if not key then
+				for _,spawnInfo in ipairs(level.spawnInfos) do
+					if spawnInfo.pos[1] == x+.5 and spawnInfo.pos[2] == y then
+						keyIndex, key = table.find(level.tilekeys, nil, function(tilekey)
+							return spawnInfo.spawn == tilekey.spawn 
+						end)
+					end
+				end
+			end
+			local color = 0xffffff
+			if key then
+				color = key.color
+			end
+			tileImage.buffer[0+3*(i+level.size[1]*j)] = bit.band(0xff, bit.rshift(color, 16))
+			tileImage.buffer[1+3*(i+level.size[1]*j)] = bit.band(0xff, bit.rshift(color, 8))
+			tileImage.buffer[2+3*(i+level.size[1]*j)] = bit.band(0xff, bit.rshift(color, 0))
+		end
+	end
+	local modio = require 'base.script.singleton.modio'
+	tileImage:save(modio.search[1]..'/maps/'..modio.levelcfg.path..'/tile-save.png')
 end
 
 return Editor

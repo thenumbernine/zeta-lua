@@ -361,22 +361,25 @@ function Level:init(args)
 			{name='uli', differOffsets={{1,-1}}, flip=true, mirror=true},	-- lower right inverse		
 			
 			{name='c4', differOffsets={{1,1},{-1,1},{1,-1},{-1,-1}}}, -- center, with diagonals missing
+			
+			{name='c8', differOffsets={{-1,-1},{0,-1},{1,-1},{1,0},{1,1},{0,1},{-1,1},{-1,0}}}, -- center, with nothing around it 
 		}
 	
 		--[[
 		if you don't want to manually split images into pieces,
 		load any 9-patches that might be there
-		flat.png (solid inside)
+		patch.png
+		(solid inside)
 		 ul u ur  ╔╦╗
 		 l  c r   ╠╬╣
 		 ll d lr  ╚╩╝
-		inv.png: (solid outside)
+		(solid outside)
 		 lri lli  ╔╗
 		 uri uli  ╚╝
-		45.png: (solid inside) 
+		(solid inside) 
 		  ul ur              /\
 		 uli uri ...-diag45 /##\
-		27.png: (solid inside)
+		(solid inside)
 		 ur1 ur2
 		     ur3
 
@@ -392,7 +395,7 @@ function Level:init(args)
 			},
 			flat2 = {
 				{'d2r', 'l2r', 'l2d'},
-				{'u2d', '?', 'u2d'},
+				{'u2d', 'c8', 'u2d'},
 				{'u2r', 'l2r', 'l2u'},
 			},
 			flat3 = {
@@ -411,6 +414,21 @@ function Level:init(args)
 			['27'] = {
 				{'ur1-diag27', 'ur2-diag27'},
 				{'ur4-diag27', 'ur3-diag27'},
+			},
+			-- the whooole thing:
+			patch = {
+				{'ul',	'u',	'ur',			'd2r',	'l2r',	'l2d',			'',	'u3',	''},
+				{'l',	'c',	'r',			'u2d',	'c8',	'u2d',			'l3',	'c4',	'r3'},
+				{'ll',	'd',	'lr',			'u2r',	'l2r',	'l2u',			'',	'd3',	''},
+				{'lri',	'lli',	'ul-diag45',	'ur-diag45',	'ur1-diag27',	'ur2-diag27', '', '', ''},
+				{'uri',	'uli',	'uli-diag45',	'uri-diag45',	'ur4-diag27',	'ur3-diag27', '', '', ''},
+			},
+			-- rearranged ...
+			['patch-new'] = {
+				{'ul',	'u',	'ur',	'd2r',	'l2r',	'l2d',	'',		'u3',	'',		'ul-diag45',	'ur-diag45', 	'',				'',				},
+				{'l',	'c',	'r',	'u2d',	'c8',	'u2d',	'l3',	'c4',	'r3',	'uli-diag45',	'uri-diag45',	'ur1-diag27',	'ur2-diag27',	},
+				{'ll',	'd',	'lr',	'u2r',	'l2r',	'l2u',	'',		'd3',	'',		'lri',			'lli',			'ur4-diag27',	'ur3-diag27',	},
+				{'',	'',		'',		'',		'',		'',		'',		'',		'',		'uri',			'uli',			'',				'',				},
 			},
 		} do
 			local fn = modio:find('tile-templates/'..key.name..'/'..patchname..'.png')

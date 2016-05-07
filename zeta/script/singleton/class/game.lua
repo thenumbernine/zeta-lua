@@ -4,7 +4,8 @@ local Game = require 'base.script.singleton.class.game'
 local ZetaGame = class(Game)
 ZetaGame.name = 'ZetaGame'
 ZetaGame.gravity = -40
---ZetaGame.maxFallVel = 16	-- slows shots as well ... hmm ...
+--ZetaGame.maxFallVel = 16	-- slows shots as well ... hmm ... only apply this to non-shot objects?
+--ZetaGame.viewSize = 16
 
 -- override respawn, don't respawn
 function ZetaGame:respawn(spawnInfo) end

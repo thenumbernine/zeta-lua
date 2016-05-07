@@ -6,7 +6,7 @@ local box2 = require 'vec.box2'
 local Gato = class(takesDamageBehavior(Object))
 Gato.sprite = 'gato'
 Gato.solid = true
-Gato.bbox = box2(-1, 0, 1, 2)
+Gato.bbox = box2(-1, .5, 1, 3)
 Gato.maxHealth = math.huge
 
 return Gato
