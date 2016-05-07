@@ -59,6 +59,8 @@ local Missile = (function()
 	end
 
 	function Missile:blast(alreadyHit)
+		if self.removeTime then return end
+		
 		-- splash damage 
 		-- TODO ignore objects just hit by damage?
 		for _,other in ipairs(game.objs) do
@@ -81,6 +83,7 @@ local Missile = (function()
 		self.vel[1], self.vel[2] = 0, 0
 		
 		Puff.puffAt(self.pos[1], self.pos[2]+.25)
+		self:playSound('explode2')
 	
 		self.removeTime = game.time + .75
 	end

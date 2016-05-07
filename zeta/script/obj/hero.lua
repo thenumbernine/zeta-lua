@@ -193,6 +193,14 @@ Hero.swimDelay = .5
 function Hero:update(dt)
 	local level = game.level
 
+	--[[ respawn objects near player
+	-- TODO rooms? and link by rooms?
+	for _,spawnInfo in ipairs(self.spawnInfos) do
+		spawnInfo:respawn()
+	end
+	--]]
+
+	-- slowly track player
 	self.viewPos[1] = self.viewPos[1] + .5 *  (self.pos[1] - self.viewPos[1])
 	self.viewPos[2] = self.viewPos[2] + .9 *  (self.pos[2] - self.viewPos[2])
 
@@ -739,7 +747,11 @@ function Hero:draw(R, viewBBox, holdOverride)
 						if self.warping then
 							self.seq = 'lookup'
 						else
-							self.seq = 'stand'
+							if self.holding then
+								self.seq = 'stand-carry'
+							else
+								self.seq = 'stand'
+							end
 						end
 					end
 				else

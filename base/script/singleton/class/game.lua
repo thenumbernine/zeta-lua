@@ -128,7 +128,7 @@ function Game:reset()
 	self.level = Level(self.levelcfg)
 	
 	-- init spawns separate after game.level is assigned (in case they want to reference it)
-	self.level:initSpawn()
+	self.level:initialize()
 	
 	-- ... and reattach players ...
 	if self.onReset then self:onReset() end	-- callback

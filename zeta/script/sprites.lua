@@ -7,7 +7,6 @@ return {
 			run={'stand','step','step2', freq=16},
 			maxrun={'stand-arms','step1-arms','step2-arms', freq=16},
 			climb={'climb1', 'climb2', freq=4},
-			climb_fwd={'climb1-fwd', 'climb2-fwd', freq=4},
 		},
 	},
 	
@@ -38,6 +37,9 @@ return {
 	{name='blaster', dir='blaster'},
 	{name='blaster-shot', dir='blaster-shot'},
 	
+	{name='grenadelauncher', dir='grenadelauncher'},
+	{name='grenade', dir='grenade'},
+	
 	{name='missilelauncher', dir='missilelauncher'},
 	{name='missile', dir='missile'},
 	{
@@ -64,7 +66,8 @@ return {
 	{name='geemer', dir='geemer'},
 	{name='turret-body', dir='turret-body'},
 	{name='turret-base', dir='turret-base'},
-		
+	{name='gato', dir='gato'},
+
 		-- etc
 	{name='puff', dir='puff'},
 	

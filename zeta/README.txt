@@ -1,17 +1,30 @@
-metrovania plus crafting ...
+TODO list
+- get rid of pickup/putdown items.  auto pickup any item you touch.  no need to put things down ever.  
+- maybe make all items touch to use, (not manually)
+- the pickup/putdown for non-inventory objects will only be accessible by the lift gloves accessory.  for that, go back to hold-A to use.
+- still keep crafting?  touch craft material to collect them, then ... inventory screen to craft them?
+	- but no crafting heal potions and damage modifiers?  too Aquaria?  instead, only craft weapon modifications? too DoomRL?
+- get the editor working?  ImGui would be great for a GUI, if it had C bindings ...
+	- tile type painting
+	- template painting
+	- seam painting
+- change object warp mechanism from tile-based to object-based?  written to objects at load from the warp image value at the object's position?
+- LATER IF NEEDED: level object: get rid of level.tile[][] 2D array of objects? replace with 2D array of int lookups into the tile map?  this will aid in manual setting textures, and memory, and on android & wii the load time
 
 buttons:
 	- up/down to aim, left/right to move
-	- L/R: inventory prev / next.  one slot for empty inventory.
-		- inventory holds *everything*, including craft objects (Minecraft-style).
-	... or we can do L/R for weapon select, then start + arrows for item select (like in Cave Story) 
+	- L/R: weapon prev/next (shift+L/R for inv prev/next? or too confusing?  separate L2&R2 for inv prev/next?  or too many buttons?)
 
 	- B: jump
 	- Y: shoot
-	- X: pick up (if current inventory is empty) / put down (if it's full)
-	- A: use inventory item.  
+	- A: use selected aux item.  
 		- for weapons/armor: this equips it.
-		- for aux things like grappling hook, speed booster, jetpack, etc, this uses it.
+		- for aux things like grappling hook, speed booster, jetpack, pick-up gloves, etc, this uses it.
+	- X: go to inventory, where arrows select and B uses the item.  
+		using items involves:
+			- one-time use items (reserve, powerup, etc)
+			- activating/deactivating items (powerup suits, high-jump, etc)
+			- selecting current aux item (grappling hook, speed booster, jetpack, pick-up gloves, etc)
 
 - how to craft? designated locations (like aquaria)? or anywhere?
 
@@ -55,7 +68,7 @@ weapons (not crafted):
 		ammo: electricity
 	- minigun (projectile)
 		ammo: bullets
-	- grenade launcher (splash)
+	* grenade launcher (splash)
 		ammo: grenades
 	* rocket launcher (/homing? as a modifier?) (projectile + splash)
 		ammo: missiles

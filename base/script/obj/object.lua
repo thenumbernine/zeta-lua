@@ -38,16 +38,10 @@ Object.seqNext = nil		-- this says what sequence comes next.  it means I need so
 
 function Object:init(args)
 
-	-- [[ without ffi
 	self.pos = vec2()
 	self.lastpos = vec2()
 	self.vel = vec2()
-	--]]
-	--[[ with ffi, but without losing indexing
-	self.pos = ffi.new('float[3]', 0,0,0)
-	self.lastpos = ffi.new('float[3]', 0,0,0)
-	self.vel = ffi.new('float[3]', 0,0,0)
-	--]]
+	self.lastvel = vec2()
 	
 	self.bbox = box2(self.bbox.min[1], self.bbox.min[2], self.bbox.max[1], self.bbox.max[2])
 
@@ -106,6 +100,7 @@ end
 function Object:update(dt)
 
 	self.lastpos[1], self.lastpos[2] = self.pos[1], self.pos[2]
+	self.lastvel[1], self.lastvel[2] = self.vel[1], self.vel[2]
 
 	if self.removeTime and self.removeTime < game.time then
 		self.remove = true
@@ -236,12 +231,13 @@ function Object:move(moveX, moveY)
 		for x = x1,x2,xstep do
 			local tile = level:getTile(x,y)
 			if tile then
+				local plane
 				if self.collidesWithWorld and tile.solid then
 					local collides
 					local testPlane
 
 					if tile.planes and #tile.planes > 0 then
-						local plane = tile.planes[1]
+						plane = tile.planes[1]
 						if moveY < 0 then
 							testPlane = plane[2] > 0
 						else
@@ -293,7 +289,7 @@ function Object:move(moveX, moveY)
 							self.collidedUp = true
 						end
 --debugDraw:insert{tile=tile, color={0,0,1}}
-						if self.touchTile then self:touchTile(tile, side) end
+						if self.touchTile then self:touchTile(tile, side, plane) end
 						if tile.touch then tile:touch(self) end
 					end
 				end
@@ -412,7 +408,7 @@ function Object:move(moveX, moveY)
 								self.vel[2] = 0
 								self.collidedDown = true
 								self.onground = true
-								if self.touchTile then self:touchTile(tile, 'down') end
+								if self.touchTile then self:touchTile(tile, 'down', plane) end
 								if tile.touch then tile:touch(self) end
 --debugDraw:insert{tile=tile, color={0,1,0}}
 							end

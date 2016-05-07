@@ -42,6 +42,10 @@ function Turret:update(dt)
 	end
 end
 
+function Turret:hit(damage, attacker, inflicter, side)
+	self:playSound('explode1')
+end
+
 local BlasterShot = require 'zeta.script.obj.blaster'.shotClass
 Turret.nextShootTime = -1
 Turret.shotDelay = .3

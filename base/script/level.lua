@@ -9,25 +9,12 @@ local texsys = require 'base.script.singleton.texsys'
 local game = require 'base.script.singleton.game'	-- this should exist by now, right?
 local EmptyTile = require 'base.script.tile.empty'
 local Image = require 'image'
-local SpawnInfo = class()
-
-function SpawnInfo:init(args)
-	for k,v in pairs(args) do self[k] = v end
-end
-
-function SpawnInfo:respawn()
-	if not self.spawn then
-		error("failed to find spawn class")
-	end
-	-- self.spawn is a table, so self:spawn() is actually calling the table's ctor with self as the first param (after the table itself)
-	self.obj = self:spawn()
-	self.obj.spawnInfo = self
-end
+local SpawnInfo = require 'base.script.spawninfo'
 
 --[[
 Level api:
 pos = vec2()						level position offset ... experimental for multiple layers, and currently disabled
-initSpawn()							called by Game when the level stars
+initialize()						called by Game when the level starts
 getTile(x,y)						used by base.script.obj.object:
 alignTileTemplates(x1,y1,x2,y2)		used by editor, by mod-specific objects, and internally within base.script.level
 --]]
@@ -233,13 +220,13 @@ function Level:init(args)
 			local tileType = self:processTileColor(i,j, rgbAt(tileImage,i-1,self.size[2]-j))
 
 			local tile = tileType{pos=vec2(i,j)}
+		
+			-- always keep templates, even empty tiles
+			if not tile.template then
+				tile.template = getTileTemplate(i,j)
+			end
 			
 			if tile.usesTemplate then
-				-- if we use templates yet don't have one assigned (i.e. solid tiles) then get the template later
-				-- otherwise (i.e. fence, lava, water) use our predefined template
-				if not tile.template then
-					tile.template = getTileTemplate(i,j)
-				end
 				if seamImage then
 					-- 'seam' means divide the textures even if the templates match
 					local seam = rgbAt(seamImage,i-1,self.size[2]-j)
@@ -251,8 +238,11 @@ function Level:init(args)
 			tile.warp = getTileWarp(i,j)
 			
 			if colorImage then
-				local r,g,b,a = colorImage(i-1,self.size[2]-j)
-				a = a or 1
+				local y = self.size[2]-j
+				local r = colorImage.buffer[0 + colorImage.channels * (i-1 + colorImage.width * y)]/255
+				local g = colorImage.buffer[1 + colorImage.channels * (i-1 + colorImage.width * y)]/255
+				local b = colorImage.buffer[2 + colorImage.channels * (i-1 + colorImage.width * y)]/255
+				local a = colorImage.channels < 4 and 1 or (colorImage.buffer[3 + colorImage.channels * (i-1 + colorImage.width * y)]/255)
 				tile.color = vec4(r,g,b,a)
 			end
 			
@@ -309,7 +299,19 @@ function Level:init(args)
 		-- possible neighbor tiles
 		-- 
 		templateInfo.neighbors = {
-			
+
+			{name='u3', differOffsets={{-1,0},{0,1},{1,0}}}, -- upward, 3 sides empty
+			{name='d3', differOffsets={{-1,0},{0,-1},{1,0}}}, -- downward, 3 sides empty
+			{name='l3', differOffsets={{-1,0},{0,1},{0,-1}}}, -- leftward
+			{name='r3', differOffsets={{1,0},{0,1},{0,-1}}}, -- rightward
+
+			{name='d2r', differOffsets={{-1,0}, {0,1}, {1,-1}}}, -- pipe down to right
+			{name='l2d', differOffsets={{1,0}, {0,1}, {-1,-1}}}, -- pipe left to down
+			{name='u2r', differOffsets={{-1,0}, {0,-1}, {1,1}}}, -- pipe up to right
+			{name='l2u', differOffsets={{1,0}, {0,-1}, {-1,1}}}, -- pipe left to up
+			{name='l2r', differOffsets={{0,1},{0,-1}}}, -- pipe left to right
+			{name='u2d', differOffsets={{1,0},{-1,0}}}, -- pipe up to down
+		
 			{name='ur2-diag27', diag=2, planes={{-1,2,0}}, differOffsets={{1,1}, {0,1}, {-1,0}}, matchOffsets={{1,0}, {-1,-1}}, mirror=true},			-- upper left diagonal 27' part 2
 			{name='ur1-diag27', diag=2, planes={{-1,2,-1}}, differOffsets={{0,1}, {-1,1}, {-2,0}}, matchOffsets={{-1,0}, {1,0}, {-2,-1}}, mirror=true},		-- upper left diagonal 27' part 1
 			{name='ur2-diag27', diag=2, planes={{1,2,-1}}, differOffsets={{-1,1}, {0,1}, {1,0}}, matchOffsets={{-1,0}, {1,-1}}},		-- upper right diagonal 27' part 2
@@ -356,17 +358,126 @@ function Level:init(args)
 			{name='uli', differOffsets={{1,1}}, mirror=true},				-- upper right inverse
 			{name='uli', differOffsets={{-1,-1}}, flip=true},				-- lower left inverse
 			{name='uri', differOffsets={{1,-1}}, flip=true},				-- lower right inverse
-			{name='uli', differOffsets={{1,-1}}, flip=true, mirror=true},	-- lower right inverse
+			{name='uli', differOffsets={{1,-1}}, flip=true, mirror=true},	-- lower right inverse		
+			
+			{name='c4', differOffsets={{1,1},{-1,1},{1,-1},{-1,-1}}}, -- center, with diagonals missing
 		}
-		for _,neighbor in pairs(templateInfo.neighbors) do
+	
+		--[[
+		if you don't want to manually split images into pieces,
+		load any 9-patches that might be there
+		flat.png (solid inside)
+		 ul u ur  ╔╦╗
+		 l  c r   ╠╬╣
+		 ll d lr  ╚╩╝
+		inv.png: (solid outside)
+		 lri lli  ╔╗
+		 uri uli  ╚╝
+		45.png: (solid inside) 
+		  ul ur              /\
+		 uli uri ...-diag45 /##\
+		27.png: (solid inside)
+		 ur1 ur2
+		     ur3
+
+		note that if ll and lr are absent then they should be replaced with ul flipped and ur flipped
+		how should absent tiles be represented?  fully transparent?  fully some magic color, like (0,255,255) ? 
+		--]]
+		local patchnames = {'flat', 'inv', '45', '27'}
+		for patchname, names in pairs{
+			flat = {
+				{'ul', 'u', 'ur'},
+				{'l', 'c', 'r'},
+				{'ll', 'd', 'lr'},
+			},
+			flat2 = {
+				{'d2r', 'l2r', 'l2d'},
+				{'u2d', '?', 'u2d'},
+				{'u2r', 'l2r', 'l2u'},
+			},
+			flat3 = {
+				{'?', 'u3', '?'},
+				{'l3', 'c4', 'r3'},
+				{'?', 'd3', '?'},
+			},
+			inv = {
+				{'lri', 'lli'},
+				{'uri', 'uli'},
+			},
+			['45'] = {
+				{'ul-diag45', 'ur-diag45'},
+				{'uli-diag45', 'uri-diag45'},
+			},
+			['27'] = {
+				{'ur1-diag27', 'ur2-diag27'},
+				{'ur4-diag27', 'ur3-diag27'},
+			},
+		} do
+			local fn = modio:find('tile-templates/'..key.name..'/'..patchname..'.png')
+			if fn then
+				local img = Image(fn)
+				for y,row in ipairs(names) do
+					for x,name in ipairs(row) do
+						-- cut this chunk out of the image
+						-- find what neighbors with matching names
+						-- set these textures to these images
+						local subimg = img:copy{
+							x=math.floor((x-1)/#row*img.width),
+							y=math.floor((y-1)/#names*img.height),
+							width=math.floor(img.width/#row),
+							height=math.floor(img.height/#names),
+						}
+						-- if the image subset is fully transparent then don't use it
+						local foundImage = true
+						if subimg.channels == 4 then
+							foundImage = false
+							for i=0,subimg.height*subimg.width-1 do
+								if subimg.buffer[4*i+3] ~= 0 then
+									foundImage = true
+									break
+								end
+							end
+						end
+						-- replace all templates with our subimg
+						if foundImage then
+							local tex
+							local function makeTex()
+								if tex then return tex end
+								local args = table(texsys.args, {
+									image = subimg,
+									wrap = {
+										s = texsys.gl.GL_CLAMP_TO_EDGE,
+										t = texsys.gl.GL_CLAMP_TO_EDGE,
+									}
+								})
+								tex = texsys.GLTex2D(args)
+								return tex
+							end
+							if name == 'c' then
+								templateInfo.centerTex = makeTex()
+							end
+							for _,neighbor in ipairs(templateInfo.neighbors) do
+								if neighbor.name == name then
+									neighbor.tex = makeTex()
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+
+		-- load files
+		for _,neighbor in ipairs(templateInfo.neighbors) do
 			local fn = modio:find('tile-templates/'..key.name..'/'..neighbor.name..'.png')
 			if fn then
 				neighbor.tex = texsys:load(fn)
 			end
 		end
+
 		-- fix texture borders.  clamp_to_edge is best, but not perfect
 		local texs = {templateInfo.centerTex}
-		for _,neighbor in pairs(templateInfo.neighbors) do
+		for _,neighbor in ipairs(templateInfo.neighbors) do
 			table.insert(texs, neighbor.tex)
 		end
 	end
@@ -386,7 +497,7 @@ function Level:init(args)
 		end
 	end
 
-	-- remember this for initSpawn()'s sake
+	-- remember this for initialize()'s sake
 	local initFile
 	if mappath then initFile = mappath..'/init.lua' end
 	if args.initFile then initFile = args.initFile end
@@ -394,7 +505,7 @@ function Level:init(args)
 end
 
 -- init stuff to be run after level is assigned as game.level (so objs can reference it)
-function Level:initSpawn()
+function Level:initialize()
 
 	for i=1,self.size[1] do
 		local tilecol = self.tile[i]
@@ -430,9 +541,7 @@ function Level:initSpawn()
 	end
 
 	-- do an initial respawn
-	for _,spawnInfo in ipairs(self.spawnInfos) do
-		spawnInfo:respawn()
-	end
+	self:initialSpawn()
 	
 	-- run any init scripts if they're there
 	if self.initFile then
@@ -440,6 +549,12 @@ function Level:initSpawn()
 		if initFile then
 			assert(load(assert(file[initFile])))()
 		end
+	end
+end
+
+function Level:initialSpawn()
+	for _,spawnInfo in ipairs(self.spawnInfos) do
+		spawnInfo:respawn()
 	end
 end
 
@@ -521,8 +636,8 @@ function Level:alignTileTemplates(xmin, ymin, xmax, ymax)
 					if not foundTemplate then
 						-- then we're using the default texture, so flip and mirror all you want
 						tile.tex = templateInfo.centerTex
-						tile.drawFlipped = math.random(2) == 2
-						tile.drawMirror = math.random(2) == 2
+						--tile.drawFlipped = math.random(2) == 2
+						--tile.drawMirror = math.random(2) == 2
 						tile.planes = {}
 					end
 				end

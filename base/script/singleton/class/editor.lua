@@ -12,7 +12,7 @@ local EmptyTile = require 'base.script.tile.empty'
 
 local function makeTile(tileClass)
 	local tile = tileClass{pos={0,0}}
-	tile.color = {1,1,1,.25}
+	tile.color = {1,1,1,.5}
 	return tile
 end
 
@@ -22,7 +22,7 @@ Editor api:
 
 local Editor = class()
 
-Editor.active = false
+Editor.active = true
 Editor.mode = 'Tile'
 
 function Editor:setTileKeys()
@@ -97,10 +97,11 @@ end
 
 function Editor:update()
 	if not self.active then return end
+	sdl.SDL_ShowCursor(sdl.SDL_ENABLE)
 	
 	local found
 	local mouse = gui.mouse
-	if mouse.leftClick then
+	if mouse.leftDown then
 		for index,tileOption in ipairs(self.tileOptions) do
 			if tileOption.bbox:contains(mouse.pos) then
 				self.selectedTileIndex = index
@@ -170,8 +171,30 @@ function Editor:update()
 				if self.shiftDown then
 					-- ... hmm this is dif than tiles
 					-- search through and pick out a spawn obj under the mouse
+					self.selectedSpawnIndex = nil
+					for _,spawnInfo in ipairs(game.level.spawnInfos) do
+						if spawnInfo.pos[1] == x+.5 and spawnInfo.pos[2] == y then
+							self.selectedSpawnIndex = self.spawnOptions:find(nil, function(option) return option == spawnInfo.spawn end)
+						end
+					end
 				else
 					-- and here ... we place a spawn obj ... exactly at mouse pos?
+					for i=#game.level.spawnInfos,1,-1 do
+						local spawnInfo = game.level.spawnInfos[i]
+						if spawnInfo.pos[1] == x+.5 and spawnInfo.pos[2] == y then
+							spawnInfo.obj.remove = true
+							game.level.spawnInfos:remove(i)
+						end
+					end
+					local SpawnInfo = require 'base.script.spawninfo'
+					if self.selectedSpawnIndex then
+						local spawnInfo = SpawnInfo{
+							pos=vec2(x+.5, y),
+							spawn=self.spawnOptions[self.selectedSpawnIndex].spawn,
+						}
+						game.level.spawnInfos:insert(spawnInfo)
+						spawnInfo:respawn()
+					end
 				end
 			end
 		end
@@ -201,6 +224,8 @@ function Editor:draw(R, viewBBox)
 	for index,tileOption in ipairs(self.tileOptions) do
 		local tile = tileOption.tile
 
+		gl.glUseProgram(0)
+		gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
 		gl.glDisable(gl.GL_TEXTURE_2D)
 		local color
 		if self.mode == 'Tile' and index == self.selectedTileIndex then
@@ -239,6 +264,8 @@ function Editor:draw(R, viewBBox)
 	y = y - 2 * (1 + 3 * space)
 	x = viewBBox.min[1] + space
 	for index,templateOption in ipairs(self.templateOptions) do
+		gl.glUseProgram(0)
+		gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
 		gl.glDisable(gl.GL_TEXTURE_2D)
 		local color
 		if self.mode == 'Template' and index == self.selectedTemplateIndex then
@@ -273,6 +300,8 @@ function Editor:draw(R, viewBBox)
 	y = y - 2 * (1 + 3 * space)
 	x = viewBBox.min[1] + space
 	for index,spawnOption in ipairs(self.spawnOptions) do
+		gl.glUseProgram(0)
+		gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
 		gl.glDisable(gl.GL_TEXTURE_2D)
 		local color
 		if self.mode == 'Spawn' and index == self.selectedSpawnIndex then
@@ -303,6 +332,24 @@ function Editor:draw(R, viewBBox)
 			-- make sure it's on our current page
 		end
 	end	
+
+	-- draw spawn infos
+	local level = game.level
+	for _,spawnInfo in ipairs(level.spawnInfos) do
+		local tex = animsys:getTex(spawnInfo.spawn.sprite, 'stand')
+		if tex then
+			gl.glBindTexture(gl.GL_TEXTURE_2D, tex.id)
+			
+			local sx, sy = 1, 1
+			if tex then
+				sx = tex.width/16
+				sy = tex.height/16
+			end
+			
+			local x,y = spawnInfo.pos:unpack()
+			R:quad(x-sx*.5,y,sx,sy,0,1,1,-1,0,1,1,1,.5)
+		end
+	end
 end
 
 return Editor

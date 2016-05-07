@@ -15,7 +15,9 @@ end
 
 InvWeapon.shotOffset = vec2(0, .25)
 function InvWeapon:getShotPosDir(player)
-	local pos = player.pos + self.shotOffset
+	local pos = vec2(
+		player.pos[1] + (player.drawMirror and -self.shotOffset[1] or self.shotOffset[1]),
+		player.pos[2] + self.shotOffset[2])
 	pos[2] = pos[2] + self.drawOffset[2]
 	local dir = vec2()
 	if player.drawMirror then

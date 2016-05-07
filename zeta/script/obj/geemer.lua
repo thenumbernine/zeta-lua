@@ -4,9 +4,16 @@ local takesDamageBehavior = require 'zeta.script.obj.takesdamage'
 local game = require 'base.script.singleton.game'
 
 local Geemer = class(takesDamageBehavior(Object))
-Geemer.sprite = 'geemer'
-Geemer.solid = true
+
 Geemer.color = {.4,.7,.4,1}
+Geemer.sprite = 'geemer'
+
+local hidden = false
+if hidden then
+	Geemer.sprite = 'tile-metal'
+end
+
+Geemer.solid = true
 
 Geemer.maxHealth = 1
 
@@ -75,13 +82,18 @@ Geemer.states = {
 					self.stuckPos = nil
 					self.stuckSide = nil
 					self.state = self.states.searching
+					if hidden then
+						self.sprite = 'geemer'
+					end
 				end)
 				self.state = nil
 			elseif self.irritatedAt then
-				-- shake and let him know you're irritated
-				if game.time > self.nextShakeTime then
-					self.shakeEndTime = game.time + 1 + math.random()
-					self.nextShakeTime = game.time + 3 + 2 * math.random()
+				if not hidden then
+					-- shake and let him know you're irritated
+					if game.time > self.nextShakeTime then
+						self.shakeEndTime = game.time + 1 + math.random()
+						self.nextShakeTime = game.time + 3 + 2 * math.random()
+					end
 				end
 			end
 		end
@@ -101,7 +113,9 @@ function Geemer:init(...)
 			self.stuckPos = pos
 			self.stuckSide = side
 			self.useGravity = false
-			self.angle = math.deg(math.atan2(dir[2], dir[1])) + 90
+			if not hidden then
+				self.angle = math.deg(math.atan2(dir[2], dir[1])) + 90
+			end
 			self.rotCenter = {.5, .5}
 			break
 		end
@@ -166,6 +180,7 @@ function Geemer:draw(...)
 end
 
 function Geemer:hit(damage, attacker, inflicter, side)
+	self:playSound('explode1')
 	self.vel = self.vel + (self.pos - inflicter.pos):normalize() * 5
 	self.madAt = attacker
 end
