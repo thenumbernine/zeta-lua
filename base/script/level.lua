@@ -71,6 +71,8 @@ args:
 		the template file is mapped via templatekeys to the different templates at different parts of the level
 	template = (optional) the template to used, if no templateFile is specified
 		either template or templateFile must be defined
+	backgroundFile = (optional).  background files lookup templateinfos for what bgtex to use.
+		default = "<path>/background.png"
 	seamFile = (optional) file to specify where seams in the tile patterns are located.
 		default "<path>/seam.png"
 		matching colors in the seam file are drawn as contiguous tiles.
@@ -158,7 +160,36 @@ function Level:init(args)
 			return args.template
 		end
 	end
-	
+
+	local backgroundImage
+	do
+		local backgroundFile
+		if mappath then backgroundFile = mappath..'/background.png' end
+		if args.backgroundFile then backgroundFile = args.backgroundFile end
+		if backgroundFile then
+			local backgroundFile = modio:find(backgroundFile)
+			if backgroundFile then
+				backgroundImage = Image(backgroundFile)
+				assert(vec2(backgroundImage:size()) == self.size)
+			end
+		end
+	end
+	backgroundImage = backgroundImage or templateImage 
+	-- convert from background colors into index enumeration into background map
+	local ffi = require 'ffi'
+	self.backgroundMap = ffi.new('unsigned char[?]', self.size[1] * self.size[2])
+	if not backgroundImage then	
+		ffi.fill(self.backgroundMap, self.size[1] * self.size[2])
+	else
+		for j=0,self.size[2]-1 do
+			for i=0,self.size[1]-1 do
+				local color = rgbAt(backgroundImage,i,self.size[2]-j-1)	-- flip y
+				local index = table.find(self.templatekeys, nil, function(templatekey) return templatekey.color == color end)
+				self.backgroundMap[i+self.size[1]*j] = index	-- one-based, so zero is empty
+			end
+		end
+	end
+
 	local seamImage
 	do
 		local seamFile
@@ -275,7 +306,16 @@ function Level:init(args)
 			end
 		end
 	end
-	
+
+	-- load backgrounds here
+	self.bgtexs = {}
+	for i,key in ipairs(self.templatekeys) do
+		local fn = modio:find('tile-templates/'..key.name..'/background.png')
+		if fn then
+			self.bgtexs[i] = texsys:load(fn, true)
+		end
+	end
+
 	self.templateInfos = {}
 	
 	for _,key in pairs(self.templatekeys) do
@@ -290,11 +330,6 @@ function Level:init(args)
 			templateInfo.centerTex = texsys:load(fn)
 		end
 		
-		local fn = modio:find('tile-templates/'..key.name..'/background.png')
-		if fn then
-			templateInfo.bgtex = texsys:load(fn, true)
-		end
-	
 		-- TODO separate templates and backgrounds ... so we can have templated things like water and fences and maintain backgrounds?
 		-- possible neighbor tiles
 		-- 
@@ -501,7 +536,7 @@ function Level:init(args)
 	end
 	self:alignTileTemplates(1, 1, self.size[1], self.size[2])
 	
-	-- set background textures according to the template map
+	--[[ set background textures according to the template map
 	-- (this way individual tiles can have predefined templates and not interfere with the template-based backgrounds)
 	for i=1,self.size[1] do
 		local tilecol = self.tile[i]
@@ -514,6 +549,7 @@ function Level:init(args)
 			end
 		end
 	end
+	--]]
 
 	-- remember this for initialize()'s sake
 	local initFile
@@ -716,7 +752,33 @@ function Level:draw(R, bbox)
 	if xmax > self.size[1] then xmax = self.size[1] end
 	if ymin < 1 then ymin = 1 end
 	if ymax > self.size[2] then ymax = self.size[2] end
-	
+
+	for y=ymin,ymax do
+		for x=xmin,xmax do
+			local bgindex = self.backgroundMap[x-1+self.size[1]*(y-1)]
+			local bgtex = self.bgtexs[bgindex]
+			local key = self.templatekeys[bgindex]
+			local scaleX, scaleY = 32, 32
+			local scrollX, scrollY = 4, 4
+			if key then
+				scaleX, scaleY = key.scaleX, key.scaleY
+				scrollX, scrollY = key.scrollX, key.scrollY
+			end
+			-- draw background
+			if bgtex then
+				bgtex:bind()
+				R:quad(
+					x, y,
+					1,1,
+					(x - bbox.min[1] * scrollX) / scaleX,
+					(1 - (y - bbox.min[2] * scrollY)) / scaleY,
+					1/scaleX, -1/scaleY,
+					0,
+					1,1,1,1)
+			end	
+		end
+	end
+
 	for x=xmin,xmax do
 		local tilecol = self.tile[x]
 		for y=ymin,ymax do

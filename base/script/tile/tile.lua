@@ -35,19 +35,6 @@ function Tile:makeEmpty()
 end
 
 function Tile:draw(R, viewBBox)
-	-- draw background
-	if self.bgtex then
-        self.bgtex:bind()
-		R:quad(
-			self.pos[1], self.pos[2],
-            1,1,
-			(self.pos[1] - viewBBox.min[1] / 4) / 32,
-            (1 - (self.pos[2] - viewBBox.min[2] / 4)) / 32,
-			1/32, -1/32,
-			0,
-			1,1,1,1)
-	end
-	
 	-- draw tile quad
 	-- very similar to GameObject:draw ...
 	
