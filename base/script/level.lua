@@ -300,23 +300,28 @@ function Level:draw(R, viewBBox)
 		end
 	end
 	
+	local tilesWide = self.texpackTex.width/16
+	local tilesHigh = self.texpackTex.height/16
+	
 	self.texpackTex:bind()
-	local texpackTilesWide = self.texpackTex.width/16
 	for y=ymin,ymax do
 		for x=xmin,xmax do
 			local offset = x-1+self.size[1]*(y-1)
 			-- draw bg tile
 			local bgtileindex = self.bgTileMap[offset]
-			local ti = bgtileindex % texpackTilesWide
-			local tj = (bgtileindex - ti) / texpackTilesWide
-			
-			R:quad(
-				x, y,
-				1, 1,
-				ti/texpackTilesWide, 1 - tj/texpackTilesWide,
-				1/texpackTilesWide, -1/texpackTilesWide,
-				0,
-				1,1,1,1)
+			if bgtileindex > 0 then
+				bgtileindex = bgtileindex - 1
+				local ti = bgtileindex % tilesWide
+				local tj = (bgtileindex - ti) / tilesWide
+				
+				R:quad(
+					x, y,
+					1, 1,
+					ti/tilesWide, (tj+1)/tilesHigh,
+					1/tilesWide, -1/tilesHigh,
+					0,
+					1,1,1,1)
+			end
 		end
 	end
 
@@ -329,7 +334,6 @@ function Level:draw(R, viewBBox)
 	end
 
 	self.texpackTex:bind()
-	local texpackTilesWide = self.texpackTex.width/16
 	for y=ymin,ymax do
 		for x=xmin,xmax do
 			local offset = x-1+self.size[1]*(y-1)
@@ -337,14 +341,14 @@ function Level:draw(R, viewBBox)
 			local fgtileindex = self.fgTileMap[offset]
 			if fgtileindex > 0 then
 				fgtileindex = fgtileindex - 1
-				local ti = fgtileindex % texpackTilesWide
-				local tj = (fgtileindex - ti) / texpackTilesWide
+				local ti = fgtileindex % tilesWide
+				local tj = (fgtileindex - ti) / tilesWide
 				
 				R:quad(
 					x, y,
 					1, 1,
-					ti/texpackTilesWide, (tj+1)/texpackTilesWide,
-					1/texpackTilesWide, -1/texpackTilesWide,
+					ti/tilesWide, (tj+1)/tilesHigh,
+					1/tilesWide, -1/tilesHigh,
 					0,
 					1,1,1,1)
 			end
