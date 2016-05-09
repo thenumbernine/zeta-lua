@@ -92,28 +92,32 @@ function Editor:updateGUI()
 	
 	ig.igRadioButton('Edit Objects', self.editTilesOrObjects, 1)
 
-	if ig.igCollapsingHeader('Brush Options:', 0) then
-		for i,brushOption in ipairs(self.brushOptions) do
-			ig.igRadioButton(brushOption.name..' brush', self.selectedBrushIndex, i)
+	if self.editTilesOrObjects[0] == 0 then
+		if ig.igCollapsingHeader('Brush Options:', 0) then
+			for i,brushOption in ipairs(self.brushOptions) do
+				ig.igRadioButton(brushOption.name..' brush', self.selectedBrushIndex, i)
+			end
+		end
+		if ig.igCollapsingHeader('Tile Type Options:',0) then
+			for i=0,#self.tileOptions do
+				ig.igRadioButton(self.tileOptions[i].tileType.name, self.selectedTileTypeIndex, i)
+			end
+		end
+		-- TODO fg and bg tile options
+		if ig.igCollapsingHeader('Background Options:',0) then
+			for i=0,#self.backgroundOptions do
+				ig.igRadioButton(self.backgroundOptions[i].background.name, self.selectedBackgroundIndex, i)
+			end
+		end
+		ig.igCheckbox('Show Tile Types', self.showTileTypes)
+	end
+	if self.editTilesOrObjects[0] == 1 then
+		if ig.igCollapsingHeader('Object Options:',0) then
+			for i,spawnOption in ipairs(self.spawnOptions) do
+				ig.igRadioButton(spawnOption.spawnType.spawn, self.selectedSpawnIndex, i)
+			end
 		end
 	end
-	if ig.igCollapsingHeader('Tile Type Options:',0) then
-		for i=0,#self.tileOptions do
-			ig.igRadioButton(self.tileOptions[i].tileType.name, self.selectedTileTypeIndex, i)
-		end
-	end
-	-- TODO fg and bg tile options
-	if ig.igCollapsingHeader('Background Options:',0) then
-		for i=0,#self.backgroundOptions do
-			ig.igRadioButton(self.backgroundOptions[i].background.name, self.selectedBackgroundIndex, i)
-		end
-	end
-	if ig.igCollapsingHeader('Spawn Options:',0) then
-		for i,spawnOption in ipairs(self.spawnOptions) do
-			ig.igRadioButton(spawnOption.spawnType.spawn, self.selectedSpawnIndex, i)
-		end
-	end
-	ig.igCheckbox('Show Tile Types', self.showTileTypes)
 	if ig.igButton('Save', ImVec2_0_0) then
 		self:save()
 	end
@@ -221,7 +225,9 @@ function Editor:update()
 					for i=#game.level.spawnInfos,1,-1 do
 						local spawnInfo = game.level.spawnInfos[i]
 						if spawnInfo.pos[1] == x+.5 and spawnInfo.pos[2] == y then
-							spawnInfo.obj.remove = true
+							if spawnInfo.obj then
+								spawnInfo.obj.remove = true
+							end
 							game.level.spawnInfos:remove(i)
 						end
 					end
@@ -272,6 +278,7 @@ function Editor:draw(R, viewBBox)
 	-- draw spawn infos in the level
 	local level = game.level
 	for _,spawnInfo in ipairs(level.spawnInfos) do
+		local x,y = spawnInfo.pos:unpack()
 		local sprite = require(spawnInfo.spawn).sprite
 		local tex = sprite and animsys:getTex(sprite, 'stand')
 		if tex then
@@ -283,16 +290,18 @@ function Editor:draw(R, viewBBox)
 				sy = tex.height/16
 			end
 			
-			local x,y = spawnInfo.pos:unpack()
 			R:quad(x-sx*.5,y,sx,sy,0,1,1,-1,0,1,1,1,.5)
 		
 			tex:unbind()	
-			gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
-			gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
-			R:quad(x-.4,(y+.5)-.4,.8,.8,0,1,1,-1,0,1,1,1,1)
-			gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
-			gl.glEnable(gl.GL_TEXTURE_2D)
 		end
+		gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
+		gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
+		R:quad(x-.4,(y+.5)-.4,.8,.8,0,1,1,-1,0,1,1,1,1)
+		gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
+		gl.glEnable(gl.GL_TEXTURE_2D)
+
+		gui.font:drawUnpacked(x-.5,y+1,.5,-.5,spawnInfo.spawn:match('([^%.]*)$'))
+
 	end
 
 	-- clone & offset
