@@ -301,7 +301,7 @@ function Editor:draw(R, viewBBox)
 		gl.glEnable(gl.GL_TEXTURE_2D)
 
 		gui.font:drawUnpacked(x-.5,y+1,.5,-.5,spawnInfo.spawn:match('([^%.]*)$'))
-
+		gl.glEnable(gl.GL_TEXTURE_2D)
 	end
 
 	-- clone & offset

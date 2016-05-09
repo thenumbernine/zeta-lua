@@ -540,6 +540,7 @@ function Hero:update(dt)
 
 	-- test doors
 	if self.onground and self.inputUpDown > 0 and self.inputUpDownLast <= 0 and self.vel[1] == 0 then
+		--[[
 		local tile = level:getTile(self.pos[1] - level.pos[1], self.pos[2] - level.pos[2])
 		if tile and tile.objs then
 			for _,obj in ipairs(tile.objs) do
@@ -548,6 +549,16 @@ function Hero:update(dt)
 				end
 			end
 		end
+		--]]
+		-- [[
+		for _,obj in ipairs(game.objs) do
+			if math.abs(self.pos[1] - obj.pos[1]) < 1 and math.abs(self.pos[2] - obj.pos[2]) < 1 then
+				if obj.playerLook then
+					obj:playerLook(self)
+				end
+			end
+		end
+		--]]
 	end
 
 	local jumpDuration = .15
@@ -672,13 +683,12 @@ function Hero:modifyDamageTaken(damage, attacker, inflicter, side)
 	return math.max(0, damage - (self.defenseBonus or 0))
 end
 
-function Hero:draw(R, viewBBox, holdOverride)
+function Hero:drawHUD(R, viewBBox)
 	-- draw gui
 	-- health:
 	local gui = require 'base.script.singleton.gui'
 	gui.font:drawUnpacked(viewBBox.min[1], viewBBox.min[2]+2, 1, -1, self.health .. '/' .. self.maxHealth)
 	local gl = R.gl
-	gl.glEnable(gl.GL_TEXTURE_2D)
 
 	-- items:
 	local Object = require 'base.script.obj.object'
@@ -701,7 +711,10 @@ function Hero:draw(R, viewBBox, holdOverride)
 			gui.font:drawUnpacked(viewBBox.min[1]+2.5, viewBBox.min[2]+3+.5*i, 1, -1, 'x'..#items)
 		end
 	end
+	gl.glEnable(gl.GL_TEXTURE_2D)
+end
 
+function Hero:draw(R, viewBBox, holdOveride)
 	if self.invincibleEndTime >= game.time then
 		if math.floor(game.time * 8) % 2 == 0 then
 			return

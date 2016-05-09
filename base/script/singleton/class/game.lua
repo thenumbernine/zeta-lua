@@ -138,17 +138,6 @@ function Game:getNextAudioSource()
 	until self.audioSourceIndex == startIndex
 end
 
--- helper function for hitting blocks
--- coordinates are level local
-function Game:hitAllOnTile(x,y,hitter)
-	local tile = self.level:getTile(x,y)
-	if tile and tile.objs then
-		for _,obj in ipairs(tile.objs) do
-			if obj.playerBounce then obj:playerBounce(hitter) end
-		end
-	end
-end
-
 local box2 = require 'vec.box2'
 function Game:render(preDrawCallback)
 	local glapp = require 'base.script.singleton.glapp'
@@ -213,6 +202,9 @@ function Game:render(preDrawCallback)
 				objs[i].drawn = false
 			end
 		end
+	
+		-- draw player hud
+		player:drawHUD(R, player.viewBBox)
 	end
 end
 

@@ -72,4 +72,16 @@ ff 70 6f	<- dark skin	-> 1.00 .439 .435
 
 end
 
+-- helper function for hitting blocks
+-- coordinates are level local
+function MarioGame:hitAllOnTile(x,y,hitter)
+	local tile = self.level:getTile(x,y)
+	if tile and tile.objs then
+		for _,obj in ipairs(tile.objs) do
+			if obj.playerBounce then obj:playerBounce(hitter) end
+		end
+	end
+end
+
+
 return MarioGame

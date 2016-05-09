@@ -244,14 +244,14 @@ function Level:update(dt)
 	self.pos[2] = self.pos[2] + self.vel[2] * dt
 end
 
-function Level:draw(R, bbox)
+function Level:draw(R, viewBBox)
 
 	-- clone & offset
 	local bbox = box2(
-		bbox.min[1] - self.pos[1],
-		bbox.min[2] - self.pos[2],
-		bbox.max[1] - self.pos[1],
-		bbox.max[2] - self.pos[2])
+		viewBBox.min[1] - self.pos[1],
+		viewBBox.min[2] - self.pos[2],
+		viewBBox.max[1] - self.pos[1],
+		viewBBox.max[2] - self.pos[2])
 
 	local ibbox = box2(
 		math.floor(bbox.min[1]),
@@ -323,7 +323,7 @@ function Level:draw(R, bbox)
 	-- draw objects
 	for _,obj in ipairs(game.objs) do
 		if not obj.drawn then
-			obj:draw(R, bbox)
+			obj:draw(R, viewBBox)
 			obj.drawn = true
 		end
 	end

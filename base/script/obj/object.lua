@@ -173,8 +173,9 @@ function Object:move(moveX, moveY)
 		end
 
 		-- need to search x in the correct order or else player skips n the air when running downhill at 27 degrees to the right
-		local x1 = math.floor(self.pos[1] + self.bbox.min[1] - level.pos[1])
-		local x2 = math.floor(self.pos[1] + self.bbox.max[1] - level.pos[1])
+		local xmin = math.floor(self.pos[1] + self.bbox.min[1] - level.pos[1])
+		local xmax = math.floor(self.pos[1] + self.bbox.max[1] - level.pos[1])
+		local x1, x2 = xmin, xmax
 		local xstep = 1
 		if moveX > 0 then
 			x1,x2 = x2,x1
@@ -246,9 +247,19 @@ function Object:move(moveX, moveY)
 					end
 				end
 				
+--[[ tile-bound entities
 				if self.collidesWithObjects then
 					if tile.objs then
 						for _,obj in ipairs(tile.objs) do
+--]]
+-- [[ world-bound entities
+			end
+			for _,obj in ipairs(game.objs) do
+				if obj ~= self and xmin <= obj.pos[1]+1 and obj.pos[1]-1 <= xmax and math.abs(y-obj.pos[2]) < 1 then
+					do
+						do
+			
+--]]
 							if obj.collidesWithObjects then
 								if self.pos[1] + self.bbox.min[1] <= obj.pos[1] + obj.bbox.max[1]
 								and self.pos[1] + self.bbox.max[1] >= obj.pos[1] + obj.bbox.min[1]
@@ -334,8 +345,10 @@ function Object:move(moveX, moveY)
 			oppositeSide = 'left'
 			x = math.floor(self.pos[1] + self.bbox.max[1] - level.pos[1])
 		end
-		
-		for y = math.floor(self.pos[2] + self.bbox.min[2] - level.pos[2]), math.floor(self.pos[2] + self.bbox.max[2] - level.pos[2]) do
+	
+		local ymin = math.floor(self.pos[2] + self.bbox.min[2] - level.pos[2])
+		local ymax = math.floor(self.pos[2] + self.bbox.max[2] - level.pos[2])
+		for y = ymin,ymax do
 			local tile = level:getTile(x,y)
 			if tile then
 				if self.collidesWithWorld and tile.solid then
@@ -423,10 +436,19 @@ function Object:move(moveX, moveY)
 						end
 					end
 				end
-				
+
+--[[ tile-bound entities
 				if self.collidesWithObjects then
 					if tile.objs then
 						for _,obj in ipairs(tile.objs) do
+--]]
+-- [[ world-bound entities
+			end
+			for _,obj in ipairs(game.objs) do
+				if obj ~= self and math.abs(x-obj.pos[1]) < 1 and ymin <= obj.pos[2]+1 and obj.pos[2]-1 <= ymax then
+					do
+						do
+--]]
 							if obj.collidesWithObjects then
 								if self.pos[1] + self.bbox.min[1] <= obj.pos[1] + obj.bbox.max[1]
 								and self.pos[1] + self.bbox.max[1] >= obj.pos[1] + obj.bbox.min[1]
