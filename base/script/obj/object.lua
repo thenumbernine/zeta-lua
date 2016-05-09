@@ -51,50 +51,6 @@ function Object:init(args)
 	if args.vel then self.vel[1], self.vel[2] = args.vel[1], args.vel[2] end
 	
 	game:addObject(self)	-- only do this once per object.  don't reuse, or change the uid system
-	
-	-- in case anyone wants the tile info.
-	self:link()
-end
-
-function Object:unlink()
-	local numtiles = #self.tiles
-	for i=1,numtiles do
-		local tile = self.tiles[i]
-		if tile.objs then
-			assert(tile.objs:removeObject(self))
-			if #tile.objs == 0 then
-				tile.objs = nil
-			end
-		end
-		-- clear as we go. safe because #self.tiles is stored upon iteration init		
-		self.tiles[i] = nil
-	end
-end
-
-function Object:link()
-	local level = game.level
-	local minx = self.pos[1] + self.bbox.min[1] - level.pos[1]
-	local miny = self.pos[2] + self.bbox.min[2] - level.pos[2]
-	local maxx = self.pos[1] + self.bbox.max[1] - level.pos[1]
-	local maxy = self.pos[2] + self.bbox.max[2] - level.pos[2]
-	local numtiles = 0
-	
-	for x=math.floor(minx),math.floor(maxx) do
-		local levelcol = level.tile[x]
-		if levelcol then
-			for y=math.floor(miny),math.floor(maxy) do
-				local tile = levelcol[y]
-				if tile then
-					if not tile.objs then
-						tile.objs = table()
-					end
-					tile.objs:insertUnique(self)
-					numtiles = numtiles + 1
-					self.tiles[numtiles] = tile
-				end		
-			end
-		end
-	end
 end
 
 function Object:update(dt)
@@ -185,9 +141,7 @@ function Object:setSeq(seq, seqNext)
 end
 
 function Object:setPos(x,y)
-	self:unlink()
 	self.pos[1], self.pos[2] = x,y
-	self:link()
 end
 
 function Object:moveToPos(x,y)
@@ -200,8 +154,6 @@ function Object:move(moveX, moveY)
 	local level = game.level
 	local epsilon = .001
 	
-	self:unlink()
-
 --print('move start at',self.pos,'bbox',self.bbox + self.pos)
 	self.pos[2] = self.pos[2] + moveY
 --print('up/down move to',self.pos,'bbox',self.bbox + self.pos)
@@ -436,19 +388,19 @@ function Object:move(moveX, moveY)
 						local sideCantBeHit
 						if moveX < 0 then
 							-- if we're moving left, and the tile to this tile's right is solid on its left side, then ignore this tile
-							nextTile = level:getTile(x+1,y)
-							local plane = nextTile.planes and nextTile.planes[1]
+							nextTile = level.tileTypes[level:getTile(x+1,y)]
+							local plane = nextTile and nextTile.planes and nextTile.planes[1]
 							if not plane then
-								sideCantBeHit = nextTile.solid
+								sideCantBeHit = nextTile and nextTile.solid
 							else
 								sideCantBeHit = plane[1] > 0 and plane[2] > 0
 							end
 						else
 							-- moving right, check tile to the left for solid on its right side
-							nextTile = level:getTile(x-1,y)
-							local plane = nextTile.planes and nextTile.planes[1]
+							nextTile = level.tileTypes[level:getTile(x-1,y)]
+							local plane = nextTile and nextTile.planes and nextTile.planes[1]
 							if not plane then
-								sideCantBeHit = nextTile.solid
+								sideCantBeHit = nextTile and nextTile.solid
 							else
 								sideCantBeHit = plane[1] < 0 and plane[2] > 0 
 							end
@@ -539,8 +491,6 @@ function Object:move(moveX, moveY)
 		end
 	end
 --print('move finished at',self.pos,'bbox',self.bbox + self.pos)
-
-	self:link()
 end
 
 -- default pretouch routine: player precedence

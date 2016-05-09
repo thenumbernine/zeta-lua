@@ -1,3 +1,14 @@
+--[[
+
+level is going to contain ...
+	tile.png: uchar 2D map of tile type
+	tile-fg.png: short 2D map of back tile index in the texpack (draw before sprites)
+	tile-bg.png: short 2D map of front tile index in the texpack (draw after sprites)
+	background.png: uchar 2D map of background index
+	spawn.lua: array of spawnInfo's
+--]]
+
+local ffi = require 'ffi'
 local bit = require 'bit'
 local class = require 'ext.class'
 local vec2 = require 'vec.vec2'
@@ -7,7 +18,6 @@ local box2 = require 'vec.box2'
 local modio = require 'base.script.singleton.modio'
 local texsys = require 'base.script.singleton.texsys'
 local game = require 'base.script.singleton.game'	-- this should exist by now, right?
-local EmptyTile = require 'base.script.tile.empty'
 local Image = require 'image'
 local SpawnInfo = require 'base.script.spawninfo'
 
@@ -25,63 +35,23 @@ local function rgbAt(image, x, y)
 	local g = image.buffer[1 + image.channels * (x + image.width * y)]
 	local b = image.buffer[2 + image.channels * (x + image.width * y)]
 	return bit.bor(
-		bit.lshift(r, 16),
+		r,
 		bit.lshift(g, 8),
-		b)
-end
-
-function Level:processTemplateColor(u,v,color)
-	for _,key in ipairs(self.templatekeys) do
-		if key.color == color then
-			return key.name
-		end
-	end
-	print("unknown template color "..('%.6x'):format(color))
-end
-
-function Level:processTileColor(u,v,color)
-	for _,info in pairs(self.tilekeys) do
-		if info.color == color then
-			if info.startPos then
-				self.startPositions:insert(vec2(u+.5, v))	-- center on the x
-			end
-			if info.spawn then
-				self.spawnInfos:insert(SpawnInfo{pos=vec2(u+.5, v), spawn=info.spawn})	-- center on x and y
-			end
-			if info.tile then
-				return info.tile
-			end
-			return EmptyTile
-		end
-	end
-	print("unknown tile at "..u..", "..v.." has "..('%.6x'):format(color))
-	return EmptyTile
+		bit.lshift(b, 16))
 end
 
 --[[
 args:
-	tilekeys = table to map level colors to tile/spawn classes
-	templatekeys = table to map template colors to template types
 	path = (optional) path where to find the map, excluding the prefix of "<mod>/maps/"
-	tileFile = (optional) path where to find the tile file.
-		default "<path>/tile.png"
-		the tile file contains pixels that is mapped to tile/spawn classes via tilekeys 
-	templateFile = (optional) path where to find the template file.
-		default "<path>/template.png"
-		the template file is mapped via templatekeys to the different templates at different parts of the level
-	template = (optional) the template to used, if no templateFile is specified
-		either template or templateFile must be defined
-	backgroundFile = (optional).  background files lookup templateinfos for what bgtex to use.
-		default = "<path>/background.png"
-	seamFile = (optional) file to specify where seams in the tile patterns are located.
-		default "<path>/seam.png"
-		matching colors in the seam file are drawn as contiguous tiles.
-	colorFile = (optional) file to find per-tile color values
-		default "<path>/color.png"
-	warpFile = (optional) warp info, used with doors and pipes and stuff.
-		default "<path>/warp.png"
+	
+	tileFile. default tile.png
+	backgroundFile. default background.png 
+	fgTileFile. default tile-fg.png
+	bgTileFile. default tile-bg.png
+	
 	initFile = (optional) file to run when the level inits.
 		default "<path>/init.lua"
+	
 	spawnFile = (optional) file to find spawn info in addition to the tile data.
 		useful when you need more than one spawn info per tile, or finer than per-tile mapping, or more info than just position and class.
 		default "<path>/spawn.lua"
@@ -100,64 +70,66 @@ spawnFile contents are as follows:
 --]]
 function Level:init(args)
 
+	-- enum of tileMap values. 0 => nil 
+	self.tileTypes = assert(args.tileTypes)
+	
+	-- is this even needed? only by the editor.
+	-- TODO enum upon creation of classes 
+	self.spawnTypes = assert(args.spawnTypes)
+
 	self.pos = vec2(0,0)
 	self.vel = vec2(0,0)
 
-	self.tilekeys = assert(args.tilekeys)
-	self.templatekeys = assert(args.templatekeys)
-	do	-- make sure no template key colors overlap
-		local templateForColor = {}
-		for _,key in ipairs(self.templatekeys) do
-			if templateForColor[key.color] then
-				print(string.format("WARNING: template color 0x%x is used for %s and %s!", tonumber(key.color), tostring(key.name), tostring(templateForColor[key.color].name)))
-			end
-			templateForColor[key.color] = key.name
-		end
-	end	
-
-	do	-- make sure no tile key colors overlap
-		local tilekeysForColor = {}
-		for _,key in ipairs(self.tilekeys) do
-			if tilekeysForColor[key.color] then
-				print(string.format("WARNING: tile color 0x%x is used for %s and %s!", tonumber(key.color), tostring(key.name), tostring(tilekeysForColor[key.color].name)))
-			end
-			tilekeysForColor[key.color] = key
-		end
-	end
-	
 	local mappath = args.path
 	if mappath then mappath = 'maps/' .. mappath end
 
-	local tileFile
-	if mappath then tileFile = mappath..'/tile.png' end
-	if args.tileFile then tileFile = args.tileFile end
+	local tileFile = args.tileFile or (mappath and (mappath..'/tile.png'))
 	if tileFile then tileFile = modio:find(tileFile) end
 	assert(tileFile, "couldn't find tile file")
-
-	local tileImage = Image(tileFile)	-- meh I'll leave it in its packed format ... maybe?
+	local tileImage = Image(tileFile)
 	self.size = vec2(tileImage:size())
-	
-	local templateImage
-	do
-		local templateFile
-		if mappath then templateFile = mappath..'/template.png' end
-		if args.templateFile then templateFile = args.templateFile end
-		if templateFile then
-			local templateFile = modio:find(templateFile)
-			if templateFile then
-				templateImage = Image(templateFile)
-				assert(vec2(templateImage:size()) == self.size)
+
+	self.tileMap = ffi.new('unsigned char[?]', self.size[1] * self.size[2])
+	for j=0,self.size[2]-1 do
+		for i=0,self.size[1]-1 do
+			self.tileMap[i+self.size[1]*j] = rgbAt(tileImage,i,self.size[2]-j-1)
+		end
+	end
+
+	local fgTileFile = args.fgTileFile or (mappath and (mappath..'/tile-fg.png'))
+	if fgTileFile then fgTileFile = modio:find(fgTileFile) end
+	local fgTileImage = fgTileFile and Image(fgTileFile)
+	self.fgTileMap = ffi.new('unsigned short[?]', self.size[1] * self.size[2])
+	if not fgTileImage then
+		ffi.fill(self.fgTileMap, ffi.sizeof('unsigned short') * self.size[1] * self.size[2])
+	else
+		for j=0,self.size[2]-1 do
+			for i=0,self.size[1]-1 do
+				self.fgTileMap[i+self.size[1]*j] = rgbAt(fgTileImage,i,self.size[2]-j-1)
 			end
 		end
 	end
-	local getTileTemplate
-	if templateImage then
-		getTileTemplate = function(i,j)
-			return self:processTemplateColor(i,j, rgbAt(templateImage,i-1,self.size[2]-j))
-		end
+
+	local bgTileFile = args.bgTileFile or (mappath and (mappath..'/tile-bg.png'))
+	if bgTileFile then bgTileFile = modio:find(bgTileFile) end
+	local bgTileImage = bgTileFile and Image(bgTileFile)
+	self.bgTileMap = ffi.new('unsigned short[?]', self.size[1] * self.size[2])
+	if not bgTileImage then
+		ffi.fill(self.bgTileMap, ffi.sizeof('unsigned short') * self.size[1] * self.size[2])
 	else
-		getTileTemplate = function(i,j)
-			return args.template
+		for j=0,self.size[2]-1 do
+			for i=0,self.size[1]-1 do
+				self.bgTileMap[i+self.size[1]*j] = rgbAt(bgTileImage,i,self.size[2]-j-1)
+			end
+		end
+	end
+
+	-- load backgrounds here
+	self.backgrounds = table(dofile(modio:find('script/backgrounds.lua')))
+	for i,background in ipairs(self.backgrounds) do
+		local fn = modio:find('backgrounds/'..background.name..'.png')
+		if fn then
+			background.tex = texsys:load(fn, true)
 		end
 	end
 
@@ -175,111 +147,30 @@ function Level:init(args)
 		end
 	end
 	backgroundImage = backgroundImage or templateImage 
-	-- convert from background colors into index enumeration into background map
-	local ffi = require 'ffi'
+	-- convert index enumeration into background map
+	-- one-based, so zero is empty
 	self.backgroundMap = ffi.new('unsigned char[?]', self.size[1] * self.size[2])
 	if not backgroundImage then	
 		ffi.fill(self.backgroundMap, self.size[1] * self.size[2])
 	else
 		for j=0,self.size[2]-1 do
 			for i=0,self.size[1]-1 do
-				local color = rgbAt(backgroundImage,i,self.size[2]-j-1)	-- flip y
-				local index = table.find(self.templatekeys, nil, function(templatekey) return templatekey.color == color end)
-				self.backgroundMap[i+self.size[1]*j] = index	-- one-based, so zero is empty
+				self.backgroundMap[i+self.size[1]*j] = rgbAt(backgroundImage,i,self.size[2]-j-1)
+				-- one-based value, with 0 = nil
+				-- TODO, warn if any oob values?
 			end
 		end
 	end
 
-	local seamImage
+	-- hold all textures in one place
 	do
-		local seamFile
-		if mappath then seamFile = mappath..'/seam.png' end
-		if args.seamFile then seamFile = args.seamFile end
-		if seamFile then
-			seamFile = modio:find(seamFile)
-			if seamFile then
-				seamImage = Image(seamFile)
-				assert(vec2(seamImage:size()) == self.size)
-			end
-		end
-	end
-	
-	local colorImage
-	do
-		local colorFile
-		if mappath then colorFile = mappath..'/color.png' end
-		if args.colorFile then colorFile = args.colorFile end
-		if colorFile then
-			colorFile = modio:find(colorFile)
-			if colorFile then
-				colorImage = Image(colorFile)
-				assert(vec2(colorImage:size()) == self.size)
-			end
-		end
-	end
-	
-	local warpImage
-	do
-		local warpFile
-		if mappath then warpFile = mappath..'/warp.png' end
-		if args.warpFile then warpFile = args.warpFile end
-		if warpFile then
-			warpFile = modio:find(warpFile)
-			if warpFile then
-				warpImage = Image(warpFile)
-				assert(vec2(warpImage:size()) == self.size)
-			end
-		end
-	end
-	local getTileWarp
-	if warpImage then
-		getTileWarp = function(i,j) return rgbAt(warpImage,i-1,self.size[2]-j) end
-	else
-		getTileWarp = function(i,j) return 0 end
+		local texpackFile = modio:find('texpack.png')
+		assert(texpackFile, "better put your textures in a texpack")
+		self.texpackTex = texsys:load(texpackFile)
 	end
 	
 	self.startPositions = table(args.startPositions)
 	self.spawnInfos = table()
-	
-	-- make level data for rgb data
-	self.tile = {}
-	for i=1,self.size[1] do
-		local tilecol = {}
-		self.tile[i] = tilecol
-		for j=1,self.size[2] do
-
-			local tileType = self:processTileColor(i,j, rgbAt(tileImage,i-1,self.size[2]-j))
-
-			local tile = tileType{pos=vec2(i,j)}
-		
-			-- always keep templates, even empty tiles
-			if not tile.template then
-				tile.template = getTileTemplate(i,j)
-			end
-			
-			if tile.usesTemplate then
-				if seamImage then
-					-- 'seam' means divide the textures even if the templates match
-					local seam = rgbAt(seamImage,i-1,self.size[2]-j)
-					if seam ~= 0 then
-						tile.seam = seam
-					end
-				end
-			end
-			tile.warp = getTileWarp(i,j)
-			
-			if colorImage then
-				local y = self.size[2]-j
-				local r = colorImage.buffer[0 + colorImage.channels * (i-1 + colorImage.width * y)]/255
-				local g = colorImage.buffer[1 + colorImage.channels * (i-1 + colorImage.width * y)]/255
-				local b = colorImage.buffer[2 + colorImage.channels * (i-1 + colorImage.width * y)]/255
-				local a = colorImage.channels < 4 and 1 or (colorImage.buffer[3 + colorImage.channels * (i-1 + colorImage.width * y)]/255)
-				tile.color = vec4(r,g,b,a)
-			end
-			
-			tilecol[j] = tile
-		end
-	end
 	
 	-- add any additional spawn infos
 	do
@@ -292,9 +183,7 @@ function Level:init(args)
 				local spawnInfos = assert(assert(loadstring('return '..io.readfile(spawnInfoFile)))())
 				for _,args in ipairs(spawnInfos) do
 
-					if type(args.spawn) == 'string' then
-						args.spawn = require(args.spawn)
-					elseif type(args.spawn) ~= 'table' then
+					if type(args.spawn) ~= 'string' then
 						error("don't know how to handle spawn of type "..tostring(args.spawn))
 					end
 					
@@ -307,250 +196,6 @@ function Level:init(args)
 		end
 	end
 
-	-- load backgrounds here
-	self.bgtexs = {}
-	for i,key in ipairs(self.templatekeys) do
-		local fn = modio:find('tile-templates/'..key.name..'/background.png')
-		if fn then
-			self.bgtexs[i] = texsys:load(fn, true)
-		end
-	end
-
-	self.templateInfos = {}
-	
-	for _,key in pairs(self.templatekeys) do
-		local templateInfo = {}
-		self.templateInfos[key.name] = templateInfo
-		
-		-- TODO search function: mod/* then base/*
-
-		-- default center tile
-		local fn = modio:find('tile-templates/'..key.name..'/c.png')
-		if fn then
-			templateInfo.centerTex = texsys:load(fn)
-		end
-		
-		-- TODO separate templates and backgrounds ... so we can have templated things like water and fences and maintain backgrounds?
-		-- possible neighbor tiles
-		-- 
-		templateInfo.neighbors = {
-
-			{name='u3', differOffsets={{-1,0},{0,1},{1,0}}}, -- upward, 3 sides empty
-			{name='d3', differOffsets={{-1,0},{0,-1},{1,0}}}, -- downward, 3 sides empty
-			{name='l3', differOffsets={{-1,0},{0,1},{0,-1}}}, -- leftward
-			{name='r3', differOffsets={{1,0},{0,1},{0,-1}}}, -- rightward
-
-			{name='d2r', differOffsets={{-1,0}, {0,1}, {1,-1}}}, -- pipe down to right
-			{name='l2d', differOffsets={{1,0}, {0,1}, {-1,-1}}}, -- pipe left to down
-			{name='u2r', differOffsets={{-1,0}, {0,-1}, {1,1}}}, -- pipe up to right
-			{name='l2u', differOffsets={{1,0}, {0,-1}, {-1,1}}}, -- pipe left to up
-			{name='l2r', differOffsets={{0,1},{0,-1}}}, -- pipe left to right
-			{name='u2d', differOffsets={{1,0},{-1,0}}}, -- pipe up to down
-		
-			{name='ur2-diag27', diag=2, planes={{-1,2,0}}, differOffsets={{1,1}, {0,1}, {-1,0}}, matchOffsets={{1,0}, {-1,-1}}, mirror=true},			-- upper left diagonal 27' part 2
-			{name='ur1-diag27', diag=2, planes={{-1,2,-1}}, differOffsets={{0,1}, {-1,1}, {-2,0}}, matchOffsets={{-1,0}, {1,0}, {-2,-1}}, mirror=true},		-- upper left diagonal 27' part 1
-			{name='ur2-diag27', diag=2, planes={{1,2,-1}}, differOffsets={{-1,1}, {0,1}, {1,0}}, matchOffsets={{-1,0}, {1,-1}}},		-- upper right diagonal 27' part 2
-			{name='ur1-diag27', diag=2, planes={{1,2,-2}}, differOffsets={{0,1}, {1,1}, {2,0}}, matchOffsets={{-1,0}, {1,0}, {2,-1}}},		-- upper right diagonal 27' part 1
-		
-			{name='ur-diag45', diag=1, planes={{-1,1,0}}, differOffsets={{0,1},{-1,0}}, mirror=true},				-- upper left diagonal 45'
-			{name='ur-diag45', diag=1, planes={{1,1,-1}}, differOffsets={{0,1},{1,0}}},								-- upper right diagonal 45'
-			{name='ur-diag45', diag=1, planes={{-1,-1,1}}, differOffsets={{0,-1},{-1,0}}, flip=true, mirror=true},	-- lower left diagonal 45'
-			{name='ur-diag45', diag=1, planes={{1,-1,0}}, differOffsets={{0,-1},{1,0}}, flip=true},				-- lower right diagonal 45'
-			
-			{name='ui', differOffsets={{1,0}, {-1,0}, {0,-1}}},	-- up, inverse
-			{name='ui', differOffsets={{1,0}, {-1,0}, {0,1}}, flip=true},	-- down, inverse
-			{name='ri', differOffsets={{1,0}, {0,1}, {0,-1}}, mirror=true},	-- left, inverse
-			{name='ri', differOffsets={{-1,0}, {0,1}, {0,-1}}},	-- right, inverse
-			
-			{name='ul', differOffsets={{0,1}, {-1,0}}},					-- upper left
-			{name='ur', differOffsets={{0,1}, {1,0}}},					-- upper right
-			{name='ul', differOffsets={{0,-1}, {-1,0}}, flip=true},		-- lower left
-			{name='ur', differOffsets={{0,-1}, {1,0}}, flip=true},		-- lower right
-			
-			{name='u', differOffsets={{0,1}}},				-- up
-			{name='r', differOffsets={{1,0}}},				-- right
-			{name='l', differOffsets={{1,0}}, mirror=true},	-- right
-			{name='l', differOffsets={{-1,0}}},				-- left
-			{name='r', differOffsets={{-1,0}}, mirror=true},-- left
-			{name='d', differOffsets={{0,-1}}},				-- down
-			{name='u', differOffsets={{0,-1}}, flip=true},	-- down
-			
-			--[[ breaks fence
-			{name='l-notsolid', differOffsets={{-1,0}}, notsolid=true},	-- left, not solid
-			{name='r-notsolid', differOffsets={{1,0}}, notsolid=true},	-- right, not solid
-			--]]
-
-			{name='ur3-diag27', diag=2, differOffsets={{1,2}, {0,2}, {-1,1}, {-2,1}}, mirror=true},	-- upper left diagonal 27' part 3
-			{name='ur3-diag27', diag=2, differOffsets={{-1,2}, {0,2}, {1,1}, {2,1}}},					-- upper right diagonal 27' part 3
-
-			{name='uri-diag45', diag=1, differOffsets={{-1,1}}, mirror=true},				-- upper left diagonal inverse 45'
-			{name='uri-diag45', diag=1, differOffsets={{1,1}}},							-- upper right diagonal inverse 45'
-			{name='uri-diag45', diag=1, differOffsets={{-1,-1}}, flip=true, mirror=true},	-- lower left diagonal inverse 45'
-			{name='uri-diag45', diag=1, differOffsets={{1,-1}}, flip=true},				-- lower right diagonal inverse 45'
-
-			{name='uli', differOffsets={{-1,1}}},							-- upper left inverse
-			{name='uri', differOffsets={{1,1}}},							-- upper right inverse
-			{name='uli', differOffsets={{1,1}}, mirror=true},				-- upper right inverse
-			{name='uli', differOffsets={{-1,-1}}, flip=true},				-- lower left inverse
-			{name='uri', differOffsets={{1,-1}}, flip=true},				-- lower right inverse
-			{name='uli', differOffsets={{1,-1}}, flip=true, mirror=true},	-- lower right inverse		
-			
-			{name='c4', differOffsets={{1,1},{-1,1},{1,-1},{-1,-1}}}, -- center, with diagonals missing
-			
-			{name='c8', differOffsets={{-1,-1},{0,-1},{1,-1},{1,0},{1,1},{0,1},{-1,1},{-1,0}}}, -- center, with nothing around it 
-		}
-	
-		--[[
-		if you don't want to manually split images into pieces,
-		load any 9-patches that might be there
-		patch.png
-		(solid inside)
-		 ul u ur  ╔╦╗
-		 l  c r   ╠╬╣
-		 ll d lr  ╚╩╝
-		(solid outside)
-		 lri lli  ╔╗
-		 uri uli  ╚╝
-		(solid inside) 
-		  ul ur              /\
-		 uli uri ...-diag45 /##\
-		(solid inside)
-		 ur1 ur2
-		     ur3
-
-		note that if ll and lr are absent then they should be replaced with ul flipped and ur flipped
-		how should absent tiles be represented?  fully transparent?  fully some magic color, like (0,255,255) ? 
-		--]]
-		local patchnames = {'flat', 'inv', '45', '27'}
-		for patchname, names in pairs{
-			flat = {
-				{'ul', 'u', 'ur'},
-				{'l', 'c', 'r'},
-				{'ll', 'd', 'lr'},
-			},
-			flat2 = {
-				{'d2r', 'l2r', 'l2d'},
-				{'u2d', 'c8', 'u2d'},
-				{'u2r', 'l2r', 'l2u'},
-			},
-			flat3 = {
-				{'?', 'u3', '?'},
-				{'l3', 'c4', 'r3'},
-				{'?', 'd3', '?'},
-			},
-			inv = {
-				{'lri', 'lli'},
-				{'uri', 'uli'},
-			},
-			['45'] = {
-				{'ul-diag45', 'ur-diag45'},
-				{'uli-diag45', 'uri-diag45'},
-			},
-			['27'] = {
-				{'ur1-diag27', 'ur2-diag27'},
-				{'ur4-diag27', 'ur3-diag27'},
-			},
-			-- the whooole thing:
-			patch = {
-				{'ul',	'u',	'ur',			'd2r',	'l2r',	'l2d',			'',	'u3',	''},
-				{'l',	'c',	'r',			'u2d',	'c8',	'u2d',			'l3',	'c4',	'r3'},
-				{'ll',	'd',	'lr',			'u2r',	'l2r',	'l2u',			'',	'd3',	''},
-				{'lri',	'lli',	'ul-diag45',	'ur-diag45',	'ur1-diag27',	'ur2-diag27', '', '', ''},
-				{'uri',	'uli',	'uli-diag45',	'uri-diag45',	'ur4-diag27',	'ur3-diag27', '', '', ''},
-			},
-			-- rearranged ...
-			['patch-new'] = {
-				{'ul',	'u',	'ur',	'd2r',	'l2r',	'l2d',	'',		'u3',	'',		'ul-diag45',	'ur-diag45', 	'',				'',				},
-				{'l',	'c',	'r',	'u2d',	'c8',	'u2d',	'l3',	'c4',	'r3',	'uli-diag45',	'uri-diag45',	'ur1-diag27',	'ur2-diag27',	},
-				{'ll',	'd',	'lr',	'u2r',	'l2r',	'l2u',	'',		'd3',	'',		'lri',			'lli',			'ur4-diag27',	'ur3-diag27',	},
-				{'',	'',		'',		'',		'',		'',		'',		'',		'',		'uri',			'uli',			'',				'',				},
-			},
-		} do
-			local fn = modio:find('tile-templates/'..key.name..'/'..patchname..'.png')
-			if fn then
-				local img = Image(fn)
-				for y,row in ipairs(names) do
-					for x,name in ipairs(row) do
-						-- cut this chunk out of the image
-						-- find what neighbors with matching names
-						-- set these textures to these images
-						local subimg = img:copy{
-							x=math.floor((x-1)/#row*img.width),
-							y=math.floor((y-1)/#names*img.height),
-							width=math.floor(img.width/#row),
-							height=math.floor(img.height/#names),
-						}
-						-- if the image subset is fully transparent then don't use it
-						local foundImage = true
-						if subimg.channels == 4 then
-							foundImage = false
-							for i=0,subimg.height*subimg.width-1 do
-								if subimg.buffer[4*i+3] ~= 0 then
-									foundImage = true
-									break
-								end
-							end
-						end
-						-- replace all templates with our subimg
-						if foundImage then
-							local tex
-							local function makeTex()
-								if tex then return tex end
-								local args = table(texsys.args, {
-									image = subimg,
-									wrap = {
-										s = texsys.gl.GL_CLAMP_TO_EDGE,
-										t = texsys.gl.GL_CLAMP_TO_EDGE,
-									}
-								})
-								tex = texsys.GLTex2D(args)
-								return tex
-							end
-							if name == 'c' then
-								templateInfo.centerTex = makeTex()
-							end
-							for _,neighbor in ipairs(templateInfo.neighbors) do
-								if neighbor.name == name then
-									neighbor.tex = makeTex()
-								end
-							end
-						end
-					end
-				end
-			end
-		end
-
-		-- load files
-		for _,neighbor in ipairs(templateInfo.neighbors) do
-			local fn = modio:find('tile-templates/'..key.name..'/'..neighbor.name..'.png')
-			if fn then
-				neighbor.tex = texsys:load(fn)
-			end
-		end
-
-		-- fix texture borders.  clamp_to_edge is best, but not perfect
-		local texs = {templateInfo.centerTex}
-		for _,neighbor in ipairs(templateInfo.neighbors) do
-			table.insert(texs, neighbor.tex)
-		end
-	end
-	self:alignTileTemplates(1, 1, self.size[1], self.size[2])
-	
-	--[[ set background textures according to the template map
-	-- (this way individual tiles can have predefined templates and not interfere with the template-based backgrounds)
-	for i=1,self.size[1] do
-		local tilecol = self.tile[i]
-		for j=1,self.size[2] do
-			local tile = tilecol[j]
-			local bgtemplate = getTileTemplate(i,j)
-			local templateInfo = self.templateInfos[bgtemplate]
-			if templateInfo and templateInfo.bgtex then
-				tile.bgtex = templateInfo.bgtex
-			end
-		end
-	end
-	--]]
-
 	-- remember this for initialize()'s sake
 	local initFile
 	if mappath then initFile = mappath..'/init.lua' end
@@ -560,39 +205,6 @@ end
 
 -- init stuff to be run after level is assigned as game.level (so objs can reference it)
 function Level:initialize()
-
-	for i=1,self.size[1] do
-		local tilecol = self.tile[i]
-		for j=1,self.size[2] do
-			local tile = tilecol[j]
-
-			-- reset objects
-			tile.objs = nil
-			
-			-- reset fluids
-			tile.fluid = nil
-			
-			-- init particles
-			local fluidClass = tile.fluidClass
-			if fluidClass then
-				--[[ 4-lattice
-				fluidClass{pos={i + .375, j + .25}}
-				fluidClass{pos={i + .875, j + .25}}
-				fluidClass{pos={i + .125, j + .75}}
-				fluidClass{pos={i + .625, j + .75}}
-				--]]
-				
-				--[[ 2-lattice
-				fluidClass{pos={i + .25, j + .25}}
-				fluidClass{pos={i + .75, j + .75}}
-				--]]
-				
-				-- [[ 1-lattice
-				fluidClass{pos={i + .25 + (j%2) * .5, j + .5}}
-				--]]
-			end
-		end
-	end
 
 	-- do an initial respawn
 	self:initialSpawn()
@@ -612,110 +224,19 @@ function Level:initialSpawn()
 	end
 end
 
--- call this on a region of any tiles change their 'usesTemplate' flag (or their metatable that has that set)
--- or their 'template' field
-function Level:alignTileTemplates(xmin, ymin, xmax, ymax)
-	xmin, ymin, xmax, ymax = math.floor(xmin), math.floor(ymin), math.floor(xmax), math.floor(ymax)
-	
-	-- adjust by our largest offset vector
-	xmin = xmin - 2
-	xmax = xmax + 2
-	ymin = ymin - 2
-	ymax = ymax + 2
-	
-	if xmin > self.size[1] or xmax < 1 or ymin > self.size[2] or ymax < 1 then return end
-	if xmin < 1 then xmin = 1 end
-	if xmax > self.size[1] then xmax = self.size[1] end
-	if ymin < 1 then ymin = 1 end
-	if ymax > self.size[2] then ymax = self.size[2] end	
-	
-	-- next align templates
-	for i=xmin,xmax do
-		local tilecol = self.tile[i]
-		for j=ymin,ymax do
-			local tile = tilecol[j]
-			if not tile.usesTemplate then
-			
-				-- remove all those template-based vars ...
-				tile.tex = nil
-				tile.drawMirror = nil
-				tile.drawFlipped = nil
-				tile.planes = nil
-			else
-			
-				local templateInfo = self.templateInfos[tile.template]
-				if templateInfo then
-
-					local foundTemplate = false
-					for _,neighbor in ipairs(templateInfo.neighbors) do
-						if neighbor.tex							-- if this type of neighbor's texture exists ...
-						and (neighbor.diag or 0) <= (tile.diag or 0)	-- and we're within our diagonalization precedence (0 for 90', 1 for 45', 2 for 30')
-						then
-							--if not not neighbor.notsolid == not tile.solid then							-- breaks fence
-							do
-								local neighborIsValid = true
-								-- make sure all neighbors that should differ do differ
-								if neighbor.differOffsets then
-									for _,offset in ipairs(neighbor.differOffsets) do
-										local neighborTile = self:getTile(i + offset[1], j + offset[2])
-										
-										-- hmm ... first seam comes from the seam map, second seam is a class-opt define
-										if neighborTile and neighborTile.usesTemplate and neighborTile.seam == tile.seam and neighborTile.seam2 == tile.seam2 then
-											neighborIsValid = false
-											break
-										end
-									end
-								end
-								-- make sure all neighbors that should match do match
-								if neighborIsValid and neighbor.matchOffsets then
-									for _,offset in ipairs(neighbor.matchOffsets) do
-										local neighborTile = self:getTile(i + offset[1], j + offset[2])
-										if neighborTile and not (neighborTile.usesTemplate and neighborTile.seam == tile.seam and neighborTile.seam2 == tile.seam2) then
-											neighborIsValid = false
-											break
-										end
-									end
-								end
-								if neighborIsValid then
-									tile.tex = neighbor.tex
-									tile.drawFlipped = neighbor.flip
-									tile.drawMirror = neighbor.mirror
-									if neighbor.planes then tile.planes = table(neighbor.planes) end
-									foundTemplate = true
-									break
-								end
-							end
-						end
-					end
-					if not foundTemplate then
-						-- then we're using the default texture, so flip and mirror all you want
-						tile.tex = templateInfo.centerTex
-						--tile.drawFlipped = math.random(2) == 2
-						--tile.drawMirror = math.random(2) == 2
-						tile.planes = {}
-					end
-				end
-			end
-		end
-	end
-end
-
+-- returns a tile enum value
 function Level:getTile(x,y)
 	x = math.floor(x)
 	y = math.floor(y)
-	local col = self.tile[x]
-	if not col then return end
-	return col[y]
+	if x<1 or y<1 or x>self.size[1] or y>self.size[2] then return 0 end
+	local tileIndex = self.tileMap[(x-1)+self.size[1]*(y-1)]
+	return self.tileTypes[tileIndex]
 end
 
 function Level:getTileWithOffset(x,y)
 	x = x - self.pos[1]
 	y = y - self.pos[2]
-	x = math.floor(x)
-	y = math.floor(y)
-	local col = self.tile[x]
-	if not col then return end
-	return col[y]
+	return self:getTile(x,y)
 end
 
 function Level:update(dt)
@@ -755,16 +276,16 @@ function Level:draw(R, bbox)
 
 	for y=ymin,ymax do
 		for x=xmin,xmax do
-			local bgindex = self.backgroundMap[x-1+self.size[1]*(y-1)]
-			local bgtex = self.bgtexs[bgindex]
-			local key = self.templatekeys[bgindex]
+			local offset = x-1+self.size[1]*(y-1)
+			local bgindex = self.backgroundMap[offset]
+			local background = self.backgrounds[bgindex]
 			local scaleX, scaleY = 32, 32
 			local scrollX, scrollY = 4, 4
-			if key then
-				scaleX, scaleY = key.scaleX, key.scaleY
-				scrollX, scrollY = key.scrollX, key.scrollY
+			if background then
+				scaleX, scaleY = background.scaleX, background.scaleY
+				scrollX, scrollY = background.scrollX, background.scrollY
 			end
-			-- draw background
+			local bgtex = background and background.tex
 			if bgtex then
 				bgtex:bind()
 				R:quad(
@@ -778,31 +299,55 @@ function Level:draw(R, bbox)
 			end	
 		end
 	end
-
-	for x=xmin,xmax do
-		local tilecol = self.tile[x]
-		for y=ymin,ymax do
-			tilecol[y]:draw(R, bbox)
+	
+	self.texpackTex:bind()
+	local texpackTilesWide = self.texpackTex.width/16
+	for y=ymin,ymax do
+		for x=xmin,xmax do
+			local offset = x-1+self.size[1]*(y-1)
+			-- draw bg tile
+			local bgtileindex = self.bgTileMap[offset]
+			local ti = bgtileindex % texpackTilesWide
+			local tj = (bgtileindex - ti) / texpackTilesWide
+			
+			R:quad(
+				x, y,
+				1, 1,
+				ti/texpackTilesWide, 1 - tj/texpackTilesWide,
+				1/texpackTilesWide, -1/texpackTilesWide,
+				0,
+				1,1,1,1)
 		end
 	end
 
-	for x=xmin,xmax do
-		local tilecol = self.tile[x]
-		for y=ymin,ymax do
-			local tile = tilecol[y]
-			local fluid = tile.fluid
-			if fluid then
-				for i=1,#fluid do
-					fluid[i]:draw(R, bbox)
-				end
+	-- draw objects
+	for _,obj in ipairs(game.objs) do
+		if not obj.drawn then
+			obj:draw(R, bbox)
+			obj.drawn = true
+		end
+	end
+
+	self.texpackTex:bind()
+	local texpackTilesWide = self.texpackTex.width/16
+	for y=ymin,ymax do
+		for x=xmin,xmax do
+			local offset = x-1+self.size[1]*(y-1)
+			-- draw fg tile
+			local fgtileindex = self.fgTileMap[offset]
+			if fgtileindex > 0 then
+				fgtileindex = fgtileindex - 1
+				local ti = fgtileindex % texpackTilesWide
+				local tj = (fgtileindex - ti) / texpackTilesWide
+				
+				R:quad(
+					x, y,
+					1, 1,
+					ti/texpackTilesWide, (tj+1)/texpackTilesWide,
+					1/texpackTilesWide, -1/texpackTilesWide,
+					0,
+					1,1,1,1)
 			end
-		end
-	end
-
-	for x=xmin,xmax do
-		local tilecol = self.tile[x]
-		for y=ymin,ymax do
-			tilecol[y]:drawObjs(R, bbox)
 		end
 	end
 end

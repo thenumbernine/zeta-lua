@@ -55,7 +55,11 @@ end
 
 Game.startPosIndex = 0
 function Game:getStartPos()
-	local startPositions = self.level.startPositions
+	local startPositions = self.level.spawnInfos:filter(function(spawnInfo)
+		return spawnInfo.spawn == 'base.script.obj.start'
+	end):map(function(spawnInfo)
+		return spawnInfo.pos
+	end)
 	assert(#startPositions > 0, "failed to find any starting positions")
 	self.startPosIndex = self.startPosIndex % #startPositions + 1
 	return startPositions[self.startPosIndex] + self.level.pos
@@ -76,10 +80,6 @@ function Game:update(dt)
 		obj:update(dt)
 	end
 	
-	for _,particle in ipairs(self.fluid) do
-		particle:update(dt)
-	end
-
 		-- remove any objs
 	for i=#self.objs,1,-1 do
 		local obj = self.objs[i]
@@ -89,7 +89,6 @@ function Game:update(dt)
 		end
 		
 		if obj.remove then
-			obj:unlink()	-- unlink from map
 			self.objs:remove(i)	-- remove from array
 			-- make sure it's not a player?
 			local spawnInfo = obj.spawnInfo
@@ -101,19 +100,10 @@ function Game:update(dt)
 			end
 		end
 	end
-	
-	for i=#self.fluid,1,-1 do
-		local particle = self.fluid[i]
-		if particle.remove then
-			particle:unlink()
-			self.fluid:remove(i)
-		end
-	end
 end
 
 function Game:resetObjects()
 	self.objs = table()	-- enumeration of all active ents
-	self.fluid = table()	-- enumeration of all fluid particles
 	self.players = table()
 	self.time = 0
 end

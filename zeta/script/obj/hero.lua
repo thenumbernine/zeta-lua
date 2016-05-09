@@ -380,13 +380,10 @@ function Hero:update(dt)
 	do
 		local canClimb
 		for x=math.floor(self.pos[1] + self.bbox.min[1] - level.pos[1]),math.floor(self.pos[1] + self.bbox.max[1] - level.pos[1]) do
-			local tilecol = level.tile[x]
-			if tilecol then
-				for y=math.floor(self.pos[2] + self.bbox.min[2] - level.pos[2]),math.floor(self.pos[2] + self.bbox.max[2] - level.pos[2]) do
-					local tile = tilecol[y]
-					if tile then
-						canClimb = canClimb or tile.canClimb
-					end
+			for y=math.floor(self.pos[2] + self.bbox.min[2] - level.pos[2]),math.floor(self.pos[2] + self.bbox.max[2] - level.pos[2]) do
+				local tile = level:getTile(x,y)
+				if tile then
+					canClimb = canClimb or tile.canClimb
 				end
 			end
 		end

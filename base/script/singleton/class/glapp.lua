@@ -98,6 +98,7 @@ local fpsFrames = 0
 
 local R
 local GLApp = class(GLApp) 
+local ImGuiApp = require 'imguiapp'
 	-- closest resolution:
 GLApp.width = 1024
 GLApp.height = 768
@@ -105,6 +106,8 @@ GLApp.title = 'Dump World'
 GLApp.sdlInitFlags = bit.bor(sdl.SDL_INIT_VIDEO, sdl.SDL_INIT_JOYSTICK)
 
 function GLApp:initGL(gl, glname)
+	ImGuiApp.initGL(self, gl, glname)
+
 	local Renderer = modio:require('script.singleton.class.renderer')
 	local rendererClass = Renderer.requireClasses[glname]
 	if not rendererClass then error("don't have support for "..tostring(glname)) end
@@ -161,22 +164,24 @@ function GLApp:initGL(gl, glname)
 	end
 	assert(levelcfg, "failed to find levelcfg info in modio or levelcfg.lua file")
 	
-	local tilekeys = table()
-	for _,dir in ipairs(modio.search) do
-		if io.fileexists(dir..'/script/tiles.lua') then
-			tilekeys:append(require(dir..'.script.tiles'))
+	local tileTypes = table()
+	local spawnTypes = table()
+	for i=#modio.search,1,-1 do	-- start with lowest (base) first, for sequence sake
+		local dir = modio.search[i]
+		if io.fileexists(dir..'/script/tiletypes.lua') then
+			tileTypes:append(require(dir..'.script.tiletypes'))
+		end
+		if io.fileexists(dir..'/script/spawntypes.lua') then
+			spawnTypes:append(require(dir..'.script.spawntypes'))
 		end
 	end
-	levelcfg.tilekeys = tilekeys
+	levelcfg.tileTypes = tileTypes
+	levelcfg.spawnTypes = spawnTypes
+
+	for i=#modio.search,1,-1 do
 	
-	local tiletemplates = table()
-	for _,dir in ipairs(modio.search) do
-		if io.fileexists(dir..'/script/tiletemplates.lua') then
-			tiletemplates:append(require(dir..'.script.tiletemplates'))
-		end
 	end
-	levelcfg.templatekeys = tiletemplates
-	
+
 	game:setLevel(levelcfg)
 	
 	game:glInit(R)
@@ -232,8 +237,13 @@ function GLApp:initGL(gl, glname)
 	R:report('init end')
 end
 	
-function GLApp:event(event)
-	if editor and editor:event(event) then return end
+function GLApp:event(event, ...)
+	if editor then
+		if editor.active then
+			ImGuiApp.event(self, event, ...)
+		end
+		if editor:event(event) then return end
+	end
 
 	if #game.clientConn.players >= 2 then
 		local player = game.clientConn.players[2]
@@ -334,7 +344,11 @@ function GLApp:event(event)
 	end
 end
 	
-function GLApp:update()
+function GLApp:updateGUI(...)
+	return editor:updateGUI(...)
+end
+
+function GLApp:update(...)
 	R:report('update begin')
 
 	sysLastTime = sysThisTime
@@ -381,10 +395,15 @@ function GLApp:update()
 	threads:update()
 	
 	R:report('update end')
+
+	if editor and editor.active then
+		ImGuiApp.update(self, ...)
+	end
 end
 
 function GLApp:exit()
 	audio:shutdown()
+	ImGuiApp.exit(self)
 end
 
 return GLApp
