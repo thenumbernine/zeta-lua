@@ -30,18 +30,20 @@ function Editor:init()
 	self.brushFill = ffi.new('bool[1]',1)
 
 	self.brushOptions = table{
-		{name='Tile', value=ffi.new('bool[1]',0)},
-		{name='Rect', value=ffi.new('bool[1]',0)},
-		{name='Fill', value=ffi.new('bool[1]',0)},
+		{name='Tile'},
+		{name='Rect'},
+		{name='Fill'},
 	}
-	self.selectedBrushIndex = 1
+	self.selectedBrushIndex = ffi.new('int[1]', 0)
+	
+	self.editTilesOrObjects = ffi.new('int[1]',0)
 end
 
 function Editor:setTileKeys()
 
-	self.selectedTileTypeIndex = nil
-	self.selectedBackgroundIndex = nil
-	self.selectedSpawnIndex = nil
+	self.selectedTileTypeIndex = ffi.new('int[1]',0)
+	self.selectedBackgroundIndex = ffi.new('int[1]',0)
+	self.selectedSpawnIndex = ffi.new('int[1]',0)
 
 	-- tile types
 	self.tileOptions = game.levelcfg.tileTypes:map(function(tileType)
@@ -62,53 +64,54 @@ function Editor:setTileKeys()
 			value = ffi.new('bool[1]', 0),
 		}
 	end)
-	
+	self.backgroundOptions[0] = {
+		background = {name='empty'},
+		value = ffi.new('bool[1]',0),
+	}
+
 	-- spawn
 	self.spawnOptions = game.levelcfg.spawnTypes:map(function(spawnType)
 		return {
-			bbox = box2(),
 			spawnType = spawnType,
+			value = ffi.new('bool[1]',0),
 		}
 	end)
+
 end
 
 local ImVec2_0_0 = ffi.new('struct ImVec2',0,0)
 function Editor:updateGUI()
 	ig.igText('EDITOR')
-	if ig.igCollapsingHeader('edit options', 0) then
-		ig.igCheckbox('Tile Type', self.paintingTileType)
-		ig.igCheckbox('Fg Tile', self.paintingFgTile)
-		ig.igCheckbox('Bg Tile', self.paintingBgTile)
-		ig.igCheckbox('Background', self.paintingBackground)
-	end
-	if ig.igCollapsingHeader('brush options', 0) then
+	
+	ig.igRadioButton('Edit Tiles', self.editTilesOrObjects, 0)
+	
+	ig.igCheckbox('Tile Type', self.paintingTileType)
+	ig.igCheckbox('Fg Tile', self.paintingFgTile)
+	ig.igCheckbox('Bg Tile', self.paintingBgTile)
+	ig.igCheckbox('Background', self.paintingBackground)
+	
+	ig.igRadioButton('Edit Objects', self.editTilesOrObjects, 1)
+
+	if ig.igCollapsingHeader('Brush Options:', 0) then
 		for i,brushOption in ipairs(self.brushOptions) do
-			brushOption.value[0] = i == self.selectedBrushIndex
-			ig.igCheckbox(brushOption.name..' brush', brushOption.value)
-			if brushOption.value[0] then
-				self.selectedBrushIndex = i
-			end
+			ig.igRadioButton(brushOption.name..' brush', self.selectedBrushIndex, i)
 		end
 	end
-	if ig.igTreeNode('Tile Options:') then
-		for i,tileOption in pairs(self.tileOptions) do
-			tileOption.value[0] = i == self.selectedTileTypeIndex
-			ig.igCheckbox(tileOption.tileType.name, tileOption.value)
-			if tileOption.value[0] then
-				self.selectedTileTypeIndex = i
-			end
+	if ig.igCollapsingHeader('Tile Type Options:',0) then
+		for i=0,#self.tileOptions do
+			ig.igRadioButton(self.tileOptions[i].tileType.name, self.selectedTileTypeIndex, i)
 		end
-		ig.igTreePop()
 	end
-	if ig.igTreeNode('Background Options:') then
-		for i,backgroundOption in ipairs(self.backgroundOptions) do
-			backgroundOption.value[0] = i == self.selectedBackgroundIndex
-			ig.igCheckbox(tostring(backgroundOption.background.name), backgroundOption.value)
-			if backgroundOption.value[0] then
-				self.selectedBackgroundIndex = i
-			end
+	-- TODO fg and bg tile options
+	if ig.igCollapsingHeader('Background Options:',0) then
+		for i=0,#self.backgroundOptions do
+			ig.igRadioButton(self.backgroundOptions[i].background.name, self.selectedBackgroundIndex, i)
 		end
-		ig.igTreePop()
+	end
+	if ig.igCollapsingHeader('Spawn Options:',0) then
+		for i,spawnOption in ipairs(self.spawnOptions) do
+			ig.igRadioButton(spawnOption.spawnType.spawn, self.selectedSpawnIndex, i)
+		end
 	end
 	ig.igCheckbox('Show Tile Types', self.showTileTypes)
 	if ig.igButton('Save', ImVec2_0_0) then
@@ -165,61 +168,52 @@ function Editor:update()
 	local canHandleMouse = not ig.igGetIO()[0].WantCaptureMouse
 	if not canHandleMouse then return end
 
-	local found
 	local mouse = gui.mouse
-	if mouse.leftDown then
-		if not found then
-			for index,spawnOption in ipairs(self.spawnOptions) do
-				if spawnOption.bbox:contains(mouse.pos) then
-					self.selectedSpawnIndex = index
-					self.mode = 'Spawn'
-					found = true
-					break
-				end
-			end
-		end
-	end
-	
 	if mouse.leftDown and not found then
-		local x = math.floor(self.viewBBox.min[1] + (self.viewBBox.max[1] - self.viewBBox.min[1]) * mouse.pos[1])
-		local y = math.floor(self.viewBBox.min[2] + (self.viewBBox.max[2] - self.viewBBox.min[2]) * mouse.pos[2])
+		local xf = self.viewBBox.min[1] + (self.viewBBox.max[1] - self.viewBBox.min[1]) * mouse.pos[1]
+		local yf = self.viewBBox.min[2] + (self.viewBBox.max[2] - self.viewBBox.min[2]) * mouse.pos[2]
+		local x = math.floor(xf)
+		local y = math.floor(yf)
 		if x >= 1 and y >= 1 and x <= game.level.size[1] and y <= game.level.size[2] then
-			if self.paintingTileType[0] then
-				if self.shiftDown then
-					self.selectedTileTypeIndex = game.level.tileMap[x-1+game.level.size[1]*(y-1)]
-				else
-					game.level.tileMap[x-1+game.level.size[1]*(y-1)] = self.selectedTileTypeIndex or 0
+			if self.editTilesOrObjects[0] == 0 then
+				if self.paintingTileType[0] then
+					if self.shiftDown then
+						self.selectedTileTypeIndex[0] = game.level.tileMap[x-1+game.level.size[1]*(y-1)]
+					else
+						game.level.tileMap[x-1+game.level.size[1]*(y-1)] = self.selectedTileTypeIndex[0]
+					end
 				end
-			end
-			if self.paintingFgTile[0] then
-				if self.shiftDown then
-					self.selectedFgTileIndex = game.level.fgTileMap[x-1+game.level.size[1]*(y-1)]
-				else
-					game.level.fgTileMap[x-1+game.level.size[1]*(y-1)] = self.selectedFgTileIndex or 0
+				if self.paintingFgTile[0] then
+					if self.shiftDown then
+						self.selectedFgTileIndex = game.level.fgTileMap[x-1+game.level.size[1]*(y-1)]
+					else
+						game.level.fgTileMap[x-1+game.level.size[1]*(y-1)] = self.selectedFgTileIndex or 0
+					end
 				end
-			end
-			if self.paintingBgTile[0] then
-				if self.shiftDown then
-					self.selectedBgTileIndex = game.level.fgTileMap[x-1+game.level.size[1]*(y-1)]
-				else
-					game.level.fgTileMap[x-1+game.level.size[1]*(y-1)] = self.selectedBgTileIndex or 0
+				if self.paintingBgTile[0] then
+					if self.shiftDown then
+						self.selectedBgTileIndex = game.level.fgTileMap[x-1+game.level.size[1]*(y-1)]
+					else
+						game.level.fgTileMap[x-1+game.level.size[1]*(y-1)] = self.selectedBgTileIndex or 0
+					end
 				end
-			end
-			if self.paintingBackground[0] then
-				if self.shiftDown then
-					self.selectedBackgroundIndex = game.level.backgroundMap[x-1+game.level.size[1]*(y-1)]
-				else
-					game.level.backgroundMap[x-1+game.level.size[1]*(y-1)] = self.selectedBackgroundIndex or 0
+				if self.paintingBackground[0] then
+					if self.shiftDown then
+						self.selectedBackgroundIndex[0] = game.level.backgroundMap[x-1+game.level.size[1]*(y-1)]
+					else
+						game.level.backgroundMap[x-1+game.level.size[1]*(y-1)] = self.selectedBackgroundIndex[0]
+					end
 				end
-			end
-			if self.mode == 'Spawn' then
+			elseif self.editTilesOrObjects[0] == 1 then
 				if self.shiftDown then
 					-- ... hmm this is dif than tiles
 					-- search through and pick out a spawn obj under the mouse
-					self.selectedSpawnIndex = nil
+					self.selectedSpawnIndex[0] = 0
 					for _,spawnInfo in ipairs(game.level.spawnInfos) do
 						if spawnInfo.pos[1] == x+.5 and spawnInfo.pos[2] == y then
-							self.selectedSpawnIndex = self.spawnOptions:find(nil, function(option) return option == spawnInfo.spawn end)
+							self.selectedSpawnIndex[0] = self.spawnOptions:find(nil, function(option)
+								return option.spawnType.spawn == spawnInfo.spawn
+							end) or 0
 						end
 					end
 				else
@@ -232,10 +226,10 @@ function Editor:update()
 						end
 					end
 					local SpawnInfo = require 'base.script.spawninfo'
-					if self.selectedSpawnIndex then
+					if self.selectedSpawnIndex[0] ~= 0 then
 						local spawnInfo = SpawnInfo{
 							pos=vec2(x+.5, y),
-							spawn=self.spawnOptions[self.selectedSpawnIndex].spawn,
+							spawn=self.spawnOptions[self.selectedSpawnIndex[0]].spawnType.spawn,
 						}
 						game.level.spawnInfos:insert(spawnInfo)
 						spawnInfo:respawn()
@@ -274,160 +268,14 @@ function Editor:draw(R, viewBBox)
 	if not self.active then return end
 
 	self.viewBBox = box2(viewBBox)
---[[
-	local viewSizeX = viewBBox.max[1] - viewBBox.min[1]
-	local viewSizeY = viewBBox.max[2] - viewBBox.min[2]
-
-	gui.font:drawUnpacked(
-		(viewBBox.min[1] + viewBBox.max[1])*.5,
-		viewBBox.max[2],
-		2, -2, 'EDITOR')
-	gl.glEnable(gl.GL_TEXTURE_2D)
 	
-	local space = .1
-	local x = viewBBox.min[1] + space
-	local y = viewBBox.max[2] - 1 - space
-	
-	
-	for index,tileOption in ipairs(self.tileOptions) do
-		local tile = tileOption.tile
-
-		gl.glUseProgram(0)
-		gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
-		gl.glDisable(gl.GL_TEXTURE_2D)
-		local color
-		if self.mode == 'Tile' and index == self.selectedTileTypeIndex then
-			color = self.tileSelColor
-		else
-			color = self.tileBackColor
-		end
-		local bx, by = x - space, y - space
-		local bw, bh = 1 + 2 * space, 1 + 2 * space
-		R:quad(
-			bx, by, bw, bh,
-			0, 0, 1, 1,
-			0,
-			unpack(color))
-		gl.glEnable(gl.GL_TEXTURE_2D)
-		
-		tileOption.bbox.min[1] = (bx - viewBBox.min[1]) / viewSizeX
-		tileOption.bbox.min[2] = (by - viewBBox.min[2]) / viewSizeY
-		tileOption.bbox.max[1] = (bx + bw - viewBBox.min[1]) / viewSizeX
-		tileOption.bbox.max[2] = (by + bh - viewBBox.min[2]) / viewSizeY
-
-		if tile then
-			tile.pos[1] = x
-			tile.pos[2] = y
-		
-			if tile.usesTemplate then
-				local templateOption = self.templateOptions[self.selectedBackgroundIndex]
-				local templateInfo = templateOption and game.level.templateInfos[templateOption.name]
-				if templateInfo then
-					local neighborName = 'c'
-					if not tile.diag then
-						neighborName = 'ur'
-					elseif tile.diag == 1 then
-						neighborName = 'ur-diag45'
-					elseif tile.diag == 2 then
-						neighborName = 'ur2-diag27'
-					end
-					tile.tex = (select(2, table.find(templateInfo.neighbors, nil, function(neighbor)
-						return neighbor.name == neighborName 
-					end)) or {}).tex
-				end
-			end
-
-			tile:draw(R, viewBBox)
-		end
-		
-		x = x + 1 + 3 * space
-		if x > viewBBox.max[1] then
-			x = viewBBox.min[1] + space
-			y = y - (1 + 3 * space)
-			-- make sure it's on our current page
-		end
-	end
-	
-	y = y - (1 + 3 * space)
-	x = viewBBox.min[1] + space
-	for index,templateOption in ipairs(self.templateOptions) do
-		gl.glUseProgram(0)
-		gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
-		gl.glDisable(gl.GL_TEXTURE_2D)
-		local color
-		if self.mode == 'Background' and index == self.selectedBackgroundIndex then
-			color = self.tileSelColor
-		else
-			color = self.tileBackColor
-		end
-		local bx, by = x - space, y - space
-		local bw, bh = 1 + 2 * space, 1 + 2 * space
-		R:quad(bx, by, bw, bh, 0, 0, 1, 1, 0, unpack(color))
-		gl.glEnable(gl.GL_TEXTURE_2D)
-
-		templateOption.bbox.min[1] = (bx - viewBBox.min[1]) / viewSizeX
-		templateOption.bbox.min[2] = (by - viewBBox.min[2]) / viewSizeY
-		templateOption.bbox.max[1] = (bx + bw - viewBBox.min[1]) / viewSizeX
-		templateOption.bbox.max[2] = (by + bh - viewBBox.min[2]) / viewSizeY
-
-		local tex = templateOption.bgtex
-		if tex then
-			gl.glBindTexture(gl.GL_TEXTURE_2D, tex.id)
-			R:quad(x,y,1,1,0,0,1,1,0,1,1,1,.5)
-		end
-		
-		x = x + 1 + 3 * space
-		if x > viewBBox.max[1] then
-			x = viewBBox.min[1] + space
-			y = y - (1 + 3 * space)
-			-- make sure it's on our current page
-		end
-	end
-	
-	y = y - (1 + 3 * space)
-	x = viewBBox.min[1] + space
-	for index,spawnOption in ipairs(self.spawnOptions) do
-		gl.glUseProgram(0)
-		gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
-		gl.glDisable(gl.GL_TEXTURE_2D)
-		local color
-		if self.mode == 'Spawn' and index == self.selectedSpawnIndex then
-			color = self.tileSelColor
-		else
-			color = self.tileBackColor
-		end
-		local bx, by = x - space, y - space
-		local bw, bh = 1 + 2 * space, 1 + 2 * space
-		R:quad(bx, by, bw, bh, 0, 0, 1, 1, 0, unpack(color))
-		gl.glEnable(gl.GL_TEXTURE_2D)
-
-		spawnOption.bbox.min[1] = (bx - viewBBox.min[1]) / viewSizeX
-		spawnOption.bbox.min[2] = (by - viewBBox.min[2]) / viewSizeY
-		spawnOption.bbox.max[1] = (bx + bw - viewBBox.min[1]) / viewSizeX
-		spawnOption.bbox.max[2] = (by + bh - viewBBox.min[2]) / viewSizeY
-
-		local tex = animsys:getTex(spawnOption.spawn.sprite, 'stand')
-		if tex then
-			gl.glBindTexture(gl.GL_TEXTURE_2D, tex.id)
-			R:quad(x,y,1,1,0,1,1,-1,0,1,1,1,.5)
-		end
-		
-		x = x + 1 + 3 * space
-		if x > viewBBox.max[1] then
-			x = viewBBox.min[1] + space
-			y = y - (1 + 3 * space)
-			-- make sure it's on our current page
-		end
-	end	
---]]
-
 	-- draw spawn infos in the level
 	local level = game.level
 	for _,spawnInfo in ipairs(level.spawnInfos) do
 		local sprite = require(spawnInfo.spawn).sprite
 		local tex = sprite and animsys:getTex(sprite, 'stand')
 		if tex then
-			gl.glBindTexture(gl.GL_TEXTURE_2D, tex.id)
+			tex:bind()
 			
 			local sx, sy = 1, 1
 			if tex then
@@ -437,6 +285,13 @@ function Editor:draw(R, viewBBox)
 			
 			local x,y = spawnInfo.pos:unpack()
 			R:quad(x-sx*.5,y,sx,sy,0,1,1,-1,0,1,1,1,.5)
+		
+			tex:unbind()	
+			gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
+			gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
+			R:quad(x-.4,(y+.5)-.4,.8,.8,0,1,1,-1,0,1,1,1,1)
+			gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
+			gl.glEnable(gl.GL_TEXTURE_2D)
 		end
 	end
 
