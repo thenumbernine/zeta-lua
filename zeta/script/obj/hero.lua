@@ -233,6 +233,26 @@ function Hero:update(dt)
 	end
 	--]]
 	
+	-- TODO put this in base?
+	local editor = require 'base.script.singleton.editor'
+	if editor.active
+	and editor.noClipping[0]
+	then
+		self.isClipping = true
+		self.useGravity = false
+		self.collidesWithWorld = false
+		local flySpeed = 20
+		self.vel[1] = self.inputLeftRight * flySpeed
+		self.vel[2] = self.inputUpDown * flySpeed
+		self.invincibleEndTime = game.time + .1
+	else
+		if self.isClipping then
+			self.isClipping = nil
+			self.useGravity = true
+			self.collidesWithWorld = true
+		end
+	end
+
 	-- reattach to world
 	Hero.super.update(self, dt)
 	
@@ -625,6 +645,7 @@ function Hero:update(dt)
 			self.items:remove(j)
 		end
 	end
+
 
 	self.inputUpDownLast = self.inputUpDown
 	self.inputRunLast = self.inputRun

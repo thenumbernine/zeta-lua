@@ -75,7 +75,7 @@ function Object:update(dt)
 	if self.vel[2] > maxVel then self.vel[2] = maxVel end
 
 	local tile = level:getTile(self.pos[1], self.pos[2])
-	if tile and tile.fluid and #tile.fluid > 0 then
+	if tile and tile.canSwim then
 		gravity = gravity * .1
 		maxFallVel = maxFallVel and maxFallVel * .1
 		--self.vel[2] = self.vel[2] * .1
@@ -254,9 +254,11 @@ function Object:move(moveX, moveY)
 --]]
 -- [[ world-bound entities
 			end
-			for _,obj in ipairs(game.objs) do
-				if obj ~= self and xmin <= obj.pos[1]+1 and obj.pos[1]-1 <= xmax and math.abs(y-obj.pos[2]) < 1 then
-					do
+			if self.collidesWithObjects then
+				for _,obj in ipairs(game.objs) do
+					if obj ~= self
+					and xmin <= obj.pos[1]+1 and obj.pos[1]-1 <= xmax and math.abs(y-obj.pos[2]) < 1
+					then
 						do
 			
 --]]
@@ -401,7 +403,7 @@ function Object:move(moveX, moveY)
 						local sideCantBeHit
 						if moveX < 0 then
 							-- if we're moving left, and the tile to this tile's right is solid on its left side, then ignore this tile
-							nextTile = level.tileTypes[level:getTile(x+1,y)]
+							nextTile = level:getTile(x+1,y)
 							local plane = nextTile and nextTile.planes and nextTile.planes[1]
 							if not plane then
 								sideCantBeHit = nextTile and nextTile.solid
@@ -410,7 +412,7 @@ function Object:move(moveX, moveY)
 							end
 						else
 							-- moving right, check tile to the left for solid on its right side
-							nextTile = level.tileTypes[level:getTile(x-1,y)]
+							nextTile = level:getTile(x-1,y)
 							local plane = nextTile and nextTile.planes and nextTile.planes[1]
 							if not plane then
 								sideCantBeHit = nextTile and nextTile.solid
@@ -444,9 +446,11 @@ function Object:move(moveX, moveY)
 --]]
 -- [[ world-bound entities
 			end
-			for _,obj in ipairs(game.objs) do
-				if obj ~= self and math.abs(x-obj.pos[1]) < 1 and ymin <= obj.pos[2]+1 and obj.pos[2]-1 <= ymax then
-					do
+			if self.collidesWithObjects then
+				for _,obj in ipairs(game.objs) do
+					if obj ~= self
+					and math.abs(x-obj.pos[1]) < 1 and ymin <= obj.pos[2]+1 and obj.pos[2]-1 <= ymax
+					then
 						do
 --]]
 							if obj.collidesWithObjects then
