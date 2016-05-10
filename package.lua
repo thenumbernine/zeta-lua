@@ -42,14 +42,14 @@ local function copyBody(destDir)
 	end
 	-- external project folders
 	-- only copy *.lua files ... or at least don't copy .git files
-	for _,dir in ipairs{'ext','glapp','vec','parser','image','audio','netrefl','resourcecache','threadmanager','simplexnoise','gui','gl'
+	for _,dir in ipairs{'ext','glapp','imguiapp','vec','parser','image','audio','netrefl','resourcecache','threadmanager','simplexnoise','gui','gl'
 		--,'gles2'	-- for android only
 	} do
 		exec("rsync -avm --include='*.lua' -f 'hide,! */' ../"..dir.." "..destDir)
 	end
 	-- ffi bindings
 	mkdir(destDir..'/ffi')
-	for _,fn in ipairs{'sdl','OpenGL','glu','OpenAL','png'} do
+	for _,fn in ipairs{'sdl','OpenGL','glu','OpenAL','OpenALUT','png','imgui'} do
 		exec('cp ../ffi/'..fn..'.lua '..destDir..'/ffi')
 	end
 	mkdir(destDir..'/ffi/c')
@@ -169,7 +169,7 @@ export LUAJIT_LIBPATH="."
 	-- ffi osx so's
 	mkdir(resourcesDir..'/bin')
 	mkdir(resourcesDir..'/bin/OSX')
-	for _,fn in ipairs{'sdl','libpng','libalut'} do
+	for _,fn in ipairs{'sdl','libpng','libalut','libimgui'} do
 		exec('cp ../bin/OSX/'..fn..'.dylib '..resourcesDir..'/bin/OSX')
 	end
 end
