@@ -441,8 +441,55 @@ function Editor:setTileKeys()
 
 	-- tile types
 	self.tileOptions = game.levelcfg.tileTypes:map(function(tileType)
+		local tex	
+		if tileType.solid or tileType.diag then
+			local width, height = 16, 16
+			local channels = 4
+			local border = 1
+			local image = Image(width, height, channels, 'unsigned char', function(i,j)
+				if i < border or j < border or i >= width-border or j >= height-border then return 0,0,0,0 end
+				if tileType.solid then
+					return 255,255,255,255
+				end
+				if tileType.diag then
+					local x=(i+.5)/16
+					local y=(j+.5)/16
+					local plane = tileType.planes[1]
+					local y = x * plane[1] + y * plane[2] + plane[3]
+					if y < 0 then return 255,255,255,255 end
+				end
+				return 0,0,0,0
+			end)
+			-- make solid image hollow
+			image = Image(image.width, image.height, image.channels, image.format, function(i,j)
+				if i > border-1 and j > border-1 and i < image.width-border-1 and j < image.height-border-1 then
+					if image.buffer[0+image.channels*(i+image.width*j)] > 0 
+					and image.buffer[0+image.channels*(i-1+image.width*j)] > 0
+					and image.buffer[0+image.channels*(i+1+image.width*j)] > 0
+					and image.buffer[0+image.channels*(i+image.width*(j-1))] > 0
+					and image.buffer[0+image.channels*(i+image.width*(j+1))] > 0
+					then
+						return 0,0,0,0
+					end
+				end
+				return image.buffer[0+image.channels*(i+image.width*j)],
+						image.buffer[1+image.channels*(i+image.width*j)],
+						image.buffer[2+image.channels*(i+image.width*j)],
+						image.buffer[3+image.channels*(i+image.width*j)]
+			end)
+			local Tex2D = require 'gl.tex2d'
+			tex = Tex2D{
+				image = image,
+				minFilter = gl.GL_NEAREST,
+				magFilter = gl.GL_NEAREST,
+				internalFormat = gl.GL_RGBA,
+				format = gl.GL_RGBA,
+			}
+	
+		end
 		return {
 			tileType = tileType,
+			tex = tex,
 		}
 	end)
 	self.tileOptions[0] = {
@@ -498,7 +545,24 @@ function Editor:updateGUI()
 		end
 		if ig.igCollapsingHeader('Tile Type Options:',0) then
 			for i=0,#self.tileOptions do
-				ig.igRadioButton(self.tileOptions[i].tileType.name, self.selectedTileTypeIndex, i)
+				local tileOption = self.tileOptions[i]	
+				local tex = tileOption.tex
+				if tex then
+					local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
+					if ig.igImageButton(
+						texIDPtr,
+						ffi.new('struct ImVec2', 32, 32), --size
+						ImVec2_00, --uv0
+						ImVec2_11, --uv1
+						-1,	--frame_padding
+						ImVec4_0000, --bg_color
+						ImVec4_1111)	--tint_color
+					then
+						self.selectedTileTypeIndex[0] = i
+					end
+					ig.igSameLine(0,-1)
+				end	
+				ig.igRadioButton(tileOption.tileType.name, self.selectedTileTypeIndex, i)
 			end
 		end
 		
@@ -828,26 +892,23 @@ function Editor:draw(R, viewBBox)
 	if ymax > game.level.size[2] then ymax = game.level.size[2] end
 
 	if self.showTileTypes[0] then
-		gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
-		gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
-		gl.glLineWidth(3)
 		for y=ymin,ymax do
 			for x=xmin,xmax do
 				local tiletype = game.level.tileMap[(x-1)+game.level.size[1]*(y-1)]
 				if tiletype ~= 0 then
+					local option = self.tileOptions[tiletype]
+					local tex = option and option.tex
+					if tex then tex:bind() end
 					R:quad(
-						x+.1, y+.1,
-						.8, .8,
-						0, 0, 
+						x, y,
 						1, 1,
+						0, 1, 
+						1, -1,
 						0,
-						table.unpack(colorForType(tiletype)))
+						1,1,1,1)--table.unpack(colorForType(tiletype)))
 				end
 			end
 		end
-		gl.glLineWidth(1)
-		gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
-		gl.glEnable(gl.GL_TEXTURE_2D)
 	end
 
 	-- show the brush
