@@ -266,125 +266,135 @@ local patchTemplate = {
 	{'',	'',		'',		'',		'',		'',		'',		'',		'',		'll-diag45',	'lr-diag45',	'll2-diag27', 'll1-diag27',	'lr1-diag27',	'lr2-diag27',	},
 }
 --]]
-local patchTool = {
-	name = 'Patch',
-	-- names in the neighbor table of where the patch tiles are
-	paint = function(self, cx,cy)
-		local level = game.level
 
+local patchTool
+do
+	local function isSelectedTemplate(map,x,y,seltx,selty)
+		local level = game.level
 		local texpack = level.texpackTex
 		local tilesWide = texpack.width / 16
-		local tilesHigh = texpack.height / 16
-
-		local xmin = math.floor(cx - tonumber(self.brushTileWidth[0]-1)/2)
-		local ymin = math.floor(cy - tonumber(self.brushTileHeight[0]-1)/2)
-		local xmax = xmin + self.brushTileWidth[0]-1
-		local ymax = ymin + self.brushTileHeight[0]-1
-		if xmax < 1 then return end
-		if ymax < 1 then return end
-		if xmin > level.size[1] then return end
-		if ymin > level.size[2] then return end
-		if xmin < 1 then xmin = 1 end
-		if ymin < 1 then ymin = 1 end
-		if xmax > level.size[1] then xmax = level.size[1] end
-		if ymax > level.size[2] then ymax = level.size[2] end
-
-		for _,side in ipairs{'Fg', 'Bg'} do
-			local lc = side:lower()	
-			if self['painting'..side..'Tile'][0] then
-				local map = level[lc..'TileMap']
-				local selectedIndex = self['selected'..side..'TileIndex']
-
-				-- needs to be a valid selected patch
-				if selectedIndex == 0 then return end
-				local seltx = (selectedIndex-1) % tilesWide
-				local selty = (selectedIndex-seltx-1) / tilesWide
-
-				local function isSelectedTemplate(x,y)
-					if x < 1 or y < 1 or x > level.size[1] or y > level.size[2] then return end
-					-- read the tile
-					local offset = x-1 + level.size[1] * (y-1)
-					local index = map[offset]
-					if index > 0 then
-						-- see if it exists at the 2d offset from the selected fg tile index (check 'patchObj.patch' above)
-						local tx = (index-1)%tilesWide
-						local ty = (index-tx-1)/tilesWide
-						
-						local i = tx - seltx
-						local j = ty - selty
-						local row = patchTemplate[j+1]
-						if row then
-							local name = row[i+1]
-							if name then
-								if name == '' then return end
-								return true	
-							end
-						end	
-					end
-				end
+		
+		if x < 1 or y < 1 or x > level.size[1] or y > level.size[2] then return end
+		
+		-- read the tile
+		local offset = x-1 + level.size[1] * (y-1)
+		local index = map[offset]
+		if index > 0 then
+			-- see if it exists at the 2d offset from the selected fg tile index (check 'patchObj.patch' above)
+			local tx = (index-1)%tilesWide
+			local ty = (index-tx-1)/tilesWide
 			
-				local function isNotEmpty(x,y)
-					if x < 1 or y < 1 or x > level.size[1] or y > level.size[2] then return end
-					local offset = x-1 + level.size[1] * (y-1)
-					local index = map[offset]
-					return index > 0
+			local i = tx - seltx
+			local j = ty - selty
+			local row = patchTemplate[j+1]
+			if row then
+				local name = row[i+1]
+				if name then
+					if name == '' then return end
+					return true	
 				end
+			end	
+		end
+	end
 
-				local function validNeighbor(x,y)
-					if x < 1 or y < 1 or x > level.size[1] or y > level.size[2] then return end
-					if not self.alignPatchToAnything[0] then return isSelectedTemplate(x,y) end
-					return isNotEmpty(x,y)
-				end
+	local function isNotEmpty(map,x,y)
+		local level = game.level
+		if x < 1 or y < 1 or x > level.size[1] or y > level.size[2] then return end
+		local offset = x-1 + level.size[1] * (y-1)
+		local index = map[offset]
+		return index > 0
+	end
 
-				for y=ymin,ymax do
-					for x=xmin,xmax do
-						local tile = level:getTile(x,y)
-						if tile then
-							local ct = isSelectedTemplate(x,y)
-							if ct then
-								for _,neighbor in ipairs(patchNeighbors) do
-									if (neighbor.diag or 0) <= (tile.diag or 0)	    -- and we're within our diagonalization precedence (0 for 90', 1 for 45', 2 for 30')
-									then
-										local neighborIsValid = true
-										-- make sure all neighbors that should differ do differ
-										if neighbor.differOffsets then
-											for _,offset in ipairs(neighbor.differOffsets) do
-												-- if not 'alignPatchToAnything' then only go by same templates
-												-- otherwise - go by anything 
-												if validNeighbor(x+offset[1], y+offset[2]) then
-													neighborIsValid = false
-													break
-												end
-											end
-										end
-										-- make sure all neighbors that should match do match
-										if neighborIsValid and neighbor.matchOffsets then
-											for _,offset in ipairs(neighbor.matchOffsets) do
-												if validNeighbor(x+offset[1], y+offset[2]) then
-													neighborIsValid = false
-													break
-												end
-											end
-										end
-										if neighborIsValid then
-											-- find the offset in the patch that this neighbor represents
-											local done = false
-											for j,row in ipairs(patchTemplate) do
-												for i,name in ipairs(row) do
-													if name == neighbor.name then
-														-- TODO instead of painting the selected patch,
-														--  use the patch that the current tile belongs to
-														local tx = seltx + i-1
-														local ty = selty + j-1
-														-- ... and paint it on the foreground
-														map[x-1+level.size[1]*(y-1)] = 1+tx+tilesWide*ty
-														done = true
+	local function validNeighbor(self,map,x,y,seltx,selty)
+		local level = game.level
+		if x < 1 or y < 1 or x > level.size[1] or y > level.size[2] then return end
+		if not self.alignPatchToAnything[0] then return isSelectedTemplate(map,x,y,seltx,selty) end
+		return isNotEmpty(map,x,y)
+	end
+
+	patchTool = {
+		name = 'Patch',
+		-- names in the neighbor table of where the patch tiles are
+		paint = function(self, cx,cy)
+			local level = game.level
+
+			local texpack = level.texpackTex
+			local tilesWide = texpack.width / 16
+			local tilesHigh = texpack.height / 16
+
+			local xmin = math.floor(cx - tonumber(self.brushTileWidth[0]-1)/2)
+			local ymin = math.floor(cy - tonumber(self.brushTileHeight[0]-1)/2)
+			local xmax = xmin + self.brushTileWidth[0]-1
+			local ymax = ymin + self.brushTileHeight[0]-1
+			if xmax < 1 then return end
+			if ymax < 1 then return end
+			if xmin > level.size[1] then return end
+			if ymin > level.size[2] then return end
+			if xmin < 1 then xmin = 1 end
+			if ymin < 1 then ymin = 1 end
+			if xmax > level.size[1] then xmax = level.size[1] end
+			if ymax > level.size[2] then ymax = level.size[2] end
+
+			for _,side in ipairs{'Fg', 'Bg'} do
+				local lc = side:lower()	
+				if self['painting'..side..'Tile'][0] then
+					local map = level[lc..'TileMap']
+					local selectedIndex = self['selected'..side..'TileIndex']
+
+					-- needs to be a valid selected patch
+					if selectedIndex > 0 then 
+						local seltx = (selectedIndex-1) % tilesWide
+						local selty = (selectedIndex-seltx-1) / tilesWide
+				
+						for y=ymin,ymax do
+							for x=xmin,xmax do
+								local tile = level:getTile(x,y)
+								local tileDiag = tile and tile.diag or 0
+								local ct = isSelectedTemplate(map,x,y,seltx,selty)
+								if ct then
+									for _,neighbor in ipairs(patchNeighbors) do
+										if (neighbor.diag or 0) <= tileDiag then	    -- and we're within our diagonalization precedence (0 for 90', 1 for 45', 2 for 30')
+											local neighborIsValid = true
+											-- make sure all neighbors that should differ do differ
+											if neighbor.differOffsets then
+												for _,offset in ipairs(neighbor.differOffsets) do
+													-- if not 'alignPatchToAnything' then only go by same templates
+													-- otherwise - go by anything 
+													if validNeighbor(self,map,x+offset[1], y+offset[2],seltx,selty) then
+														neighborIsValid = false
 														break
 													end
 												end
+											end
+											-- make sure all neighbors that should match do match
+											if neighborIsValid and neighbor.matchOffsets then
+												for _,offset in ipairs(neighbor.matchOffsets) do
+													if validNeighbor(self,map,x+offset[1], y+offset[2],seltx,selty) then
+														neighborIsValid = false
+														break
+													end
+												end
+											end
+											if neighborIsValid then
+												-- find the offset in the patch that this neighbor represents
+												local done = false
+												for j,row in ipairs(patchTemplate) do
+													for i,name in ipairs(row) do
+														if name == neighbor.name then
+															-- TODO instead of painting the selected patch,
+															--  use the patch that the current tile belongs to
+															local tx = seltx + i-1
+															local ty = selty + j-1
+															-- ... and paint it on the foreground
+															map[x-1+level.size[1]*(y-1)] = 1+tx+tilesWide*ty
+															done = true
+															break
+														end
+													end
+													if done then break end
+												end
 												if done then break end
 											end
-											if done then break end
 										end
 									end
 								end
@@ -393,9 +403,9 @@ local patchTool = {
 					end
 				end
 			end
-		end
-	end,
-}
+		end,
+	}
+end
 Editor.brushOptions:insert(patchTool)
 
 function Editor:init()	
@@ -411,6 +421,9 @@ function Editor:init()
 	self.brushStampWidth = ffi.new('int[1]',1)
 	self.brushStampHeight = ffi.new('int[1]',1)
 	self.alignPatchToAnything = ffi.new('bool[1]',true)
+
+	self.fgTileWindowOpenedPtr = ffi.new('bool[1]',false)
+	self.bgTileWindowOpenedPtr = ffi.new('bool[1]',false)
 
 	self.selectedBrushIndex = ffi.new('int[1]',1)
 	
@@ -492,7 +505,6 @@ function Editor:updateGUI()
 		for _,side in ipairs{'Fg', 'Bg'} do
 			local lc = side:lower()	
 			if ig.igCollapsingHeader(side..' Tile Options:',0) then
-				self[lc..'TileWindowOpenedPtr'] = self[lc..'TileWindowOpenedPtr'] or ffi.new('bool[1]',false)
 					
 				local tex = game.level.texpackTex
 				local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
@@ -527,23 +539,33 @@ function Editor:updateGUI()
 					ig.igGetCursorScreenPos(texScreenPos)
 					local mousePos = ffi.new('struct ImVec2[1]')
 					ig.igGetMousePos(mousePos)
-
-					local cursorX = mousePos[0].x - texScreenPos[0].x
-					local cursorY = mousePos[0].y - texScreenPos[0].y
+					local cursorX = mousePos[0].x - texScreenPos[0].x - 2
+					local cursorY = mousePos[0].y - texScreenPos[0].y - 2
+					local x = math.clamp(math.floor(cursorX / tex.width * tilesWide), 0, tilesWide-1)
+					local y = math.clamp(math.floor(cursorY / tex.height * tilesHigh), 0, tilesHigh-1)
 
 					if ig.igImageButton(
 						texIDPtr,
 						ffi.new('struct ImVec2', tex.width, tex.height),	-- size
 						ImVec2_00,	-- uv0
 						ImVec2_11,	-- uv1
-						-1,	-- frame_padding
+						0,	-- frame_padding
 						ImVec4_0000,	-- bg_color
 						ImVec4_1111)	-- tint_color
 					then
-						local x = math.clamp(math.floor(cursorX / tex.width * tilesWide), 0, tilesWide-1)
-						local y = math.clamp(math.floor(cursorY / tex.height * tilesHigh), 0, tilesHigh-1)
 						self['selected'..side..'TileIndex'] = 1+x+tilesWide*y
 						self[lc..'TileWindowOpenedPtr'][0] = false
+					end
+					if ig.igIsItemHovered() then
+						ig.igBeginTooltip()
+						ig.igImage(
+							texIDPtr,
+							ffi.new('struct ImVec2', 64, 64),
+							ffi.new('struct ImVec2', x/tilesWide, y/tilesHigh),
+							ffi.new('struct ImVec2', (x+1)/tilesWide, (y+1)/tilesHigh),
+							ImVec4_1111,
+							ImVec4_0000)
+						ig.igEndTooltip()
 					end
 					
 					ig.igEnd()
