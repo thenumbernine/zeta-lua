@@ -979,7 +979,7 @@ function Editor:draw(R, viewBBox)
 		local cy = math.floor(self.viewBBox.min[2] + (self.viewBBox.max[2] - self.viewBBox.min[2]) * mouse.pos[2])
 		local brushWidth, brushHeight = 1, 1
 		local brushOption = self.brushOptions[self.selectedBrushIndex[0]]
-		if brushOption == paintTile or brushOption == smoothTile then
+		if brushOption == paintBrush or brushOption == smoothBrush then
 			brushWidth = self.brushTileWidth[0]
 			brushHeight = self.brushTileHeight[0]
 		end
@@ -992,7 +992,7 @@ function Editor:draw(R, viewBBox)
 			xmax - xmin + .8, ymax - ymin + .8,
 			0, 0, 1, 1, 0,
 			1, 1, 0, 1)	--color
-		if brushOption == paintTile and self.smoothWhilePainting[0] then
+		if brushOption == paintBrush and self.smoothWhilePainting[0] then
 			xmin = xmin - self.smoothExtendedBorder[0]
 			ymin = ymin - self.smoothExtendedBorder[0]
 			xmax = xmax + self.smoothExtendedBorder[0]
