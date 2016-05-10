@@ -258,6 +258,8 @@ local patchTemplate = {
 	{'ll',	'd',	'lr',	'u2r',	'l2r',	'l2u',	'',		'd3',	'',		'lli-diag45',	'lri-diag45',	'll3-diag27', 'uri',		'uli',			'lr3-diag27',	},
 	{'',	'',		'',		'',		'',		'',		'',		'',		'',		'll-diag45',	'lr-diag45',	'll2-diag27', 'll1-diag27',	'lr1-diag27',	'lr2-diag27',	},
 }
+local patchTilesWide = #patchTemplate[1]
+local patchTilesHigh = #patchTemplate
 
 local patchTool
 do
@@ -272,12 +274,21 @@ do
 		local offset = x-1 + level.size[1] * (y-1)
 		local index = map[offset]
 		if index > 0 then
-			-- see if it exists at the 2d offset from the selected fg tile index (check 'patchObj.patch' above)
+			-- see if this is a member of the current patch
+			-- ... check if it exists at the 2d offset from the selected fg tile index (check 'patchObj.patch' above)
 			local tx = (index-1)%tilesWide
 			local ty = (index-tx-1)/tilesWide
-			
+	
+			--[[ if we must match the selected fg/bg texture's patch:
 			local i = tx - seltx
 			local j = ty - selty
+			--]]
+			-- [[ if we just must be any patch
+			local patchtx = tx - tx%patchTilesWide
+			local patchty = ty - ty%patchTilesHigh
+			local i = tx - patchtx
+			local j = ty - patchty
+			--]]
 			local row = patchTemplate[j+1]
 			if row then
 				local name = row[i+1]
@@ -347,10 +358,15 @@ do
 
 					-- needs to be a valid selected patch
 					if selectedIndex > 0 or drawingTileType then 
+						-- if this is fg or bg then get the current patch 
 						local seltx, selty
 						if not drawingTileType then
 							seltx = (selectedIndex-1) % tilesWide
 							selty = (selectedIndex-seltx-1) / tilesWide
+							-- align to the patch upper-left corner
+							seltx = seltx - seltx%patchTilesWide
+							selty = selty - selty%patchTilesHigh
+							-- TODO keep track of patch locations in the texpack and verify that this section of the texpack is in fact a patch
 						end
 
 						for y=ymin,ymax do
@@ -544,10 +560,10 @@ function Editor:setTileKeys()
 
 end
 
-local ImVec2_00 = ffi.new('struct ImVec2',0,0)
-local ImVec2_11 = ffi.new('struct ImVec2',1,1)
-local ImVec4_0000 = ffi.new('struct ImVec4',0,0,0,0)
-local ImVec4_1111 = ffi.new('struct ImVec4',1,1,1,1)
+local ImVec2_00 = ig.ImVec2(0,0)
+local ImVec2_11 = ig.ImVec2(1,1)
+local ImVec4_0000 = ig.ImVec4(0,0,0,0)
+local ImVec4_1111 = ig.ImVec4(1,1,1,1)
 
 function Editor:updateGUI()
 	ig.igText('EDITOR')
@@ -562,14 +578,14 @@ function Editor:updateGUI()
 	ig.igCheckbox('Background', self.paintingBackground)
 
 	if self.editTilesOrObjects[0] == 0 then
-		if ig.igCollapsingHeader('Brush Options:', 0) then
+		if ig.igCollapsingHeader('Brush Options:') then
 			for i,brushOption in ipairs(self.brushOptions) do
 				ig.igRadioButton(brushOption.name..' brush', self.selectedBrushIndex, i)
 			end
-			ig.igSliderInt('Brush Tile Width', self.brushTileWidth, 1, 20, '%.0f')
-			ig.igSliderInt('Brush Tile Height', self.brushTileHeight, 1, 20, '%.0f')
-			ig.igSliderInt('Brush Stamp Width', self.brushStampWidth, 1, 20, '%.0f')
-			ig.igSliderInt('Brush Stamp Height', self.brushStampHeight, 1, 20, '%.0f')
+			ig.igSliderInt('Brush Tile Width', self.brushTileWidth, 1, 20)
+			ig.igSliderInt('Brush Tile Height', self.brushTileHeight, 1, 20)
+			ig.igSliderInt('Brush Stamp Width', self.brushStampWidth, 1, 20)
+			ig.igSliderInt('Brush Stamp Height', self.brushStampHeight, 1, 20)
 			ig.igCheckbox('Align Patch to Anything', self.alignPatchToAnything)
 		end
 		if ig.igCollapsingHeader('Tile Type Options:',0) then
@@ -580,16 +596,13 @@ function Editor:updateGUI()
 					local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
 					if ig.igImageButton(
 						texIDPtr,
-						ffi.new('struct ImVec2', 32, 32), --size
-						ffi.new('struct ImVec2', 0, 1), --uv0
-						ffi.new('struct ImVec2', 1, 0), --uv1
-						-1,	--frame_padding
-						ImVec4_0000, --bg_color
-						ImVec4_1111)	--tint_color
+						ig.ImVec2(32, 32), --size
+						ig.ImVec2(0, 1), --uv0
+						ig.ImVec2(1, 0)) --uv1
 					then
 						self.selectedTileTypeIndex[0] = i
 					end
-					ig.igSameLine(0,-1)
+					ig.igSameLine()
 				end	
 				ig.igRadioButton(tileOption.tileType.name, self.selectedTileTypeIndex, i)
 			end
@@ -597,7 +610,7 @@ function Editor:updateGUI()
 		
 		for _,side in ipairs{'Fg', 'Bg'} do
 			local lc = side:lower()	
-			if ig.igCollapsingHeader(side..' Tile Options:',0) then
+			if ig.igCollapsingHeader(side..' Tile Options:') then
 					
 				local tex = game.level.texpackTex
 				local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
@@ -608,17 +621,14 @@ function Editor:updateGUI()
 				local tj = (self['selected'..side..'TileIndex'] - 1 - ti) / tilesWide
 				if ig.igImageButton(
 					texIDPtr,
-					ffi.new('struct ImVec2', bw,bh),	-- size
-					ffi.new('struct ImVec2', ti/tilesWide, tj/tilesHigh),	-- uv0
-					ffi.new('struct ImVec2', (ti+1)/tilesWide, (tj+1)/tilesHigh),	-- uv1
-					-1,			-- frame_padding
-					ImVec4_0000,	-- bg_color
-					ImVec4_1111)	-- tint_color
+					ig.ImVec2(bw,bh),	-- size
+					ig.ImVec2(ti/tilesWide, tj/tilesHigh),	-- uv0
+					ig.ImVec2((ti+1)/tilesWide, (tj+1)/tilesHigh))	-- uv1
 				then
 					-- popup of the whole thing?
 					self[lc..'TileWindowOpenedPtr'][0] = true
 				end
-				if ig.igButton('Clear '..side..' Tile', ImVec2_00) then
+				if ig.igButton('Clear '..side..' Tile') then
 					self['selected'..side..'TileIndex'] = 0
 				end
 
@@ -628,23 +638,16 @@ function Editor:updateGUI()
 						self[lc..'TileWindowOpenedPtr'],
 						ig.ImGuiWindowFlags_NoTitleBar)
 					
-					local texScreenPos = ffi.new('struct ImVec2[1]')
-					ig.igGetCursorScreenPos(texScreenPos)
-					local mousePos = ffi.new('struct ImVec2[1]')
-					ig.igGetMousePos(mousePos)
-					local cursorX = mousePos[0].x - texScreenPos[0].x - 2
-					local cursorY = mousePos[0].y - texScreenPos[0].y - 2
+					local texScreenPos = ig.igGetCursorScreenPos()
+					local mousePos = ig.igGetMousePos()
+					local cursorX = mousePos.x - texScreenPos.x - 2
+					local cursorY = mousePos.y - texScreenPos.y - 2
 					local x = math.clamp(math.floor(cursorX / tex.width * tilesWide), 0, tilesWide-1)
 					local y = math.clamp(math.floor(cursorY / tex.height * tilesHigh), 0, tilesHigh-1)
 
 					if ig.igImageButton(
 						texIDPtr,
-						ffi.new('struct ImVec2', tex.width, tex.height),	-- size
-						ImVec2_00,	-- uv0
-						ImVec2_11,	-- uv1
-						0,	-- frame_padding
-						ImVec4_0000,	-- bg_color
-						ImVec4_1111)	-- tint_color
+						ig.ImVec2(tex.width, tex.height))	-- size
 					then
 						self['selected'..side..'TileIndex'] = 1+x+tilesWide*y
 						self[lc..'TileWindowOpenedPtr'][0] = false
@@ -652,12 +655,10 @@ function Editor:updateGUI()
 					if ig.igIsItemHovered() then
 						ig.igBeginTooltip()
 						ig.igImage(
-							texIDPtr,
-							ffi.new('struct ImVec2', 64, 64),
-							ffi.new('struct ImVec2', x/tilesWide, y/tilesHigh),
-							ffi.new('struct ImVec2', (x+1)/tilesWide, (y+1)/tilesHigh),
-							ImVec4_1111,
-							ImVec4_0000)
+							texIDPtr, -- tex
+							ig.ImVec2(64, 64), -- size
+							ig.ImVec2(x/tilesWide, y/tilesHigh), -- uv0
+							ig.ImVec2((x+1)/tilesWide, (y+1)/tilesHigh)) -- uv1
 						ig.igEndTooltip()
 					end
 					
@@ -665,7 +666,7 @@ function Editor:updateGUI()
 				end
 			end
 		end
-		if ig.igCollapsingHeader('Background Options:',0) then
+		if ig.igCollapsingHeader('Background Options:') then
 			for i=0,#self.backgroundOptions do
 				local background = self.backgroundOptions[i].background
 				
@@ -674,26 +675,23 @@ function Editor:updateGUI()
 					local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
 					if ig.igImageButton(
 						texIDPtr,
-						ffi.new('struct ImVec2', 32, 32), --size
-						ImVec2_00, --uv0
-						ImVec2_11, --uv1
-						-1,	--frame_padding
-						ImVec4_0000, --bg_color
-						ImVec4_1111)	--tint_color
+						ig.ImVec2(32, 32)) --size
 					then
 						self.selectedBackgroundIndex[0] = i
 					end
-					ig.igSameLine(0,-1)
+					ig.igSameLine()
 				end
 				
 				ig.igRadioButton(background.name, self.selectedBackgroundIndex, i)
 	
 				if i > 0 then
 					if ig.igTreeNode('background '..i..': '..background.name) then
+						-- something is acting strange here.
+						-- if I pick certain values then my objects freeze ... like it's influencing something else?
 						local float = ffi.new('float[1]')
 						for _,field in ipairs{'scaleX', 'scaleY', 'scrollX', 'scrollY'} do
 							float[0] = background[field] or 0
-							ig.igInputFloat('background '..i..' '..field, float, 0, 0, -1, 0)
+							ig.igInputFloat('background '..i..' '..field, float)
 							background[field] = float[0]
 						end
 						ig.igTreePop()
@@ -705,19 +703,19 @@ function Editor:updateGUI()
 		ig.igCheckbox('no clipping', self.noClipping)
 	end
 	if self.editTilesOrObjects[0] == 1 then
-		if ig.igCollapsingHeader('Object Options:',0) then
+		if ig.igCollapsingHeader('Object Options:') then
 			for i,spawnOption in ipairs(self.spawnOptions) do
 				ig.igRadioButton(spawnOption.spawnType.spawn, self.selectedSpawnIndex, i)
 			end
 		end
 	end
-	if ig.igButton('Save Map', ImVec2_00) then
+	if ig.igButton('Save Map') then
 		self:save()
 	end
-	if ig.igButton('Save Backgrounds', ImVec2_00) then
+	if ig.igButton('Save Backgrounds') then
 		self:saveBackgrounds()
 	end
-	if ig.igButton('Save Texpack', ImVec2_00) then
+	if ig.igButton('Save Texpack') then
 		self:saveTexPack()
 	end
 end
