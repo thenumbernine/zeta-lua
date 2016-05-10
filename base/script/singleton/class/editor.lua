@@ -88,7 +88,7 @@ paintBrush = {
 		end
 	
 		if self.smoothWhilePainting[0] then
-			smoothBrush.paint(self, cx, cy, self.smoothExtraBorder[0])
+			smoothBrush.paint(self, cx, cy, self.smoothBorder[0])
 		end
 	end,
 }
@@ -207,20 +207,20 @@ local patchNeighbors = {
 	{name='l2r', differOffsets={{0,1},{0,-1}}}, -- pipe left to right
 	{name='u2d', differOffsets={{1,0},{-1,0}}}, -- pipe up to down
 
-	{name='ul2-diag27', diag=2, planes={{-1,2,0}}, differOffsets={{1,1}, {0,1}, {-1,0}}, matchOffsets={{1,0}, {-1,-1}}},					   -- upper left diagonal 27' part 2
-	{name='ul1-diag27', diag=2, planes={{-1,2,-1}}, differOffsets={{0,1}, {-1,1}, {-2,0}}, matchOffsets={{-1,0}, {1,0}, {-2,-1}}},			 -- upper left diagonal 27' part 1
-	{name='ur2-diag27', diag=2, planes={{1,2,-1}}, differOffsets={{-1,1}, {0,1}, {1,0}}, matchOffsets={{-1,0}, {1,-1}}},			-- upper right diagonal 27' part 2
-	{name='ur1-diag27', diag=2, planes={{1,2,-2}}, differOffsets={{0,1}, {1,1}, {2,0}}, matchOffsets={{-1,0}, {1,0}, {2,-1}}},			  -- upper right diagonal 27' part 1
+	{name='ul2-diag27', diag=2, differOffsets={{1,1}, {0,1}, {-1,0}}, matchOffsets={{1,0}, {-1,-1}}},					   -- upper left diagonal 27' part 2
+	{name='ul1-diag27', diag=2, differOffsets={{0,1}, {-1,1}, {-2,0}}, matchOffsets={{-1,0}, {1,0}, {-2,-1}}},			 -- upper left diagonal 27' part 1
+	{name='ur2-diag27', diag=2, differOffsets={{-1,1}, {0,1}, {1,0}}, matchOffsets={{-1,0}, {1,-1}}},			-- upper right diagonal 27' part 2
+	{name='ur1-diag27', diag=2, differOffsets={{0,1}, {1,1}, {2,0}}, matchOffsets={{-1,0}, {1,0}, {2,-1}}},			  -- upper right diagonal 27' part 1
 
-	{name='dl2-diag27', diag=2, planes={{-1,-2,2}}, differOffsets={{1,-1}, {0,-1}, {-1,0}}, matchOffsets={{1,0}, {-1,1}}},					   -- lower left diagonal 27' part 2
-	{name='dl1-diag27', diag=2, planes={{-1,-2,1}}, differOffsets={{0,-1}, {-1,-1}, {-2,0}}, matchOffsets={{-1,0}, {1,0}, {-2,1}}},			 -- lower left diagonal 27' part 1
-	{name='dr2-diag27', diag=2, planes={{1,-2,0}}, differOffsets={{-1,-1}, {0,-1}, {1,0}}, matchOffsets={{-1,0}, {1,1}}},			-- lower right diagonal 27' part 2
-	{name='dr1-diag27', diag=2, planes={{1,-2,1}}, differOffsets={{0,-1}, {1,-1}, {2,0}}, matchOffsets={{-1,0}, {1,0}, {2,1}}},			  -- lower right diagonal 27' part 1
+	{name='dl2-diag27', diag=2, differOffsets={{1,-1}, {0,-1}, {-1,0}}, matchOffsets={{1,0}, {-1,1}}},					   -- lower left diagonal 27' part 2
+	{name='dl1-diag27', diag=2, differOffsets={{0,-1}, {-1,-1}, {-2,0}}, matchOffsets={{-1,0}, {1,0}, {-2,1}}},			 -- lower left diagonal 27' part 1
+	{name='dr2-diag27', diag=2, differOffsets={{-1,-1}, {0,-1}, {1,0}}, matchOffsets={{-1,0}, {1,1}}},			-- lower right diagonal 27' part 2
+	{name='dr1-diag27', diag=2, differOffsets={{0,-1}, {1,-1}, {2,0}}, matchOffsets={{-1,0}, {1,0}, {2,1}}},			  -- lower right diagonal 27' part 1
 
-	{name='ul-diag45', diag=1, planes={{-1,1,0}}, differOffsets={{0,1},{-1,0}}},							   -- upper left diagonal 45'
-	{name='ur-diag45', diag=1, planes={{1,1,-1}}, differOffsets={{0,1},{1,0}}},															 -- upper right diagonal 45'
-	{name='dl-diag45', diag=1, planes={{-1,-1,1}}, differOffsets={{0,-1},{-1,0}}},  -- lower left diagonal 45'
-	{name='dr-diag45', diag=1, planes={{1,-1,0}}, differOffsets={{0,-1},{1,0}}},						 -- lower right diagonal 45'
+	{name='ul-diag45', diag=1, differOffsets={{0,1},{-1,0}}},							   -- upper left diagonal 45'
+	{name='ur-diag45', diag=1, differOffsets={{0,1},{1,0}}},															 -- upper right diagonal 45'
+	{name='dl-diag45', diag=1, differOffsets={{0,-1},{-1,0}}},  -- lower left diagonal 45'
+	{name='dr-diag45', diag=1, differOffsets={{0,-1},{1,0}}},						 -- lower right diagonal 45'
 	
 	{name='ui', differOffsets={{1,0}, {-1,0}, {0,-1}}},	 -- up, inverse
 	{name='di', differOffsets={{1,0}, {-1,0}, {0,1}}},   -- down, inverse
@@ -263,7 +263,7 @@ local patchNeighbors = {
 -- note: 1) we're missing three-way tiles, (i.e. ulr dlr uld urd) and 2) some are doubled: l2r and r2l
 local patchTemplate = {
 	{'ul',	'u',	'ur',	'd2r',	'l2r',	'l2d',	'',		'u3',	'',		'ul-diag45',	'ur-diag45',	'ul2-diag27', 'ul1-diag27',	'ur1-diag27',	'ur2-diag27',	},
-	{'l',	'c',	'r',	'u2d',	'c8',	'u2d',	'l3',	'c4',	'r3',	'uli-diag45',	'uri-diag45',	'ul3-diag27', 'dri',		'dli',			'ur3-diag27',	},
+	{'l',	'c',	'r',	'u2d',''--[[c8--]],'u2d','l3',	'c4',	'r3',	'uli-diag45',	'uri-diag45',	'ul3-diag27', 'dri',		'dli',			'ur3-diag27',	},
 	{'dl',	'd',	'dr',	'u2r',	'l2r',	'l2u',	'',		'd3',	'',		'dli-diag45',	'dri-diag45',	'dl3-diag27', 'uri',		'uli',			'dr3-diag27',	},
 	{'',	'',		'',		'',		'',		'',		'',		'',		'',		'dl-diag45',	'dr-diag45',	'dl2-diag27', 'dl1-diag27',	'dr1-diag27',	'dr2-diag27',	},
 }
@@ -469,7 +469,7 @@ function Editor:init()
 	self.brushStampWidth = ffi.new('int[1]',1)
 	self.brushStampHeight = ffi.new('int[1]',1)
 	self.smoothWhilePainting = ffi.new('bool[1]',0)
-	self.smoothExtraBorder = ffi.new('int[1]',1)
+	self.smoothBorder = ffi.new('int[1]',1)
 	-- smooth brush options:
 	self.alignPatchToAnything = ffi.new('bool[1]',true)
 	self.smoothDiagLevel = ffi.new('int[1]',0)
@@ -575,13 +575,13 @@ function Editor:updateGUI()
 	ig.igRadioButton('Edit Tiles', self.editTilesOrObjects, 0)
 	ig.igRadioButton('Edit Objects', self.editTilesOrObjects, 1)
 
-	-- not sure if I should use brushes for painting objects or not ...
-	ig.igCheckbox('Tile Type', self.paintingTileType)
-	ig.igCheckbox('Fg Tile', self.paintingFgTile)
-	ig.igCheckbox('Bg Tile', self.paintingBgTile)
-	ig.igCheckbox('Background', self.paintingBackground)
-
 	if self.editTilesOrObjects[0] == 0 then
+		-- not sure if I should use brushes for painting objects or not ...
+		ig.igCheckbox('Tile Type', self.paintingTileType)
+		ig.igCheckbox('Fg Tile', self.paintingFgTile)
+		ig.igCheckbox('Bg Tile', self.paintingBgTile)
+		ig.igCheckbox('Background', self.paintingBackground)
+	
 		if ig.igCollapsingHeader('Brush Options:') then
 			for i,brushOption in ipairs(self.brushOptions) do
 				ig.igRadioButton(brushOption.name..' brush', self.selectedBrushIndex, i)
@@ -596,7 +596,7 @@ function Editor:updateGUI()
 					ig.igSliderInt('Stamp Height', self.brushStampHeight, 1, 20)
 					ig.igCheckbox('Smooth While Painting', self.smoothWhilePainting)
 					if self.smoothWhilePainting[0] then
-						ig.igSliderInt('Smooth Extra Border', self.smoothExtraBorder, 0, 10)
+						ig.igSliderInt('Smooth Border', self.smoothBorder, 0, 10)
 					end
 				end
 				if brushOption == smoothBrush
@@ -717,8 +717,6 @@ function Editor:updateGUI()
 	
 				if i > 0 then
 					if ig.igTreeNode('background '..i..': '..background.name) then
-						-- something is acting strange here.
-						-- if I pick certain values then my objects freeze ... like it's influencing something else?
 						local float = ffi.new('float[1]')
 						for _,field in ipairs{'scaleX', 'scaleY', 'scrollX', 'scrollY'} do
 							float[0] = background[field] or 0
@@ -730,8 +728,6 @@ function Editor:updateGUI()
 				end
 			end
 		end
-		ig.igCheckbox('Show Tile Types', self.showTileTypes)
-		ig.igCheckbox('no clipping', self.noClipping)
 	end
 	if self.editTilesOrObjects[0] == 1 then
 		if ig.igCollapsingHeader('Object Options:') then
@@ -740,6 +736,8 @@ function Editor:updateGUI()
 			end
 		end
 	end
+	ig.igCheckbox('Show Tile Types', self.showTileTypes)
+	ig.igCheckbox('no clipping', self.noClipping)
 	if ig.igButton('Save Map') then
 		self:save()
 	end
@@ -978,10 +976,13 @@ function Editor:draw(R, viewBBox)
 		local cx = math.floor(self.viewBBox.min[1] + (self.viewBBox.max[1] - self.viewBBox.min[1]) * mouse.pos[1])
 		local cy = math.floor(self.viewBBox.min[2] + (self.viewBBox.max[2] - self.viewBBox.min[2]) * mouse.pos[2])
 		local brushWidth, brushHeight = 1, 1
-		local brushOption = self.brushOptions[self.selectedBrushIndex[0]]
-		if brushOption == paintBrush or brushOption == smoothBrush then
-			brushWidth = self.brushTileWidth[0]
-			brushHeight = self.brushTileHeight[0]
+		local brushOption
+		if self.editTilesOrObjects[0] == 0 then	-- tiles
+			brushOption = self.brushOptions[self.selectedBrushIndex[0]]
+			if brushOption == paintBrush or brushOption == smoothBrush then
+				brushWidth = self.brushTileWidth[0]
+				brushHeight = self.brushTileHeight[0]
+			end
 		end
 		local xmin = math.floor(cx - tonumber(brushWidth-1)/2)
 		local ymin = math.floor(cy - tonumber(brushHeight-1)/2)
@@ -993,10 +994,10 @@ function Editor:draw(R, viewBBox)
 			0, 0, 1, 1, 0,
 			1, 1, 0, 1)	--color
 		if brushOption == paintBrush and self.smoothWhilePainting[0] then
-			xmin = xmin - self.smoothExtraBorder[0]
-			ymin = ymin - self.smoothExtraBorder[0]
-			xmax = xmax + self.smoothExtraBorder[0]
-			ymax = ymax + self.smoothExtraBorder[0]
+			xmin = xmin - self.smoothBorder[0]
+			ymin = ymin - self.smoothBorder[0]
+			xmax = xmax + self.smoothBorder[0]
+			ymax = ymax + self.smoothBorder[0]
 			R:quad(
 				xmin + .1, ymin + .1,
 				xmax - xmin + .8, ymax - ymin + .8,

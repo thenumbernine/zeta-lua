@@ -16,8 +16,8 @@ return {
 	
 	{name='dl2-diag27', solid=true, diag=2, planes={{-1,-2,2}}}, 
 	{name='dl1-diag27', solid=true, diag=2, planes={{-1,-2,1}}},
-	{name='dr2-diag27', solid=true, diag=2, planes={{1,-2,0}}}, 
-	{name='dr1-diag27', solid=true, diag=2, planes={{1,-2,1}}}, 
+	{name='dr2-diag27', solid=true, diag=2, planes={{1,-2,1}}}, 
+	{name='dr1-diag27', solid=true, diag=2, planes={{1,-2,0}}}, 
 	
 	-- water
 	{name='water', canSwim = true},
