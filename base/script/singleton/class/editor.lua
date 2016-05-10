@@ -200,15 +200,15 @@ local patchNeighbors = {
 	{name='ur2-diag27', diag=2, planes={{1,2,-1}}, differOffsets={{-1,1}, {0,1}, {1,0}}, matchOffsets={{-1,0}, {1,-1}}},			-- upper right diagonal 27' part 2
 	{name='ur1-diag27', diag=2, planes={{1,2,-2}}, differOffsets={{0,1}, {1,1}, {2,0}}, matchOffsets={{-1,0}, {1,0}, {2,-1}}},			  -- upper right diagonal 27' part 1
 
-	{name='ll2-diag27', diag=2, planes={{-1,-2,2}}, differOffsets={{1,-1}, {0,-1}, {-1,0}}, matchOffsets={{1,0}, {-1,1}}},					   -- lower left diagonal 27' part 2
-	{name='ll1-diag27', diag=2, planes={{-1,-2,1}}, differOffsets={{0,-1}, {-1,-1}, {-2,0}}, matchOffsets={{-1,0}, {1,0}, {-2,1}}},			 -- lower left diagonal 27' part 1
-	{name='lr2-diag27', diag=2, planes={{1,-2,0}}, differOffsets={{-1,-1}, {0,-1}, {1,0}}, matchOffsets={{-1,0}, {1,1}}},			-- lower right diagonal 27' part 2
-	{name='lr1-diag27', diag=2, planes={{1,-2,1}}, differOffsets={{0,-1}, {1,-1}, {2,0}}, matchOffsets={{-1,0}, {1,0}, {2,1}}},			  -- lower right diagonal 27' part 1
+	{name='dl2-diag27', diag=2, planes={{-1,-2,2}}, differOffsets={{1,-1}, {0,-1}, {-1,0}}, matchOffsets={{1,0}, {-1,1}}},					   -- lower left diagonal 27' part 2
+	{name='dl1-diag27', diag=2, planes={{-1,-2,1}}, differOffsets={{0,-1}, {-1,-1}, {-2,0}}, matchOffsets={{-1,0}, {1,0}, {-2,1}}},			 -- lower left diagonal 27' part 1
+	{name='dr2-diag27', diag=2, planes={{1,-2,0}}, differOffsets={{-1,-1}, {0,-1}, {1,0}}, matchOffsets={{-1,0}, {1,1}}},			-- lower right diagonal 27' part 2
+	{name='dr1-diag27', diag=2, planes={{1,-2,1}}, differOffsets={{0,-1}, {1,-1}, {2,0}}, matchOffsets={{-1,0}, {1,0}, {2,1}}},			  -- lower right diagonal 27' part 1
 
 	{name='ul-diag45', diag=1, planes={{-1,1,0}}, differOffsets={{0,1},{-1,0}}},							   -- upper left diagonal 45'
 	{name='ur-diag45', diag=1, planes={{1,1,-1}}, differOffsets={{0,1},{1,0}}},															 -- upper right diagonal 45'
-	{name='ll-diag45', diag=1, planes={{-1,-1,1}}, differOffsets={{0,-1},{-1,0}}},  -- lower left diagonal 45'
-	{name='lr-diag45', diag=1, planes={{1,-1,0}}, differOffsets={{0,-1},{1,0}}},						 -- lower right diagonal 45'
+	{name='dl-diag45', diag=1, planes={{-1,-1,1}}, differOffsets={{0,-1},{-1,0}}},  -- lower left diagonal 45'
+	{name='dr-diag45', diag=1, planes={{1,-1,0}}, differOffsets={{0,-1},{1,0}}},						 -- lower right diagonal 45'
 	
 	{name='ui', differOffsets={{1,0}, {-1,0}, {0,-1}}},	 -- up, inverse
 	{name='di', differOffsets={{1,0}, {-1,0}, {0,1}}},   -- down, inverse
@@ -217,8 +217,8 @@ local patchNeighbors = {
 	
 	{name='ul', differOffsets={{0,1}, {-1,0}}},									 -- upper left
 	{name='ur', differOffsets={{0,1}, {1,0}}},									  -- upper right
-	{name='ll', differOffsets={{0,-1}, {-1,0}}},		 -- lower left
-	{name='lr', differOffsets={{0,-1}, {1,0}}},		  -- lower right
+	{name='dl', differOffsets={{0,-1}, {-1,0}}},		 -- lower left
+	{name='dr', differOffsets={{0,-1}, {1,0}}},		  -- lower right
 	
 	{name='u', differOffsets={{0,1}}},							  -- up
 	{name='r', differOffsets={{1,0}}},							  -- right
@@ -233,18 +233,18 @@ local patchNeighbors = {
 	{name='ul3-diag27', diag=2, differOffsets={{1,2}, {0,2}, {-1,1}, {-2,1}}}, -- upper left diagonal 27' part 3
 	{name='ur3-diag27', diag=2, differOffsets={{-1,2}, {0,2}, {1,1}, {2,1}}},									   -- upper right diagonal 27' part 3
 	
-	{name='ll3-diag27', diag=2, differOffsets={{1,-2}, {0,-2}, {-1,-1}, {-2,-1}}}, -- lower left diagonal 27' part 3
-	{name='lr3-diag27', diag=2, differOffsets={{-1,-2}, {0,-2}, {1,-1}, {2,-1}}},									   -- upper right diagonal 27' part 3
+	{name='dl3-diag27', diag=2, differOffsets={{1,-2}, {0,-2}, {-1,-1}, {-2,-1}}}, -- lower left diagonal 27' part 3
+	{name='dr3-diag27', diag=2, differOffsets={{-1,-2}, {0,-2}, {1,-1}, {2,-1}}},									   -- upper right diagonal 27' part 3
 
 	{name='uli-diag45', diag=1, differOffsets={{-1,1}}},							   -- upper left diagonal inverse 45'
 	{name='uri-diag45', diag=1, differOffsets={{1,1}}},													 -- upper right diagonal inverse 45'
-	{name='lli-diag45', diag=1, differOffsets={{-1,-1}}},   -- lower left diagonal inverse 45'
-	{name='lri-diag45', diag=1, differOffsets={{1,-1}}},						 -- lower right diagonal inverse 45'
+	{name='dli-diag45', diag=1, differOffsets={{-1,-1}}},   -- lower left diagonal inverse 45'
+	{name='dri-diag45', diag=1, differOffsets={{1,-1}}},						 -- lower right diagonal inverse 45'
 
 	{name='uli', differOffsets={{-1,1}}},												   -- upper left inverse
 	{name='uri', differOffsets={{1,1}}},													-- upper right inverse
-	{name='lli', differOffsets={{-1,-1}}},							   -- lower left inverse
-	{name='lri', differOffsets={{1,-1}}},								-- lower right inverse
+	{name='dli', differOffsets={{-1,-1}}},							   -- lower left inverse
+	{name='dri', differOffsets={{1,-1}}},								-- lower right inverse
 	
 	{name='c4', differOffsets={{1,1},{-1,1},{1,-1},{-1,-1}}}, -- center, with diagonals missing
 	
@@ -252,16 +252,23 @@ local patchNeighbors = {
 	
 	{name='c', differOffsets={}},
 }
+-- note: 1) we're missing three-way tiles, (i.e. ulr dlr uld urd) and 2) some are doubled: l2r and r2l
+-- and 3) 'l' is both 'lower' and 'left ... but i'm fixing that now
 local patchTemplate = {
 	{'ul',	'u',	'ur',	'd2r',	'l2r',	'l2d',	'',		'u3',	'',		'ul-diag45',	'ur-diag45',	'ul2-diag27', 'ul1-diag27',	'ur1-diag27',	'ur2-diag27',	},
-	{'l',	'c',	'r',	'u2d',	'c8',	'u2d',	'l3',	'c4',	'r3',	'uli-diag45',	'uri-diag45',	'ul3-diag27', 'lri',		'lli',			'ur3-diag27',	},
-	{'ll',	'd',	'lr',	'u2r',	'l2r',	'l2u',	'',		'd3',	'',		'lli-diag45',	'lri-diag45',	'll3-diag27', 'uri',		'uli',			'lr3-diag27',	},
-	{'',	'',		'',		'',		'',		'',		'',		'',		'',		'll-diag45',	'lr-diag45',	'll2-diag27', 'll1-diag27',	'lr1-diag27',	'lr2-diag27',	},
+	{'l',	'c',	'r',	'u2d',	'c8',	'u2d',	'l3',	'c4',	'r3',	'uli-diag45',	'uri-diag45',	'ul3-diag27', 'dri',		'dli',			'ur3-diag27',	},
+	{'dl',	'd',	'dr',	'u2r',	'l2r',	'l2u',	'',		'd3',	'',		'dli-diag45',	'dri-diag45',	'dl3-diag27', 'uri',		'uli',			'dr3-diag27',	},
+	{'',	'',		'',		'',		'',		'',		'',		'',		'',		'dl-diag45',	'dr-diag45',	'dl2-diag27', 'dl1-diag27',	'dr1-diag27',	'dr2-diag27',	},
 }
 local patchTilesWide = #patchTemplate[1]
 local patchTilesHigh = #patchTemplate
-print('texpack patch size',patchTilesWide,patchTilesHigh)
-local patchTool
+-- map of upper-left coordinates of where valid patches are in the texpack
+-- stored [x][y] where x and y are tile coordinates, i.e. pixel coordinates / 16
+local validTexPackTemplateLoc = {
+	[0] = { [1] = true, [2] = true, [3] = true, }
+}
+
+local smoothBrush
 do
 	local function isSelectedTemplate(map,x,y)
 		local level = game.level
@@ -282,9 +289,6 @@ do
 			-- make sure this tile's texture is a part of a valid patch 
 			local patchtx = tx - tx%patchTilesWide
 			local patchty = ty - ty%patchTilesHigh
-			local validTexPackTemplateLoc = {	-- stored [x][y] where x and y are tile coordinates, i.e. pixel coordinates / 16
-				[0] = { [1] = true, [2] = true, [3] = true, }
-			}
 			local row = validTexPackTemplateLoc[patchtx/patchTilesWide]
 			local valid = row and row[patchty/patchTilesHigh]
 			if not valid then return end
@@ -318,8 +322,8 @@ do
 		return isNotEmpty(map,x,y)
 	end
 
-	patchTool = {
-		name = 'Patch',
+	smoothBrush = {
+		name = 'Smooth',
 		-- names in the neighbor table of where the patch tiles are
 		paint = function(self, cx,cy)
 			local level = game.level
@@ -351,15 +355,6 @@ do
 				local selectedIndex = info.selected
 				local drawingTileType = info.drawingTileType
 				if painting then
-					-- choose the diagonal slope based on what tile type is currently selected
-					-- otherwise the slope in the patch would never change from what it was set to
-					-- TODO separate selection for patches
-					local tileDiag
-					do 
-						local selTileType = level.tileTypes[self.selectedTileTypeIndex[0]]
-						tileDiag = selTileType and selTileType.diag or 0
-					end
-
 					for y=ymin,ymax do
 						for x=xmin,xmax do
 							-- get the current tile's associated patch
@@ -380,7 +375,7 @@ do
 							local checkThisTile = drawingTileType and isNotEmpty(map,x,y) or isSelectedTemplate(map,x,y)
 							if checkThisTile then
 								for _,neighbor in ipairs(patchNeighbors) do
-									if (neighbor.diag or 0) <= tileDiag then	    -- and we're within our diagonalization precedence (0 for 90', 1 for 45', 2 for 30')
+									if (neighbor.diag or 0) <= self.smoothTileTypeIndex[0] then	    -- and we're within our diagonalization precedence (0 for 90', 1 for 45', 2 for 30')
 										local neighborIsValid = true
 										-- make sure all neighbors that should differ do differ
 										if neighbor.differOffsets then
@@ -434,9 +429,10 @@ do
 															break
 														end
 													end
+													if done then break end
 												end
-												if done then break end
 											end
+											-- don't need to check anymore neighbors -- we've found one
 											if done then break end
 										end
 									end
@@ -449,7 +445,7 @@ do
 		end,
 	}
 end
-Editor.brushOptions:insert(patchTool)
+Editor.brushOptions:insert(smoothBrush)
 
 function Editor:init()	
 	self.editTilesOrObjects = ffi.new('int[1]',0)
@@ -464,6 +460,7 @@ function Editor:init()
 	self.brushStampWidth = ffi.new('int[1]',1)
 	self.brushStampHeight = ffi.new('int[1]',1)
 	self.alignPatchToAnything = ffi.new('bool[1]',true)
+	self.smoothTileTypeIndex = ffi.new('int[1]',0)
 
 	self.fgTileWindowOpenedPtr = ffi.new('bool[1]',false)
 	self.bgTileWindowOpenedPtr = ffi.new('bool[1]',false)
@@ -583,7 +580,12 @@ function Editor:updateGUI()
 			ig.igSliderInt('Brush Tile Height', self.brushTileHeight, 1, 20)
 			ig.igSliderInt('Brush Stamp Width', self.brushStampWidth, 1, 20)
 			ig.igSliderInt('Brush Stamp Height', self.brushStampHeight, 1, 20)
-			ig.igCheckbox('Align Patch to Anything', self.alignPatchToAnything)
+			if self.brushOptions[self.selectedBrushIndex[0]] == smoothBrush then
+				ig.igCheckbox('Smooth Aligns Patch to Anything', self.alignPatchToAnything)
+				ig.igRadioButton("Smooth Tiles to 90'", self.smoothTileTypeIndex, 0)
+				ig.igRadioButton("Smooth Tiles to 45'", self.smoothTileTypeIndex, 1)
+				ig.igRadioButton("Smooth Tiles to 27'", self.smoothTileTypeIndex, 2)
+			end
 		end
 		if ig.igCollapsingHeader('Tile Type Options:',0) then
 			for i=0,#self.tileOptions do
@@ -959,8 +961,6 @@ function Editor:draw(R, viewBBox)
 end
 
 function Editor:save()
-	print('saving...')
-
 	local level = game.level
 	local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
 	
