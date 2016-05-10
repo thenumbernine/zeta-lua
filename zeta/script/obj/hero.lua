@@ -705,6 +705,8 @@ function Hero:modifyDamageTaken(damage, attacker, inflicter, side)
 end
 
 function Hero:drawHUD(R, viewBBox)
+	if Hero.super.drawHUD then Hero.super.drawHUD(self, R, viewBBox) end
+	
 	-- draw gui
 	-- health:
 	local gui = require 'base.script.singleton.gui'

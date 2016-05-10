@@ -199,9 +199,9 @@ function Object:move(moveX, moveY)
 						if testPlane then
 							local cx
 							if plane[1] > 0 then
-								cx = self.pos[1] + self.bbox.min[1] - (tile.pos[1] + level.pos[1])
+								cx = self.pos[1] + self.bbox.min[1] - (x + level.pos[1])
 							else
-								cx = self.pos[1] + self.bbox.max[1] - (tile.pos[1] + level.pos[1])
+								cx = self.pos[1] + self.bbox.max[1] - (x + level.pos[1])
 							end
 							cx = math.clamp(cx, 0, 1)
 							do --if cx >= -epsilon and cx <= 1+epsilon then
@@ -212,7 +212,7 @@ function Object:move(moveX, moveY)
 								else
 									edge = self.bbox.max[2] + epsilon
 								end
-								local destY = (cy + tile.pos[2] + level.pos[2]) - edge
+								local destY = (cy + y + level.pos[2]) - edge
 								self.pos[2] = destY --(moveY > 0 and math.min or math.max)(self.pos[2], destY)
 --print('up/down plane push to',self.pos,'bbox',self.bbox + self.pos)
 								collides = true
@@ -241,7 +241,7 @@ function Object:move(moveX, moveY)
 						else
 							self.collidedUp = true
 						end
---debugDraw:insert{tile=tile, color={0,0,1}}
+--debugDraw:insert{tile=tile, pos={x,y}, color={0,0,1}}
 						if self.touchTile then self:touchTile(tile, side, plane) end
 						if tile.touch then tile:touch(self) end
 					end
@@ -361,15 +361,15 @@ function Object:move(moveX, moveY)
 						if plane[2] > 0 then
 							local cx
 							if plane[1] > 0 then	-- plane normal facing right / slope up&left
-								cx = self.pos[1] + self.bbox.min[1] - (tile.pos[1] + level.pos[1])
+								cx = self.pos[1] + self.bbox.min[1] - (x + level.pos[1])
 							else	-- plane normal facing left / slope up&right
-								cx = self.pos[1] + self.bbox.max[1] - (tile.pos[1] + level.pos[1])
+								cx = self.pos[1] + self.bbox.max[1] - (x + level.pos[1])
 							end
 --print('tile slope collision cx=',cx)							
 							cx = math.clamp(cx, 0, 1)
 							do --if cx >= -epsilon and cx <= 1+epsilon then
 								local cy = -(cx * plane[1] + plane[3]) / plane[2]
-								local destY = (cy + tile.pos[2] + level.pos[2]) - self.bbox.min[2]
+								local destY = (cy + y + level.pos[2]) - self.bbox.min[2]
 								self.pos[2] = math.max(self.pos[2], destY)
 --print('left/right plane push up/down to',self.pos,'bbox',self.bbox + self.pos)
 								self.vel[2] = 0
@@ -377,20 +377,20 @@ function Object:move(moveX, moveY)
 								self.onground = true
 								if self.touchTile then self:touchTile(tile, 'down', plane) end
 								if tile.touch then tile:touch(self) end
---debugDraw:insert{tile=tile, color={0,1,0}}
+--debugDraw:insert{tile=tile, pos={x,y}, color={0,1,0}}
 							end
 						end
 					--[[
 						if plane[1] > 0 then
 							local cy
 							if plane[2] > 0 then
-								cy = self.pos[2] + self.bbox.min[2] - (tile.pos[2] + level.pos[2])
+								cy = self.pos[2] + self.bbox.min[2] - (y + level.pos[2])
 							else
-								cy = self.pos[2] + self.bbox.max[2] - (tile.pos[2] + level.pos[2])
+								cy = self.pos[2] + self.bbox.max[2] - (y + level.pos[2])
 							end
 							if cy >= 0 and cy <= 1 then
 								local cx = -(cy * plane[2] + plane[3]) / plane[1]
-								self.pos[1] = (cx + tile.pos[1] + level.pos[1]) - self.bbox.min[2] + epsilon
+								self.pos[1] = (cx + x + level.pos[1]) - self.bbox.min[2] + epsilon
 								collides = true
 							end
 						end
@@ -434,7 +434,7 @@ function Object:move(moveX, moveY)
 							self.vel[1] = 0
 							if self.touchTile then self:touchTile(tile, side) end
 							if tile.touch then tile:touch(self) end
---debugDraw:insert{tile=tile, color={1,0,0}}
+--debugDraw:insert{tile=tile, pos={x,y}, color={1,0,0}}
 						end
 					end
 				end
@@ -621,25 +621,27 @@ function Object:draw(R, viewBBox, holdOverride)
 		self.shader,
 		self.uniforms,
 		rcx, rcy)
+end
+
 --[[
+function Object:drawHUD(R, viewBBox)
 if #debugDraw > 0 then
 	local gl = R.gl
 	gl.glDisable(gl.GL_TEXTURE_2D)
 	gl.glBegin(gl.GL_QUADS)
 	for _,info in ipairs(debugDraw) do
 		gl.glColor3f(table.unpack(info.color))
-		local tile = info.tile
-		gl.glVertex2f(tile.pos[1], tile.pos[2])
-		gl.glVertex2f(tile.pos[1]+1, tile.pos[2])
-		gl.glVertex2f(tile.pos[1]+1, tile.pos[2]+1)
-		gl.glVertex2f(tile.pos[1], tile.pos[2]+1)
+		gl.glVertex2f(info.pos[1], info.pos[2])
+		gl.glVertex2f(info.pos[1]+1, info.pos[2])
+		gl.glVertex2f(info.pos[1]+1, info.pos[2]+1)
+		gl.glVertex2f(info.pos[1], info.pos[2]+1)
 	end
 	gl.glEnd()
 	gl.glEnable(gl.GL_TEXTURE_2D)
 	debugDraw = table()
 end
---]]
 end
+--]]
 
 local sounds = require 'base.script.singleton.sounds'
 

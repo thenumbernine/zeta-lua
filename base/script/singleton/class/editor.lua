@@ -448,15 +448,14 @@ function Editor:setTileKeys()
 			local border = 1
 			local image = Image(width, height, channels, 'unsigned char', function(i,j)
 				if i < border or j < border or i >= width-border or j >= height-border then return 0,0,0,0 end
-				if tileType.solid then
-					return 255,255,255,255
-				end
-				if tileType.diag then
+				local plane = tileType.planes and tileType.planes[1]
+				if plane then
 					local x=(i+.5)/16
 					local y=(j+.5)/16
-					local plane = tileType.planes[1]
 					local y = x * plane[1] + y * plane[2] + plane[3]
 					if y < 0 then return 255,255,255,255 end
+				elseif tileType.solid then
+					return 255,255,255,255
 				end
 				return 0,0,0,0
 			end)
@@ -552,8 +551,8 @@ function Editor:updateGUI()
 					if ig.igImageButton(
 						texIDPtr,
 						ffi.new('struct ImVec2', 32, 32), --size
-						ImVec2_00, --uv0
-						ImVec2_11, --uv1
+						ffi.new('struct ImVec2', 0, 1), --uv0
+						ffi.new('struct ImVec2', 1, 0), --uv1
 						-1,	--frame_padding
 						ImVec4_0000, --bg_color
 						ImVec4_1111)	--tint_color
@@ -902,8 +901,8 @@ function Editor:draw(R, viewBBox)
 					R:quad(
 						x, y,
 						1, 1,
-						0, 1, 
-						1, -1,
+						0, 0, 
+						1, 1,
 						0,
 						1,1,1,1)--table.unpack(colorForType(tiletype)))
 				end
