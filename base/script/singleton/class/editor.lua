@@ -28,8 +28,11 @@ Editor.active = true
 
 Editor.brushOptions = table()
 
-Editor.brushOptions:insert{
-	name='Tile',
+local paintBrush
+local smoothBrush
+
+paintBrush = {
+	name = 'Paint',
 	paint = function(self, cx, cy)
 		local level = game.level
 
@@ -83,8 +86,14 @@ Editor.brushOptions:insert{
 				end
 			end
 		end
+	
+		if self.smoothWhilePainting[0] then
+			smoothBrush.paint(self, cx, cy, self.smoothExtendedBorder[0])
+		end
 	end,
 }
+Editor.brushOptions:insert(paintBrush)
+
 Editor.brushOptions:insert{
 	name='Fill',
 	paint = function(self, x, y)
@@ -266,7 +275,6 @@ local validTexPackTemplateLoc = {
 	[0] = { [1] = true, [2] = true, [3] = true, }
 }
 
-local smoothBrush
 do
 	local function isSelectedTemplate(map,x,y)
 		local level = game.level
@@ -323,17 +331,18 @@ do
 	smoothBrush = {
 		name = 'Smooth',
 		-- names in the neighbor table of where the patch tiles are
-		paint = function(self, cx,cy)
+		paint = function(self, cx, cy, extraBorder)
+			extraBorder = extraBorder or 0
 			local level = game.level
 
 			local texpack = level.texpackTex
 			local tilesWide = texpack.width / 16
 			local tilesHigh = texpack.height / 16
 
-			local xmin = math.floor(cx - tonumber(self.brushTileWidth[0]-1)/2)
-			local ymin = math.floor(cy - tonumber(self.brushTileHeight[0]-1)/2)
-			local xmax = xmin + self.brushTileWidth[0]-1
-			local ymax = ymin + self.brushTileHeight[0]-1
+			local xmin = math.floor(cx - tonumber(self.brushTileWidth[0]-1)/2) - extraBorder
+			local ymin = math.floor(cy - tonumber(self.brushTileHeight[0]-1)/2) - extraBorder
+			local xmax = xmin + self.brushTileWidth[0]-1 + 2*extraBorder
+			local ymax = ymin + self.brushTileHeight[0]-1 + 2*extraBorder
 			if xmax < 1 then return end
 			if ymax < 1 then return end
 			if xmin > level.size[1] then return end
@@ -453,10 +462,15 @@ function Editor:init()
 	self.paintingBgTile = ffi.new('bool[1]',true)
 	self.paintingBackground = ffi.new('bool[1]',true)
 
+	-- paint & smooth brush options:
 	self.brushTileWidth = ffi.new('int[1]',1)
 	self.brushTileHeight = ffi.new('int[1]',1)
+	-- paint brush options:
 	self.brushStampWidth = ffi.new('int[1]',1)
 	self.brushStampHeight = ffi.new('int[1]',1)
+	self.smoothWhilePainting = ffi.new('bool[1]',0)
+	self.smoothExtendedBorder = ffi.new('int[1]',1)
+	-- smooth brush options:
 	self.alignPatchToAnything = ffi.new('bool[1]',true)
 	self.smoothDiagLevel = ffi.new('int[1]',0)
 
@@ -572,15 +586,27 @@ function Editor:updateGUI()
 			for i,brushOption in ipairs(self.brushOptions) do
 				ig.igRadioButton(brushOption.name..' brush', self.selectedBrushIndex, i)
 			end
-			ig.igSliderInt('Brush Tile Width', self.brushTileWidth, 1, 20)
-			ig.igSliderInt('Brush Tile Height', self.brushTileHeight, 1, 20)
-			ig.igSliderInt('Brush Stamp Width', self.brushStampWidth, 1, 20)
-			ig.igSliderInt('Brush Stamp Height', self.brushStampHeight, 1, 20)
-			if self.brushOptions[self.selectedBrushIndex[0]] == smoothBrush then
-				ig.igCheckbox('Smooth Aligns Patch to Anything', self.alignPatchToAnything)
-				ig.igRadioButton("Smooth Tiles to 90'", self.smoothDiagLevel, 0)
-				ig.igRadioButton("Smooth Tiles to 45'", self.smoothDiagLevel, 1)
-				ig.igRadioButton("Smooth Tiles to 27'", self.smoothDiagLevel, 2)
+			local brushOption = self.brushOptions[self.selectedBrushIndex[0]]
+			-- TODO paint-smoothing?  hmm, sounds dangerously contradictive
+			if brushOption == paintBrush or brushOption == smoothBrush then
+				ig.igSliderInt('Brush Width', self.brushTileWidth, 1, 20)
+				ig.igSliderInt('Brush Height', self.brushTileHeight, 1, 20)
+				if brushOption == paintBrush then
+					ig.igSliderInt('Stamp Width', self.brushStampWidth, 1, 20)
+					ig.igSliderInt('Stamp Height', self.brushStampHeight, 1, 20)
+					ig.igCheckbox('Smooth While Painting', self.smoothWhilePainting)
+					if self.smoothWhilePainting[0] then
+						ig.igSliderInt('Smooth Extended Border', self.smoothExtendedBorder, 1, 20)
+					end
+				end
+				if brushOption == smoothBrush
+				or (brushOption == paintBrush and self.smoothWhilePainting[0])
+				then
+					ig.igCheckbox('Smooth Aligns Patch to Anything', self.alignPatchToAnything)
+					ig.igRadioButton("Smooth Tiles to 90'", self.smoothDiagLevel, 0)
+					ig.igRadioButton("Smooth Tiles to 45'", self.smoothDiagLevel, 1)
+					ig.igRadioButton("Smooth Tiles to 27'", self.smoothDiagLevel, 2)
+				end
 			end
 		end
 		if ig.igCollapsingHeader('Tile Type Options:',0) then
@@ -951,15 +977,32 @@ function Editor:draw(R, viewBBox)
 		gl.glLineWidth(3)
 		local cx = math.floor(self.viewBBox.min[1] + (self.viewBBox.max[1] - self.viewBBox.min[1]) * mouse.pos[1])
 		local cy = math.floor(self.viewBBox.min[2] + (self.viewBBox.max[2] - self.viewBBox.min[2]) * mouse.pos[2])
-		local xmin = math.floor(cx - tonumber(self.brushTileWidth[0]-1)/2)
-		local ymin = math.floor(cy - tonumber(self.brushTileHeight[0]-1)/2)
-		local xmax = xmin + self.brushTileWidth[0]-1
-		local ymax = ymin + self.brushTileHeight[0]-1
+		local brushWidth, brushHeight = 1, 1
+		local brushOption = self.brushOptions[self.selectedBrushIndex[0]]
+		if brushOption == paintTile or brushOption == smoothTile then
+			brushWidth = self.brushTileWidth[0]
+			brushHeight = self.brushTileHeight[0]
+		end
+		local xmin = math.floor(cx - tonumber(brushWidth-1)/2)
+		local ymin = math.floor(cy - tonumber(brushHeight-1)/2)
+		local xmax = xmin + brushWidth-1
+		local ymax = ymin + brushHeight-1
 		R:quad(
 			xmin + .1, ymin + .1,
 			xmax - xmin + .8, ymax - ymin + .8,
 			0, 0, 1, 1, 0,
 			1, 1, 0, 1)	--color
+		if brushOption == paintTile and self.smoothWhilePainting[0] then
+			xmin = xmin - self.smoothExtendedBorder[0]
+			ymin = ymin - self.smoothExtendedBorder[0]
+			xmax = xmax + self.smoothExtendedBorder[0]
+			ymax = ymax + self.smoothExtendedBorder[0]
+			R:quad(
+				xmin + .1, ymin + .1,
+				xmax - xmin + .8, ymax - ymin + .8,
+				0, 0, 1, 1, 0,
+				0, 1, 0, 1)	--color	
+		end
 		gl.glLineWidth(1)
 		gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
 		gl.glEnable(gl.GL_TEXTURE_2D)
