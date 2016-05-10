@@ -478,60 +478,58 @@ end
 function Editor:setTileKeys()
 
 	-- tile types
-	self.tileOptions = game.levelcfg.tileTypes:map(function(tileType)
-		local tex	
-		if tileType.solid or tileType.diag then
-			local width, height = 16, 16
-			local channels = 4
-			local border = 1
-			local image = Image(width, height, channels, 'unsigned char', function(i,j)
-				if i < border or j < border or i >= width-border or j >= height-border then return 0,0,0,0 end
-				local plane = tileType.planes and tileType.planes[1]
-				if plane then
-					local x=(i+.5)/16
-					local y=(j+.5)/16
-					local y = x * plane[1] + y * plane[2] + plane[3]
-					if y < 0 then return 255,255,255,255 end
-				elseif tileType.solid then
-					return 255,255,255,255
-				end
+	local tileTypes = table(game.levelcfg.tileTypes)
+	tileTypes[0] = {name='empty'}
+	self.tileOptions = tileTypes:map(function(tileType)
+		local width, height = 16, 16
+		local channels = 4
+		local border = 1
+		local image = Image(width, height, channels, 'unsigned char', function(i,j)
+			if i < border or j < border or i >= width-border or j >= height-border then return 0,0,0,0 end
+			local plane = tileType.planes and tileType.planes[1]
+			if plane then
+				local x=(i+.5)/16
+				local y=(j+.5)/16
+				local y = x * plane[1] + y * plane[2] + plane[3]
+				if y < 0 then return 255,255,255,255 end
+			elseif tileType.solid then
+				return 255,255,255,255
+			else
 				return 0,0,0,0
-			end)
-			-- make solid image hollow
-			image = Image(image.width, image.height, image.channels, image.format, function(i,j)
-				if i > border-1 and j > border-1 and i < image.width-border-1 and j < image.height-border-1 then
-					if image.buffer[0+image.channels*(i+image.width*j)] > 0 
-					and image.buffer[0+image.channels*(i-1+image.width*j)] > 0
-					and image.buffer[0+image.channels*(i+1+image.width*j)] > 0
-					and image.buffer[0+image.channels*(i+image.width*(j-1))] > 0
-					and image.buffer[0+image.channels*(i+image.width*(j+1))] > 0
-					then
-						return 0,0,0,0
-					end
+			end
+			return 0,0,0,0
+		end)
+		-- make solid image hollow
+		image = Image(image.width, image.height, image.channels, image.format, function(i,j)
+			if i > border-1 and j > border-1 and i < image.width-border-1 and j < image.height-border-1 then
+				if image.buffer[0+image.channels*(i+image.width*j)] > 0 
+				and image.buffer[0+image.channels*(i-1+image.width*j)] > 0
+				and image.buffer[0+image.channels*(i+1+image.width*j)] > 0
+				and image.buffer[0+image.channels*(i+image.width*(j-1))] > 0
+				and image.buffer[0+image.channels*(i+image.width*(j+1))] > 0
+				then
+					return 0,0,0,0
 				end
-				return image.buffer[0+image.channels*(i+image.width*j)],
-						image.buffer[1+image.channels*(i+image.width*j)],
-						image.buffer[2+image.channels*(i+image.width*j)],
-						image.buffer[3+image.channels*(i+image.width*j)]
-			end)
-			local Tex2D = require 'gl.tex2d'
-			tex = Tex2D{
-				image = image,
-				minFilter = gl.GL_NEAREST,
-				magFilter = gl.GL_NEAREST,
-				internalFormat = gl.GL_RGBA,
-				format = gl.GL_RGBA,
-			}
+			end
+			return image.buffer[0+image.channels*(i+image.width*j)],
+					image.buffer[1+image.channels*(i+image.width*j)],
+					image.buffer[2+image.channels*(i+image.width*j)],
+					image.buffer[3+image.channels*(i+image.width*j)]
+		end)
+		local Tex2D = require 'gl.tex2d'
+		local tex = Tex2D{
+			image = image,
+			minFilter = gl.GL_NEAREST,
+			magFilter = gl.GL_NEAREST,
+			internalFormat = gl.GL_RGBA,
+			format = gl.GL_RGBA,
+		}
 	
-		end
 		return {
 			tileType = tileType,
 			tex = tex,
 		}
 	end)
-	self.tileOptions[0] = {
-		tileType = {name='empty'},
-	}
 
 	-- backgrounds
 	self.backgroundOptions = game.level.backgrounds:map(function(background)
@@ -589,19 +587,29 @@ function Editor:updateGUI()
 			for i=0,#self.tileOptions do
 				local tileOption = self.tileOptions[i]	
 				local tex = tileOption.tex
-				if tex then
-					local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
-					if ig.igImageButton(
-						texIDPtr,
-						ig.ImVec2(32, 32), --size
-						ig.ImVec2(0, 1), --uv0
-						ig.ImVec2(1, 0)) --uv1
-					then
-						self.selectedTileTypeIndex[0] = i
-					end
+				-- no-texture renders solid white.  TODO replace with a completely blank textures.
+				local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex and tex.id or 0))
+				if ig.igImageButton(
+					texIDPtr,
+					ig.ImVec2(32, 32), --size
+					ig.ImVec2(0, 1), --uv0
+					ig.ImVec2(1, 0), --uv1
+					-1,	-- frame_padding
+					i == self.selectedTileTypeIndex[0] and ig.ImVec4(1,1,0,.25) or ig.ImVec4(0,0,0,0))	-- bg_col
+				then
+					self.selectedTileTypeIndex[0] = i
+				end
+				local tileOptionsWide = 5
+				if (i+1) % tileOptionsWide > 0 and -- it would be nice if wrapping controls was automatic
+				i < #self.tileOptions then 
 					ig.igSameLine()
-				end	
-				ig.igRadioButton(tileOption.tileType.name, self.selectedTileTypeIndex, i)
+				end
+				
+				if ig.igIsItemHovered() then
+					ig.igBeginTooltip()
+					ig.igText(tileOption.tileType.name)
+					ig.igEndTooltip()
+				end
 			end
 		end
 		
