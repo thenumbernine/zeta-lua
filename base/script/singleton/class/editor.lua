@@ -260,10 +260,10 @@ local patchTemplate = {
 }
 local patchTilesWide = #patchTemplate[1]
 local patchTilesHigh = #patchTemplate
-
+print('texpack patch size',patchTilesWide,patchTilesHigh)
 local patchTool
 do
-	local function isSelectedTemplate(map,x,y,seltx,selty)
+	local function isSelectedTemplate(map,x,y)
 		local level = game.level
 		local texpack = level.texpackTex
 		local tilesWide = texpack.width / 16
@@ -279,18 +279,19 @@ do
 			local tx = (index-1)%tilesWide
 			local ty = (index-tx-1)/tilesWide
 	
-			--[[ if we must match the selected fg/bg texture's patch:
-			local i = tx - seltx
-			local j = ty - selty
-			--]]
-			-- [[ if we just must be any patch
+			-- make sure this tile's texture is a part of a valid patch 
 			local patchtx = tx - tx%patchTilesWide
 			local patchty = ty - ty%patchTilesHigh
-			-- only operate on templates matching the selected template?
-			if patchtx ~= seltx or patchty ~= selty then return end
+			local validTexPackTemplateLoc = {	-- stored [x][y] where x and y are tile coordinates, i.e. pixel coordinates / 16
+				[0] = { [1] = true, [2] = true, [3] = true, }
+			}
+			local row = validTexPackTemplateLoc[patchtx/patchTilesWide]
+			local valid = row and row[patchty/patchTilesHigh]
+			if not valid then return end
+			
 			local i = tx - patchtx
 			local j = ty - patchty
-			--]]
+			
 			local row = patchTemplate[j+1]
 			if row then
 				local name = row[i+1]
@@ -310,10 +311,10 @@ do
 		return index > 0
 	end
 
-	local function validNeighbor(self,map,x,y,seltx,selty)
+	local function validNeighbor(self,map,x,y)
 		local level = game.level
 		if x < 1 or y < 1 or x > level.size[1] or y > level.size[2] then return end
-		if not self.alignPatchToAnything[0] then return isSelectedTemplate(map,x,y,seltx,selty) end
+		if not self.alignPatchToAnything[0] then return isSelectedTemplate(map,x,y) end
 		return isNotEmpty(map,x,y)
 	end
 
@@ -350,100 +351,93 @@ do
 				local selectedIndex = info.selected
 				local drawingTileType = info.drawingTileType
 				if painting then
-					-- use diagonal based on what tile type is selected
-					-- otherwise the slope would never change from what it was set to
+					-- choose the diagonal slope based on what tile type is currently selected
+					-- otherwise the slope in the patch would never change from what it was set to
+					-- TODO separate selection for patches
 					local tileDiag
 					do 
 						local selTileType = level.tileTypes[self.selectedTileTypeIndex[0]]
 						tileDiag = selTileType and selTileType.diag or 0
 					end
 
-					-- needs to be a valid selected patch
-					if selectedIndex > 0 or drawingTileType then 
-						-- if this is fg or bg then get the current patch 
-						local seltx, selty
-						if not drawingTileType then
-							seltx = (selectedIndex-1) % tilesWide
-							selty = (selectedIndex-seltx-1) / tilesWide
-							-- [[ align to the patch upper-left corner
-							seltx = seltx - seltx%patchTilesWide
-							selty = selty - selty%patchTilesHigh
-							--]]
-							-- TODO keep track of patch locations in the texpack and verify that this section of the texpack is in fact a patch
-						end
-
-						for y=ymin,ymax do
-							for x=xmin,xmax do
-								--if not drawingTileType then use the tile's diagonal
-								-- TODO look up the tile texture in the patch and use its neighbor's diagonal ... ?
-								--[[
-								if not drawingTileType then
-									local tile = level:getTile(x,y)
-									tileDiag = tile and tile.diag or 0
+					for y=ymin,ymax do
+						for x=xmin,xmax do
+							-- get the current tile's associated patch
+							local seltx, selty
+							if not drawingTileType then
+								if x >= 1 and y >= 1 and x <= level.size[1] and y <= level.size[2] then 
+									local offset = x-1 + level.size[1] * (y-1)
+									local index = map[offset]
+									if index > 0 then
+										seltx = (index-1)%tilesWide
+										selty = (index-seltx-1)/tilesWide
+										seltx = seltx - seltx % patchTilesWide
+										selty = selty - selty % patchTilesHigh
+									end
 								end
-								--]]
-								local checkThisTile = drawingTileType and isNotEmpty(map,x,y) or isSelectedTemplate(map,x,y,seltx,selty)
-								if checkThisTile then
-									for _,neighbor in ipairs(patchNeighbors) do
-										if (neighbor.diag or 0) <= tileDiag then	    -- and we're within our diagonalization precedence (0 for 90', 1 for 45', 2 for 30')
-											local neighborIsValid = true
-											-- make sure all neighbors that should differ do differ
-											if neighbor.differOffsets then
-												for _,offset in ipairs(neighbor.differOffsets) do
-													-- if not 'alignPatchToAnything' then only go by same templates. otherwise - go by anything 
-													-- if drawing tile type then just check if it's empty.  TODO still only consider matching templates!
-													if drawingTileType and isNotEmpty(map,x+offset[1],y+offset[2])
-													or validNeighbor(self,map,x+offset[1], y+offset[2],seltx,selty)
-													then
-														neighborIsValid = false
-														break
-													end
+							end
+							-- for fg/bg (drawingTileType == 0), if the fg/bg tex is part of a patch, then align it.  if it's not, ignore it.
+							local checkThisTile = drawingTileType and isNotEmpty(map,x,y) or isSelectedTemplate(map,x,y)
+							if checkThisTile then
+								for _,neighbor in ipairs(patchNeighbors) do
+									if (neighbor.diag or 0) <= tileDiag then	    -- and we're within our diagonalization precedence (0 for 90', 1 for 45', 2 for 30')
+										local neighborIsValid = true
+										-- make sure all neighbors that should differ do differ
+										if neighbor.differOffsets then
+											for _,offset in ipairs(neighbor.differOffsets) do
+												-- if not 'alignPatchToAnything' then only go by same templates. otherwise - go by anything 
+												-- if drawing tile type then just check if it's empty.  TODO still only consider matching templates!
+												if drawingTileType and isNotEmpty(map,x+offset[1],y+offset[2])
+												or validNeighbor(self,map,x+offset[1], y+offset[2])
+												then
+													neighborIsValid = false
+													break
 												end
 											end
-											-- make sure all neighbors that should match do match
-											if neighborIsValid and neighbor.matchOffsets then
-												for _,offset in ipairs(neighbor.matchOffsets) do
-													-- same test as above
-													if drawingTileType and isNotEmpty(map,x+offset[1],y+offset[2])
-													or validNeighbor(self,map,x+offset[1], y+offset[2],seltx,selty)
-													then
-														neighborIsValid = false
-														break
-													end
+										end
+										-- make sure all neighbors that should match do match
+										if neighborIsValid and neighbor.matchOffsets then
+											for _,offset in ipairs(neighbor.matchOffsets) do
+												-- same test as above
+												if drawingTileType and isNotEmpty(map,x+offset[1],y+offset[2])
+												or validNeighbor(self,map,x+offset[1], y+offset[2])
+												then
+													neighborIsValid = false
+													break
 												end
 											end
-											if neighborIsValid then
-												-- find the offset in the patch that this neighbor represents
-												local done = false
-												if drawingTileType then
-													-- convert neighbor name to tileType
-													local tileTypeIndex = level.tileTypes:find(nil, function(tileType)
-														if neighbor.diag then
-															return tileType.name == neighbor.name
-														end
-														return tileType.name == 'solid'
-													end)
-													map[x-1+level.size[1]*(y-1)] = tileTypeIndex or 0
-													if tileTypeIndex then done = true end
-												else
-													for j,row in ipairs(patchTemplate) do
-														for i,name in ipairs(row) do
-															if name == neighbor.name then
-																-- TODO instead of painting the selected patch,
-																--  use the patch that the current tile belongs to
-																local tx = seltx + i-1
-																local ty = selty + j-1
-																-- ... and paint it on the foreground
-																map[x-1+level.size[1]*(y-1)] = 1+tx+tilesWide*ty
-																done = true
-																break
-															end
+										end
+										if neighborIsValid then
+											-- find the offset in the patch that this neighbor represents
+											local done = false
+											if drawingTileType then
+												-- convert neighbor name to tileType
+												local tileTypeIndex = level.tileTypes:find(nil, function(tileType)
+													if neighbor.diag then
+														return tileType.name == neighbor.name
+													end
+													return tileType.name == 'solid'
+												end)
+												map[x-1+level.size[1]*(y-1)] = tileTypeIndex or 0
+												if tileTypeIndex then done = true end
+											else
+												for j,row in ipairs(patchTemplate) do
+													for i,name in ipairs(row) do
+														if name == neighbor.name then
+															-- TODO instead of painting the selected patch,
+															--  use the patch that the current tile belongs to
+															local tx = seltx + i-1
+															local ty = selty + j-1
+															-- ... and paint it on the foreground
+															map[x-1+level.size[1]*(y-1)] = 1+tx+tilesWide*ty
+															done = true
+															break
 														end
 													end
-													if done then break end
 												end
 												if done then break end
 											end
+											if done then break end
 										end
 									end
 								end
