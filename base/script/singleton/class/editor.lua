@@ -260,7 +260,7 @@ local patchNeighbors = {
 	
 	{name='c', differOffsets={}},
 }
--- note: 1) we're missing three-way tiles, (i.e. ulr dlr uld urd) and 2) some are doubled: l2r and r2l
+-- note: (1) we're missing three-way tiles, (i.e. ulr dlr uld urd) and (2) some are doubled: l2r and r2l and (3) we don't have 27 degree upward slopes
 local patchTemplate = {
 	{'ul',	'u',	'ur',	'd2r',	'l2r',	'l2d',	'',		'u3',	'',		'ul-diag45',	'ur-diag45',	'ul2-diag27', 'ul1-diag27',	'ur1-diag27',	'ur2-diag27',	},
 	{'l',	'c',	'r',	'u2d',''--[[c8--]],'u2d','l3',	'c4',	'r3',	'uli-diag45',	'uri-diag45',	'ul3-diag27', 'dri',		'dli',			'ur3-diag27',	},
@@ -315,7 +315,11 @@ do
 
 	local function isNotEmpty(map,x,y)
 		local level = game.level
-		if x < 1 or y < 1 or x > level.size[1] or y > level.size[2] then return end
+		-- if we're oob then should we consider the neighbor as bad?
+		-- TODO only if 'patch with any neighbor' is set
+		if x < 1 or y < 1 or x > level.size[1] or y > level.size[2] then
+			return
+		end
 		local offset = x-1 + level.size[1] * (y-1)
 		local index = map[offset]
 		return index > 0
