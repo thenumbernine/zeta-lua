@@ -146,7 +146,8 @@ local patchTool = {
 		if xmax > level.size[1] then xmax = level.size[1] end
 		if ymax > level.size[2] then ymax = level.size[2] end
 		
-		local function isTemplate(x,y)
+		local function isSelectedTemplate(x,y)
+			if x < 1 or y < 1 or x > level.size[1] or y > level.size[2] then return end
 			-- read the fg tile at the tile  
 			local offset = x-1 + level.size[1] * (y-1)
 			local index = level.fgTileMap[offset]
@@ -167,12 +168,25 @@ local patchTool = {
 				end	
 			end
 		end
-		
+	
+		local function isNotEmpty(x,y)
+			if x < 1 or y < 1 or x > level.size[1] or y > level.size[2] then return end
+			local offset = x-1 + level.size[1] * (y-1)
+			local index = level.fgTileMap[offset]
+			return index > 0
+		end
+
+		local function validNeighbor(x,y)
+			if x < 1 or y < 1 or x > level.size[1] or y > level.size[2] then return end
+			if not self.alignPatchToAnything[0] then return isSelectedTemplate(x,y) end
+			return isNotEmpty(x,y)
+		end
+
 		for y=ymin,ymax do
 			for x=xmin,xmax do
 				local tile = level:getTile(x,y)
 				if tile then
-					local ct = isTemplate(x,y)
+					local ct = isSelectedTemplate(x,y)
 					if ct then
 						for _,neighbor in ipairs(patchNeighbors) do
 							if (neighbor.diag or 0) <= (tile.diag or 0)	    -- and we're within our diagonalization precedence (0 for 90', 1 for 45', 2 for 30')
@@ -181,8 +195,9 @@ local patchTool = {
 								-- make sure all neighbors that should differ do differ
 								if neighbor.differOffsets then
 									for _,offset in ipairs(neighbor.differOffsets) do
-										-- hmm ... first seam comes from the seam map, second seam is a class-opt define
-										if isTemplate(x+offset[1], y+offset[2]) then
+										-- if not 'alignPatchToAnything' then only go by same templates
+										-- otherwise - go by anything 
+										if validNeighbor(x+offset[1], y+offset[2]) then
 											neighborIsValid = false
 											break
 										end
@@ -191,7 +206,7 @@ local patchTool = {
 								-- make sure all neighbors that should match do match
 								if neighborIsValid and neighbor.matchOffsets then
 									for _,offset in ipairs(neighbor.matchOffsets) do
-										if isTemplate(x+offset[1], y+offset[2]) then
+										if validNeighbor(x+offset[1], y+offset[2]) then
 											neighborIsValid = false
 											break
 										end
@@ -389,6 +404,7 @@ function Editor:init()
 	self.brushTileHeight = ffi.new('int[1]',1)
 	self.brushStampWidth = ffi.new('int[1]',1)
 	self.brushStampHeight = ffi.new('int[1]',1)
+	self.alignPatchToAnything = ffi.new('bool[1]',true)
 
 	self.selectedBrushIndex = ffi.new('int[1]',1)
 	
@@ -399,7 +415,7 @@ function Editor:init()
 	self.selectedSpawnIndex = ffi.new('int[1]',0)
 
 	self.showTileTypes = ffi.new('bool[1]',true)
-	self.noClipping = ffi.new('bool[1]',false)	
+	self.noClipping = ffi.new('bool[1]',false)
 end
 
 function Editor:setTileKeys()
@@ -459,6 +475,7 @@ function Editor:updateGUI()
 			ig.igSliderInt('Brush Tile Height', self.brushTileHeight, 1, 20, '%.0f')
 			ig.igSliderInt('Brush Stamp Width', self.brushStampWidth, 1, 20, '%.0f')
 			ig.igSliderInt('Brush Stamp Height', self.brushStampHeight, 1, 20, '%.0f')
+			ig.igCheckbox('Align Patch to Anything', self.alignPatchToAnything)
 		end
 		if ig.igCollapsingHeader('Tile Type Options:',0) then
 			for i=0,#self.tileOptions do
