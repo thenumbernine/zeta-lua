@@ -88,7 +88,7 @@ paintBrush = {
 		end
 	
 		if self.smoothWhilePainting[0] then
-			smoothBrush.paint(self, cx, cy, self.smoothExtendedBorder[0])
+			smoothBrush.paint(self, cx, cy, self.smoothExtraBorder[0])
 		end
 	end,
 }
@@ -469,7 +469,7 @@ function Editor:init()
 	self.brushStampWidth = ffi.new('int[1]',1)
 	self.brushStampHeight = ffi.new('int[1]',1)
 	self.smoothWhilePainting = ffi.new('bool[1]',0)
-	self.smoothExtendedBorder = ffi.new('int[1]',1)
+	self.smoothExtraBorder = ffi.new('int[1]',1)
 	-- smooth brush options:
 	self.alignPatchToAnything = ffi.new('bool[1]',true)
 	self.smoothDiagLevel = ffi.new('int[1]',0)
@@ -596,7 +596,7 @@ function Editor:updateGUI()
 					ig.igSliderInt('Stamp Height', self.brushStampHeight, 1, 20)
 					ig.igCheckbox('Smooth While Painting', self.smoothWhilePainting)
 					if self.smoothWhilePainting[0] then
-						ig.igSliderInt('Smooth Extended Border', self.smoothExtendedBorder, 1, 20)
+						ig.igSliderInt('Smooth Extra Border', self.smoothExtraBorder, 0, 10)
 					end
 				end
 				if brushOption == smoothBrush
@@ -993,10 +993,10 @@ function Editor:draw(R, viewBBox)
 			0, 0, 1, 1, 0,
 			1, 1, 0, 1)	--color
 		if brushOption == paintBrush and self.smoothWhilePainting[0] then
-			xmin = xmin - self.smoothExtendedBorder[0]
-			ymin = ymin - self.smoothExtendedBorder[0]
-			xmax = xmax + self.smoothExtendedBorder[0]
-			ymax = ymax + self.smoothExtendedBorder[0]
+			xmin = xmin - self.smoothExtraBorder[0]
+			ymin = ymin - self.smoothExtraBorder[0]
+			xmax = xmax + self.smoothExtraBorder[0]
+			ymax = ymax + self.smoothExtraBorder[0]
 			R:quad(
 				xmin + .1, ymin + .1,
 				xmax - xmin + .8, ymax - ymin + .8,
