@@ -26,220 +26,6 @@ local Editor = class()
 
 Editor.active = true
 
---[[
-select the upper-left corner of a preset patch
-this looks over the tiles under it
-for any that are in the patch, converts them to the correct patch tile, based on the neighbors
---]]
-local patchNeighbors = {
-	{name='u3', differOffsets={{-1,0},{0,1},{1,0}}}, -- upward, 3 sides empty
-	{name='d3', differOffsets={{-1,0},{0,-1},{1,0}}}, -- downward, 3 sides empty
-	{name='l3', differOffsets={{-1,0},{0,1},{0,-1}}}, -- leftward
-	{name='r3', differOffsets={{1,0},{0,1},{0,-1}}}, -- rightward
-
-	{name='d2r', differOffsets={{-1,0}, {0,1}, {1,-1}}}, -- pipe down to right
-	{name='l2d', differOffsets={{1,0}, {0,1}, {-1,-1}}}, -- pipe left to down
-	{name='u2r', differOffsets={{-1,0}, {0,-1}, {1,1}}}, -- pipe up to right
-	{name='l2u', differOffsets={{1,0}, {0,-1}, {-1,1}}}, -- pipe left to up
-	{name='l2r', differOffsets={{0,1},{0,-1}}}, -- pipe left to right
-	{name='u2d', differOffsets={{1,0},{-1,0}}}, -- pipe up to down
-
-	{name='ul2-diag27', diag=2, planes={{-1,2,0}}, differOffsets={{1,1}, {0,1}, {-1,0}}, matchOffsets={{1,0}, {-1,-1}}},					   -- upper left diagonal 27' part 2
-	{name='ul1-diag27', diag=2, planes={{-1,2,-1}}, differOffsets={{0,1}, {-1,1}, {-2,0}}, matchOffsets={{-1,0}, {1,0}, {-2,-1}}},			 -- upper left diagonal 27' part 1
-	{name='ur2-diag27', diag=2, planes={{1,2,-1}}, differOffsets={{-1,1}, {0,1}, {1,0}}, matchOffsets={{-1,0}, {1,-1}}},			-- upper right diagonal 27' part 2
-	{name='ur1-diag27', diag=2, planes={{1,2,-2}}, differOffsets={{0,1}, {1,1}, {2,0}}, matchOffsets={{-1,0}, {1,0}, {2,-1}}},			  -- upper right diagonal 27' part 1
-
-	{name='ll2-diag27', diag=2, planes={{-1,-2,2}}, differOffsets={{1,-1}, {0,-1}, {-1,0}}, matchOffsets={{1,0}, {-1,1}}},					   -- lower left diagonal 27' part 2
-	{name='ll1-diag27', diag=2, planes={{-1,-2,1}}, differOffsets={{0,-1}, {-1,-1}, {-2,0}}, matchOffsets={{-1,0}, {1,0}, {-2,1}}},			 -- lower left diagonal 27' part 1
-	{name='lr2-diag27', diag=2, planes={{1,-2,0}}, differOffsets={{-1,-1}, {0,-1}, {1,0}}, matchOffsets={{-1,0}, {1,1}}},			-- lower right diagonal 27' part 2
-	{name='lr1-diag27', diag=2, planes={{1,-2,1}}, differOffsets={{0,-1}, {1,-1}, {2,0}}, matchOffsets={{-1,0}, {1,0}, {2,1}}},			  -- lower right diagonal 27' part 1
-
-	{name='ul-diag45', diag=1, planes={{-1,1,0}}, differOffsets={{0,1},{-1,0}}},							   -- upper left diagonal 45'
-	{name='ur-diag45', diag=1, planes={{1,1,-1}}, differOffsets={{0,1},{1,0}}},															 -- upper right diagonal 45'
-	{name='ll-diag45', diag=1, planes={{-1,-1,1}}, differOffsets={{0,-1},{-1,0}}},  -- lower left diagonal 45'
-	{name='lr-diag45', diag=1, planes={{1,-1,0}}, differOffsets={{0,-1},{1,0}}},						 -- lower right diagonal 45'
-	
-	{name='ui', differOffsets={{1,0}, {-1,0}, {0,-1}}},	 -- up, inverse
-	{name='di', differOffsets={{1,0}, {-1,0}, {0,1}}},   -- down, inverse
-	{name='li', differOffsets={{1,0}, {0,1}, {0,-1}}}, -- left, inverse
-	{name='ri', differOffsets={{-1,0}, {0,1}, {0,-1}}},	 -- right, inverse
-	
-	{name='ul', differOffsets={{0,1}, {-1,0}}},									 -- upper left
-	{name='ur', differOffsets={{0,1}, {1,0}}},									  -- upper right
-	{name='ll', differOffsets={{0,-1}, {-1,0}}},		 -- lower left
-	{name='lr', differOffsets={{0,-1}, {1,0}}},		  -- lower right
-	
-	{name='u', differOffsets={{0,1}}},							  -- up
-	{name='r', differOffsets={{1,0}}},							  -- right
-	{name='l', differOffsets={{-1,0}}},							 -- left
-	{name='d', differOffsets={{0,-1}}},							 -- down
-	
-	--[[ breaks fence
-	{name='l-notsolid', differOffsets={{-1,0}}, notsolid=true},	 -- left, not solid
-	{name='r-notsolid', differOffsets={{1,0}}, notsolid=true},	  -- right, not solid
-	--]]
-
-	{name='ul3-diag27', diag=2, differOffsets={{1,2}, {0,2}, {-1,1}, {-2,1}}}, -- upper left diagonal 27' part 3
-	{name='ur3-diag27', diag=2, differOffsets={{-1,2}, {0,2}, {1,1}, {2,1}}},									   -- upper right diagonal 27' part 3
-	
-	{name='ll3-diag27', diag=2, differOffsets={{1,-2}, {0,-2}, {-1,-1}, {-2,-1}}}, -- lower left diagonal 27' part 3
-	{name='lr3-diag27', diag=2, differOffsets={{-1,-2}, {0,-2}, {1,-1}, {2,-1}}},									   -- upper right diagonal 27' part 3
-
-	{name='uli-diag45', diag=1, differOffsets={{-1,1}}},							   -- upper left diagonal inverse 45'
-	{name='uri-diag45', diag=1, differOffsets={{1,1}}},													 -- upper right diagonal inverse 45'
-	{name='lli-diag45', diag=1, differOffsets={{-1,-1}}},   -- lower left diagonal inverse 45'
-	{name='lri-diag45', diag=1, differOffsets={{1,-1}}},						 -- lower right diagonal inverse 45'
-
-	{name='uli', differOffsets={{-1,1}}},												   -- upper left inverse
-	{name='uri', differOffsets={{1,1}}},													-- upper right inverse
-	{name='lli', differOffsets={{-1,-1}}},							   -- lower left inverse
-	{name='lri', differOffsets={{1,-1}}},								-- lower right inverse
-	
-	{name='c4', differOffsets={{1,1},{-1,1},{1,-1},{-1,-1}}}, -- center, with diagonals missing
-	
-	{name='c8', differOffsets={{-1,-1},{0,-1},{1,-1},{1,0},{1,1},{0,1},{-1,1},{-1,0}}}, -- center, with nothing around it 
-	
-	{name='c', differOffsets={}},
-}
-local patchTemplate = {
-	{'ul',	'u',	'ur',	'd2r',	'l2r',	'l2d',	'',		'u3',	'',		'ul-diag45',	'ur-diag45',	'',				'',				},
-	{'l',	'c',	'r',	'u2d',	'c8',	'u2d',	'l3',	'c4',	'r3',	'uli-diag45',	'uri-diag45',	'ur1-diag27',	'ur2-diag27',	},
-	{'ll',	'd',	'lr',	'u2r',	'l2r',	'l2u',	'',		'd3',	'',		'lri',			'lli',			'ur4-diag27',	'ur3-diag27',	},
-	{'',	'',		'',		'',		'',		'',		'',		'',		'',		'uri',			'uli',			'',				'',				},
-}
---[[ new:
-local patchTemplate = {
-	{'ul',	'u',	'ur',	'd2r',	'l2r',	'l2d',	'',		'u3',	'',		'ul-diag45',	'ur-diag45',	'ul2-diag27', 'ul1-diag27',	'ur1-diag27',	'ur2-diag27',	},
-	{'l',	'c',	'r',	'u2d',	'c8',	'u2d',	'l3',	'c4',	'r3',	'uli-diag45',	'uri-diag45',	'ul3-diag27', 'lri',		'lli',			'ur3-diag27',	},
-	{'ll',	'd',	'lr',	'u2r',	'l2r',	'l2u',	'',		'd3',	'',		'lli-diag45',	'lri-diag45',	'll3-diag27', 'uri',		'uli',			'lr3-diag27',	},
-	{'',	'',		'',		'',		'',		'',		'',		'',		'',		'll-diag45',	'lr-diag45',	'll2-diag27', 'll1-diag27',	'lr1-diag27',	'lr2-diag27',	},
-}
---]]
-local patchTool = {
-	name = 'Patch',
-	-- names in the neighbor table of where the patch tiles are
-	paint = function(self, cx,cy)
-		local level = game.level
-
-		local texpack = level.texpackTex
-		local tilesWide = texpack.width / 16
-		local tilesHigh = texpack.height / 16
-
-		-- needs to be a valid selected patch
-		if self.selectedFgTileIndex == 0 then return end
-		local fgtx = (self.selectedFgTileIndex-1) % tilesWide
-		local fgty = (self.selectedFgTileIndex-fgtx-1) / tilesWide
-		
-		local bgtx = (self.selectedBgTileIndex-1) % tilesWide
-		local bgty = (self.selectedBgTileIndex-bgtx-1) / tilesWide
-
-		local xmin = math.floor(cx - tonumber(self.brushTileWidth[0]-1)/2)
-		local ymin = math.floor(cy - tonumber(self.brushTileHeight[0]-1)/2)
-		local xmax = xmin + self.brushTileWidth[0]-1
-		local ymax = ymin + self.brushTileHeight[0]-1
-		if xmax < 1 then return end
-		if ymax < 1 then return end
-		if xmin > level.size[1] then return end
-		if ymin > level.size[2] then return end
-		if xmin < 1 then xmin = 1 end
-		if ymin < 1 then ymin = 1 end
-		if xmax > level.size[1] then xmax = level.size[1] end
-		if ymax > level.size[2] then ymax = level.size[2] end
-		
-		local function isSelectedTemplate(x,y)
-			if x < 1 or y < 1 or x > level.size[1] or y > level.size[2] then return end
-			-- read the fg tile at the tile  
-			local offset = x-1 + level.size[1] * (y-1)
-			local index = level.fgTileMap[offset]
-			if index > 0 then
-				-- see if it exists at the 2d offset from the selected fg tile index (check 'patchObj.patch' above)
-				local tx = (index-1)%tilesWide
-				local ty = (index-tx-1)/tilesWide
-				
-				local i = tx - fgtx
-				local j = ty - fgty
-				local row = patchTemplate[j+1]
-				if row then
-					local name = row[i+1]
-					if name then
-						if name == '' then return end
-						return true	
-					end
-				end	
-			end
-		end
-	
-		local function isNotEmpty(x,y)
-			if x < 1 or y < 1 or x > level.size[1] or y > level.size[2] then return end
-			local offset = x-1 + level.size[1] * (y-1)
-			local index = level.fgTileMap[offset]
-			return index > 0
-		end
-
-		local function validNeighbor(x,y)
-			if x < 1 or y < 1 or x > level.size[1] or y > level.size[2] then return end
-			if not self.alignPatchToAnything[0] then return isSelectedTemplate(x,y) end
-			return isNotEmpty(x,y)
-		end
-
-		for y=ymin,ymax do
-			for x=xmin,xmax do
-				local tile = level:getTile(x,y)
-				if tile then
-					local ct = isSelectedTemplate(x,y)
-					if ct then
-						for _,neighbor in ipairs(patchNeighbors) do
-							if (neighbor.diag or 0) <= (tile.diag or 0)	    -- and we're within our diagonalization precedence (0 for 90', 1 for 45', 2 for 30')
-							then
-								local neighborIsValid = true
-								-- make sure all neighbors that should differ do differ
-								if neighbor.differOffsets then
-									for _,offset in ipairs(neighbor.differOffsets) do
-										-- if not 'alignPatchToAnything' then only go by same templates
-										-- otherwise - go by anything 
-										if validNeighbor(x+offset[1], y+offset[2]) then
-											neighborIsValid = false
-											break
-										end
-									end
-								end
-								-- make sure all neighbors that should match do match
-								if neighborIsValid and neighbor.matchOffsets then
-									for _,offset in ipairs(neighbor.matchOffsets) do
-										if validNeighbor(x+offset[1], y+offset[2]) then
-											neighborIsValid = false
-											break
-										end
-									end
-								end
-								if neighborIsValid then
-									-- find the offset in the patch that this neighbor represents
-									local done = false
-									for j,row in ipairs(patchTemplate) do
-										for i,name in ipairs(row) do
-											if name == neighbor.name then
-												local tx = fgtx + i-1
-												local ty = fgty + j-1
-												-- ... and paint it on the foreground
-												level.fgTileMap[x-1+level.size[1]*(y-1)] = 1+tx+tilesWide*ty
-												done = true
-												break
-											end
-										end
-										if done then break end
-									end
-									if done then break end
-								end
-							end
-						end
-					end
-				end
-			end
-		end
-	end,
-}
-
-
 Editor.brushOptions = table()
 
 Editor.brushOptions:insert{
@@ -390,6 +176,226 @@ Editor.brushOptions:insert{
 		threads:add(thread)
 	end,
 }
+
+--[[
+select the upper-left corner of a preset patch
+this looks over the tiles under it
+for any that are in the patch, converts them to the correct patch tile, based on the neighbors
+--]]
+local patchNeighbors = {
+	{name='u3', differOffsets={{-1,0},{0,1},{1,0}}}, -- upward, 3 sides empty
+	{name='d3', differOffsets={{-1,0},{0,-1},{1,0}}}, -- downward, 3 sides empty
+	{name='l3', differOffsets={{-1,0},{0,1},{0,-1}}}, -- leftward
+	{name='r3', differOffsets={{1,0},{0,1},{0,-1}}}, -- rightward
+
+	{name='d2r', differOffsets={{-1,0}, {0,1}, {1,-1}}}, -- pipe down to right
+	{name='l2d', differOffsets={{1,0}, {0,1}, {-1,-1}}}, -- pipe left to down
+	{name='u2r', differOffsets={{-1,0}, {0,-1}, {1,1}}}, -- pipe up to right
+	{name='l2u', differOffsets={{1,0}, {0,-1}, {-1,1}}}, -- pipe left to up
+	{name='l2r', differOffsets={{0,1},{0,-1}}}, -- pipe left to right
+	{name='u2d', differOffsets={{1,0},{-1,0}}}, -- pipe up to down
+
+	{name='ul2-diag27', diag=2, planes={{-1,2,0}}, differOffsets={{1,1}, {0,1}, {-1,0}}, matchOffsets={{1,0}, {-1,-1}}},					   -- upper left diagonal 27' part 2
+	{name='ul1-diag27', diag=2, planes={{-1,2,-1}}, differOffsets={{0,1}, {-1,1}, {-2,0}}, matchOffsets={{-1,0}, {1,0}, {-2,-1}}},			 -- upper left diagonal 27' part 1
+	{name='ur2-diag27', diag=2, planes={{1,2,-1}}, differOffsets={{-1,1}, {0,1}, {1,0}}, matchOffsets={{-1,0}, {1,-1}}},			-- upper right diagonal 27' part 2
+	{name='ur1-diag27', diag=2, planes={{1,2,-2}}, differOffsets={{0,1}, {1,1}, {2,0}}, matchOffsets={{-1,0}, {1,0}, {2,-1}}},			  -- upper right diagonal 27' part 1
+
+	{name='ll2-diag27', diag=2, planes={{-1,-2,2}}, differOffsets={{1,-1}, {0,-1}, {-1,0}}, matchOffsets={{1,0}, {-1,1}}},					   -- lower left diagonal 27' part 2
+	{name='ll1-diag27', diag=2, planes={{-1,-2,1}}, differOffsets={{0,-1}, {-1,-1}, {-2,0}}, matchOffsets={{-1,0}, {1,0}, {-2,1}}},			 -- lower left diagonal 27' part 1
+	{name='lr2-diag27', diag=2, planes={{1,-2,0}}, differOffsets={{-1,-1}, {0,-1}, {1,0}}, matchOffsets={{-1,0}, {1,1}}},			-- lower right diagonal 27' part 2
+	{name='lr1-diag27', diag=2, planes={{1,-2,1}}, differOffsets={{0,-1}, {1,-1}, {2,0}}, matchOffsets={{-1,0}, {1,0}, {2,1}}},			  -- lower right diagonal 27' part 1
+
+	{name='ul-diag45', diag=1, planes={{-1,1,0}}, differOffsets={{0,1},{-1,0}}},							   -- upper left diagonal 45'
+	{name='ur-diag45', diag=1, planes={{1,1,-1}}, differOffsets={{0,1},{1,0}}},															 -- upper right diagonal 45'
+	{name='ll-diag45', diag=1, planes={{-1,-1,1}}, differOffsets={{0,-1},{-1,0}}},  -- lower left diagonal 45'
+	{name='lr-diag45', diag=1, planes={{1,-1,0}}, differOffsets={{0,-1},{1,0}}},						 -- lower right diagonal 45'
+	
+	{name='ui', differOffsets={{1,0}, {-1,0}, {0,-1}}},	 -- up, inverse
+	{name='di', differOffsets={{1,0}, {-1,0}, {0,1}}},   -- down, inverse
+	{name='li', differOffsets={{1,0}, {0,1}, {0,-1}}}, -- left, inverse
+	{name='ri', differOffsets={{-1,0}, {0,1}, {0,-1}}},	 -- right, inverse
+	
+	{name='ul', differOffsets={{0,1}, {-1,0}}},									 -- upper left
+	{name='ur', differOffsets={{0,1}, {1,0}}},									  -- upper right
+	{name='ll', differOffsets={{0,-1}, {-1,0}}},		 -- lower left
+	{name='lr', differOffsets={{0,-1}, {1,0}}},		  -- lower right
+	
+	{name='u', differOffsets={{0,1}}},							  -- up
+	{name='r', differOffsets={{1,0}}},							  -- right
+	{name='l', differOffsets={{-1,0}}},							 -- left
+	{name='d', differOffsets={{0,-1}}},							 -- down
+	
+	--[[ breaks fence
+	{name='l-notsolid', differOffsets={{-1,0}}, notsolid=true},	 -- left, not solid
+	{name='r-notsolid', differOffsets={{1,0}}, notsolid=true},	  -- right, not solid
+	--]]
+
+	{name='ul3-diag27', diag=2, differOffsets={{1,2}, {0,2}, {-1,1}, {-2,1}}}, -- upper left diagonal 27' part 3
+	{name='ur3-diag27', diag=2, differOffsets={{-1,2}, {0,2}, {1,1}, {2,1}}},									   -- upper right diagonal 27' part 3
+	
+	{name='ll3-diag27', diag=2, differOffsets={{1,-2}, {0,-2}, {-1,-1}, {-2,-1}}}, -- lower left diagonal 27' part 3
+	{name='lr3-diag27', diag=2, differOffsets={{-1,-2}, {0,-2}, {1,-1}, {2,-1}}},									   -- upper right diagonal 27' part 3
+
+	{name='uli-diag45', diag=1, differOffsets={{-1,1}}},							   -- upper left diagonal inverse 45'
+	{name='uri-diag45', diag=1, differOffsets={{1,1}}},													 -- upper right diagonal inverse 45'
+	{name='lli-diag45', diag=1, differOffsets={{-1,-1}}},   -- lower left diagonal inverse 45'
+	{name='lri-diag45', diag=1, differOffsets={{1,-1}}},						 -- lower right diagonal inverse 45'
+
+	{name='uli', differOffsets={{-1,1}}},												   -- upper left inverse
+	{name='uri', differOffsets={{1,1}}},													-- upper right inverse
+	{name='lli', differOffsets={{-1,-1}}},							   -- lower left inverse
+	{name='lri', differOffsets={{1,-1}}},								-- lower right inverse
+	
+	{name='c4', differOffsets={{1,1},{-1,1},{1,-1},{-1,-1}}}, -- center, with diagonals missing
+	
+	{name='c8', differOffsets={{-1,-1},{0,-1},{1,-1},{1,0},{1,1},{0,1},{-1,1},{-1,0}}}, -- center, with nothing around it 
+	
+	{name='c', differOffsets={}},
+}
+local patchTemplate = {
+	{'ul',	'u',	'ur',	'd2r',	'l2r',	'l2d',	'',		'u3',	'',		'ul-diag45',	'ur-diag45',	'',				'',				},
+	{'l',	'c',	'r',	'u2d',	'c8',	'u2d',	'l3',	'c4',	'r3',	'uli-diag45',	'uri-diag45',	'ur1-diag27',	'ur2-diag27',	},
+	{'ll',	'd',	'lr',	'u2r',	'l2r',	'l2u',	'',		'd3',	'',		'lri',			'lli',			'ur4-diag27',	'ur3-diag27',	},
+	{'',	'',		'',		'',		'',		'',		'',		'',		'',		'uri',			'uli',			'',				'',				},
+}
+--[[ new:
+local patchTemplate = {
+	{'ul',	'u',	'ur',	'd2r',	'l2r',	'l2d',	'',		'u3',	'',		'ul-diag45',	'ur-diag45',	'ul2-diag27', 'ul1-diag27',	'ur1-diag27',	'ur2-diag27',	},
+	{'l',	'c',	'r',	'u2d',	'c8',	'u2d',	'l3',	'c4',	'r3',	'uli-diag45',	'uri-diag45',	'ul3-diag27', 'lri',		'lli',			'ur3-diag27',	},
+	{'ll',	'd',	'lr',	'u2r',	'l2r',	'l2u',	'',		'd3',	'',		'lli-diag45',	'lri-diag45',	'll3-diag27', 'uri',		'uli',			'lr3-diag27',	},
+	{'',	'',		'',		'',		'',		'',		'',		'',		'',		'll-diag45',	'lr-diag45',	'll2-diag27', 'll1-diag27',	'lr1-diag27',	'lr2-diag27',	},
+}
+--]]
+local patchTool = {
+	name = 'Patch',
+	-- names in the neighbor table of where the patch tiles are
+	paint = function(self, cx,cy)
+		local level = game.level
+
+		local texpack = level.texpackTex
+		local tilesWide = texpack.width / 16
+		local tilesHigh = texpack.height / 16
+
+		local xmin = math.floor(cx - tonumber(self.brushTileWidth[0]-1)/2)
+		local ymin = math.floor(cy - tonumber(self.brushTileHeight[0]-1)/2)
+		local xmax = xmin + self.brushTileWidth[0]-1
+		local ymax = ymin + self.brushTileHeight[0]-1
+		if xmax < 1 then return end
+		if ymax < 1 then return end
+		if xmin > level.size[1] then return end
+		if ymin > level.size[2] then return end
+		if xmin < 1 then xmin = 1 end
+		if ymin < 1 then ymin = 1 end
+		if xmax > level.size[1] then xmax = level.size[1] end
+		if ymax > level.size[2] then ymax = level.size[2] end
+
+		for _,side in ipairs{'Fg', 'Bg'} do
+			local lc = side:lower()	
+			if self['painting'..side..'Tile'][0] then
+				local map = level[lc..'TileMap']
+				local selectedIndex = self['selected'..side..'TileIndex']
+
+				-- needs to be a valid selected patch
+				if selectedIndex == 0 then return end
+				local seltx = (selectedIndex-1) % tilesWide
+				local selty = (selectedIndex-seltx-1) / tilesWide
+
+				local function isSelectedTemplate(x,y)
+					if x < 1 or y < 1 or x > level.size[1] or y > level.size[2] then return end
+					-- read the tile
+					local offset = x-1 + level.size[1] * (y-1)
+					local index = map[offset]
+					if index > 0 then
+						-- see if it exists at the 2d offset from the selected fg tile index (check 'patchObj.patch' above)
+						local tx = (index-1)%tilesWide
+						local ty = (index-tx-1)/tilesWide
+						
+						local i = tx - seltx
+						local j = ty - selty
+						local row = patchTemplate[j+1]
+						if row then
+							local name = row[i+1]
+							if name then
+								if name == '' then return end
+								return true	
+							end
+						end	
+					end
+				end
+			
+				local function isNotEmpty(x,y)
+					if x < 1 or y < 1 or x > level.size[1] or y > level.size[2] then return end
+					local offset = x-1 + level.size[1] * (y-1)
+					local index = map[offset]
+					return index > 0
+				end
+
+				local function validNeighbor(x,y)
+					if x < 1 or y < 1 or x > level.size[1] or y > level.size[2] then return end
+					if not self.alignPatchToAnything[0] then return isSelectedTemplate(x,y) end
+					return isNotEmpty(x,y)
+				end
+
+				for y=ymin,ymax do
+					for x=xmin,xmax do
+						local tile = level:getTile(x,y)
+						if tile then
+							local ct = isSelectedTemplate(x,y)
+							if ct then
+								for _,neighbor in ipairs(patchNeighbors) do
+									if (neighbor.diag or 0) <= (tile.diag or 0)	    -- and we're within our diagonalization precedence (0 for 90', 1 for 45', 2 for 30')
+									then
+										local neighborIsValid = true
+										-- make sure all neighbors that should differ do differ
+										if neighbor.differOffsets then
+											for _,offset in ipairs(neighbor.differOffsets) do
+												-- if not 'alignPatchToAnything' then only go by same templates
+												-- otherwise - go by anything 
+												if validNeighbor(x+offset[1], y+offset[2]) then
+													neighborIsValid = false
+													break
+												end
+											end
+										end
+										-- make sure all neighbors that should match do match
+										if neighborIsValid and neighbor.matchOffsets then
+											for _,offset in ipairs(neighbor.matchOffsets) do
+												if validNeighbor(x+offset[1], y+offset[2]) then
+													neighborIsValid = false
+													break
+												end
+											end
+										end
+										if neighborIsValid then
+											-- find the offset in the patch that this neighbor represents
+											local done = false
+											for j,row in ipairs(patchTemplate) do
+												for i,name in ipairs(row) do
+													if name == neighbor.name then
+														-- TODO instead of painting the selected patch,
+														--  use the patch that the current tile belongs to
+														local tx = seltx + i-1
+														local ty = selty + j-1
+														-- ... and paint it on the foreground
+														map[x-1+level.size[1]*(y-1)] = 1+tx+tilesWide*ty
+														done = true
+														break
+													end
+												end
+												if done then break end
+											end
+											if done then break end
+										end
+									end
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	end,
+}
 Editor.brushOptions:insert(patchTool)
 
 function Editor:init()	
@@ -483,17 +489,7 @@ function Editor:updateGUI()
 			end
 		end
 		
-		for _,info in ipairs{
-			-- foreground
-			{
-				side = 'Fg',
-			},
-			-- background
-			{
-				side = 'Bg',
-			},
-		} do
-			local side = info.side
+		for _,side in ipairs{'Fg', 'Bg'} do
 			local lc = side:lower()	
 			if ig.igCollapsingHeader(side..' Tile Options:',0) then
 				self[lc..'TileWindowOpenedPtr'] = self[lc..'TileWindowOpenedPtr'] or ffi.new('bool[1]',false)
