@@ -286,6 +286,8 @@ do
 			-- [[ if we just must be any patch
 			local patchtx = tx - tx%patchTilesWide
 			local patchty = ty - ty%patchTilesHigh
+			-- only operate on templates matching the selected template?
+			if patchtx ~= seltx or patchty ~= selty then return end
 			local i = tx - patchtx
 			local j = ty - patchty
 			--]]
@@ -363,9 +365,10 @@ do
 						if not drawingTileType then
 							seltx = (selectedIndex-1) % tilesWide
 							selty = (selectedIndex-seltx-1) / tilesWide
-							-- align to the patch upper-left corner
+							-- [[ align to the patch upper-left corner
 							seltx = seltx - seltx%patchTilesWide
 							selty = selty - selty%patchTilesHigh
+							--]]
 							-- TODO keep track of patch locations in the texpack and verify that this section of the texpack is in fact a patch
 						end
 
