@@ -183,6 +183,9 @@ this looks over the tiles under it
 for any that are in the patch, converts them to the correct patch tile, based on the neighbors
 --]]
 local patchNeighbors = {
+	{name='c8', differOffsets={{-1,-1},{0,-1},{1,-1},{1,0},{1,1},{0,1},{-1,1},{-1,0}}}, -- center, with nothing around it 
+	{name='c4', differOffsets={{1,1},{-1,1},{1,-1},{-1,-1}}}, -- center, with diagonals missing
+	
 	{name='u3', differOffsets={{-1,0},{0,1},{1,0}}}, -- upward, 3 sides empty
 	{name='d3', differOffsets={{-1,0},{0,-1},{1,0}}}, -- downward, 3 sides empty
 	{name='l3', differOffsets={{-1,0},{0,1},{0,-1}}}, -- leftward
@@ -246,14 +249,9 @@ local patchNeighbors = {
 	{name='dli', differOffsets={{-1,-1}}},							   -- lower left inverse
 	{name='dri', differOffsets={{1,-1}}},								-- lower right inverse
 	
-	{name='c4', differOffsets={{1,1},{-1,1},{1,-1},{-1,-1}}}, -- center, with diagonals missing
-	
-	{name='c8', differOffsets={{-1,-1},{0,-1},{1,-1},{1,0},{1,1},{0,1},{-1,1},{-1,0}}}, -- center, with nothing around it 
-	
 	{name='c', differOffsets={}},
 }
 -- note: 1) we're missing three-way tiles, (i.e. ulr dlr uld urd) and 2) some are doubled: l2r and r2l
--- and 3) 'l' is both 'lower' and 'left ... but i'm fixing that now
 local patchTemplate = {
 	{'ul',	'u',	'ur',	'd2r',	'l2r',	'l2d',	'',		'u3',	'',		'ul-diag45',	'ur-diag45',	'ul2-diag27', 'ul1-diag27',	'ur1-diag27',	'ur2-diag27',	},
 	{'l',	'c',	'r',	'u2d',	'c8',	'u2d',	'l3',	'c4',	'r3',	'uli-diag45',	'uri-diag45',	'ul3-diag27', 'dri',		'dli',			'ur3-diag27',	},
@@ -375,7 +373,7 @@ do
 							local checkThisTile = drawingTileType and isNotEmpty(map,x,y) or isSelectedTemplate(map,x,y)
 							if checkThisTile then
 								for _,neighbor in ipairs(patchNeighbors) do
-									if (neighbor.diag or 0) <= self.smoothTileTypeIndex[0] then	    -- and we're within our diagonalization precedence (0 for 90', 1 for 45', 2 for 30')
+									if (neighbor.diag or 0) <= self.smoothDiagLevel[0] then	    -- and we're within our diagonalization precedence (0 for 90', 1 for 45', 2 for 30')
 										local neighborIsValid = true
 										-- make sure all neighbors that should differ do differ
 										if neighbor.differOffsets then
@@ -394,8 +392,8 @@ do
 										if neighborIsValid and neighbor.matchOffsets then
 											for _,offset in ipairs(neighbor.matchOffsets) do
 												-- same test as above
-												if drawingTileType and isNotEmpty(map,x+offset[1],y+offset[2])
-												or validNeighbor(self,map,x+offset[1], y+offset[2])
+												if not (drawingTileType and isNotEmpty(map,x+offset[1],y+offset[2])
+												or validNeighbor(self,map,x+offset[1], y+offset[2]))
 												then
 													neighborIsValid = false
 													break
@@ -460,7 +458,7 @@ function Editor:init()
 	self.brushStampWidth = ffi.new('int[1]',1)
 	self.brushStampHeight = ffi.new('int[1]',1)
 	self.alignPatchToAnything = ffi.new('bool[1]',true)
-	self.smoothTileTypeIndex = ffi.new('int[1]',0)
+	self.smoothDiagLevel = ffi.new('int[1]',0)
 
 	self.fgTileWindowOpenedPtr = ffi.new('bool[1]',false)
 	self.bgTileWindowOpenedPtr = ffi.new('bool[1]',false)
@@ -582,9 +580,9 @@ function Editor:updateGUI()
 			ig.igSliderInt('Brush Stamp Height', self.brushStampHeight, 1, 20)
 			if self.brushOptions[self.selectedBrushIndex[0]] == smoothBrush then
 				ig.igCheckbox('Smooth Aligns Patch to Anything', self.alignPatchToAnything)
-				ig.igRadioButton("Smooth Tiles to 90'", self.smoothTileTypeIndex, 0)
-				ig.igRadioButton("Smooth Tiles to 45'", self.smoothTileTypeIndex, 1)
-				ig.igRadioButton("Smooth Tiles to 27'", self.smoothTileTypeIndex, 2)
+				ig.igRadioButton("Smooth Tiles to 90'", self.smoothDiagLevel, 0)
+				ig.igRadioButton("Smooth Tiles to 45'", self.smoothDiagLevel, 1)
+				ig.igRadioButton("Smooth Tiles to 27'", self.smoothDiagLevel, 2)
 			end
 		end
 		if ig.igCollapsingHeader('Tile Type Options:',0) then
