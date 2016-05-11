@@ -594,6 +594,7 @@ function Editor:updateGUI()
 
 	ig.igRadioButton('Edit Tiles', self.editTilesOrObjects, 0)
 	ig.igRadioButton('Edit Objects', self.editTilesOrObjects, 1)
+	ig.igSeparator()
 
 	if self.editTilesOrObjects[0] == 0 then
 		-- not sure if I should use brushes for painting objects or not ...
@@ -885,8 +886,17 @@ function Editor:updateGUI()
 			end
 		end
 	end
+	
+	ig.igSeparator()
 	ig.igCheckbox('Show Tile Types', self.showTileTypes)
 	ig.igCheckbox('no clipping', self.noClipping)
+
+	self.viewSizePtr = self.viewSizePtr or ffi.new('float[1]')
+	self.viewSizePtr[0] = game.viewSize
+	ig.igSliderFloat('zoom', self.viewSizePtr, 1, 100, '%.3f', 3)
+	game.viewSize = tonumber(self.viewSizePtr[0])
+
+	ig.igSeparator()
 	if ig.igButton('Save Map') then
 		self:saveMap()
 	end
@@ -929,7 +939,10 @@ function Editor:event(event)
 end
 
 function Editor:update()
-	if not self.active then return end
+	if not self.active then
+		game.viewSize = nil
+		return
+	end
 	sdl.SDL_ShowCursor(sdl.SDL_ENABLE)
 	
 	local canHandleMouse = not ig.igGetIO()[0].WantCaptureMouse

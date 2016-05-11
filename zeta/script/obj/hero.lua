@@ -247,7 +247,7 @@ function Hero:update(dt)
 		self.useGravity = false
 		self.collidesWithWorld = false
 		self.collidesWithObjects = false
-		local flySpeed = 20
+		local flySpeed = 2 * game.viewSize
 		self.vel[1] = self.inputLeftRight * flySpeed
 		self.vel[2] = self.inputUpDown * flySpeed
 		self.invincibleEndTime = game.time + .1
