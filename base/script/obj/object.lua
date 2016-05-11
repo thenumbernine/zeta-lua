@@ -49,7 +49,8 @@ function Object:init(args)
 	
 	if args.pos then self.pos[1], self.pos[2] = args.pos[1], args.pos[2] end
 	if args.vel then self.vel[1], self.vel[2] = args.vel[1], args.vel[2] end
-	
+	if args.sprite then self.sprite = args.sprite end
+
 	game:addObject(self)	-- only do this once per object.  don't reuse, or change the uid system
 end
 
@@ -189,8 +190,8 @@ function Object:move(moveX, moveY)
 					local collides
 					local testPlane
 
-					if tile.planes and #tile.planes > 0 then
-						plane = tile.planes[1]
+					if tile.plane then
+						plane = tile.plane
 						if moveY < 0 then
 							testPlane = plane[2] > 0
 						else
@@ -355,8 +356,8 @@ function Object:move(moveX, moveY)
 			if tile then
 				if self.collidesWithWorld and tile.solid then
 					local collides
-					if tile.planes and #tile.planes > 0 then
-						local plane = tile.planes[1]
+					if tile.plane then
+						local plane = tile.plane
 --print('found planes, first plane is',table.unpack(plane))
 						if plane[2] > 0 then
 							local cx
@@ -404,7 +405,7 @@ function Object:move(moveX, moveY)
 						if moveX < 0 then
 							-- if we're moving left, and the tile to this tile's right is solid on its left side, then ignore this tile
 							nextTile = level:getTile(x+1,y)
-							local plane = nextTile and nextTile.planes and nextTile.planes[1]
+							local plane = nextTile and nextTile.plane
 							if not plane then
 								sideCantBeHit = nextTile and nextTile.solid
 							else
@@ -413,7 +414,7 @@ function Object:move(moveX, moveY)
 						else
 							-- moving right, check tile to the left for solid on its right side
 							nextTile = level:getTile(x-1,y)
-							local plane = nextTile and nextTile.planes and nextTile.planes[1]
+							local plane = nextTile and nextTile.plane
 							if not plane then
 								sideCantBeHit = nextTile and nextTile.solid
 							else

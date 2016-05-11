@@ -7,16 +7,19 @@ local sdl = require 'ffi.sdl'
 local gl = require 'ffi.OpenGL'
 local ig = require 'ffi.imgui'
 
+local vec2 = require 'vec.vec2'
+local vec3 = require 'vec.vec3'
+local box2 = require 'vec.box2'
+local Tex2D = require 'gl.tex2d'
+local Image = require 'image'
+
 local gui = require 'base.script.singleton.gui'
 local animsys = require 'base.script.singleton.animsys'
 local threads = require 'base.script.singleton.threads'
 local modio = require 'base.script.singleton.modio'
 local game = require 'base.script.singleton.game'
-
-local vec2 = require 'vec.vec2'
-local box2 = require 'vec.box2'
-
-local Image = require 'image'
+local SpawnInfo = require 'base.script.spawninfo'
+local Object = require'base.script.obj.object'
 
 --[[
 Editor api:
@@ -504,7 +507,7 @@ function Editor:setTileKeys()
 		local border = 1
 		local image = Image(width, height, channels, 'unsigned char', function(i,j)
 			if i < border or j < border or i >= width-border or j >= height-border then return 0,0,0,0 end
-			local plane = tileType.planes and tileType.planes[1]
+			local plane = tileType.plane
 			if plane then
 				local x=(i+.5)/16
 				local y=(j+.5)/16
@@ -534,7 +537,6 @@ function Editor:setTileKeys()
 					image.buffer[2+image.channels*(i+image.width*j)],
 					image.buffer[3+image.channels*(i+image.width*j)]
 		end)
-		local Tex2D = require 'gl.tex2d'
 		local tex = Tex2D{
 			image = image,
 			minFilter = gl.GL_NEAREST,
@@ -568,14 +570,22 @@ function Editor:setTileKeys()
 
 end
 
-local ImVec2_00 = ig.ImVec2(0,0)
-local ImVec2_11 = ig.ImVec2(1,1)
-local ImVec4_0000 = ig.ImVec4(0,0,0,0)
-local ImVec4_1111 = ig.ImVec4(1,1,1,1)
-
 function Editor:updateGUI()
 	ig.igText('EDITOR')
-	
+
+	local function alert(str)
+		print(str)
+		do return end
+		ig.igOpenPopup('Error!')
+		if ig.igBeginPopupModal('Error!', nil, ig.ImGuiWindowFlags_AlwaysAutoResize) then
+			ig.igText(str)
+			if ig.igButton('OK') then
+				ig.igCloseCurrentPopup()
+			end
+			ig.igEndPopup()
+		end
+	end
+
 	ig.igRadioButton('Edit Tiles', self.editTilesOrObjects, 0)
 	ig.igRadioButton('Edit Objects', self.editTilesOrObjects, 1)
 
@@ -591,8 +601,9 @@ function Editor:updateGUI()
 				ig.igRadioButton(brushOption.name..' brush', self.selectedBrushIndex, i)
 			end
 			local brushOption = self.brushOptions[self.selectedBrushIndex[0]]
-			-- TODO paint-smoothing?  hmm, sounds dangerously contradictive
+			-- TODO fill-smoothing?  hmm, sounds dangerously contradictive
 			if brushOption == paintBrush or brushOption == smoothBrush then
+				-- TODO separate sizes for paint and smooth brushes?
 				ig.igSliderInt('Brush Width', self.brushTileWidth, 1, 20)
 				ig.igSliderInt('Brush Height', self.brushTileHeight, 1, 20)
 				if brushOption == paintBrush then
@@ -732,18 +743,146 @@ function Editor:updateGUI()
 				end
 			end
 		end
-	end
-	if self.editTilesOrObjects[0] == 1 then
-		if ig.igCollapsingHeader('Object Options:') then
+	elseif self.editTilesOrObjects[0] == 1 then
+		if ig.igCollapsingHeader('Object Type:') then
 			for i,spawnOption in ipairs(self.spawnOptions) do
 				ig.igRadioButton(spawnOption.spawnType.spawn, self.selectedSpawnIndex, i)
+			end
+		end
+		if self.selectedSpawnInfo then
+			if ig.igCollapsingHeader('Object Properties:') then
+				local textBufferSize = 2048
+				
+				local fieldTypes = table{'value', 'boolean', '2D vector'}
+				local fieldTypeValue = 0
+				local fieldTypeBoolean = 1
+				local fieldTypeVec2D = 2
+				
+				local function createProp(k,v, fieldType)
+					if k == 'obj' then return end		-- obj is reserved
+					
+					assert(type(k) == 'string')	-- non-string keys in spawnobjects?
+					-- non-string values?
+					local prop = {
+						k = k,
+						--kstr = ffi.new('char[?]', textBufferSize),
+					}
+					
+					--ffi.copy(prop.kstr, k, math.min(#k+1, textBufferSize-1)) 
+					--infno.kstr[textBufferSize-1] = 0
+			
+					if not fieldType then
+						-- deduce from value
+						fieldType = fieldTypeValue
+						if type(v) == 'boolean' then fieldType = fieldTypeBoolean end
+						if type(v) == 'table' then fieldType = fieldTypeVec2D end
+					end
+					prop.fieldType = ffi.new('int[1]',fieldType)
+					
+					if fieldType == fieldTypeValue then
+						prop.vptr = ffi.new('char[?]', textBufferSize)
+						local vs = tostring(v)
+						ffi.copy(prop.vptr, vs, math.min(#vs+1, textBufferSize-1)) 
+						prop.vptr[textBufferSize-1] = 0
+					elseif fieldType == fieldTypeBoolean then 
+						prop.vptr = ffi.new('bool[1]', v)
+					elseif fieldType == fieldTypeVec2D then
+						prop.vptr = ffi.new('float[2]', v[1], v[2])
+					end
+
+					return prop	
+				end
+
+				-- if we selected a new object
+				if self.selectedSpawnInfo ~= self.lastSelectedSpawnInfo then
+					self.spawnInfoProps = table()
+					-- put these first and in order	
+					self.spawnInfoProps:insert(createProp('spawn', self.selectedSpawnInfo.spawn))
+					self.spawnInfoProps:insert(createProp('pos', self.selectedSpawnInfo.pos))
+					-- and add the rest
+					for k,v in pairs(self.selectedSpawnInfo) do
+						if k ~= 'obj' and k ~= 'pos' and k ~= 'spawn' then
+							self.spawnInfoProps:insert(createProp(k,v))
+						end
+					end
+					self.lastSelectedSpawnInfo = self.selectedSpawnInfo
+				end
+					
+				for i=#self.spawnInfoProps,1,-1 do
+					local prop = self.spawnInfoProps[i]
+					local propTitle = prop.k..' (#'..i..')'
+				
+					if prop.k ~= 'pos' and prop.k ~= 'spawn' then
+						if ig.igButton('remove '..propTitle) then
+							self.spawnInfoProps:remove(i)
+							self.selectedSpawnInfo[prop.k] = nil
+						end
+					end
+					
+					-- changing mid-edit means changing the underlying c arrays that communicate with imgui
+					--ig.igCombo(propTitle..' type', prop.fieldType, fieldTypes)
+					if prop.fieldType[0] == fieldTypeValue then
+						if not prop.multiLineVisible then 
+							if ig.igButton(ffi.string(prop.vptr)..' -- '..propTitle) then
+								prop.multiLineVisible = true
+							end
+						end
+						if prop.multiLineVisible then
+							-- ctrl+enter returns by default?
+							if ig.igInputTextMultiline(propTitle, prop.vptr, textBufferSize,
+								ig.ImVec2(0,0),
+								ig.ImGuiInputTextFlags_CtrlEnterForNewLine
+								+ ig.ImGuiInputTextFlags_EnterReturnsTrue)
+							then
+								-- save changes
+								self.selectedSpawnInfo[prop.k] = ffi.string(prop.vptr)
+								prop.multiLineVisible = false
+							end
+						end
+					elseif prop.fieldType[0] == fieldTypeBoolean then
+						ig.igCheckbox(propTitle, prop.vptr)
+						self.selectedSpawnInfo[prop.k] = prop.vptr[0]
+					elseif prop.fieldType[0] == fieldTypeVec2D then
+						ig.igInputFloat2(propTitle, prop.vptr)
+						self.selectedSpawnInfo[prop.k][1] = prop.vptr[0]
+						self.selectedSpawnInfo[prop.k][2] = prop.vptr[1]
+					end
+				end
+				
+				ig.igSeparator()
+	
+				self.newFieldType = self.newFieldType or ffi.new('int[1]', 0)
+				ig.igCombo('new field type', self.newFieldType, fieldTypes)
+
+				self.newFieldStr = self.newFieldStr or ffi.new('char[?]', textBufferSize)
+				if ig.igInputText('new field name', self.newFieldStr, textBufferSize, ig.ImGuiInputTextFlags_EnterReturnsTrue)
+				then
+					local k = ffi.string(self.newFieldStr)
+					if k == 'obj' then
+						alert("can't use the reserved field 'obj'")
+					elseif self.selectedSpawnInfo[k] ~= nil then
+						alert("the field "..k.." already exists")
+					else
+						local fieldType = self.newFieldType[0]
+						local v
+						if fieldType == fieldTypeValue then
+							v = ''
+						elseif fieldType == fieldTypeBoolean then	-- boolean
+							v = false
+						elseif fieldType == fieldTypeVec2D then	-- 2D vector
+							v = vec2(0,0)
+						end
+						self.selectedSpawnInfo[k] = v
+						self.spawnInfoProps:insert(createProp(k, v, fieldType))
+					end
+				end
 			end
 		end
 	end
 	ig.igCheckbox('Show Tile Types', self.showTileTypes)
 	ig.igCheckbox('no clipping', self.noClipping)
 	if ig.igButton('Save Map') then
-		self:save()
+		self:saveMap()
 	end
 	if ig.igButton('Save Backgrounds') then
 		self:saveBackgrounds()
@@ -766,7 +905,7 @@ function Editor:event(event)
 	or event.type == sdl.SDL_KEYUP
 	then
 		local buttonDown = event.type == sdl.SDL_KEYDOWN
-		if event.key.keysym.sym == sdl.SDLK_TAB then	-- editor
+		if event.key.keysym.sym == 167 then	-- ` key for editor
 			if buttonDown and canHandleKeyboard then
 				self.active = not self.active
 				return true
@@ -783,18 +922,6 @@ function Editor:event(event)
 	-- active editor events here
 end
 
---[[
-now's where I need imgui ...
-buttons:
-'paint background'
-'paint bgtile'
-'paint fgtile'
-'paint tile type'
-'save'
-'load'
-'path:' ...
---]]
-
 function Editor:update()
 	if not self.active then return end
 	sdl.SDL_ShowCursor(sdl.SDL_ENABLE)
@@ -809,9 +936,9 @@ function Editor:update()
 		local yf = self.viewBBox.min[2] + (self.viewBBox.max[2] - self.viewBBox.min[2]) * mouse.pos[2]
 		local x = math.floor(xf)
 		local y = math.floor(yf)
-		if x >= 1 and y >= 1 and x <= level.size[1] and y <= level.size[2] then
-			if self.editTilesOrObjects[0] == 0 then
-				if self.shiftDown then
+		if self.editTilesOrObjects[0] == 0 then
+			if self.shiftDown then
+				if x >= 1 and y >= 1 and x <= level.size[1] and y <= level.size[2] then
 					if self.paintingTileType[0] then
 						self.selectedTileTypeIndex[0] = level.tileMap[x-1+level.size[1]*(y-1)]
 					end
@@ -824,39 +951,48 @@ function Editor:update()
 					if self.paintingBackground[0] then
 						self.selectedBackgroundIndex[0] = level.backgroundMap[x-1+level.size[1]*(y-1)]
 					end
-				else
-					self.brushOptions[self.selectedBrushIndex[0]].paint(self, x, y)
 				end
-			elseif self.editTilesOrObjects[0] == 1 then
+			else
+				self.brushOptions[self.selectedBrushIndex[0]].paint(self, x, y)
+			end
+		elseif self.editTilesOrObjects[0] == 1 then
+			-- only on single click
+			if mouse.leftDown and not mouse.lastLeftDown then
 				if self.shiftDown then
-					-- ... hmm this is dif than tiles
-					-- search through and pick out a spawn obj under the mouse
+				-- ... hmm this is dif than tiles
+				-- search through and pick out a spawn obj under the mouse
 					self.selectedSpawnIndex[0] = 0
+					self.selectedSpawnInfo = nil
 					for _,spawnInfo in ipairs(level.spawnInfos) do
 						if spawnInfo.pos[1] == x+.5 and spawnInfo.pos[2] == y then
 							self.selectedSpawnIndex[0] = self.spawnOptions:find(nil, function(option)
 								return option.spawnType.spawn == spawnInfo.spawn
 							end) or 0
+							self.selectedSpawnInfo = spawnInfo
 						end
 					end
 				else
 					-- and here ... we place a spawn obj ... exactly at mouse pos?
+					-- TODO ... no overlaps?
 					for i=#level.spawnInfos,1,-1 do
 						local spawnInfo = level.spawnInfos[i]
 						if spawnInfo.pos[1] == x+.5 and spawnInfo.pos[2] == y then
 							if spawnInfo.obj then
 								spawnInfo.obj.remove = true
 							end
+							if self.selectedSpawnInfo == spawnInfo then
+								self.selectedSpawnInfo = nil
+							end
 							level.spawnInfos:remove(i)
 						end
 					end
-					local SpawnInfo = require 'base.script.spawninfo'
 					if self.selectedSpawnIndex[0] ~= 0 then
 						local spawnInfo = SpawnInfo{
 							pos=vec2(x+.5, y),
 							spawn=self.spawnOptions[self.selectedSpawnIndex[0]].spawnType.spawn,
 						}
 						level.spawnInfos:insert(spawnInfo)
+						self.selectedSpawnInfo = spawnInfo
 						spawnInfo:respawn()
 					end
 				end
@@ -865,7 +1001,6 @@ function Editor:update()
 	end
 end
 
-local vec3 = require 'vec.vec3'
 local colorForTypeTable = table()
 local predefinedColors = table{
 	{0,0,0},
@@ -898,7 +1033,9 @@ function Editor:draw(R, viewBBox)
 	local level = game.level
 	for _,spawnInfo in ipairs(level.spawnInfos) do
 		local x,y = spawnInfo.pos:unpack()
-		local sprite = require(spawnInfo.spawn).sprite
+		local spawnClass = require(spawnInfo.spawn)
+		local sprite = spawnClass.sprite
+		local bbox = spawnClass.bbox or Object.bbox
 		local tex = sprite and animsys:getTex(sprite, 'stand')
 		if tex then
 			tex:bind()
@@ -909,37 +1046,71 @@ function Editor:draw(R, viewBBox)
 				sy = tex.height/16
 			end
 			
-			R:quad(x-sx*.5,y,sx,sy,0,1,1,-1,0,1,1,1,.5)
-		
+			R:quad(
+				x + bbox.min[1],
+				y + bbox.min[2],
+				bbox.max[1] - bbox.min[1],
+				bbox.max[2] - bbox.min[2],
+				0,1,
+				1,-1,
+				0,	-- angle
+				1,1,1,.4)
+			
 			tex:unbind()	
 		end
 		gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
 		gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
-		R:quad(x-.4,(y+.5)-.4,.8,.8,0,1,1,-1,0,1,1,1,1)
+		local r,g,b,a = 1,1,1,1
+		b = self.selectedSpawnInfo == spawnInfo and 0 or 1
+		g = b
+		R:quad(
+			x + bbox.min[1],
+			y + bbox.min[2],
+			bbox.max[1] - bbox.min[1],
+			bbox.max[2] - bbox.min[2],
+			0,1,
+			1,-1,
+			0,
+			r,g,b,a)
 		gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
 		gl.glEnable(gl.GL_TEXTURE_2D)
 
-		gui.font:drawUnpacked(x-.5,y+1,.5,-.5,spawnInfo.spawn:match('([^%.]*)$'))
-		gl.glEnable(gl.GL_TEXTURE_2D)
+		if self.editTilesOrObjects[0] == 1 then
+			gui.font:drawUnpacked(x-.5,y+1,.5,-.75,spawnInfo.spawn:match('([^%.]*)$'))
+	
+			for k,v in pairs(spawnInfo) do
+				if k ~= 'pos' and getmetatable(v) == vec2 then
+					gl.glBegin(gl.GL_LINES)
+					gl.glColor2f(0,1,0)
+					gl.glVertex2f(x,y)
+					gl.glVertex2f(v:unpack())
+					gl.glEnd()
+				
+					gui.font:drawUnpacked(v[1]-.5,v[2]+1,.5,-.5,k)
+				end
+			end
+			
+			gl.glEnable(gl.GL_TEXTURE_2D)
+		end
 	end
 
 	-- clone & offset
-	local bbox = box2(
+	local tileBBox = box2(
 		viewBBox.min[1] - game.level.pos[1],
 		viewBBox.min[2] - game.level.pos[2],
 		viewBBox.max[1] - game.level.pos[1],
 		viewBBox.max[2] - game.level.pos[2])
 
-	local ibbox = box2(
-		math.floor(bbox.min[1]),
-		math.floor(bbox.min[2]),
-		math.floor(bbox.max[1]),
-		math.floor(bbox.max[2]))
+	local itileBBox = box2(
+		math.floor(tileBBox.min[1]),
+		math.floor(tileBBox.min[2]),
+		math.floor(tileBBox.max[1]),
+		math.floor(tileBBox.max[2]))
 	
-	local xmin = ibbox.min[1]
-	local xmax = ibbox.max[1]
-	local ymin = ibbox.min[2]
-	local ymax = ibbox.max[2]
+	local xmin = itileBBox.min[1]
+	local xmax = itileBBox.max[1]
+	local ymin = itileBBox.min[2]
+	local ymax = itileBBox.max[2]
 
 	if xmin > game.level.size[1] then return end
 	if xmax < 1 then return end
@@ -964,7 +1135,7 @@ function Editor:draw(R, viewBBox)
 						1, 1,
 						0, 0, 
 						1, 1,
-						0,
+						0,	--angle
 						1,1,1,1)--table.unpack(colorForType(tiletype)))
 				end
 			end
@@ -1014,7 +1185,7 @@ function Editor:draw(R, viewBBox)
 	end
 end
 
-function Editor:save()
+function Editor:saveMap()
 	local level = game.level
 	local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
 	

@@ -1,14 +1,6 @@
 TODO list
 
 levels:
-- enumerate all textures as numbers, and store a lookup of numbers per-tile of what tex each tile is.
-- make all subtexs within template neighbor patches usable as individual tiles. for larger textures, specify subtex x,y,w,h.  this will aid in individual tex assignments and in tex caching.
-- get rid of templates.
-- rename 'template neighbors' to patches, consolidate all patches of a particular type into one image (no separate flat,flat2,flat3,inv,etc).
-	- maybe automatic connecting stuff is bad.  maybe stamps of multiple tiles are better?
-- put all tile textures (patch or otherwise) into the 'mod/tiles' directory.  load all for all levels? why not? heck, use one texture for everything. it'll fit. that's what minecraft does.
-- enumerate tile types as numbers as well: empty, solid, sloped... liquid... shootable? interactable in some way ... 
-- make all individual textures paintable - whether they are in patches or otherwise...
 - room environmental effects ... foreground warping (underwater, heat), blowing wind, falling snow/rain/leaves, etc
 
 gameplay:
@@ -19,6 +11,9 @@ gameplay:
 	- but no crafting heal potions and damage modifiers?  too Aquaria?  instead, only craft weapon modifications? too DoomRL?
 - change object warp mechanism from tile-based to object-based?  written to objects at load from the warp image value at the object's position?
 - LATER IF NEEDED: level object: get rid of level.tile[][] 2D array of objects? replace with 2D array of int lookups into the tile map?  this will aid in manual setting textures, and memory, and on android & wii the load time
+
+editor:
+- properties: click on a textarea to replace it with a multi-line input?
 
 buttons:
 	- up/down to aim, left/right to move

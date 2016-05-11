@@ -160,7 +160,7 @@ function GLApp:initGL(gl, glname)
 	local levelcfg = modio.levelcfg
 		-- next try the levelcfg file
 	if not levelcfg and io.fileexists('levelcfg.lua') then
-		levelcfg = assert(loadstring('return '..io.readfile('levelcfg.lua')))()
+		levelcfg = assert(load('return '..file['levelcfg.lua']))()
 	end
 	assert(levelcfg, "failed to find levelcfg info in modio or levelcfg.lua file")
 	
@@ -323,9 +323,10 @@ function GLApp:event(event, ...)
 				player.inputPageUp = press
 			elseif event.key.keysym.sym == sdl.SDLK_z then	-- inventory down
 				player.inputPageDown = press
-			elseif event.key.keysym.sym == sdl.SDLK_RETURN then
+			elseif event.key.keysym.sym == sdl.SDLK_p then
 				player.inputPause = press
-				-- i'm lazy so I'm putting this here.  I don't know if I want to keep it ...
+				-- i'm lazy so I'm putting this here.  
+				-- I don't know if I want to keep it here ...
 				if player.inputPause and not player.inputPauseLast then
 					game.paused = not game.paused
 				end

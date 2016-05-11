@@ -70,7 +70,9 @@ return {
 
 		-- etc
 	{name='puff', dir='puff'},
-	
+	{name='terminal', dir='terminal'},
+	{name='keycard', dir='keycard'},
+
 	-- tiles	
 	{name='tile-metal', dir='tile-metal'},
 	{name='tile-ladder', dir='tile-ladder'},

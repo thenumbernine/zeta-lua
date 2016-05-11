@@ -180,7 +180,7 @@ function Level:init(args)
 		if spawnInfoFile then
 			spawnInfoFile = modio:find(spawnInfoFile)
 			if spawnInfoFile then
-				local spawnInfos = assert(assert(loadstring('return '..io.readfile(spawnInfoFile)))())
+				local spawnInfos = assert(assert(load('return '..file[spawnInfoFile]))())
 				for _,args in ipairs(spawnInfos) do
 
 					if type(args.spawn) ~= 'string' then

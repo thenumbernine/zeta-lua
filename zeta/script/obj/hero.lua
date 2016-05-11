@@ -27,9 +27,12 @@ when you pick up an item, you're holding it...
 --]]
 local class = require 'ext.class'
 local table = require 'ext.table'
-local Player = require 'base.script.obj.player'
-local game = require 'base.script.singleton.game'
 local box2 = require 'vec.box2'
+local gui = require 'base.script.singleton.gui'
+local game = require 'base.script.singleton.game'
+local editor = require 'base.script.singleton.editor'
+local Object = require 'base.script.obj.object'
+local Player = require 'base.script.obj.player'
 local takesDamageBehavior = require 'zeta.script.obj.takesdamage'
 
 local Hero = class(takesDamageBehavior(Player))
@@ -234,7 +237,6 @@ function Hero:update(dt)
 	--]]
 	
 	-- TODO put this in base?
-	local editor = require 'base.script.singleton.editor'
 	if editor.active
 	and editor.noClipping[0]
 	then
@@ -704,39 +706,6 @@ function Hero:modifyDamageTaken(damage, attacker, inflicter, side)
 	return math.max(0, damage - (self.defenseBonus or 0))
 end
 
-function Hero:drawHUD(R, viewBBox)
-	if Hero.super.drawHUD then Hero.super.drawHUD(self, R, viewBBox) end
-	
-	-- draw gui
-	-- health:
-	local gui = require 'base.script.singleton.gui'
-	gui.font:drawUnpacked(viewBBox.min[1], viewBBox.min[2]+2, 1, -1, self.health .. '/' .. self.maxHealth)
-	local gl = R.gl
-
-	-- items:
-	local Object = require 'base.script.obj.object'
-	for i,items in ipairs(self.items) do
-		i = i + 1
-		local item = items[1]
-		Object.draw({
-			sprite = item.sprite,
-			seq = item.invSeq,
-			pos = viewBBox.min + vec2(1,2+.5*i),
-			angle = 0,
-		}, R, viewBBox)
-		if items:find(self.holding) then
-			gui.font:drawUnpacked(viewBBox.min[1]+1.5, viewBBox.min[2]+3+.5*i, 1, -1, '<')
-		end
-		if items:find(self.weapon) then
-			gui.font:drawUnpacked(viewBBox.min[1]+2, viewBBox.min[2]+3+.5*i, 1, -1, 'W')
-		end
-		if #items > 1 then
-			gui.font:drawUnpacked(viewBBox.min[1]+2.5, viewBBox.min[2]+3+.5*i, 1, -1, 'x'..#items)
-		end
-	end
-	gl.glEnable(gl.GL_TEXTURE_2D)
-end
-
 function Hero:draw(R, viewBBox, holdOveride)
 	if self.invincibleEndTime >= game.time then
 		if math.floor(game.time * 8) % 2 == 0 then
@@ -834,6 +803,80 @@ function Hero:draw(R, viewBBox, holdOveride)
 			end
 		end
 	end
+end
+
+function Hero:drawHUD(R, viewBBox)
+	if Hero.super.drawHUD then Hero.super.drawHUD(self, R, viewBBox) end
+	
+	-- draw gui
+	-- health:
+	gui.font:drawUnpacked(viewBBox.min[1], viewBBox.min[2]+2, 1, -1, self.health .. '/' .. self.maxHealth)
+	local gl = R.gl
+
+	-- items:
+	for i,items in ipairs(self.items) do
+		i = i + 1
+		local item = items[1]
+		Object.draw({
+			sprite = item.sprite,
+			seq = item.invSeq,
+			pos = viewBBox.min + vec2(1,2+.5*i),
+			angle = 0,
+		}, R, viewBBox)
+		if items:find(self.holding) then
+			gui.font:drawUnpacked(viewBBox.min[1]+1.5, viewBBox.min[2]+3+.5*i, 1, -1, '<')
+		end
+		if items:find(self.weapon) then
+			gui.font:drawUnpacked(viewBBox.min[1]+2, viewBBox.min[2]+3+.5*i, 1, -1, 'W')
+		end
+		if #items > 1 then
+			gui.font:drawUnpacked(viewBBox.min[1]+2.5, viewBBox.min[2]+3+.5*i, 1, -1, 'x'..#items)
+		end
+	end
+	
+	-- popup messages from terminals, talking, etc
+	if self.popupMessageText then
+		-- TODO use something other than game.paused?
+		-- or fix game.paused vs Object:draw so objects can't animate while the game is paused (specifically player, geemer, etc, but not terminal)
+		gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
+		R:quad(
+			viewBBox.min[1]+.7, viewBBox.min[2]+.7,	-- pos
+			viewBBox.max[1]-viewBBox.min[1]-1.6,
+			viewBBox.max[2]-viewBBox.min[2]-1.6, -- size
+			0,0,0,0,0,
+			0,0,0,.5)
+		gui.font:drawUnpacked(
+			viewBBox.min[1]+1, viewBBox.max[2]-1,	-- pos
+			1, -1,	-- fontSize
+			tostring(self.popupMessageText),	-- text
+			viewBBox.max[1]-viewBBox.min[1]-2,
+			viewBBox.max[2]-viewBBox.min[2]-2) -- size
+
+		-- can't use inputJumpLast because Last keys don't refresh when paused
+		if not game.paused
+		or self.inputJump
+		or self.inputShoot
+		or self.inputJumpAux
+		or self.inputShootAux
+		then
+			-- can't use setTimeout because timeouts don't run when paused
+			--setTimeout(.5, function()
+				self.popupMessageText = nil
+				game.paused = false
+			--end)
+		end
+	end
+
+	gl.glEnable(gl.GL_TEXTURE_2D)
+end
+
+-- run as a coroutine
+function Hero:popupMessage(text)
+	self.popupMessageText = text
+	game.paused = true
+	repeat
+		coroutine.yield()
+	until not game.paused
 end
 
 return Hero
