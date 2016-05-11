@@ -179,11 +179,17 @@ go left you find the former launchpad from where the rocket had just took off.
 keep going left and you find the entrance to the caves below the base
 
 from there you maybe find some red sirens that are blinking
+and gun turrets
+
+you pass by some doors that are locked, with red shining lights and "security level 1" or something
+	... behind one can be a max-life powerup
+	... behind another can be a blaster cell max powerup
+	... behind another can be an armor powerup
 
 down in the base you find another terminal
 	"Emergency alarm deactivated." (and the sirens stop)
 
-another terminal:
+down another room, another terminal:
 	"Journal Entry:
 	When mining in the crust of this planet we
 		stumbled across a unique cave system.
@@ -191,9 +197,22 @@ another terminal:
 		The minerals seem to proceed through the caves.
 	The prospecting company is eager for us to follow."
 
+from there go right, find the path to the caves
+...and your first monsters, the jumping wall critters
+... and bats too? you always need swooping monsters paired with jumping monsters. (spelunkey, metroid, cave story, ...)
+hidden geemeers too
 
-super metroid level sizes
+keep going and find a boss of some sort ... mega-geemer?
+have him blocking some sort of power supply or some kind of mining base terminal or something
 
+after you defeat him, the mining base is now full of monsters
+... and off of his room there's a terminal that says "security level 1 access granted"
+	... and it makes the securty level 1 red doors turn green and are open
+
+keep going past the boss to enter into the caves
+
+
+=========================
 super metroid bosses & minibosses
 1. chozo in crateria
 2. spore spawn in brinstar
