@@ -316,7 +316,7 @@ do
 		end
 	end
 
-	local function isNotEmpty(map,x,y)
+	local function isTileTypeSmoothable(map,x,y)
 		local level = game.level
 		-- if we're oob then should we consider the neighbor as bad?
 		-- TODO only if 'patch with any neighbor' is set
@@ -325,14 +325,20 @@ do
 		end
 		local offset = x-1 + level.size[1] * (y-1)
 		local index = map[offset]
-		return index > 0
+		if index == 0 then return end
+		-- what should we smooth?  diagonals for sure
+		-- and ... only the first solid?  or *any* solid?
+		-- only the first for now -- in case there's solid=true blocks that shouldn't be smoothed (like shootable)
+		return index == 1 or index.diag
 	end
 
 	local function validNeighbor(self,map,x,y)
 		local level = game.level
 		if x < 1 or y < 1 or x > level.size[1] or y > level.size[2] then return end
 		if not self.alignPatchToAnything[0] then return isSelectedTemplate(map,x,y) end
-		return isNotEmpty(map,x,y)
+		local offset = x-1 + level.size[1] * (y-1)
+		local index = map[offset]
+		return index > 0
 	end
 
 	smoothBrush = {
@@ -386,7 +392,7 @@ do
 								end
 							end
 							-- for fg/bg (drawingTileType == 0), if the fg/bg tex is part of a patch, then align it.  if it's not, ignore it.
-							local checkThisTile = drawingTileType and isNotEmpty(map,x,y) or isSelectedTemplate(map,x,y)
+							local checkThisTile = drawingTileType and isTileTypeSmoothable(map,x,y) or isSelectedTemplate(map,x,y)
 							if checkThisTile then
 								for _,neighbor in ipairs(patchNeighbors) do
 									if (neighbor.diag or 0) <= self.smoothDiagLevel[0] then	    -- and we're within our diagonalization precedence (0 for 90', 1 for 45', 2 for 30')
@@ -396,7 +402,7 @@ do
 											for _,offset in ipairs(neighbor.differOffsets) do
 												-- if not 'alignPatchToAnything' then only go by same templates. otherwise - go by anything 
 												-- if drawing tile type then just check if it's empty.  TODO still only consider matching templates!
-												if drawingTileType and isNotEmpty(map,x+offset[1],y+offset[2])
+												if drawingTileType and isTileTypeSmoothable(map,x+offset[1],y+offset[2])
 												or validNeighbor(self,map,x+offset[1], y+offset[2])
 												then
 													neighborIsValid = false
@@ -408,7 +414,7 @@ do
 										if neighborIsValid and neighbor.matchOffsets then
 											for _,offset in ipairs(neighbor.matchOffsets) do
 												-- same test as above
-												if not (drawingTileType and isNotEmpty(map,x+offset[1],y+offset[2])
+												if not (drawingTileType and isTileTypeSmoothable(map,x+offset[1],y+offset[2])
 												or validNeighbor(self,map,x+offset[1], y+offset[2]))
 												then
 													neighborIsValid = false
@@ -1047,10 +1053,10 @@ function Editor:draw(R, viewBBox)
 			end
 			
 			R:quad(
-				x + bbox.min[1],
-				y + bbox.min[2],
-				bbox.max[1] - bbox.min[1],
-				bbox.max[2] - bbox.min[2],
+				x - sx*.5, 
+				y,
+				sx,
+				sy,
 				0,1,
 				1,-1,
 				0,	-- angle

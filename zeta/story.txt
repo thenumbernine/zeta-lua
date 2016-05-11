@@ -30,9 +30,11 @@ you are one of the robots that got left behind
 
 section 1. - colony #1 whose rocket left
 you start off not knowing what's going on
+computer terminals tell you that colony #1's team had just left in an escape rocket
+- and that the weapons cache is unlocked, and gives you a blaster
 (secret: find one team member that died when activating you, get his keycard)
-go into the mining base 
-learn from terminal that one team left and another is still around
+you go down, underground the mining operation
+learn from terminal that monsters invaded 
 find first monsters
 keep going to find first boss in the edge of the base - big evil alien monster
 find some doors are now unlocked

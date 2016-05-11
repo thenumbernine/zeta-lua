@@ -121,12 +121,14 @@ function Hero:updateHeldPosition()
 		self.holding:updateHeldPosition()
 		return
 	end
-	
+
+	local offset
 	if not self.ducking then
-		self.holding.pos[2] = self.pos[2] + .125
+		offset = self.holding.playerHoldOffsetStanding
 	else
-		self.holding.pos[2] = self.pos[2] - .5
+		offset = self.holding.playerHoldOffsetDucking
 	end
+	offset = offset or {.625, .125}	
 	
 	self.holding.drawMirror = self.drawMirror
 	local side
@@ -139,7 +141,8 @@ function Hero:updateHeldPosition()
 			side = 1
 		end
 	end
-	self.holding.pos[1] = self.pos[1] + side * .625
+	self.holding.pos[1] = self.pos[1] + side * offset[1]
+	self.holding.pos[2] = self.pos[2] + offset[2]
 end
 
 Hero.extraBounceVel = 40
@@ -243,6 +246,7 @@ function Hero:update(dt)
 		self.isClipping = true
 		self.useGravity = false
 		self.collidesWithWorld = false
+		self.collidesWithObjects = false
 		local flySpeed = 20
 		self.vel[1] = self.inputLeftRight * flySpeed
 		self.vel[2] = self.inputUpDown * flySpeed
@@ -251,7 +255,8 @@ function Hero:update(dt)
 		if self.isClipping then
 			self.isClipping = nil
 			self.useGravity = true
-			self.collidesWithWorld = true
+			self.collidesWithWorld = nil
+			self.collidesWithObjects = nil
 		end
 	end
 
@@ -820,17 +825,17 @@ function Hero:drawHUD(R, viewBBox)
 		Object.draw({
 			sprite = item.sprite,
 			seq = item.invSeq,
-			pos = viewBBox.min + vec2(1,2+.5*i),
+			pos = viewBBox.min + vec2(1, 2 + i),
 			angle = 0,
 		}, R, viewBBox)
 		if items:find(self.holding) then
-			gui.font:drawUnpacked(viewBBox.min[1]+1.5, viewBBox.min[2]+3+.5*i, 1, -1, '<')
+			gui.font:drawUnpacked(viewBBox.min[1]+1.5, viewBBox.min[2]+3+i, 1, -1, '<')
 		end
 		if items:find(self.weapon) then
-			gui.font:drawUnpacked(viewBBox.min[1]+2, viewBBox.min[2]+3+.5*i, 1, -1, 'W')
+			gui.font:drawUnpacked(viewBBox.min[1]+2, viewBBox.min[2]+3+i, 1, -1, 'W')
 		end
 		if #items > 1 then
-			gui.font:drawUnpacked(viewBBox.min[1]+2.5, viewBBox.min[2]+3+.5*i, 1, -1, 'x'..#items)
+			gui.font:drawUnpacked(viewBBox.min[1]+2.5, viewBBox.min[2]+3+i, 1, -1, 'x'..#items)
 		end
 	end
 	

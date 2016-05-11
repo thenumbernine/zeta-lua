@@ -6,6 +6,8 @@ local Item = class(Object)
 Item.canCarry = true
 Item.solid = false
 Item.canStoreInv = true
+Item.playerHoldOffsetStanding = {.625, .125}
+Item.playerHoldOffsetDucking = {.625, -.25}
 
 function Item:playerGrab(player, side)
 	-- add item to player

@@ -5,8 +5,8 @@ local game = require 'base.script.singleton.game'
 
 local Turret = class(takesDamageBehavior(Object))
 Turret.sprite = 'turret-body'
-Turret.solid = true
-Turret.maxHealth = 5
+Turret.solid = false
+Turret.maxHealth = 3
 Turret.rotCenter = {.5, .5}
 
 function Turret:init(...)
@@ -28,16 +28,19 @@ function Turret:init(...)
 	end
 end
 
+Turret.deactivated = false
 function Turret:update(dt)
 	Turret.super.update(self, dt)
 	if self.health == 0 then return end
 	-- look for player
 	-- shoot at player
-	for _,player in ipairs(game.players) do
-		local delta = player.pos - self.pos
-		if delta:length() < 8 then
-			self.angle = math.deg(math.atan2(delta[2], delta[1]))
-			self:shootAt(player)
+	if not self.deactivated then
+		for _,player in ipairs(game.players) do
+			local delta = player.pos - self.pos
+			if delta:length() < 8 then
+				self.angle = math.deg(math.atan2(delta[2], delta[1]))
+				self:shootAt(player)
+			end
 		end
 	end
 end
@@ -48,11 +51,19 @@ end
 
 local BlasterShot = require 'zeta.script.obj.blaster'.shotClass
 Turret.nextShootTime = -1
-Turret.shotDelay = .3
+Turret.shotDelay = .5
+Turret.ammo = 3	-- three shots then refill
+Turret.ammoRefillDelay = 2
 function Turret:shootAt(player)
 	if self.health == 0 then return end
 	if self.nextShootTime >= game.time then return end
-	self.nextShootTime = game.time + self.shotDelay
+	self.ammo = self.ammo - 1
+	if self.ammo <= 0 then
+		self.nextShootTime = game.time + self.ammoRefillDelay 
+		self.ammo = nil	-- default
+	else
+		self.nextShootTime = game.time + self.shotDelay
+	end
 
 	local dir = (player.pos - self.pos):normalize()
 	BlasterShot{
@@ -70,7 +81,6 @@ function Turret:die()
 	self.angle = nil
 
 	self.collidesWithWorld = false
-	self.collidesWithObjects = false
 
 	self:playSound('explode2')
 end

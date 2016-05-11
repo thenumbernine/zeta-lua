@@ -9,10 +9,6 @@ local InvWeapon = class(Item)
 InvWeapon.isWeapon = true
 InvWeapon.rotCenter = {0, .5}
 
-function InvWeapon:init(...)
-	InvWeapon.super.init(self, ...)
-end
-
 InvWeapon.shotOffset = vec2(0, .25)
 function InvWeapon:getShotPosDir(player)
 	local pos = vec2(
@@ -69,7 +65,10 @@ end
 
 InvWeapon.drawOffsetStanding = vec2(.5, .75)
 InvWeapon.drawOffsetDucking = vec2(.5, 0)
-function InvWeapon:updateHeldPosition(R, viewBBox)
+
+-- TODO - rename 'doUpdateHeldPosition' to 'updateHeldPosition'
+-- and rename 'updateHeldPosition' to 'updateAndDrawOverlay'
+function InvWeapon:doUpdateHeldPosition()
 	local player = self.heldby
 	self.drawOffset = player.ducking and self.drawOffsetDucking or self.drawOffsetStanding
 
@@ -93,7 +92,11 @@ function InvWeapon:updateHeldPosition(R, viewBBox)
 	
 	self.drawMirror = player.drawMirror
 	if self.drawMirror then self.angle = -self.angle end
-
+end
+function InvWeapon:updateHeldPosition(R, viewBBox)
+	self:doUpdateHeldPosition()
+	
+	local player = self.heldby
 	OverlayObject.drawItem(self, player, R, viewBBox)
 end
 
