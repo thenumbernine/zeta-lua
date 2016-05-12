@@ -10,21 +10,17 @@ local Grenade = (function()
 	Grenade.sprite = 'grenade'
 	Grenade.maxHealth = 1
 	Grenade.solid = true
-	Grenade.speed = 18
-	Grenade.upSpeed = 7
 	Grenade.damage = 3
 	Grenade.splashDamage = 3
 	Grenade.rotCenter = {.5, .5}
 
 	function Grenade:init(args)
-		args.vel = args.dir * self.speed + vec2(0, self.upSpeed)
 		args.vel[1] = args.vel[1] * (math.random() * .2 + .9)
 		args.vel[2] = args.vel[2] * (math.random() * .2 + .9)
 		Grenade.super.init(self, args)
 	
 		self.shooter = args.shooter
 		self:hasBeenKicked(args.shooter)
-		self:playSound('fire-grenade')
 	
 		self.angle = math.deg(math.atan2(self.vel[2], self.vel[1]))
 		self.rotation = (math.random()*2-1) * 360
@@ -148,19 +144,29 @@ local GrenadeLauncherItem = (function()
 	local GrenadeLauncherItem = class(Weapon)
 	GrenadeLauncherItem.sprite = 'grenadelauncher'
 	GrenadeLauncherItem.shotDelay = .5
+	GrenadeLauncherItem.shotSpeed = 18
+	GrenadeLauncherItem.shotUpSpeed = 7
+	GrenadeLauncherItem.shotSound = 'fire-grenade'
 	GrenadeLauncherItem.rotCenter = {.25,.5}
 	GrenadeLauncherItem.drawOffsetStanding = {.5, .25}
 	GrenadeLauncherItem.shotClass = Grenade 
 	GrenadeLauncherItem.shotOffset = {.5, .5}
 
+	function GrenadeLauncherItem:getShotPosVel(player)
+		local pos, vel = GrenadeLauncherItem.super.getShotPosVel(self, player)
+		vel[2] = vel[2] + self.shotUpSpeed
+		return pos, vel
+	end
+
+
 	--[[ cluster grenades won't work so long as grenades are solid and takesDamage themselves
+	local game = require 'base.script.singleton.game'
 	function GrenadeLauncherItem:onShoot(player)
-		local game = require 'base.script.singleton.game'
 		if player.inputShootLast and not self.rapidFire then return end
 		player.nextShootTime = game.time + self.shotDelay
 
 		for i=1,5 do
-			local pos, dir = self:getShotPosDir(player)
+			local pos, dir = self:getShotPosVel(player)
 			self.shotClass{
 				shooter = player,
 				pos = pos,
@@ -169,6 +175,7 @@ local GrenadeLauncherItem = (function()
 		end
 	end
 	--]]
+	
 	return GrenadeLauncherItem
 end)()
 

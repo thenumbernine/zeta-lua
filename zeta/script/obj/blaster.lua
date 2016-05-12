@@ -11,22 +11,19 @@ local BlasterShot = (function()
 	BlasterShot.sprite = 'blaster-shot'
 	BlasterShot.useGravity = false
 	BlasterShot.solid = false
-	BlasterShot.speed = 35
 	BlasterShot.damage = 1
 	BlasterShot.rotCenter = {.5, .5}
 
 	function BlasterShot:init(args, ...)
-		args.vel = args.dir * self.speed
 		BlasterShot.super.init(self, args, ...)
 		
 		self.shooter = args.shooter
 		self:hasBeenKicked(args.shooter)
-		self:playSound('shoot')
 		
 		--self.angle = self.shooter.weapon.angle
 		--self.drawMirror = self.shooter.weapon.drawMirror
-		self.angle = math.deg(math.atan2(args.dir[2], args.dir[1]))
-		self.drawMirror = args.dir[1] < 0
+		self.angle = math.deg(math.atan2(args.vel[2], args.vel[1]))
+		self.drawMirror = args.vel[1] < 0
 		if self.drawMirror then self.angle = -self.angle end
 
 		setTimeout(.2, function() self.remove = true end)
@@ -74,7 +71,9 @@ local BlasterItem = (function()
 	local BlasterItem = class(Weapon)
 	BlasterItem.sprite = 'blaster'
 	BlasterItem.shotDelay = .05
+	BlasterItem.shotSpeed = 35
 	BlasterItem.shotClass = BlasterShot
+	BlasterItem.shotSound = 'shoot'
 
 	return BlasterItem
 end)()

@@ -9,18 +9,15 @@ local Missile = (function()
 	Missile.sprite = 'missile'
 	Missile.solid = false
 	Missile.useGravity = false
-	Missile.speed = 50
 	Missile.damage = 5
 	Missile.splashDamage = 3
 	Missile.rotCenter = {.5, .5}
 
 	function Missile:init(args)
-		args.vel = args.dir * self.speed	
 		Missile.super.init(self, args)
 	
 		self.shooter = args.shooter
 		self:hasBeenKicked(args.shooter)
-		self:playSound('explode1')
 	
 		self.angle = math.deg(math.atan2(self.vel[2], self.vel[1]))
 	end
@@ -98,6 +95,8 @@ local MissileLauncherItem = (function()
 	local MissileLauncherItem = class(Weapon)
 	MissileLauncherItem.sprite = 'missilelauncher'
 	MissileLauncherItem.shotDelay = .5
+	MissileLauncherItem.shotSpeed = 50
+	MissileLauncherItem.shotSound = 'explode1'
 	MissileLauncherItem.rotCenter = {.25,.5}
 	MissileLauncherItem.shotClass = Missile 
 	

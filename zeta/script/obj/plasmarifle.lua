@@ -11,17 +11,14 @@ local PlasmaShot = (function()
 	PlasmaShot.sprite = 'plasma-shot'
 	PlasmaShot.useGravity = false
 	PlasmaShot.solid = false
-	PlasmaShot.speed = 40
 	PlasmaShot.damage = 3
 	PlasmaShot.rotCenter = {.5, .5}
 
 	function PlasmaShot:init(args, ...)
-		args.vel = args.dir * self.speed
 		PlasmaShot.super.init(self, args, ...)
 		
 		self.shooter = args.shooter
 		self:hasBeenKicked(args.shooter)
-		self:playSound('shoot')
 		
 		self.angle = self.shooter.weapon.angle
 		self.drawMirror = self.shooter.weapon.drawMirror
@@ -87,6 +84,8 @@ local PlasmaRifleItem = (function()
 	local PlasmaRifleItem = class(Weapon)
 	PlasmaRifleItem.sprite = 'plasma-rifle'
 	PlasmaRifleItem.shotDelay = .05
+	PlasmaRifleItem.shotSpeed = 40
+	PlasmaRifleItem.shotSound = 'shoot'
 	PlasmaRifleItem.rapidFire = true
 	PlasmaRifleItem.shotClass = PlasmaShot
 	PlasmaRifleItem.drawOffsetStanding = {.5, .25}
@@ -94,16 +93,13 @@ local PlasmaRifleItem = (function()
 	PlasmaRifleItem.shotOffset = {0, .45}
 	
 	PlasmaRifleItem.spreadAngle = 5
-	function PlasmaRifleItem:getShotPosDir(player)
-		local pos, dir = PlasmaRifleItem.super.getShotPosDir(self, player)
-	
+	function PlasmaRifleItem:getShotPosVel(player)
+		local pos, vel = PlasmaRifleItem.super.getShotPosVel(self, player)
 		local angle = (math.random() - .5) * self.spreadAngle
 		local theta = math.rad(angle)
 		local x, y = math.cos(theta), math.sin(theta)
-
-		dir[1], dir[2] = x * dir[1] - y * dir[2], x * dir[2] + y * dir[1]
-	
-		return pos, dir
+		vel[1], vel[2] = x * vel[1] - y * vel[2], x * vel[2] + y * vel[1]
+		return pos, vel
 	end
 	
 	return PlasmaRifleItem

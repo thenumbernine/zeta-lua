@@ -10,7 +10,8 @@ Weapon.isWeapon = true
 Weapon.rotCenter = {0, .5}
 
 Weapon.shotOffset = vec2(0, .25)
-function Weapon:getShotPosDir(player)
+Weapon.shotSpeed = nil
+function Weapon:getShotPosVel(player)
 	local pos = vec2(
 		player.pos[1] + (player.drawMirror and -self.shotOffset[1] or self.shotOffset[1]),
 		player.pos[2] + self.shotOffset[2])
@@ -41,25 +42,30 @@ function Weapon:getShotPosDir(player)
 		end
 	end	
 	dir = dir:normalize()
-
-	return pos, dir
+	local vel = dir * self.shotSpeed
+	return pos, vel
 end
 
 function Weapon:onUse(player)
 	player.weapon = self
 end
 
-Weapon.shotDelay = nil
 Weapon.shotClass = nil
+Weapon.shotDelay = nil
+Weapon.shotSound = nil
 function Weapon:onShoot(player)
 	if player.inputShootLast and not self.rapidFire then return end
 	player.nextShootTime = game.time + self.shotDelay
 
-	local pos, dir = self:getShotPosDir(player)
+	if self.shotSound then
+		player:playSound(self.shotSound)
+	end
+
+	local pos, vel = self:getShotPosVel(player)
 	self.shotClass{
 		shooter = player,
 		pos = pos,
-		dir = dir,
+		vel = vel, 
 	}
 end
 
