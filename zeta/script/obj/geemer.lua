@@ -10,7 +10,7 @@ Geemer.sprite = 'geemer'
 
 local hidden = false
 if hidden then
-	Geemer.sprite = 'tile-metal'
+	Geemer.seq = 'hiding'
 end
 
 Geemer.solid = true
@@ -83,7 +83,7 @@ Geemer.states = {
 					self.stuckSide = nil
 					self.state = self.states.searching
 					if hidden then
-						self.sprite = 'geemer'
+						self.seq = 'stand'
 					end
 				end)
 				self.state = nil

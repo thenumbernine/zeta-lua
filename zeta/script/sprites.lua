@@ -34,14 +34,6 @@ return {
 		
 		-- weapons
 	
-	{name='blaster', dir='blaster'},
-	{name='blaster-shot', dir='blaster-shot'},
-	
-	{name='grenadelauncher', dir='grenadelauncher'},
-	{name='grenade', dir='grenade'},
-	
-	{name='missilelauncher', dir='missilelauncher'},
-	{name='missile', dir='missile'},
 	{
 		name='missileblast',
 		dir='missileblast',
@@ -59,21 +51,4 @@ return {
 			stand={'stand1', 'stand2', 'stand3', 'stand4', 'stand5', freq=8},
 		},
 	},
-
-	{name='minigun', dir='minigun'},
-		
-		-- enemies
-	{name='geemer', dir='geemer'},
-	{name='turret-body', dir='turret-body'},
-	{name='turret-base', dir='turret-base'},
-	{name='gato', dir='gato'},
-
-		-- etc
-	{name='puff', dir='puff'},
-	{name='terminal', dir='terminal'},
-	{name='keycard', dir='keycard'},
-
-	-- tiles	
-	{name='tile-metal', dir='tile-metal'},
-	{name='tile-ladder', dir='tile-ladder'},
 }

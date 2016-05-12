@@ -8,6 +8,7 @@ Turret.sprite = 'turret-body'
 Turret.solid = false
 Turret.maxHealth = 3
 Turret.rotCenter = {.5, .5}
+Turret.angle = 90
 
 function Turret:init(...)
 	Turret.super.init(self, ...)
@@ -34,10 +35,22 @@ function Turret:update(dt)
 	if self.health == 0 then return end
 	-- look for player
 	-- shoot at player
-	if not self.deactivated then
+	if self.deactivated then
+		local parkAngle = (self.stuckAngle + 90) % 360
+		-- choose an angle within 180' of the park angle, so you rotate the right way
+		self.angle = ((self.angle - parkAngle + 180) % 360) + parkAngle - 180
+		local rot = 90 * dt	-- rotation amount
+		local deltaAngle = parkAngle - self.angle
+		if math.abs(deltaAngle) < rot then
+			self.angle = parkAngle
+		else
+			self.angle = self.angle + (deltaAngle < 0 and -1 or 1) * rot
+		end
+	else
 		for _,player in ipairs(game.players) do
 			local delta = player.pos - self.pos
 			if delta:length() < 8 then
+				-- TODO only turn so fast ...
 				self.angle = math.deg(math.atan2(delta[2], delta[1]))
 				self:shootAt(player)
 			end
@@ -65,7 +78,8 @@ function Turret:shootAt(player)
 		self.nextShootTime = game.time + self.shotDelay
 	end
 
-	local dir = (player.pos - self.pos):normalize()
+	local theta = math.rad(self.angle)
+	local dir = vec2(math.cos(theta), math.sin(theta))
 	BlasterShot{
 		shooter = self,
 		pos = self.pos,
@@ -78,7 +92,7 @@ function Turret:die()
 	self.seqStartTime = game.time
 	self.removeTime = game.time + .75
 	self.pos[2] = self.pos[2] - 1
-	self.angle = nil
+	self.angle = 0
 
 	self.collidesWithWorld = false
 

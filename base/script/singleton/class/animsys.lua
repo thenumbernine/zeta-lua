@@ -16,7 +16,7 @@ function AnimationSystem:load(sprite)
 	self.sprites[sprite.name] = sprite
 	local newframes = {}
 	
-	-- create implicit frames of all files
+	-- create implicit frames from all files
 	for _,mod in ipairs(modio.search) do
 		local dirobj = file[mod..'/'..dir]
 		if dirobj then

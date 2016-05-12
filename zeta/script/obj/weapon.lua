@@ -4,13 +4,13 @@ local Item = require 'zeta.script.obj.item'
 local OverlayObject = require 'base.script.item'
 local game = require 'base.script.singleton.game'
 
-local InvWeapon = class(Item)
+local Weapon = class(Item)
 
-InvWeapon.isWeapon = true
-InvWeapon.rotCenter = {0, .5}
+Weapon.isWeapon = true
+Weapon.rotCenter = {0, .5}
 
-InvWeapon.shotOffset = vec2(0, .25)
-function InvWeapon:getShotPosDir(player)
+Weapon.shotOffset = vec2(0, .25)
+function Weapon:getShotPosDir(player)
 	local pos = vec2(
 		player.pos[1] + (player.drawMirror and -self.shotOffset[1] or self.shotOffset[1]),
 		player.pos[2] + self.shotOffset[2])
@@ -45,13 +45,13 @@ function InvWeapon:getShotPosDir(player)
 	return pos, dir
 end
 
-function InvWeapon:onUse(player)
+function Weapon:onUse(player)
 	player.weapon = self
 end
 
-InvWeapon.shotDelay = nil
-InvWeapon.shotClass = nil
-function InvWeapon:onShoot(player)
+Weapon.shotDelay = nil
+Weapon.shotClass = nil
+function Weapon:onShoot(player)
 	if player.inputShootLast and not self.rapidFire then return end
 	player.nextShootTime = game.time + self.shotDelay
 
@@ -63,12 +63,12 @@ function InvWeapon:onShoot(player)
 	}
 end
 
-InvWeapon.drawOffsetStanding = vec2(.5, .75)
-InvWeapon.drawOffsetDucking = vec2(.5, 0)
+Weapon.drawOffsetStanding = vec2(.5, .75)
+Weapon.drawOffsetDucking = vec2(.5, 0)
 
 -- TODO - rename 'doUpdateHeldPosition' to 'updateHeldPosition'
 -- and rename 'updateHeldPosition' to 'updateAndDrawOverlay'
-function InvWeapon:doUpdateHeldPosition()
+function Weapon:doUpdateHeldPosition()
 	local player = self.heldby
 	self.drawOffset = player.ducking and self.drawOffsetDucking or self.drawOffsetStanding
 
@@ -93,11 +93,11 @@ function InvWeapon:doUpdateHeldPosition()
 	self.drawMirror = player.drawMirror
 	if self.drawMirror then self.angle = -self.angle end
 end
-function InvWeapon:updateHeldPosition(R, viewBBox)
+function Weapon:updateHeldPosition(R, viewBBox)
 	self:doUpdateHeldPosition()
 	
 	local player = self.heldby
 	OverlayObject.drawItem(self, player, R, viewBBox)
 end
 
-return InvWeapon
+return Weapon

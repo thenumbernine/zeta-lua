@@ -20,7 +20,7 @@ local audio = require 'base.script.singleton.audio'
 local threads = require 'base.script.singleton.threads'
 local game = require 'base.script.singleton.game'
 local sounds = require 'base.script.singleton.sounds'
-local anim = require 'base.script.singleton.animsys'
+local animsys = require 'base.script.singleton.animsys'
 local teamColors = require 'base.script.teamcolors'
 local modio = require 'base.script.singleton.modio'
 -- don't include these til after opengl init
@@ -121,18 +121,34 @@ function GLApp:initGL(gl, glname)
 		joysticks[i] = sdl.SDL_JoystickOpen(i)
 	end
 
-	for _,dir in ipairs(modio.search) do
-		if io.fileexists(dir..'/script/sprites.lua') then
-			local spriteTable = require(dir..'.script.sprites')
+	--[[
+	it would be great to implicitly detect sprite sequences
+	as directories (containing any pngs) in the /sprites/ folder
+	from there, anything in scripts/sprites.lua would be appended
+	-- but the only info needed would be the sequence data
+	( and - soon - any spritesheet chopping regions for frames)
+	--]]
+	for _,mod in ipairs(modio.search) do
+		local dirobj = file[mod..'/sprites']
+		if dirobj then
+			for sprite in dirobj() do
+				animsys:load{name=sprite, dir=sprite}
+			end
+		end
+	end
+
+	for _,mod in ipairs(modio.search) do
+		if io.fileexists(mod..'/script/sprites.lua') then
+			local spriteTable = require(mod..'.script.sprites')
 			for _,sprite in ipairs(spriteTable) do
-				anim:load(sprite)
+				animsys:load(sprite)
 			end
 		end
 	end
 	
-	for _,dir in ipairs(modio.search) do
-		if io.fileexists(dir..'/script/sounds.lua') then
-			local soundTable = require(dir..'.script.sounds')
+	for _,mod in ipairs(modio.search) do
+		if io.fileexists(mod..'/script/sounds.lua') then
+			local soundTable = require(mod..'.script.sounds')
 			for _,sound in ipairs(soundTable) do
 				sounds:load(sound)
 			end
@@ -167,20 +183,16 @@ function GLApp:initGL(gl, glname)
 	local tileTypes = table()
 	local spawnTypes = table()
 	for i=#modio.search,1,-1 do	-- start with lowest (base) first, for sequence sake
-		local dir = modio.search[i]
-		if io.fileexists(dir..'/script/tiletypes.lua') then
-			tileTypes:append(require(dir..'.script.tiletypes'))
+		local mod = modio.search[i]
+		if io.fileexists(mod..'/script/tiletypes.lua') then
+			tileTypes:append(require(mod..'.script.tiletypes'))
 		end
-		if io.fileexists(dir..'/script/spawntypes.lua') then
-			spawnTypes:append(require(dir..'.script.spawntypes'))
+		if io.fileexists(mod..'/script/spawntypes.lua') then
+			spawnTypes:append(require(mod..'.script.spawntypes'))
 		end
 	end
 	levelcfg.tileTypes = tileTypes
 	levelcfg.spawnTypes = spawnTypes
-
-	for i=#modio.search,1,-1 do
-	
-	end
 
 	game:setLevel(levelcfg)
 	

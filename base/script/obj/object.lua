@@ -44,8 +44,6 @@ function Object:init(args)
 	self.lastvel = vec2()
 	
 	self.bbox = box2(self.bbox.min[1], self.bbox.min[2], self.bbox.max[1], self.bbox.max[2])
-
-	self.tiles = {}
 	
 	if args.pos then self.pos[1], self.pos[2] = args.pos[1], args.pos[2] end
 	if args.vel then self.vel[1], self.vel[2] = args.vel[1], args.vel[2] end
