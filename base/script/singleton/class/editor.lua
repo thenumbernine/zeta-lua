@@ -580,8 +580,10 @@ function Editor:updateGUI()
 	ig.igText('EDITOR')
 
 	local function alert(str)
+		-- [[
 		print(str)
-		do return end
+		--]]
+		--[[
 		ig.igOpenPopup('Error!')
 		if ig.igBeginPopupModal('Error!', nil, ig.ImGuiWindowFlags_AlwaysAutoResize) then
 			ig.igText(str)
@@ -590,7 +592,57 @@ function Editor:updateGUI()
 			end
 			ig.igEndPopup()
 		end
+		--]]
 	end
+
+	ig.igCheckbox('Show Tile Types', self.showTileTypes)
+	ig.igCheckbox('no clipping', self.noClipping)
+
+	self.execWindowPtr = self.execWindowPtr or ffi.new('bool[1]', false)
+	if ig.igButton('Console') then
+		self.execWindowPtr[0] = true
+	end
+	if self.execWindowPtr[0] then
+		ig.igBegin('Console', self.execWindowPtr)
+		self.execBuffer = self.execBuffer or ffi.new('char[2048]')
+		if ig.igInputTextMultiline('code', self.execBuffer, ffi.sizeof(self.execBuffer),
+			ig.ImVec2(0,0),
+			ig.ImGuiInputTextFlags_EnterReturnsTrue
+			+ ig.ImGuiInputTextFlags_AllowTabInput)
+		or ig.igButton('run code')
+		then
+			local code = ffi.string(self.execBuffer)
+			print('executing...\n'..code)
+			print('results...')
+			threads:add(function()
+				print(assert(load(code))())
+				io.stdout:flush()
+				io.stderr:flush()
+			end)
+		end
+		if ig.igButton('clear code') then
+			ffi.fill(self.execBuffer, ffi.sizeof(self.execBuffer))
+		end
+		ig.igEnd()
+	end
+
+	self.viewSizePtr = self.viewSizePtr or ffi.new('float[1]')
+	self.viewSizePtr[0] = game.viewSize
+	ig.igSliderFloat('zoom', self.viewSizePtr, 1, 100, '%.3f', 3)
+	game.viewSize = tonumber(self.viewSizePtr[0])
+
+	ig.igSeparator()
+	if ig.igButton('Save Map') then
+		self:saveMap()
+	end
+	if ig.igButton('Save Backgrounds') then
+		self:saveBackgrounds()
+	end
+	if ig.igButton('Save Texpack') then
+		self:saveTexPack()
+	end
+
+	ig.igSeparator()
 
 	ig.igRadioButton('Edit Tiles', self.editTilesOrObjects, 0)
 	ig.igRadioButton('Edit Objects', self.editTilesOrObjects, 1)
@@ -838,8 +890,9 @@ function Editor:updateGUI()
 							-- ctrl+enter returns by default?
 							if ig.igInputTextMultiline(propTitle, prop.vptr, textBufferSize,
 								ig.ImVec2(0,0),
-								ig.ImGuiInputTextFlags_CtrlEnterForNewLine
-								+ ig.ImGuiInputTextFlags_EnterReturnsTrue)
+								ig.ImGuiInputTextFlags_EnterReturnsTrue
+								+ ig.ImGuiInputTextFlags_AllowTabInput)
+							or ig.igButton('done editing')
 							then
 								-- save changes
 								self.selectedSpawnInfo[prop.k] = ffi.string(prop.vptr)
@@ -887,25 +940,6 @@ function Editor:updateGUI()
 		end
 	end
 	
-	ig.igSeparator()
-	ig.igCheckbox('Show Tile Types', self.showTileTypes)
-	ig.igCheckbox('no clipping', self.noClipping)
-
-	self.viewSizePtr = self.viewSizePtr or ffi.new('float[1]')
-	self.viewSizePtr[0] = game.viewSize
-	ig.igSliderFloat('zoom', self.viewSizePtr, 1, 100, '%.3f', 3)
-	game.viewSize = tonumber(self.viewSizePtr[0])
-
-	ig.igSeparator()
-	if ig.igButton('Save Map') then
-		self:saveMap()
-	end
-	if ig.igButton('Save Backgrounds') then
-		self:saveBackgrounds()
-	end
-	if ig.igButton('Save Texpack') then
-		self:saveTexPack()
-	end
 end
 
 

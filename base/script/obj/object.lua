@@ -37,14 +37,13 @@ Object.seqNext = nil		-- this says what sequence comes next.  it means I need so
 
 
 function Object:init(args)
-
 	self.pos = vec2()
 	self.lastpos = vec2()
 	self.vel = vec2()
 	self.lastvel = vec2()
-	
 	self.bbox = box2(self.bbox.min[1], self.bbox.min[2], self.bbox.max[1], self.bbox.max[2])
-	
+	self.solid = args.solid
+
 	if args.pos then self.pos[1], self.pos[2] = args.pos[1], args.pos[2] end
 	if args.vel then self.vel[1], self.vel[2] = args.vel[1], args.vel[2] end
 	if args.sprite then self.sprite = args.sprite end
@@ -561,6 +560,8 @@ function Object:playerKick(other, dx, dy)
 end
 
 function Object:draw(R, viewBBox, holdOverride)
+	if not self.sprite then return end
+	
 	-- heldby means re-rendering the obj to keep it in frame sync with the player	
 	if self.heldby and not holdOverride then return end
 	
