@@ -613,9 +613,15 @@ function Editor:updateGUI()
 		then
 			local code = ffi.string(self.execBuffer)
 			print('executing...\n'..code)
+			code = [[
+local game = require 'base.script.singleton.game'
+local level = game.level
+local player = game.players[1]
+local function popup(...) return player:popupMessage(...) end
+]] .. code
 			print('results...')
 			threads:add(function()
-				print(assert(load(code))())
+				assert(load(code))()
 				io.stdout:flush()
 				io.stderr:flush()
 			end)
@@ -948,7 +954,7 @@ end
 return 'true' if we're processing something
 --]]
 function Editor:event(event)
-	local canHandleKeyboard = not ig.igGetIO()[0].WantCaptureKeyboard
+	self.isHandlingKeyboard = ig.igGetIO()[0].WantCaptureKeyboard
 
 	-- check for enable/disable
 	if event.type == sdl.SDL_KEYDOWN
@@ -956,7 +962,7 @@ function Editor:event(event)
 	then
 		local buttonDown = event.type == sdl.SDL_KEYDOWN
 		if event.key.keysym.sym == 167 then	-- ` key for editor
-			if buttonDown and canHandleKeyboard then
+			if buttonDown and not self.isHandlingKeyboard then
 				self.active = not self.active
 				return true
 			end
@@ -979,8 +985,8 @@ function Editor:update()
 	end
 	sdl.SDL_ShowCursor(sdl.SDL_ENABLE)
 	
-	local canHandleMouse = not ig.igGetIO()[0].WantCaptureMouse
-	if not canHandleMouse then return end
+	self.isHandlingMouse = ig.igGetIO()[0].WantCaptureMouse
+	if self.isHandlingMouse then return end
 	
 	local level = game.level
 	local mouse = gui.mouse

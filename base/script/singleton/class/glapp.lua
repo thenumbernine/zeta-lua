@@ -257,6 +257,8 @@ function GLApp:event(event, ...)
 		if editor:event(event) then return end
 	end
 
+	if editor.active and editor.isHandlingKeyboard then return end
+
 	if #game.clientConn.players >= 2 then
 		local player = game.clientConn.players[2]
 
@@ -351,10 +353,11 @@ function GLApp:event(event, ...)
 		end
 	end
 	
-	
-	if event.key.keysym.sym == sdl.SDLK_BACKQUOTE then	-- slowdown
+	--[[ slowdown effect
+	if event.key.keysym.sym == sdl.SDLK_BACKQUOTE then	
 		timescale = 1 - 4/5 * (press and 1 or 0)
 	end
+	--]]
 end
 	
 function GLApp:updateGUI(...)

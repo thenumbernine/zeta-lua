@@ -21,22 +21,14 @@ function Terminal:playerLook(player)
 		end)
 	end
 	if self.use then
--- TODO sandbox: http://stackoverflow.com/a/6982080/2714073
+		-- TODO sandbox: http://stackoverflow.com/a/6982080/2714073
 		local code = [[
-local object, player, game = ...
+local self, player = ...
+local game = require 'base.script.singleton.game'
 local level = game.level
 local function popup(...) return player:popupMessage(...) end
-local function create(spawnTypeStr)
-	-- verify the spawnTypeStr is valid
-	if not game.levelcfg.spawnTypes:find(nil, function(spawnType)
-		return spawnType.spawn == spawnTypeStr
-	end) then 
-		error("failed to find spawntype "..spawnTypeStr)
-	end
-	return require(spawnTypeStr)
-end
 ]] .. self.use
-		threads:add(assert(load(code)), self, player, game)
+		threads:add(assert(load(code)), self, player)
 	end
 end
 

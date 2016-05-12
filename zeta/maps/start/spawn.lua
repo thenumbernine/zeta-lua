@@ -1,7 +1,7 @@
 {
 	{pos={113.5,236},spawn="zeta.script.obj.terminal",text="evacuation orders given!\nplease proceed to launchpad 1 for immediate departure"},
-	{pos={141.5,221},spawn="zeta.script.obj.terminal",text="team 1 left without us.\nteam 2's rocket won't start.\nI think I'm going to go activate the defense robot to help us fight these creatures off...",use="if object.hasGiven then return end\nobject.hasGiven = true\ncreate\n 'zeta.script.obj.item'\n {pos = object.pos + {-1,1},\n  sprite = 'keycard'}"},
-	{pos={116.5,236},spawn="zeta.script.obj.terminal",text="defense protocols initiated\nweapons storage unlocked",use="if object.hasGiven then\n\9return\nend\nobject.hasGiven = true\ncreate\n 'zeta.script.obj.blaster'\n {pos=object.pos+{1,3}}\nfor i=1,5 do\n create\n  'zeta.script.obj.grenadeitem'\n  {pos=object.pos+{2,3}}\nend"},
+	{pos={141.5,221},spawn="zeta.script.obj.terminal",text="team 1 left without us.\nteam 2's rocket won't start.\nI think I'm going to go activate the defense robot to help us fight these creatures off...",use="if self.hasGiven then return end\nself.hasGiven = true\ncreate\n 'zeta.script.obj.item'\n {pos = self.pos + {-1,1},\n  sprite = 'keycard'}"},
+	{pos={116.5,236},spawn="zeta.script.obj.terminal",text="defense protocols initiated\nweapons storage unlocked",use="if self.hasGiven then\n\9return\nend\nself.hasGiven = true\ncreate\n 'zeta.script.obj.blaster'\n {pos=self.pos+{1,3}}\nfor i=1,5 do\n create\n  'zeta.script.obj.grenadeitem'\n  {pos=self.pos+{2,3}}\nend"},
 	{pos={10.5,206},spawn="zeta.script.obj.turret"},
 	{pos={23.5,206},spawn="zeta.script.obj.turret"},
 	{pos={6.5,199},spawn="zeta.script.obj.turret"},
@@ -120,6 +120,6 @@
 	{pos={62.5,192},spawn="zeta.script.obj.heart"},
 	{pos={62.5,193},spawn="zeta.script.obj.heart"},
 	{pos={62.5,194},spawn="zeta.script.obj.heart"},
-	{pos={107.5,133},spawn="base.script.obj.trigger"},
+	{pos={107.5,133},spawn="base.script.obj.trigger",trigger="-- push into the room\nplayer.pos=self.pos+{1,0}\n-- center view in room\ncenter={120.5, 137}\ncenterView(center)\n-- create boss\ncreate'base.script.obj.boss-geemer'\n{\n\9pos=center,\n\9-- upon boss death...\n\9trigger=function()\n\9\9popup('defeated boss geemer!')\n\9\9-- and maybe drop the next story item...\n\9\9stopCenterView()\n\9end,\n}"},
 	{pos={120.5,238},spawn="base.script.obj.start"},
 }
