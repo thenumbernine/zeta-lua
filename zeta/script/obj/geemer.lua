@@ -1,9 +1,8 @@
 local class = require 'ext.class'
-local Object = require 'base.script.obj.object'
-local takesDamageBehavior = require 'zeta.script.obj.takesdamage'
+local Enemy = require 'zeta.script.obj.enemy'
 local game = require 'base.script.singleton.game'
 
-local Geemer = class(takesDamageBehavior(Object))
+local Geemer = class(Enemy)
 
 Geemer.color = {.4,.7,.4,1}
 Geemer.sprite = 'geemer'
@@ -127,21 +126,21 @@ function Geemer:init(...)
 	-- this determines the visible range below the geemer
 	do
 		local x, y = math.floor(self.pos[1]), math.floor(self.pos[2])
-		
 		repeat
 			y = y - 1
 			local tile = level:getTile(x,y)
-			if not tile then break end
-			if tile.solid then break end
+			if y < 1 or y > level.size[2] then break end
+			if tile and tile.solid then break end
 		until y < 1
 		y = y + 1
 		self.ymin = y - 2	-- leeway?
 
+		y = math.floor(self.pos[2])
 		repeat
 			y = y + 1
 			local tile = level:getTile(x,y)
-			if not tile then break end
-			if tile.solid then break end
+			if y < 1 or y > level.size[2] then break end
+			if tile and tile.solid then break end
 		until y > level.size[2]
 		y = y - 1
 		self.ymax = y
@@ -167,13 +166,13 @@ function Geemer:touch(other, side)
 	end
 end
 
-function Geemer:draw(...)
+function Geemer:draw(R, viewBBox, ...)
 	local ofs = 0
 	if game.time < self.shakeEndTime then
 		ofs = 1/16 * math.sin(game.time * 100)
 		self.pos[1] = self.pos[1] + ofs
 	end
-	Geemer.super.draw(self, ...)
+	Geemer.super.draw(self, R, viewBBox, ...)
 	if game.time < self.shakeEndTime then
 		self.pos[1] = self.pos[1] - ofs
 	end
@@ -185,7 +184,14 @@ function Geemer:hit(damage, attacker, inflicter, side)
 	self.madAt = attacker
 end
 
+Geemer.itemDrops = {
+	['zeta.script.obj.heart'] = .1,
+}
+
 function Geemer:die(damage, attacker, inflicter, side)
+	self:playSound('explode1')
+	-- spawn item drops
+	Geemer.super.die(self, damage, attacker, inflicter, side)
 	-- puff of smoke	
 	--local Puff = require 'zeta.script.obj.puff'
 	--Puff.puffAt(self.pos:unpack())
@@ -196,12 +202,6 @@ function Geemer:die(damage, attacker, inflicter, side)
 		dir = (self.pos - attacker.pos):normalize(),
 		color = self.color,
 	}
-	-- spawn a random item
-	local r = math.random(10)
-	if r == 1 then
-		local Heart = require 'zeta.script.obj.heart'
-		Heart{pos=self.pos}
-	end
 	-- get rid of self
 	self.remove = true
 	-- piss off the geemers around you

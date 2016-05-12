@@ -1,9 +1,8 @@
 local class = require 'ext.class'
-local Object = require 'base.script.obj.object'
-local takesDamageBehavior = require 'zeta.script.obj.takesdamage'
+local Enemy = require 'zeta.script.obj.enemy'
 local game = require 'base.script.singleton.game'
 
-local Turret = class(takesDamageBehavior(Object))
+local Turret = class(Enemy)
 Turret.sprite = 'turret-body'
 Turret.solid = false
 Turret.maxHealth = 3
@@ -32,6 +31,7 @@ end
 
 -- look for player
 -- shoot at player
+Turret.rotationSpeed = 360 	-- degrees per second
 function Turret:update(dt)
 	Turret.super.update(self, dt)
 	if self.health == 0 then return end
@@ -58,7 +58,7 @@ function Turret:update(dt)
 		-- choose an angle within 180' of the park angle, so you rotate the right way
 		local oppositeAngle = targetAngle - 180
 		self.angle = ((self.angle - oppositeAngle) % 360) + oppositeAngle
-		local rot = 180 * dt	-- rotation amount
+		local rot = self.rotationSpeed * dt
 		local deltaAngle = targetAngle - self.angle
 		if math.abs(deltaAngle) < rot then
 			self.angle = targetAngle
@@ -99,8 +99,16 @@ function Turret:shootAt(player)
 	}
 end
 
+Turret.itemDrops = {
+	['zeta.script.obj.heart'] = .05,
+	['zeta.script.obj.grenadeitem'] = .05,
+}
+
 -- TODO missileblast object, use it here, grenades, and missiles
 function Turret:die()
+	-- item drops
+	Turret.super.die(self, damage, attacker, inflicter, side)
+	
 	self.sprite = 'missileblast'
 	self.seq = nil
 	self.seqStartTime = game.time
