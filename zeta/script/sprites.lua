@@ -11,6 +11,14 @@ return {
 	},
 
 	{
+		name='savepoint',
+		dir='savepoint',
+		seqs={
+			stand={'stand1', 'stand2', freq=16},
+		},
+	},
+
+	{
 		name='crystal',
 		dir='crystal',
 		seqs={

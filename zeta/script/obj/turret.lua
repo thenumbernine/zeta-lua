@@ -46,12 +46,13 @@ function Turret:update(dt)
 			targetAngle = (self.stuckAngle + 90) % 360
 		end
 	else
+		self.seq = nil
 		for _,player in ipairs(game.players) do
 			local delta = player.pos - self.pos
 			if delta:length() < 8 then
 				targetAngle = math.deg(math.atan2(delta[2], delta[1]))
 				if math.abs(self.angle - targetAngle) < 30 then
-					self:shootAt(player)
+					self:shoot()
 				end
 				break
 			end
@@ -79,7 +80,7 @@ Turret.nextShootTime = -1
 Turret.shotDelay = .5
 Turret.ammo = 3	-- three shots then refill
 Turret.ammoRefillDelay = 2
-function Turret:shootAt(player)
+function Turret:shoot()
 	if self.health == 0 then return end
 	if self.nextShootTime >= game.time then return end
 	self.ammo = self.ammo - 1

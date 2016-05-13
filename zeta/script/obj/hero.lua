@@ -830,8 +830,8 @@ function Hero:drawHUD(R, viewBBox)
 	-- health:
 	y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'HP: '..self.health .. '/' .. self.maxHealth)
 	y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'Cells: ' .. ('%.1f'):format(self.ammoCells)..'/'..self.maxAmmoCells)
-	y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'ATK: ' .. self.attackStat)
-	y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'DEF: ' .. self.defenseStat)
+	y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'ATK +' .. self.attackStat)
+	y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'DEF +' .. self.defenseStat)
 	local gl = R.gl
 
 	-- items:
