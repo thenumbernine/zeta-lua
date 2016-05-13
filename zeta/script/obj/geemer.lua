@@ -52,25 +52,24 @@ function Geemer:init(...)
 	-- taken from thwomp code
 	-- this determines the visible range below the geemer
 	do
-		local x, y = math.floor(self.pos[1]), math.floor(self.pos[2])
+		local x = math.floor(self.pos[2])
+		local y = math.floor(self.pos[1]) + 1
 		repeat
 			y = y - 1
 			local tile = level:getTile(x,y)
 			if y < 1 or y > level.size[2] then break end
 			if tile and tile.solid then break end
 		until y < 1
-		y = y + 1
 		self.ymin = y - 2	-- leeway?
 
-		y = math.floor(self.pos[2])
+		y = math.floor(self.pos[2]) - 1
 		repeat
 			y = y + 1
 			local tile = level:getTile(x,y)
 			if y < 1 or y > level.size[2] then break end
 			if tile and tile.solid then break end
 		until y > level.size[2]
-		y = y - 1
-		self.ymax = y
+		self.ymax = y-2
 	end
 end
 
@@ -88,9 +87,9 @@ Geemer.states = {
 				local len = delta:length()
 				
 				-- if the player is within their range then attack 
-				if len < self.attackDist 
-				-- or if the player is directl below them then attack. TODO traceline as well?
-				or (math.abs(delta[1]) < 3 and player.pos[2] > self.ymin and player.pos[2] < self.ymax)
+				if math.abs(delta[1]) < self.attackDist
+				and player.pos[2] > self.ymin
+				and player.pos[2] < self.ymax
 				then
 					self.madAt = player 
 					break

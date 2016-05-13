@@ -913,10 +913,11 @@ local function popup(...) return player:popupMessage(...) end
 			if ig.igCollapsingHeader('Object Properties:') then
 				local textBufferSize = 2048
 				
-				local fieldTypes = table{'value', 'boolean', '2D vector'}
+				local fieldTypes = table{'value', 'boolean', '2D vector','color'}
 				local fieldTypeValue = 0
 				local fieldTypeBoolean = 1
 				local fieldTypeVec2D = 2
+				local fieldTypeColor = 2
 				
 				local function createProp(k,v, fieldType)
 					if k == 'obj' then return end		-- obj is reserved
@@ -935,7 +936,8 @@ local function popup(...) return player:popupMessage(...) end
 						-- deduce from value
 						fieldType = fieldTypeValue
 						if type(v) == 'boolean' then fieldType = fieldTypeBoolean end
-						if type(v) == 'table' then fieldType = fieldTypeVec2D end
+						if type(v) == 'table' and #v == 2 then fieldType = fieldTypeVec2D end
+						if type(v) == 'table' and #v == 4 then fieldType = fieldTypeColor end
 					end
 					prop.fieldType = ffi.new('int[1]',fieldType)
 					
@@ -948,6 +950,8 @@ local function popup(...) return player:popupMessage(...) end
 						prop.vptr = ffi.new('bool[1]', v)
 					elseif fieldType == fieldTypeVec2D then
 						prop.vptr = ffi.new('float[2]', v[1], v[2])
+					elseif fieldType == fieldTypeColor then
+						prop.vptr = ffi.new('float[4]', v[1], v[2], v[3], v[4])
 					end
 
 					return prop	
@@ -1007,6 +1011,12 @@ local function popup(...) return player:popupMessage(...) end
 						ig.igInputFloat2(propTitle, prop.vptr)
 						self.selectedSpawnInfo[prop.k][1] = prop.vptr[0]
 						self.selectedSpawnInfo[prop.k][2] = prop.vptr[1]
+					elseif prop.fieldType[0] == fieldTypeColor then
+						ig.igInputFloat4(propTitle, prop.vptr)
+						self.selectedSpawnInfo[prop.k][1] = prop.vptr[0]
+						self.selectedSpawnInfo[prop.k][2] = prop.vptr[1]
+						self.selectedSpawnInfo[prop.k][3] = prop.vptr[2]
+						self.selectedSpawnInfo[prop.k][4] = prop.vptr[3]
 					end
 				end
 				
@@ -1028,10 +1038,12 @@ local function popup(...) return player:popupMessage(...) end
 						local v
 						if fieldType == fieldTypeValue then
 							v = ''
-						elseif fieldType == fieldTypeBoolean then	-- boolean
+						elseif fieldType == fieldTypeBoolean then
 							v = false
-						elseif fieldType == fieldTypeVec2D then	-- 2D vector
+						elseif fieldType == fieldTypeVec2D then
 							v = vec2(0,0)
+						elseif fieldType == fieldTypeColor then
+							v = vec4(1,1,1,1)
 						end
 						self.selectedSpawnInfo[k] = v
 						self.spawnInfoProps:insert(createProp(k, v, fieldType))

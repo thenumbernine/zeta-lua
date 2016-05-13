@@ -59,9 +59,7 @@ function Hero:init(args)
 	Hero.super.init(self, args)
 	self.items = table()	-- self.items = {{obj1, ...}, {obj2, ...}, ...} for each unique class
 	self.holding = nil
-	if args.color then
---		self.color = {unpack(args.color)}
-	end
+	self.color = nil	-- TODO team colors
 end
 
 function Hero:refreshSize()
@@ -833,6 +831,7 @@ function Hero:drawHUD(R, viewBBox)
 			seq = item.invSeq,
 			pos = viewBBox.min + vec2(1, 2 + i),
 			angle = 0,
+			color = item.color,
 		}, R, viewBBox)
 		if items:find(self.holding) then
 			gui.font:drawUnpacked(viewBBox.min[1]+1.5, viewBBox.min[2]+3+i, 1, -1, '<')

@@ -5,6 +5,7 @@ return {
 	{spawn='zeta.script.obj.missilelauncher'},
 	{spawn='zeta.script.obj.grenadelauncher'},
 	{spawn='zeta.script.obj.item'},
+	{spawn='zeta.script.obj.keycard'},
 	{spawn='zeta.script.obj.heart'},
 	{spawn='zeta.script.obj.attackbonus'},
 	{spawn='zeta.script.obj.defensebonus'},
