@@ -34,7 +34,11 @@ local function stopCenterView() return player:centerView() end
 	else
 		-- TODO sandbox: http://stackoverflow.com/a/6982080/2714073
 		local threads = require 'base.script.singleton.threads'
-		threads:add(f, ...)
+		
+		threads:add(function(...)
+			coroutine.yield()
+			f(...)
+		end, ...)
 	end
 end
 

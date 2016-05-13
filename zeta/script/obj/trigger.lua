@@ -6,6 +6,7 @@ local Trigger = class(Object)
 Trigger.solid = false
 Trigger.nextTriggerTime = -1
 Trigger.wait = math.huge	-- wait forever, so default trigger only once
+Trigger.pushPriority = math.huge	-- can't push
 
 function Trigger:init(args)
 	Trigger.super.init(self, args)
@@ -29,6 +30,25 @@ function Trigger:pretouch(other, side)
 		sandbox(self.trigger, 'self, other, side', self, other, side)
 		-- TODO once by default?
 	end
+end
+
+function Trigger:draw(R, viewBBox)
+	local gl = R.gl
+	local bbox = self.bbox
+	gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
+	gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
+	local r,g,b,a = 1,1,0,1
+	R:quad(
+		self.pos[1] + bbox.min[1],
+		self.pos[2] + bbox.min[2],
+		bbox.max[1] - bbox.min[1],
+		bbox.max[2] - bbox.min[2],
+		0,1,
+		1,-1,
+		0,
+		r,g,b,a)
+	gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
+	gl.glEnable(gl.GL_TEXTURE_2D)
 end
 
 return Trigger
