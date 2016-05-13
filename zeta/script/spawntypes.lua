@@ -1,6 +1,7 @@
 return {
 	{spawn='zeta.script.obj.trigger'},	-- touch to perform events 
 	{spawn='zeta.script.obj.door'},
+	{spawn='zeta.script.obj.savepoint'},
 	{spawn='zeta.script.obj.blaster'},
 	{spawn='zeta.script.obj.missilelauncher'},
 	{spawn='zeta.script.obj.grenadelauncher'},

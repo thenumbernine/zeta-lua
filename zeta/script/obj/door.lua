@@ -4,6 +4,7 @@ local box2 = require 'vec.box2'
 local threads = require 'base.script.singleton.threads'
 local game = require 'base.script.singleton.game'
 local Hero = require 'zeta.script.obj.hero'
+local vec2 = require 'vec.vec2'
 
 local Door = class(Object)
 Door.sprite = 'door'
@@ -15,6 +16,11 @@ Door.timeOpening = .5
 Door.timeOpen = 3
 Door.blockTime = 0	-- last time it was blocked
 
+function Door:init(args)
+	Door.super.init(self, args)
+	self.startPos = vec2(self.pos:unpack())
+end
+
 function Door:pretouch(other, side)
 	if not other:isa(Hero) then return end
 	self.blockTime = game.time + 1
@@ -23,6 +29,7 @@ end
 local white = {1,1,1,1}
 local vec4 = require 'vec.vec4'
 function Door:touch(other, side)
+	if not self.solid then return end
 	if not other:isa(Hero) then return end
 
 	local KeyCard = require 'zeta.script.obj.keycard'
@@ -41,7 +48,7 @@ function Door:touch(other, side)
 		threads:add(function()
 			other:popupMessage('Security Access Level Required!')
 		end)
-	elseif self.solid then
+	else
 		self.seq = 'unlock'
 		self.solid = false
 		threads:add(function()
@@ -52,20 +59,20 @@ function Door:touch(other, side)
 				while game.time < openEndTime do
 					coroutine.yield()
 					local y = (game.time - openStartTime) / self.timeOpening 
-					self.pos[2] = self.spawnInfo.pos[2] + 2 * y
+					self.pos[2] = self.startPos[2] + 2 * y
 				end
 				-- keep open
 				local closeStartTime = openEndTime + self.timeOpen
 				while game.time < closeStartTime do
 					coroutine.yield()
-					self.pos[2] = self.spawnInfo.pos[2] + 2
+					self.pos[2] = self.startPos[2] + 2
 				end
 				-- and close
 				local closeEndTime = closeStartTime + self.timeOpening
 				while game.time < closeEndTime do
 					coroutine.yield()
 					local y = 1 - (game.time - closeStartTime) / self.timeOpening
-					self.pos[2] = self.spawnInfo.pos[2] + 2 * y
+					self.pos[2] = self.startPos[2] + 2 * y
 				end
 			until self.blockTime < game.time
 			-- and done

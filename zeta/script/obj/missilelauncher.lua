@@ -2,6 +2,9 @@ local Missile = (function()
 	local class = require 'ext.class'
 	local Object = require 'base.script.obj.object'
 	local game = require 'base.script.singleton.game'
+	local MissileBlast = require 'zeta.script.obj.missileblast'
+	local Puff = require 'zeta.script.obj.puff'
+	local vec2 = require 'vec.vec2'
 	local box2 = require 'vec.box2'
 
 	local Missile = class(Object)
@@ -22,26 +25,23 @@ local Missile = (function()
 		self.angle = math.deg(math.atan2(self.vel[2], self.vel[1]))
 	end
 
-	local Puff = require 'zeta.script.obj.puff'
-	local vec2 = require 'vec.vec2'
 	function Missile:update(dt)
 		Missile.super.update(self, dt)
-		if self.collidesWithWorld then
-			self.tick = ((self.tick or 0) + 1) % 3
-			if self.tick == 0 then
-				Puff{pos=self.pos + vec2(0,-.75)}
-			end
+		self.tick = ((self.tick or 0) + 1) % 3
+		if self.tick == 0 then
+			Puff{pos=self.pos + vec2(0,-.5)}
 		end
 	end
 
 	function Missile:pretouch(other, side)
-		if not self.collidesWithWorld then return end
 		if self.remove then return end
 		if other == self.shooter then return true end
+		local hit
 		if other.takeDamage then
 			other:takeDamage(self.damage, self.shooter, self, side)
+			hit = true
 		end
-		if other.takeDamgae or other.solid then
+		if hit or other.solid then
 			self:blast(other)
 			return
 		end
@@ -69,20 +69,11 @@ local Missile = (function()
 				end
 			end
 		end
-	
-		self.sprite = 'missileblast'
-		self.seqStartTime = game.time
-		self.pos[2] = self.pos[2] - 1
-		self.angle = nil
 
-		self.collidesWithWorld = false
-		self.colldiesWithObjects = false
-		self.vel[1], self.vel[2] = 0, 0
-		
-		Puff.puffAt(self.pos[1], self.pos[2]+.25)
+		Puff.puffAt(self.pos[1], self.pos[2]-.5)
+		MissileBlast{pos={self.pos[1], self.pos[2]-.5}}
 		self:playSound('explode2')
-	
-		self.removeTime = game.time + .75
+		self.remove = true
 	end
 	
 	return Missile

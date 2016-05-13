@@ -53,9 +53,15 @@ end
 Weapon.shotClass = nil
 Weapon.shotDelay = nil
 Weapon.shotSound = nil
-function Weapon:onShoot(player)
+
+function Weapon:canShoot(player)
 	if player.inputShootLast and not self.rapidFire then return end
 	player.nextShootTime = game.time + self.shotDelay
+	return true
+end
+
+function Weapon:onShoot(player)
+	if not self:canShoot(player) then return end
 
 	if self.shotSound then
 		player:playSound(self.shotSound)

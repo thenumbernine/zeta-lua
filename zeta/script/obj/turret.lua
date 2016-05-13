@@ -1,5 +1,8 @@
 local class = require 'ext.class'
 local Enemy = require 'zeta.script.obj.enemy'
+local MissileBlast = require 'zeta.script.obj.missileblast'
+local Blaster = require 'zeta.script.obj.blaster'
+local BlasterShot = Blaster.shotClass
 local game = require 'base.script.singleton.game'
 
 local Turret = class(Enemy)
@@ -72,8 +75,6 @@ function Turret:hit(damage, attacker, inflicter, side)
 	self:playSound('explode1')
 end
 
-local BlasterItem = require 'zeta.script.obj.blaster'
-local BlasterShot = BlasterItem.shotClass
 Turret.nextShootTime = -1
 Turret.shotDelay = .5
 Turret.ammo = 3	-- three shots then refill
@@ -89,13 +90,13 @@ function Turret:shootAt(player)
 		self.nextShootTime = game.time + self.shotDelay
 	end
 
-	self:playSound(BlasterItem.shotSound)
+	self:playSound(Blaster.shotSound)
 	local theta = math.rad(self.angle)
 	local dir = vec2(math.cos(theta), math.sin(theta))
 	BlasterShot{
 		shooter = self,
 		pos = self.pos,
-		vel = dir * BlasterItem.shotSpeed,
+		vel = dir * Blaster.shotSpeed,
 	}
 end
 
@@ -108,17 +109,9 @@ Turret.itemDrops = {
 function Turret:die()
 	-- item drops
 	Turret.super.die(self, damage, attacker, inflicter, side)
-	
-	self.sprite = 'missileblast'
-	self.seq = nil
-	self.seqStartTime = game.time
-	self.removeTime = game.time + .75
-	self.pos[2] = self.pos[2] - 1
-	self.angle = 0
-
-	self.collidesWithWorld = false
-
+	MissileBlast{pos={self.pos[1],self.pos[2]-.5}}
 	self:playSound('explode2')
+	self.remove = true
 end
 
 function Turret:draw(R, viewBBox, ...)

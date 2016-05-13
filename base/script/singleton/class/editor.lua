@@ -512,15 +512,37 @@ function Editor:init()
 	self.noClipping = ffi.new('bool[1]',false)
 end
 
+local colorForTypeTable = table()
+local predefinedColors = table{
+	{0,0,0},
+	{1,1,1},
+	{1,0,0},
+	{1,1,0},
+	{0,1,0},
+	{0,1,1},
+	{0,0,1},
+	{1,0,1},
+}
+local function colorForType(index)
+	local color = colorForTypeTable[index]
+	if not color then 
+		color = predefinedColors:remove(1) or vec3(math.random(), math.random(), math.random()):normalize()
+		color = {color[1], color[2], color[3], .7}
+		colorForTypeTable[index] = color
+	end
+	return color
+end
+
 function Editor:setTileKeys()
 
 	-- tile types
 	local tileTypes = table(game.levelcfg.tileTypes)
 	tileTypes[0] = {name='empty'}
-	self.tileOptions = tileTypes:map(function(tileType)
+	self.tileOptions = tileTypes:map(function(tileType,tileTypeIndex)
 		local width, height = 16, 16
 		local channels = 4
 		local border = 1
+		local misc
 		local image = Image(width, height, channels, 'unsigned char', function(i,j)
 			if i < border or j < border or i >= width-border or j >= height-border then return 0,0,0,0 end
 			local plane = tileType.plane
@@ -532,27 +554,35 @@ function Editor:setTileKeys()
 			elseif tileType.solid then
 				return 255,255,255,255
 			else
-				return 0,0,0,0
+				misc = true
+				local color = colorForType(tileTypeIndex)
+				return 
+					ffi.cast('unsigned char',color[1]*255),
+					ffi.cast('unsigned char',color[2]*255),
+					ffi.cast('unsigned char',color[3]*255),
+					255
 			end
 			return 0,0,0,0
 		end)
 		-- make solid image hollow
-		image = Image(image.width, image.height, image.channels, image.format, function(i,j)
-			if i > border-1 and j > border-1 and i < image.width-border-1 and j < image.height-border-1 then
-				if image.buffer[0+image.channels*(i+image.width*j)] > 0 
-				and image.buffer[0+image.channels*(i-1+image.width*j)] > 0
-				and image.buffer[0+image.channels*(i+1+image.width*j)] > 0
-				and image.buffer[0+image.channels*(i+image.width*(j-1))] > 0
-				and image.buffer[0+image.channels*(i+image.width*(j+1))] > 0
-				then
-					return 0,0,0,0
+		if not misc then
+			image = Image(image.width, image.height, image.channels, image.format, function(i,j)
+				if i > border-1 and j > border-1 and i < image.width-border-1 and j < image.height-border-1 then
+					if image.buffer[0+image.channels*(i+image.width*j)] > 0 
+					and image.buffer[0+image.channels*(i-1+image.width*j)] > 0
+					and image.buffer[0+image.channels*(i+1+image.width*j)] > 0
+					and image.buffer[0+image.channels*(i+image.width*(j-1))] > 0
+					and image.buffer[0+image.channels*(i+image.width*(j+1))] > 0
+					then
+						return 0,0,0,0
+					end
 				end
-			end
-			return image.buffer[0+image.channels*(i+image.width*j)],
-					image.buffer[1+image.channels*(i+image.width*j)],
-					image.buffer[2+image.channels*(i+image.width*j)],
-					image.buffer[3+image.channels*(i+image.width*j)]
-		end)
+				return image.buffer[0+image.channels*(i+image.width*j)],
+						image.buffer[1+image.channels*(i+image.width*j)],
+						image.buffer[2+image.channels*(i+image.width*j)],
+						image.buffer[3+image.channels*(i+image.width*j)]
+			end)
+		end
 		local tex = Tex2D{
 			image = image,
 			minFilter = gl.GL_NEAREST,
@@ -907,7 +937,25 @@ local function popup(...) return player:popupMessage(...) end
 	elseif self.editTilesOrObjects[0] == 1 then
 		if ig.igCollapsingHeader('Object Type:') then
 			for i,spawnOption in ipairs(self.spawnOptions) do
-				ig.igRadioButton(spawnOption.spawnType.spawn, self.selectedSpawnIndex, i)
+				ig.igPushIdStr('spawnOption #'..i)
+				local spawnType = spawnOption.spawnType
+				local spawnClass = require(spawnType.spawn)
+				local sprite = spawnClass.sprite
+				local tex = sprite and animsys:getTex(sprite, 'stand')
+				local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex and tex.id or 0))
+				if ig.igImageButton(
+					texIDPtr,
+					ig.ImVec2(32, 32), --size
+					ig.ImVec2(0, 0), --uv0
+					ig.ImVec2(1, 1), --uv1
+					-1,	-- frame_padding
+					i == self.selectedSpawnIndex[0] and ig.ImVec4(1,1,0,.25) or ig.ImVec4(0,0,0,0))	-- bg_col
+				then
+					self.selectedSpawnIndex[0] = i
+				end
+				ig.igSameLine()	
+				ig.igRadioButton(spawnType.spawn, self.selectedSpawnIndex, i)
+				ig.igPopId()
 			end
 		end
 		if self.selectedSpawnInfo then
@@ -918,7 +966,7 @@ local function popup(...) return player:popupMessage(...) end
 				local fieldTypeValue = 0
 				local fieldTypeBoolean = 1
 				local fieldTypeVec2D = 2
-				local fieldTypeColor = 2
+				local fieldTypeColor = 3
 				
 				local function createProp(k,v, fieldType)
 					if k == 'obj' then return end		-- obj is reserved
@@ -974,8 +1022,9 @@ local function popup(...) return player:popupMessage(...) end
 				end
 					
 				for i=#self.spawnInfoProps,1,-1 do
+					ig.igPushIdStr('spawnprop #'..i)
 					local prop = self.spawnInfoProps[i]
-					local propTitle = prop.k..' (#'..i..')'
+					local propTitle = prop.k
 				
 					if prop.k ~= 'pos' and prop.k ~= 'spawn' then
 						if ig.igButton('remove '..propTitle) then
@@ -1019,6 +1068,7 @@ local function popup(...) return player:popupMessage(...) end
 						self.selectedSpawnInfo[prop.k][3] = prop.vptr[2]
 						self.selectedSpawnInfo[prop.k][4] = prop.vptr[3]
 					end
+					ig.igPopId()
 				end
 				
 				ig.igSeparator()
@@ -1171,27 +1221,6 @@ function Editor:update()
 	end
 end
 
-local colorForTypeTable = table()
-local predefinedColors = table{
-	{0,0,0},
-	{1,1,1},
-	{1,0,0},
-	{1,1,0},
-	{0,1,0},
-	{0,1,1},
-	{0,0,1},
-	{1,0,1},
-}
-local function colorForType(index)
-	local color = colorForTypeTable[index]
-	if not color then 
-		color = predefinedColors:remove(1) or vec3(math.random(), math.random(), math.random()):normalize()
-		color = {color[1], color[2], color[3], .7}
-		colorForTypeTable[index] = color
-	end
-	return color
-end
-
 Editor.tileBackColor = {0,0,0,.5}
 Editor.tileSelColor = {1,0,0,.5}
 function Editor:draw(R, viewBBox)
@@ -1330,8 +1359,8 @@ function Editor:draw(R, viewBBox)
 						1, 1,
 						0, 0, 
 						1, 1,
-						0,	--angle
-						1,1,1,1)--table.unpack(colorForType(tiletype)))
+						0,
+						1,1,1,1)
 				end
 			end
 		end

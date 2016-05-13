@@ -1,11 +1,14 @@
 local Grenade = (function()
 	local class = require 'ext.class'
-	local Object = require 'base.script.obj.object'
-	local game = require 'base.script.singleton.game'
 	local box2 = require 'vec.box2'
+	local vec2 = require 'vec.vec2'
+	local Object = require 'base.script.obj.object'
 	local takesDamageBehavior = require 'zeta.script.obj.takesdamage'
-	local Grenade = class(takesDamageBehavior(Object))
+	local MissileBlast = require 'zeta.script.obj.missileblast'
+	local Puff = require 'zeta.script.obj.puff'
+	local game = require 'base.script.singleton.game'
 	
+	local Grenade = class(takesDamageBehavior(Object))
 	Grenade.bbox = box2(-.1, 0, .1, .2)
 	Grenade.sprite = 'grenade'
 	Grenade.maxHealth = 1
@@ -28,8 +31,6 @@ local Grenade = (function()
 		self.detonateTime = game.time + 2.9 + math.random() * .2
 	end
 
-	local Puff = require 'zeta.script.obj.puff'
-	local vec2 = require 'vec.vec2'
 	function Grenade:update(dt)
 		Grenade.super.update(self, dt)
 		if self.collidesWithWorld then
@@ -116,52 +117,66 @@ local Grenade = (function()
 				end
 			end
 		end
-	
-		self.sprite = 'missileblast'
-		self.useGravity = false
-		self.solid = false
-		self.seqStartTime = game.time
-		self.pos[2] = self.pos[2] - 1
-		self.angle = nil
 
-		self.collidesWithWorld = false
-		self.colldiesWithObjects = false
-		self.vel[1], self.vel[2] = 0, 0
-		
-		Puff.puffAt(self.pos[1], self.pos[2]+.25)
+		Puff.puffAt(self.pos[1], self.pos[2]-.5)
+		MissileBlast{pos={self.pos[1], self.pos[2]-.5}}
 		self:playSound('explode2')
-	
-		self.removeTime = game.time + .75
+		self.remove = true
 	end
 	
 	return Grenade
 end)()
 
-local GrenadeLauncherItem = (function()
+local GrenadeLauncher = (function()
 	local class = require 'ext.class'
 	local Weapon  = require 'zeta.script.obj.weapon'
-	
-	local GrenadeLauncherItem = class(Weapon)
-	GrenadeLauncherItem.sprite = 'grenadelauncher'
-	GrenadeLauncherItem.shotDelay = .5
-	GrenadeLauncherItem.shotSpeed = 18
-	GrenadeLauncherItem.shotUpSpeed = 7
-	GrenadeLauncherItem.shotSound = 'fire-grenade'
-	GrenadeLauncherItem.rotCenter = {.25,.5}
-	GrenadeLauncherItem.drawOffsetStanding = {.5, .25}
-	GrenadeLauncherItem.shotClass = Grenade 
-	GrenadeLauncherItem.shotOffset = {.5, .5}
 
-	function GrenadeLauncherItem:getShotPosVel(player)
-		local pos, vel = GrenadeLauncherItem.super.getShotPosVel(self, player)
+	local GrenadeLauncher = class(Weapon)
+	GrenadeLauncher.sprite = 'grenadelauncher'
+	GrenadeLauncher.shotDelay = .5
+	GrenadeLauncher.shotSpeed = 18
+	GrenadeLauncher.shotUpSpeed = 7
+	GrenadeLauncher.shotSound = 'fire-grenade'
+	GrenadeLauncher.rotCenter = {.25,.5}
+	GrenadeLauncher.drawOffsetStanding = {.5, .25}
+	GrenadeLauncher.shotClass = Grenade 
+	GrenadeLauncher.shotOffset = {.5, .5}
+
+	function GrenadeLauncher:getShotPosVel(player)
+		local pos, vel = GrenadeLauncher.super.getShotPosVel(self, player)
 		vel[2] = vel[2] + self.shotUpSpeed
 		return pos, vel
 	end
 
+	function GrenadeLauncher:canShoot(player)
+		if not GrenadeLauncher.super.canShoot(self, player) then return end	
+	
+		-- TODO instead of separate GrenadeItem and Grenade ...
+		-- combine the two?
+		-- then have ammo selection?
+		local GrenadeItem = require 'zeta.script.obj.grenadeitem'
+
+		-- TODO if player:takeItem(require'zeta.script.obj.grenadeitem') then ...
+		local found
+		for i=#player.items,1,-1 do
+			local items = player.items[i]
+			if items[1]
+			and items[1]:isa(GrenadeItem)
+			then
+				items:remove()
+				if #items == 0 then player.items:remove(i) end
+				return true
+			end
+		end
+		
+		-- didn't find it
+		-- TODO play out of ammo sound?
+		return false
+	end
 
 	--[[ cluster grenades won't work so long as grenades are solid and takesDamage themselves
 	local game = require 'base.script.singleton.game'
-	function GrenadeLauncherItem:onShoot(player)
+	function GrenadeLauncher:onShoot(player)
 		if player.inputShootLast and not self.rapidFire then return end
 		player.nextShootTime = game.time + self.shotDelay
 
@@ -176,7 +191,7 @@ local GrenadeLauncherItem = (function()
 	end
 	--]]
 	
-	return GrenadeLauncherItem
+	return GrenadeLauncher
 end)()
 
-return GrenadeLauncherItem
+return GrenadeLauncher

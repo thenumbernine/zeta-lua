@@ -55,6 +55,12 @@ Hero.pushPriority = 1
 
 Hero.nextShootTime = -1
 
+Hero.attackStat = 0
+Hero.defenseStat = 0
+Hero.maxAmmoCells = 5
+Hero.ammoCells = Hero.maxAmmoCells
+Hero.rechargeCellsTime = 10	-- seconds
+
 function Hero:init(args)
 	Hero.super.init(self, args)
 	self.items = table()	-- self.items = {{obj1, ...}, {obj2, ...}, ...} for each unique class
@@ -203,6 +209,8 @@ function Hero:update(dt)
 		spawnInfo:respawn()
 	end
 	--]]
+
+	self.ammoCells = math.min(self.maxAmmoCells, self.ammoCells + self.maxAmmoCells * dt / self.rechargeCellsTime)
 
 	-- slowly track player
 	local editor = require 'base.script.singleton.editor'
@@ -708,11 +716,11 @@ function Hero:hit(damage, attacker, inflicter, side)
 end
 
 function Hero:modifyDamageGiven(damage, receiver, inflicter, side)
-	return math.max(0, damage + (self.attackBonus or 0))
+	return math.max(0, damage + self.attackStat)
 end
 
 function Hero:modifyDamageTaken(damage, attacker, inflicter, side)
-	return math.max(0, damage - (self.defenseBonus or 0))
+	return math.max(0, damage - self.defenseStat)
 end
 
 function Hero:draw(R, viewBBox, holdOveride)
@@ -816,31 +824,35 @@ end
 
 function Hero:drawHUD(R, viewBBox)
 	if Hero.super.drawHUD then Hero.super.drawHUD(self, R, viewBBox) end
-	
+
+	local y = viewBBox.min[2]+1
 	-- draw gui
 	-- health:
-	gui.font:drawUnpacked(viewBBox.min[1], viewBBox.min[2]+2, 1, -1, self.health .. '/' .. self.maxHealth)
+	y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'HP: '..self.health .. '/' .. self.maxHealth)
+	y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'Cells: ' .. ('%.1f'):format(self.ammoCells)..'/'..self.maxAmmoCells)
+	y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'ATK: ' .. self.attackStat)
+	y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'DEF: ' .. self.defenseStat)
 	local gl = R.gl
 
 	-- items:
-	for i,items in ipairs(self.items) do
-		i = i + 1
+	for _,items in ipairs(self.items) do
+		y=y+1
 		local item = items[1]
 		Object.draw({
 			sprite = item.sprite,
 			seq = item.invSeq,
-			pos = viewBBox.min + vec2(1, 2 + i),
+			pos = {viewBBox.min[1] + 1, y-1},
 			angle = 0,
 			color = item.color,
 		}, R, viewBBox)
 		if items:find(self.holding) then
-			gui.font:drawUnpacked(viewBBox.min[1]+1.5, viewBBox.min[2]+3+i, 1, -1, '<')
+			gui.font:drawUnpacked(viewBBox.min[1]+1.5, y, 1, -1, '<')
 		end
 		if items:find(self.weapon) then
-			gui.font:drawUnpacked(viewBBox.min[1]+2, viewBBox.min[2]+3+i, 1, -1, 'W')
+			gui.font:drawUnpacked(viewBBox.min[1]+2, y, 1, -1, 'W')
 		end
 		if #items > 1 then
-			gui.font:drawUnpacked(viewBBox.min[1]+2.5, viewBBox.min[2]+3+i, 1, -1, 'x'..#items)
+			gui.font:drawUnpacked(viewBBox.min[1]+2.5, y, 1, -1, 'x'..#items)
 		end
 	end
 	

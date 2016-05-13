@@ -6,10 +6,7 @@ DefenseBonus.sprite = 'defense-bonus'
 DefenseBonus.invSeq = 'stand2'	-- stop flashing!
 
 function DefenseBonus:onGiveBonus(player)
-	player.defenseBonus = (player.defenseBonus or 0) + 1
-end
-function DefenseBonus:onLoseBonus(player)
-	player.defenseBonus = player.defenseBonus - 1
+	player.defenseStat = player.defenseStat + 1
 end
 
 return DefenseBonus

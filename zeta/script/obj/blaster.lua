@@ -3,7 +3,6 @@
 local BlasterShot = (function()
 	local class = require 'ext.class'
 	local Object = require 'base.script.obj.object'
-	local game = require 'base.script.singleton.game'
 	local box2 = require 'vec.box2'
 
 	local BlasterShot = class(Object)
@@ -50,8 +49,8 @@ local BlasterShot = (function()
 			other:takeDamage(self.damage, self.shooter, self, side)
 		end
 		if other.takeDamage or other.solid then
-			self.collidesWithWorld = false
-			self.collidesWithObjects = false
+			--self.collidesWithWorld = false
+			--self.collidesWithObjects = false
 			self.remove = true
 			return
 		end
@@ -63,19 +62,26 @@ end)()
 
 -- world object
 
-local BlasterItem = (function()
+local Blaster = (function()
 	local class = require 'ext.class'
 	local Weapon = require 'zeta.script.obj.weapon'
 	local game = require 'base.script.singleton.game'
 	
-	local BlasterItem = class(Weapon)
-	BlasterItem.sprite = 'blaster'
-	BlasterItem.shotDelay = .05
-	BlasterItem.shotSpeed = 35
-	BlasterItem.shotClass = BlasterShot
-	BlasterItem.shotSound = 'shoot'
+	local Blaster = class(Weapon)
+	Blaster.sprite = 'blaster'
+	Blaster.shotDelay = .05
+	Blaster.shotSpeed = 35
+	Blaster.shotClass = BlasterShot
+	Blaster.shotSound = 'shoot'
 
-	return BlasterItem
+	function Blaster:canShoot(player)
+		if not Blaster.super.canShoot(self, player) then return end
+		if player.ammoCells < 1 then return end
+		player.ammoCells = player.ammoCells - 1
+		return true
+	end
+
+	return Blaster
 end)()
 
-return BlasterItem
+return Blaster
