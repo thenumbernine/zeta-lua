@@ -1127,7 +1127,7 @@ function Editor:update()
 			end
 		elseif self.editTilesOrObjects[0] == 1 then	
 			-- only on single click
-			if mouse.leftDown and not mouse.lastLeftDown then
+			do	--if mouse.leftDown and not mouse.lastLeftDown then
 				if self.shiftDown then
 				-- ... hmm this is dif than tiles
 				-- search through and pick out a spawn obj under the mouse

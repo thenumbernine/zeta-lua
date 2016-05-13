@@ -26,6 +26,8 @@ Geemer.alertDist = 10
 Geemer.nextShakeTime = -1
 Geemer.shakeEndTime = -1
 
+Geemer.searchYPaddingDown = 2
+Geemer.searchYPaddingUp = 3
 function Geemer:init(...)
 	Geemer.super.init(self, ...)
 
@@ -52,16 +54,16 @@ function Geemer:init(...)
 	-- taken from thwomp code
 	-- this determines the visible range below the geemer
 	do
-		local x = math.floor(self.pos[2])
-		local y = math.floor(self.pos[1]) + 1
+		local x = math.floor(self.pos[1])
+		local y = math.floor(self.pos[2]) + 1
 		repeat
 			y = y - 1
 			local tile = level:getTile(x,y)
 			if y < 1 or y > level.size[2] then break end
 			if tile and tile.solid then break end
 		until y < 1
-		self.ymin = y - 2	-- leeway?
-
+		self.ymin = y - self.searchYPaddingDown
+		
 		y = math.floor(self.pos[2]) - 1
 		repeat
 			y = y + 1
@@ -69,7 +71,7 @@ function Geemer:init(...)
 			if y < 1 or y > level.size[2] then break end
 			if tile and tile.solid then break end
 		until y > level.size[2]
-		self.ymax = y-2
+		self.ymax = y + self.searchYPaddingUp
 	end
 end
 
@@ -183,6 +185,22 @@ function Geemer:draw(R, viewBBox, ...)
 	if game.time < self.shakeEndTime then
 		self.pos[1] = self.pos[1] - ofs
 	end
+
+--[[ debug draw
+	local gl = R.gl
+	gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
+	gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
+	R:quad(
+		self.spawnInfo.pos[1] - self.attackDist,
+		self.ymin,
+		2 * self.attackDist,
+		self.ymax - self.ymin,
+		0,0,
+		1,1,
+		0,
+		1,0,0,1)
+	gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
+--]]
 end
 
 function Geemer:hit(damage, attacker, inflicter, side)
