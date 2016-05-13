@@ -1,8 +1,10 @@
 return {
+	-- interaction
 	{spawn='zeta.script.obj.trigger'},	-- touch to perform events 
 	{spawn='zeta.script.obj.door'},
 	{spawn='zeta.script.obj.terminal'},
 	{spawn='zeta.script.obj.savepoint'},
+	{spawn='zeta.script.obj.energyrefill'},
 	-- items	
 	{spawn='zeta.script.obj.item'},
 	{spawn='zeta.script.obj.keycard'},

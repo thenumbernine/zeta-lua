@@ -9,7 +9,10 @@ SavePoint.sprite = 'savepoint'
 SavePoint.solid = false
 
 function SavePoint:playerLook(player)
-	print('saving...')
+	threads:add(function()
+		player:popupMessage('saving...')
+	end)
+
 	os.execute('mkdir zeta/save')
 
 	local vec2 = require 'vec.vec2'

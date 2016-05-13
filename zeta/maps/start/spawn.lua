@@ -211,10 +211,12 @@
 	{pos={44.5,239},spawn="zeta.script.obj.redgeemer"},
 	{pos={44.5,238},spawn="zeta.script.obj.redgeemer"},
 	{color={0,1,0,1},pos={50.5,160},spawn="zeta.script.obj.door"},
-	{pos={41.5,158},spawn="zeta.script.obj.cells"},
+	{cells="2",pos={37.5,168},spawn="zeta.script.obj.cells"},
 	{pos={160.5,236},spawn="zeta.script.obj.savepoint"},
 	{cells="5",pos={118.5,148},spawn="zeta.script.obj.cells"},
 	{pos={151.5,130},spawn="zeta.script.obj.savepoint"},
 	{pos={114.5,218},spawn="zeta.script.obj.attackbonus"},
 	{color={0,1,1,1},pos={175.5,163},spawn="zeta.script.obj.door"},
+	{pos={161.5,236},spawn="zeta.script.obj.energyrefill"},
+	{pos={41.5,158},spawn="zeta.script.obj.energyrefill"},
 }

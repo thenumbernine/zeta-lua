@@ -1,19 +1,14 @@
 TODO list
 
-levels:
+- get load game working?
+- missile launcher missile ammo
+- link objs and spawninfos to rooms, respawn by room
+- room tags?  or camera align objects?
+- ‘x’ to use computers, save points, etc?  that’s the item button …
+- deactivated turrets shoot at enemies
+- fix collisions with sloped tiles
+- geemers and doors don’t mix
 - room environmental effects ... foreground warping (underwater, heat), blowing wind, falling snow/rain/leaves, etc
-
-gameplay:
-- get rid of pickup/putdown items.  auto pickup any item you touch.  auto collect health/inventory.  no need to put things down ever.  
-- maybe make all items touch to use, (not manually)
-- the pickup/putdown for non-inventory objects will only be accessible by the lift gloves accessory.  for that, go back to hold-A to use.
-- still keep crafting?  touch craft material to collect them, then ... inventory screen to craft them?
-	- but no crafting heal potions and damage modifiers?  too Aquaria?  instead, only craft weapon modifications? too DoomRL?
-- change object warp mechanism from tile-based to object-based?  written to objects at load from the warp image value at the object's position?
-- LATER IF NEEDED: level object: get rid of level.tile[][] 2D array of objects? replace with 2D array of int lookups into the tile map?  this will aid in manual setting textures, and memory, and on android & wii the load time
-
-editor:
-- properties: click on a textarea to replace it with a multi-line input?
 
 buttons:
 	- up/down to aim, left/right to move
