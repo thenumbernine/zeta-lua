@@ -24,81 +24,6 @@ Geemer.alertDist = 10
 Geemer.nextShakeTime = -1
 Geemer.shakeEndTime = -1
 
-Geemer.states = {
-	searching = function(self)
-	
-		if self.jumpBaseVelX then
-			self.vel[1] = self.jumpBaseVelX
-		end
-
-		self.irritatedAt = nil
-		if self.onground or self.stuckPos then 
-			for _,player in ipairs(game.players) do
-				local delta = player.pos - self.pos
-				local len = delta:length()
-				
-				-- if the player is within their range then attack 
-				if len < self.attackDist 
-				-- or if the player is directl below them then attack. TODO traceline as well?
-				or (math.abs(delta[1]) < 3 and player.pos[2] > self.ymin and player.pos[2] < self.ymax)
-				then
-					self.madAt = player 
-					break
-				elseif len < self.alertDist then
-					self.irritatedAt = player
-				end
-			end
-		
-			-- if something made us angry
-			if self.madAt
-			-- if we're looking for free space
-			or self.avoiding
-			then
-				local delta = (self.madAt or self.avoiding).pos - self.pos
-				local len = delta:length()
-				setTimeout(math.random() * .4, function()
-					local avoiding = not self.madAt and self.avoiding
-					local jumpVel = avoiding and 5 or self.jumpVel
-					local runVel = avoiding and 3 or self.runVel
-					runVel = runVel * (math.random() * .3 + .7)
-					jumpVel = jumpVel * (math.random() * .2 + .8)
-
-					-- jump at player
-					self.vel[2] = jumpVel
-					self.vel[1] = delta[1] > 0 and runVel or -runVel
-					-- if we're on a wall then don't jump into the wa
-					if (self.vel[1] > 0 and self.stuckSide == 'right')
-					or (self.vel[1] < 0 and self.stuckSide == 'left')
-					then
-						self.vel[1] = -self.vel[1]
-					end
-					self.jumpBaseVelX = self.vel[1]
-
-					--self.madAt = nil
-					self.avoiding = nil
-					self.angle = nil
-					self.useGravity = true
-					self.stuckPos = nil
-					self.stuckSide = nil
-					self.state = self.states.searching
-					if hidden then
-						self.seq = 'stand'
-					end
-				end)
-				self.state = nil
-			elseif self.irritatedAt then
-				if not hidden then
-					-- shake and let him know you're irritated
-					if game.time > self.nextShakeTime then
-						self.shakeEndTime = game.time + 1 + math.random()
-						self.nextShakeTime = game.time + 3 + 2 * math.random()
-					end
-				end
-			end
-		end
-	end,
-}
-
 function Geemer:init(...)
 	Geemer.super.init(self, ...)
 
@@ -147,9 +72,92 @@ function Geemer:init(...)
 	end
 end
 
+Geemer.states = {
+	searching = function(self)
+	
+		if self.jumpBaseVelX then
+			self.vel[1] = self.jumpBaseVelX
+		end
+
+		self.irritatedAt = nil
+		if self.onground or self.stuckPos then 
+			for _,player in ipairs(game.players) do
+				local delta = player.pos - self.pos
+				local len = delta:length()
+				
+				-- if the player is within their range then attack 
+				if len < self.attackDist 
+				-- or if the player is directl below them then attack. TODO traceline as well?
+				or (math.abs(delta[1]) < 3 and player.pos[2] > self.ymin and player.pos[2] < self.ymax)
+				then
+					self.madAt = player 
+					break
+				elseif len < self.alertDist then
+					self.irritatedAt = player
+				end
+			end
+		
+			-- if something made us angry
+			if self.madAt
+			-- if we're looking for free space
+			or self.avoiding
+			then
+				local delta = (self.madAt or self.avoiding).pos - self.pos
+				if self.avoiding then delta[1] = -delta[1] end
+				local len = delta:length()
+				setTimeout(math.random() * .4, function()
+					self:calcVelForJump(delta)					
+				
+					-- if we're on a wall then don't jump into the wa
+					if (self.vel[1] > 0 and self.stuckSide == 'right')
+					or (self.vel[1] < 0 and self.stuckSide == 'left')
+					then
+						self.vel[1] = -self.vel[1]
+					end
+					self.jumpBaseVelX = self.vel[1]
+
+					--self.madAt = nil
+					self.avoiding = nil
+					self.angle = nil
+					self.useGravity = true
+					self.stuckPos = nil
+					self.stuckSide = nil
+					self.state = self.states.searching
+					if hidden then
+						self.seq = 'stand'
+					end
+				end)
+				self.state = nil
+			elseif self.irritatedAt then
+				if not hidden then
+					-- shake and let him know you're irritated
+					if game.time > self.nextShakeTime then
+						self.shakeEndTime = game.time + 1 + math.random()
+						self.nextShakeTime = game.time + 3 + 2 * math.random()
+					end
+				end
+			end
+		end
+	end,
+}
+
 function Geemer:update(dt)
 	Geemer.super.update(self, dt)
 	if self.state then self:state() end
+end
+
+function Geemer:calcVelForJump(delta)
+	-- delta is the vector from our target to ourselves
+	local avoiding = not self.madAt and self.avoiding
+	local jumpVel = avoiding and 5 or self.jumpVel
+	local runVel = avoiding and 3 or self.runVel
+	runVel = runVel * (math.random() * .3 + .7)
+	jumpVel = jumpVel * (math.random() * .2 + .8)
+	if delta[1] < 0 then runVel = -runVel end
+
+	-- jump at player
+	self.vel[1] = runVel
+	self.vel[2] = jumpVel
 end
 
 function Geemer:pretouch(other, side)

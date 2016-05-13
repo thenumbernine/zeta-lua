@@ -120,6 +120,6 @@
 	{pos={62.5,192},spawn="zeta.script.obj.heart"},
 	{pos={62.5,193},spawn="zeta.script.obj.heart"},
 	{pos={62.5,194},spawn="zeta.script.obj.heart"},
-	{pos={107.5,133},spawn="base.script.obj.trigger",trigger="-- push into the room\nplayer.pos=self.pos+{1,0}\n-- center view in room\ncenter={120.5, 137}\ncenterView(center)\n-- create boss\ncreate'base.script.obj.boss-geemer'\n{\n\9pos=center,\n\9-- upon boss death...\n\9trigger=function()\n\9\9popup('defeated boss geemer!')\n\9\9-- and maybe drop the next story item...\n\9\9stopCenterView()\n\9end,\n}"},
+	{pos={107.5,133},spawn="zeta.script.obj.trigger",trigger="-- push into the room\nplayer.pos=self.pos+{1,0}\n-- make ourselves solid and blocking\nself.solid = true\nbox2 = require 'vec.box2'\nself.bbox = box2(-.5, 0, .5, 3)\n-- center view in room\ncenter={120.5, 137}\ncenterView(center)\n-- create boss\ncreate'zeta.script.obj.boss-geemer'\n{\n\9pos=center,\n\9-- upon boss death...\n\9onDie=function()\n\9\9popup('defeated boss geemer!')\n\9\9-- and maybe drop the next story item...\n\9\9stopCenterView()\n\9\9-- stop blocking the exit\n\9\9self.remove = true\n\9end,\n}"},
 	{pos={120.5,238},spawn="base.script.obj.start"},
 }

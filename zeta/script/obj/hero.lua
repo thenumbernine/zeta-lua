@@ -207,8 +207,13 @@ function Hero:update(dt)
 	--]]
 
 	-- slowly track player
-	self.viewPos[1] = self.viewPos[1] + .5 *  (self.pos[1] - self.viewPos[1])
-	self.viewPos[2] = self.viewPos[2] + .9 *  (self.pos[2] - self.viewPos[2])
+	if self.fixedViewPos then
+		self.viewPos[1] = self.fixedViewPos[1]
+		self.viewPos[2] = self.fixedViewPos[2]
+	else
+		self.viewPos[1] = self.viewPos[1] + .5 *  (self.pos[1] - self.viewPos[1])
+		self.viewPos[2] = self.viewPos[2] + .9 *  (self.pos[2] - self.viewPos[2])
+	end
 
 	self.inputRun = self.inputJumpAux
 
@@ -875,13 +880,19 @@ function Hero:drawHUD(R, viewBBox)
 	gl.glEnable(gl.GL_TEXTURE_2D)
 end
 
+-- script functions...
 -- run as a coroutine
+
 function Hero:popupMessage(text)
 	self.popupMessageText = text
 	game.paused = true
 	repeat
 		coroutine.yield()
 	until not game.paused
+end
+
+function Hero:centerView(pos)
+	self.fixedViewPos = pos
 end
 
 return Hero

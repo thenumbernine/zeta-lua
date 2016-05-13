@@ -42,11 +42,12 @@ function Object:init(args)
 	self.vel = vec2()
 	self.lastvel = vec2()
 	self.bbox = box2(self.bbox.min[1], self.bbox.min[2], self.bbox.max[1], self.bbox.max[2])
-	self.solid = args.solid
 
 	if args.pos then self.pos[1], self.pos[2] = args.pos[1], args.pos[2] end
 	if args.vel then self.vel[1], self.vel[2] = args.vel[1], args.vel[2] end
 	if args.sprite then self.sprite = args.sprite end
+	if args.solid ~= nil then self.solid = args.solid end
+	if args.drawScale then self.drawScale = vec2(table.unpack(args.drawScale)) end
 
 	game:addObject(self)	-- only do this once per object.  don't reuse, or change the uid system
 end
@@ -597,6 +598,9 @@ function Object:draw(R, viewBBox, holdOverride)
 	if tex then
 		sx = tex.width/16
 		sy = tex.height/16
+	end
+	if self.drawScale then
+		sx, sy = table.unpack(self.drawScale)
 	end
 
 	-- rotation center

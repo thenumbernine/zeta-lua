@@ -21,14 +21,8 @@ function Terminal:playerLook(player)
 		end)
 	end
 	if self.use then
-		-- TODO sandbox: http://stackoverflow.com/a/6982080/2714073
-		local code = [[
-local self, player = ...
-local game = require 'base.script.singleton.game'
-local level = game.level
-local function popup(...) return player:popupMessage(...) end
-]] .. self.use
-		threads:add(assert(load(code)), self, player)
+		local sandbox = require 'zeta.script.sandbox'
+		sandbox(self.use, 'self, player', self, player)
 	end
 end
 

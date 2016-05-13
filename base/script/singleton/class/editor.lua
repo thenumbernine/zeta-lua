@@ -598,12 +598,12 @@ function Editor:updateGUI()
 	ig.igCheckbox('Show Tile Types', self.showTileTypes)
 	ig.igCheckbox('no clipping', self.noClipping)
 
-	self.execWindowPtr = self.execWindowPtr or ffi.new('bool[1]', false)
+	self.consoleWindowOpenedPtr = self.consoleWindowOpenedPtr or ffi.new('bool[1]', false)
 	if ig.igButton('Console') then
-		self.execWindowPtr[0] = true
+		self.consoleWindowOpenedPtr[0] = true
 	end
-	if self.execWindowPtr[0] then
-		ig.igBegin('Console', self.execWindowPtr)
+	if self.consoleWindowOpenedPtr[0] then
+		ig.igBegin('Console', self.consoleWindowOpenedPtr)
 		self.execBuffer = self.execBuffer or ffi.new('char[2048]')
 		if ig.igInputTextMultiline('code', self.execBuffer, ffi.sizeof(self.execBuffer),
 			ig.ImVec2(0,0),
@@ -721,7 +721,7 @@ local function popup(...) return player:popupMessage(...) end
 		
 		for _,side in ipairs{'Fg', 'Bg'} do
 			local lc = side:lower()	
-			if ig.igCollapsingHeader(side..' Tile Options:') then
+			do	-- if ig.igCollapsingHeader(side..' Tile Options:') then
 					
 				local tex = game.level.texpackTex
 				local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
@@ -738,12 +738,16 @@ local function popup(...) return player:popupMessage(...) end
 				then
 					-- popup of the whole thing?
 					self[lc..'TileWindowOpenedPtr'][0] = true
+print('setting '..lc..'TileWindowOpenedPtr')
 				end
+				ig.igSameLine()
 				if ig.igButton('Clear '..side..' Tile') then
 					self['selected'..side..'TileIndex'] = 0
 				end
 
+--print('testing '..lc..'TileWindowOpenedPtr')
 				if self[lc..'TileWindowOpenedPtr'][0] then
+--print('running begin '..side..' Tile Window, '..lc..'TileWindowOpenedPtr')
 					ig.igBegin(
 						side..' Tile Window',
 						self[lc..'TileWindowOpenedPtr'],
@@ -751,8 +755,8 @@ local function popup(...) return player:popupMessage(...) end
 					
 					local texScreenPos = ig.igGetCursorScreenPos()
 					local mousePos = ig.igGetMousePos()
-					local cursorX = mousePos.x - texScreenPos.x - 2
-					local cursorY = mousePos.y - texScreenPos.y - 2
+					local cursorX = mousePos.x - texScreenPos.x - 4
+					local cursorY = mousePos.y - texScreenPos.y - 4
 					local x = math.clamp(math.floor(cursorX / tex.width * tilesWide), 0, tilesWide-1)
 					local y = math.clamp(math.floor(cursorY / tex.height * tilesHigh), 0, tilesHigh-1)
 

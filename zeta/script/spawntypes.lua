@@ -10,6 +10,7 @@ return {
 	{spawn='zeta.script.obj.plasmarifle'},
 	{spawn='zeta.script.obj.geemer'},
 	{spawn='zeta.script.obj.redgeemer'},
+	{spawn='zeta.script.obj.boss-geemer'},
 	{spawn='zeta.script.obj.turret'},
 	{spawn='zeta.script.obj.gato'},
 	{spawn='zeta.script.obj.terminal'},

@@ -4,6 +4,11 @@ local takesDamageBehavior = require 'zeta.script.obj.takesdamage'
 
 local Enemy = class(takesDamageBehavior(Object))
 
+function Enemy:init(args)
+	Enemy.super.init(self, args)
+	self.onDie = args.onDie
+end
+
 Enemy.itemDrops = nil
 function Enemy:die(damage, attacker, inflicter, side)
 	if self.itemDrops then
@@ -16,6 +21,13 @@ function Enemy:die(damage, attacker, inflicter, side)
 			end
 			r = r - v
 		end
+	end
+
+	if self.onDie then
+		local sandbox = require 'zeta.script.sandbox'
+		sandbox(self.onDie,
+			'self, damage, attacker, inflicter, side',
+			self, damage, attacker, inflicter, side)
 	end
 end
 
