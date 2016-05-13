@@ -100,12 +100,14 @@ Editor.brushOptions:insert(paintBrush)
 Editor.brushOptions:insert{
 	name='Fill',
 	paint = function(self, x, y)
+		local level = game.level
+		if x < 1 or y < 1 or x > level.size[1] or y > level.size[2] then return end
+		
 		-- only on click:
 		local mouse = gui.mouse
 		if not (mouse.leftDown and not mouse.lastLeftDown) then return end
-		
+
 		local thread = function()
-			local level = game.level
 			local alreadyHit = table()
 			alreadyHit[x..','..y] = true
 			local check = table{vec2(x,y)}
@@ -157,7 +159,7 @@ Editor.brushOptions:insert{
 				iter = iter + 1
 				if iter%100 == 0 then coroutine.yield() end
 				local pt = check:remove(1)
-				local offset = (pt[1]-1) + game.level.size[1] * (pt[2]-1)
+				local offset = (pt[1]-1) + level.size[1] * (pt[2]-1)
 				for i=1,#maps do
 					if mask[i] then
 						maps[i][offset] = values[i]
@@ -165,21 +167,27 @@ Editor.brushOptions:insert{
 				end
 				for side,dir in pairs(dirs) do
 					local nbhd = pt + dir
-					if not alreadyHit[nbhd[1]..','..nbhd[2]] then
-						alreadyHit[nbhd[1]..','..nbhd[2]] = true
-						local offset = (nbhd[1]-1) + game.level.size[1] * (nbhd[2]-1)
-						local same = true
-						for i=1,#maps do
-							-- enable/disable this test to only check maps of fill for congruency 
-							do--if mask[i] then
-								if srcValues[i] ~= maps[i][offset] then
-									same = false
-									break
+					if nbhd[1] >= 1
+					and nbhd[2] >= 1
+					and nbhd[1] <= level.size[1]
+					and nbhd[2] <= level.size[2]
+					then
+						if not alreadyHit[nbhd[1]..','..nbhd[2]] then
+							alreadyHit[nbhd[1]..','..nbhd[2]] = true
+							local offset = (nbhd[1]-1) + level.size[1] * (nbhd[2]-1)
+							local same = true
+							for i=1,#maps do
+								-- enable/disable this test to only check maps of fill for congruency 
+								do--if mask[i] then
+									if srcValues[i] ~= maps[i][offset] then
+										same = false
+										break
+									end
 								end
 							end
-						end
-						if same then
-							check:insert(nbhd)
+							if same then
+								check:insert(nbhd)
+							end
 						end
 					end
 				end
@@ -499,6 +507,8 @@ function Editor:init()
 	self.selectedSpawnIndex = ffi.new('int[1]',0)
 
 	self.showTileTypes = ffi.new('bool[1]',true)
+	self.showSpawnInfos = ffi.new('bool[1]',true)
+	self.showObjects = ffi.new('bool[1]',true)
 	self.noClipping = ffi.new('bool[1]',false)
 end
 
@@ -573,7 +583,46 @@ function Editor:setTileKeys()
 			spawnType = spawnType,
 		}
 	end)
+end
 
+--[[
+move all tiles and spawnobjs in the world
+and objs while we're at it
+clips borders
+--]]
+local function doMoveWorld(dx, dy)
+	-- move tile stuff
+	local level = game.level
+	for _,key in ipairs{'tileMap', 'fgTileMap', 'bgTileMap', 'backgroundMap'} do
+		local map = level[key]
+		-- format will be "type[?]" for type the c type
+		local ctype = assert(tostring(ffi.typeof(map)):match('^ctype<(.*)%[%?%]>$'))
+		local newMap = ffi.new(ctype..'[?]', level.size[1] * level.size[2])
+		for j=0,level.size[2]-1 do
+			for i=0,level.size[1]-1 do
+				local x = i - dx
+				local y = j - dy
+				if x >= 0 and y >= 0 and x < level.size[1] and y < level.size[2] then
+					newMap[i+level.size[1]*j] = map[x+level.size[1]*y]
+				end
+			end
+		end
+		for j=0,level.size[2]-1 do
+			for i=0,level.size[1]-1 do
+				map[i+level.size[1]*j] = newMap[i+level.size[1]*j]
+			end
+		end
+	end
+	-- move spawninfos
+	for _,spawnInfo in ipairs(level.spawnInfos) do
+		spawnInfo.pos[1] = spawnInfo.pos[1] + dx
+		spawnInfo.pos[2] = spawnInfo.pos[2] + dy
+	end
+	-- move objects
+	for _,obj in ipairs(game.objs) do
+		obj.pos[1] = obj.pos[1] + dx
+		obj.pos[2] = obj.pos[2] + dy
+	end
 end
 
 function Editor:updateGUI()
@@ -596,7 +645,47 @@ function Editor:updateGUI()
 	end
 
 	ig.igCheckbox('Show Tile Types', self.showTileTypes)
+	ig.igCheckbox('Show Spawn Infos', self.showSpawnInfos)
+	ig.igCheckbox('Show Objects', self.showObjects)
+
 	ig.igCheckbox('no clipping', self.noClipping)
+	local level = game.level
+	if ig.igButton('remove all objs') then
+		for _,spawnInfo in ipairs(level.spawnInfos) do
+			if spawnInfo.obj then
+				spawnInfo.obj.remove = true
+			end
+		end
+	end
+	if ig.igButton('spawn all objs') then
+		for _,spawnInfo in ipairs(level.spawnInfos) do
+			spawnInfo:respawn()
+		end
+	end
+
+	self.showMoveWorldWindow = self.showMoveWorldWindow or ffi.new('bool[1]',false)
+	self.moveWorldWindowXPtr = self.moveWorldWindowXPtr or ffi.new('int[1]',0)
+	self.moveWorldWindowYPtr = self.moveWorldWindowYPtr or ffi.new('int[1]',0)
+	if ig.igButton('move world') then
+		self.showMoveWorldWindow[0] = true
+		self.moveWorldWindowXPtr[0] = 0
+		self.moveWorldWindowYPtr[0] = 0
+	end
+	if self.showMoveWorldWindow[0] then
+		ig.igBegin('move world', self.showMoveWorldWindow)
+		ig.igInputInt('move x', self.moveWorldWindowXPtr)
+		ig.igInputInt('move y', self.moveWorldWindowYPtr)
+		if ig.igButton('ok') then
+			doMoveWorld(self.moveWorldWindowXPtr[0], self.moveWorldWindowYPtr[0])
+			self.showMoveWorldWindow[0] = false
+		end
+		ig.igSameLine()
+		if ig.igButton('cancel') then
+			self.showMoveWorldWindow[0] = false
+		end
+
+		ig.igEnd()
+	end
 
 	self.consoleWindowOpenedPtr = self.consoleWindowOpenedPtr or ffi.new('bool[1]', false)
 	if ig.igButton('Console') then
@@ -614,6 +703,9 @@ function Editor:updateGUI()
 			local code = ffi.string(self.execBuffer)
 			print('executing...\n'..code)
 			code = [[
+local ffi = require 'ffi'
+local vec2 = require 'vec.vec2'
+local box2 = require 'vec.box2'
 local game = require 'base.script.singleton.game'
 local level = game.level
 local player = game.players[1]
@@ -720,6 +812,7 @@ local function popup(...) return player:popupMessage(...) end
 		end
 		
 		for _,side in ipairs{'Fg', 'Bg'} do
+			ig.igPushIdStr(side)
 			local lc = side:lower()	
 			do	-- if ig.igCollapsingHeader(side..' Tile Options:') then
 					
@@ -738,16 +831,13 @@ local function popup(...) return player:popupMessage(...) end
 				then
 					-- popup of the whole thing?
 					self[lc..'TileWindowOpenedPtr'][0] = true
-print('setting '..lc..'TileWindowOpenedPtr')
 				end
 				ig.igSameLine()
 				if ig.igButton('Clear '..side..' Tile') then
 					self['selected'..side..'TileIndex'] = 0
 				end
 
---print('testing '..lc..'TileWindowOpenedPtr')
 				if self[lc..'TileWindowOpenedPtr'][0] then
---print('running begin '..side..' Tile Window, '..lc..'TileWindowOpenedPtr')
 					ig.igBegin(
 						side..' Tile Window',
 						self[lc..'TileWindowOpenedPtr'],
@@ -780,6 +870,7 @@ print('setting '..lc..'TileWindowOpenedPtr')
 					ig.igEnd()
 				end
 			end
+			ig.igPopId()
 		end
 		if ig.igCollapsingHeader('Background Options:') then
 			for i=0,#self.backgroundOptions do
@@ -947,6 +1038,9 @@ print('setting '..lc..'TileWindowOpenedPtr')
 					end
 				end
 			end
+			if ig.igButton('spawn obj') then
+				self.selectedSpawnInfo:respawn()
+			end
 		end
 	end
 	
@@ -1018,7 +1112,7 @@ function Editor:update()
 			else
 				self.brushOptions[self.selectedBrushIndex[0]].paint(self, x, y)
 			end
-		elseif self.editTilesOrObjects[0] == 1 then
+		elseif self.editTilesOrObjects[0] == 1 then	
 			-- only on single click
 			if mouse.leftDown and not mouse.lastLeftDown then
 				if self.shiftDown then
@@ -1091,56 +1185,61 @@ function Editor:draw(R, viewBBox)
 	if not self.active then return end
 
 	self.viewBBox = box2(viewBBox)
+	local level = game.level
 	
 	-- draw spawn infos in the level
-	local level = game.level
-	for _,spawnInfo in ipairs(level.spawnInfos) do
-		local x,y = spawnInfo.pos:unpack()
-		local spawnClass = require(spawnInfo.spawn)
-		local sprite = spawnClass.sprite
-		local bbox = spawnClass.bbox or Object.bbox
-		local tex = sprite and animsys:getTex(sprite, 'stand')
-		if tex then
-			tex:bind()
+	if self.showSpawnInfos[0] then
+		for _,spawnInfo in ipairs(level.spawnInfos) do
 			
-			local sx, sy = 1, 1
+			local x,y = spawnInfo.pos:unpack()
+			local spawnClass = require(spawnInfo.spawn)
+			local sprite = spawnClass.sprite
+			local bbox = spawnClass.bbox or Object.bbox
+			
+			-- draw sprite
+			local tex = sprite and animsys:getTex(sprite, 'stand')
 			if tex then
-				sx = tex.width/16
-				sy = tex.height/16
+				tex:bind()
+				
+				local sx, sy = 1, 1
+				if tex then
+					sx = tex.width/16
+					sy = tex.height/16
+				end
+				
+				R:quad(
+					x - sx*.5, 
+					y,
+					sx,
+					sy,
+					0,1,
+					1,-1,
+					0,	-- angle
+					1,1,1,.4)
+				
+				tex:unbind()	
 			end
 			
+			-- draw bbox
+			gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
+			gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
+			local r,g,b,a = 1,1,1,1
+			b = self.selectedSpawnInfo == spawnInfo and 0 or 1
+			g = b
 			R:quad(
-				x - sx*.5, 
-				y,
-				sx,
-				sy,
+				x + bbox.min[1],
+				y + bbox.min[2],
+				bbox.max[1] - bbox.min[1],
+				bbox.max[2] - bbox.min[2],
 				0,1,
 				1,-1,
-				0,	-- angle
-				1,1,1,.4)
-			
-			tex:unbind()	
-		end
-		gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
-		gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
-		local r,g,b,a = 1,1,1,1
-		b = self.selectedSpawnInfo == spawnInfo and 0 or 1
-		g = b
-		R:quad(
-			x + bbox.min[1],
-			y + bbox.min[2],
-			bbox.max[1] - bbox.min[1],
-			bbox.max[2] - bbox.min[2],
-			0,1,
-			1,-1,
-			0,
-			r,g,b,a)
-		gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
-		gl.glEnable(gl.GL_TEXTURE_2D)
+				0,
+				r,g,b,a)
+			gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
+			gl.glEnable(gl.GL_TEXTURE_2D)
 
-		if self.editTilesOrObjects[0] == 1 then
+			-- draw text
 			gui.font:drawUnpacked(x-.5,y+1,.5,-.75,spawnInfo.spawn:match('([^%.]*)$'))
-	
 			for k,v in pairs(spawnInfo) do
 				if k ~= 'pos' and getmetatable(v) == vec2 then
 					gl.glBegin(gl.GL_LINES)
@@ -1152,28 +1251,29 @@ function Editor:draw(R, viewBBox)
 					gui.font:drawUnpacked(v[1]-.5,v[2]+1,.5,-.5,k)
 				end
 			end
-			
 			gl.glEnable(gl.GL_TEXTURE_2D)
 		end
 	end
-
+	
 	-- draw bboxes of objects
-	for _,obj in ipairs(game.objs) do
-		local bbox = obj.bbox
-		gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
-		gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
-		local r,g,b,a = 1,1,0,1
-		R:quad(
-			obj.pos[1] + bbox.min[1],
-			obj.pos[2] + bbox.min[2],
-			bbox.max[1] - bbox.min[1],
-			bbox.max[2] - bbox.min[2],
-			0,1,
-			1,-1,
-			0,
-			r,g,b,a)
-		gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
-		gl.glEnable(gl.GL_TEXTURE_2D)
+	if self.showObjects[0] then
+		for _,obj in ipairs(game.objs) do
+			local bbox = obj.bbox
+			gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
+			gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
+			local r,g,b,a = 1,1,0,1
+			R:quad(
+				obj.pos[1] + bbox.min[1],
+				obj.pos[2] + bbox.min[2],
+				bbox.max[1] - bbox.min[1],
+				bbox.max[2] - bbox.min[2],
+				0,1,
+				1,-1,
+				0,
+				r,g,b,a)
+			gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
+			gl.glEnable(gl.GL_TEXTURE_2D)
+		end
 	end
 
 	-- clone & offset
