@@ -1157,6 +1157,25 @@ function Editor:draw(R, viewBBox)
 		end
 	end
 
+	-- draw bboxes of objects
+	for _,obj in ipairs(game.objs) do
+		local bbox = obj.bbox
+		gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
+		gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
+		local r,g,b,a = 1,1,0,1
+		R:quad(
+			obj.pos[1] + bbox.min[1],
+			obj.pos[2] + bbox.min[2],
+			bbox.max[1] - bbox.min[1],
+			bbox.max[2] - bbox.min[2],
+			0,1,
+			1,-1,
+			0,
+			r,g,b,a)
+		gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
+		gl.glEnable(gl.GL_TEXTURE_2D)
+	end
+
 	-- clone & offset
 	local tileBBox = box2(
 		viewBBox.min[1] - game.level.pos[1],

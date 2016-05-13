@@ -22,6 +22,9 @@ local player = game.players[1]
 local function popup(...) return player:popupMessage(...) end
 local function centerView(...) return player:centerView(...) end
 local function stopCenterView() return player:centerView() end
+local function findName(name) return select(2, game.objs:find(nil, function(obj)
+	return obj.spawnInfo and obj.spawnInfo.name == name
+end)) end
 ]] .. code
 		f, reason = load(code)
 	end

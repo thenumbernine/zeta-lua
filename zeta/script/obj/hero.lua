@@ -207,7 +207,8 @@ function Hero:update(dt)
 	--]]
 
 	-- slowly track player
-	if self.fixedViewPos then
+	local editor = require 'base.script.singleton.editor'
+	if self.fixedViewPos and not (editor and editor.active) then
 		self.viewPos[1] = self.fixedViewPos[1]
 		self.viewPos[2] = self.fixedViewPos[2]
 	else
@@ -871,8 +872,12 @@ function Hero:drawHUD(R, viewBBox)
 		then
 			-- can't use setTimeout because timeouts don't run when paused
 			--setTimeout(.5, function()
+			if self.popupMessageCloseSysTime
+			and self.popupMessageCloseSysTime < game.sysTime
+			then
 				self.popupMessageText = nil
 				game.paused = false
+			end
 			--end)
 		end
 	end
@@ -884,6 +889,7 @@ end
 -- run as a coroutine
 
 function Hero:popupMessage(text)
+	self.popupMessageCloseSysTime = game.sysTime + 1
 	self.popupMessageText = text
 	game.paused = true
 	repeat

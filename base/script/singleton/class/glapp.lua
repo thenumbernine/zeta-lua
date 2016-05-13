@@ -371,6 +371,8 @@ function GLApp:update(...)
 	sysThisTime = sdl.SDL_GetTicks() / 1000
 	local sysDeltaTime = sysThisTime - sysLastTime
 
+	game.sysTime = sysThisTime
+
 	if not game.paused then
 	--if sysThisTime > 5 then
 	

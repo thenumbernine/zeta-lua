@@ -22,13 +22,22 @@ function AnimationSystem:load(sprite)
 		if dirobj then
 			for framefile in dirobj() do
 				local framename, ext = io.getfileext(framefile)
-				-- TODO make sure it's a file?  or at least has a proper extension?
-				if not sprite.seqs[framename] then
-					sprite.seqs[framename] = {framename}
-				end
+				ext = ext:lower()
+				if ext == 'png'
+				or ext == 'tif'
+				or ext == 'tiff'
+				or ext == 'jpg'
+				or ext == 'jpeg'
+				or ext == 'bmp'
+				then
+					-- TODO make sure it's a file?  or at least has a proper extension?
+					if not sprite.seqs[framename] then
+						sprite.seqs[framename] = {framename}
+					end
 
-				local tex = texsys:load(mod..'/'..dir..'/'..framefile)
-				newframes[framename] = {name=framename, file=framename, tex=tex}
+					local tex = texsys:load(mod..'/'..dir..'/'..framefile)
+					newframes[framename] = {name=framename, file=framename, tex=tex}
+				end
 			end
 		end
 	end

@@ -1,6 +1,8 @@
 local class = require 'ext.class'
 local Enemy = require 'zeta.script.obj.enemy'
 local game = require 'base.script.singleton.game'
+local GeemerChunk = require 'zeta.script.obj.geemerchunk'
+local Hero = require 'zeta.script.obj.hero'
 
 local Geemer = class(Enemy)
 
@@ -103,7 +105,6 @@ Geemer.states = {
 			or self.avoiding
 			then
 				local delta = (self.madAt or self.avoiding).pos - self.pos
-				if self.avoiding then delta[1] = -delta[1] end
 				local len = delta:length()
 				setTimeout(math.random() * .4, function()
 					self:calcVelForJump(delta)					
@@ -167,7 +168,6 @@ function Geemer:pretouch(other, side)
 	end
 end
 
-local Hero = require 'zeta.script.obj.hero'
 function Geemer:touch(other, side)
 	if other:isa(Hero) then
 		other:takeDamage(1, self, self, side)
@@ -203,7 +203,6 @@ function Geemer:die(damage, attacker, inflicter, side)
 	-- puff of smoke	
 	--local Puff = require 'zeta.script.obj.puff'
 	--Puff.puffAt(self.pos:unpack())
-	local GeemerChunk = require 'zeta.script.obj.geemerchunk'
 	GeemerChunk.makeAt{
 		pos = self.pos,
 		-- should be inflicter.pos, but the shot needs to stop at the surface for that to happen

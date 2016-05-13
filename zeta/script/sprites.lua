@@ -9,7 +9,20 @@ return {
 			climb={'climb1', 'climb2', freq=4},
 		},
 	},
-	
+
+	{
+		name='crystal',
+		dir='crystal',
+		seqs={
+			stand={
+				'stand1', 'stand2', 'stand3', 'stand4', 'stand5',
+				'stand6', 'stand7', 'stand8', 'stand9', 'stand10',
+				'stand11', 'stand12', 'stand13', 'stand14', 'stand15',
+				freq=16,
+			},
+		},
+	},
+
 	{
 		name='heart',
 		dir='heart',
