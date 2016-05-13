@@ -57,7 +57,7 @@ Hero.nextShootTime = -1
 
 Hero.attackStat = 0
 Hero.defenseStat = 0
-Hero.maxAmmoCells = 5
+Hero.maxAmmoCells = 0
 Hero.ammoCells = Hero.maxAmmoCells
 Hero.rechargeCellsTime = 10	-- seconds
 

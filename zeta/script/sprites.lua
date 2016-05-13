@@ -24,6 +24,18 @@ return {
 	},
 
 	{
+		name='cells',
+		dir='cells',
+		seqs={
+			stand={
+				'stand1', 'stand2', 'stand3', 'stand4', 'stand5', 'stand6', 'stand7', 
+				'stand8', 'stand7', 'stand6', 'stand5', 'stand4', 'stand3', 'stand2',
+				freq=16,
+			},
+		},
+	},
+
+	{
 		name='heart',
 		dir='heart',
 		seqs={

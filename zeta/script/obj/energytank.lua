@@ -1,16 +1,13 @@
 local class = require 'ext.class'
-local ItemBonus = require 'zeta.script.obj.item'
+local ItemBonus = require 'zeta.script.obj.itembonus'
 
 local EnergyTank = class(ItemBonus)
-EnergyTank.healthBonus = 1
 EnergyTank.sprite = 'crystal'
+EnergyTank.healthBonus = 1
 
--- use upon grab
-function EnergyTank:playerGrab(player, side)
+function EnergyTank:onGiveBonus(player)
 	player.maxHealth = player.maxHealth + self.healthBonus
 	player.health = player.health + self.healthBonus
-	self:playSound('powerup')
-	self.remove = true
 end
 
 function EnergyTank:draw(...)
