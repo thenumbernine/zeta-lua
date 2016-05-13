@@ -1,7 +1,7 @@
 {
 	{pos={163.5,236},spawn="zeta.script.obj.terminal",text="evacuation orders given!\nplease proceed to launchpad 1 for immediate departure"},
-	{pos={191.5,221},spawn="zeta.script.obj.terminal",text="team 1 left without us.\nteam 2's rocket won't start.\nI think I'm going to go activate the defense robot to help us fight these creatures off...",use="if self.hasGiven then return end\nself.hasGiven = true\ncreate\n 'zeta.script.obj.keycard'\n {pos = self.pos + {-1,1},\n  color = {0,1,1,1}}"},
-	{pos={166.5,236},spawn="zeta.script.obj.terminal",text="defense protocols initiated\nweapons storage unlocked",use="if self.hasGiven then\n return\nend\nself.hasGiven = true\ncreate\n 'zeta.script.obj.blaster'\n {pos=self.pos+{1,3}}\nfor i=1,5 do\n create\n  'zeta.script.obj.grenadeitem'\n  {pos=self.pos+{2,3}}\nend"},
+	{pos={191.5,221},spawn="zeta.script.obj.terminal",text="team 1 left without us.\nteam 2's rocket won't start.\nI think I'm going to go activate the defense robot to help us fight these creatures off...",use="if self.hasGiven then return end\nself.hasGiven = true\ncreate\n 'zeta.script.obj.keycard'\n {pos = self.pos + {-1,0},\n  color = {0,1,1,1}}"},
+	{pos={166.5,236},spawn="zeta.script.obj.terminal",text="defense protocols initiated\nweapons storage unlocked",use="if self.hasGiven then\n return\nend\nself.hasGiven = true\ncreate\n 'zeta.script.obj.blaster'\n {pos=self.pos+{1,0}}\nfor i=1,5 do\n create\n  'zeta.script.obj.grenadeitem'\n  {pos=self.pos+{2,0}}\nend"},
 	{pos={60.5,206},spawn="zeta.script.obj.turret"},
 	{pos={73.5,206},spawn="zeta.script.obj.turret"},
 	{pos={56.5,199},spawn="zeta.script.obj.turret"},
@@ -116,7 +116,7 @@
 	{pos={22.5,212},spawn="zeta.script.obj.geemer"},
 	{pos={24.5,215},spawn="zeta.script.obj.geemer"},
 	{pos={37.5,243},spawn="zeta.script.obj.energytank"},
-	{pos={50.5,211},spawn="zeta.script.obj.door",color={0,1,0,1}},
+	{color={0,1,0,1},pos={50.5,211},spawn="zeta.script.obj.door"},
 	{pos={28.5,217},spawn="zeta.script.obj.geemer"},
 	{pos={29.5,221},spawn="zeta.script.obj.geemer"},
 	{pos={34.5,222},spawn="zeta.script.obj.geemer"},

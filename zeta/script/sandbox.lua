@@ -15,6 +15,7 @@ local function sandbox(f, argstr, ...)
 		end
 		code = [[
 local vec2 = require 'vec.vec2'
+local vec4 = require 'vec.vec4'
 local box2 = require 'vec.box2'
 local game = require 'base.script.singleton.game'
 local level = game.level
