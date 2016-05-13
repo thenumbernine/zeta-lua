@@ -12,6 +12,8 @@ local GrenadeThrower = class(GrenadeLauncher)
 GrenadeThrower.shotSpeed = 11
 GrenadeThrower.shotUpSpeed = 8
 GrenadeThrower.shotSound = nil
+-- revert the ammo remove code in :canShoot() ... we're doing that ourselves
+GrenadeThrower.canShoot = GrenadeLauncher.super.canShoot
 -- but override its init so it doesn't link to the game 
 --  and is immediately thrown away
 function GrenadeThrower:init(player)
