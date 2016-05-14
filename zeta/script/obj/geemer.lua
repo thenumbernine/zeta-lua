@@ -28,11 +28,13 @@ Geemer.shakeEndTime = -1
 
 Geemer.searchYPaddingDown = 2
 Geemer.searchYPaddingUp = 3
-function Geemer:init(...)
-	Geemer.super.init(self, ...)
+function Geemer:init(args, dontKill)
+	Geemer.super.init(self, args, dontKill)
 
-	if not game.session.geemerBossKilled	-- if the geemer boss wasn't killed yet
-	and not self.spawnAtFirst			-- and we're not a first-geemer
+	-- don't spawn until the geemer boss is killed
+	if not game.session.geemerBossKilled
+	-- unless our args tell us to
+	and not dontKill
 	then
 		self.remove = true
 		return

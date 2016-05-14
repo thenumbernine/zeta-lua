@@ -20,6 +20,7 @@ local vec2 = require 'vec.vec2'
 local vec4 = require 'vec.vec4'
 local box2 = require 'vec.box2'
 local editor = require 'base.script.singleton.editor'
+local threads = require 'base.script.singleton.threads'
 local game = require 'base.script.singleton.game'
 local level = game.level
 local session = game.session
@@ -39,7 +40,7 @@ end)) end
 	if not f then
 		-- TODO imgui popup?
 		print('sandbox failed for code')
-		print(tostring(code))
+		print(tostring(code):split'\n':map(function(line,i) return i..': '..line end):concat'\n')
 		print(tostring(reason))
 		print(debug.traceback())
 	else

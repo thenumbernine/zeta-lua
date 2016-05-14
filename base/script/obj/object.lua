@@ -51,6 +51,16 @@ function Object:init(args)
 	if args.color then self.color = {table.unpack(args.color)} end 
 
 	game:addObject(self)	-- only do this once per object.  don't reuse, or change the uid system
+
+	if args.create then
+		local threads = require 'base.script.singleton.threads'
+		local sandbox = require 'zeta.script.sandbox'
+		threads:add(function()
+			-- wait for ctor to resolve
+			coroutine.yield()
+			sandbox(args.create, 'self', self)
+		end)
+	end
 end
 
 function Object:update(dt)
