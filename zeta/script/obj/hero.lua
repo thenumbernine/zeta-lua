@@ -228,30 +228,33 @@ function Hero:update(dt)
 		self.viewPos[1] = self.fixedViewPos[1]
 		self.viewPos[2] = self.fixedViewPos[2]
 	else
-		self.viewPos[1] = self.viewPos[1] + .5 *  (self.pos[1] - self.viewPos[1])
-		self.viewPos[2] = self.viewPos[2] + .9 *  (self.pos[2] - self.viewPos[2])
-	
+		local targetPosX = self.pos[1]
+		local targetPosY = self.pos[2]
+			
 		if not (editor and editor.active) then
 			local viewSizeX = (self.viewBBox.max[1] - self.viewBBox.min[1]) / 2 
 			local viewSizeY = (self.viewBBox.max[2] - self.viewBBox.min[2]) / 2
 
 			for side,dir in pairs(dirs) do
 				local sideRoom = level:getRoom(
-					self.viewPos[1] + level.mapTileSize[1] * dir[1],
-					self.viewPos[2] + level.mapTileSize[2] * dir[2])
+					self.pos[1] + level.mapTileSize[1] * dir[1],
+					self.pos[2] + level.mapTileSize[2] * dir[2])
 				if sideRoom ~= self.room then
 					if side == 'right' then					
-						self.viewPos[1] = roomPosX * level.mapTileSize[1] + 1 - viewSizeX
+						targetPosX = math.min(targetPosX, roomPosX * level.mapTileSize[1] + 1 - viewSizeX)
 					elseif side == 'left' then -- left side - so move right
-						self.viewPos[1] = (roomPosX-1) * level.mapTileSize[1] + 1 + viewSizeX
+						targetPosX = math.max(targetPosX, (roomPosX-1) * level.mapTileSize[1] + 1 + viewSizeX)
 					elseif side == 'up' then
-						self.viewPos[2] = roomPosY * level.mapTileSize[2] + 1 - viewSizeY
+						targetPosY = math.min(targetPosY, roomPosY * level.mapTileSize[2] + 1 - viewSizeY)
 					elseif side == 'down' then
-						self.viewPos[2] = (roomPosY-1) * level.mapTileSize[2] + 1 + viewSizeY
+						targetPosY = math.max(targetPosY, (roomPosY-1) * level.mapTileSize[2] + 1 + viewSizeY)
 					end
 				end
 			end
 		end
+		
+		self.viewPos[1] = self.viewPos[1] + .5 *  (targetPosX - self.viewPos[1])
+		self.viewPos[2] = self.viewPos[2] + .9 *  (targetPosY - self.viewPos[2])
 	end
 
 	self.inputRun = self.inputJumpAux
