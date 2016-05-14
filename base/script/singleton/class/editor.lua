@@ -896,10 +896,10 @@ local function popup(...) return player:popupMessage(...) end
 			end
 		end
 		
-		for _,side in ipairs{'Fg', 'Bg'} do
-			ig.igPushIdStr(side)
-			local lc = side:lower()	
-			do -- if ig.igCollapsingHeader(side..' Tile Options:') then
+		if ig.igCollapsingHeader('Tile Options:') then
+			for _,side in ipairs{'Fg', 'Bg'} do
+				ig.igPushIdStr(side)
+				local lc = side:lower()	
 				if tileButton(self['selected'..side..'TileIndex']) then
 					openPickTileWindow(function(i)
 						self['selected'..side..'TileIndex'] = i
@@ -909,8 +909,12 @@ local function popup(...) return player:popupMessage(...) end
 				if ig.igButton('Clear '..side..' Tile') then
 					self['selected'..side..'TileIndex'] = 0
 				end
+				ig.igPopId()
 			end
-			ig.igPopId()
+			if ig.igButton('Swap Fg & Bg') then
+				self.selectedFgTileIndex, self.selectedBgTileIndex =
+					self.selectedBgTileIndex, self.selectedFgTileIndex
+			end
 		end
 		if ig.igCollapsingHeader('Background Options:') then
 			for i=0,#self.backgroundOptions do

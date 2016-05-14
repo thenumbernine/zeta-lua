@@ -2,8 +2,6 @@ TODO list
 
 - items and terminals: same button to get either (cave story)
 - editor: move texpack tiles 
-- editor: swap fg & bg
-- editor: tile field
 - objects use 'spawnclass' which auto-links
 - object classes use 'spawnfields' for fields, types, and tooltips
 - missile launcher missile ammo
