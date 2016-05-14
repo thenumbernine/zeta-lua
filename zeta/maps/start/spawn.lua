@@ -93,8 +93,8 @@
 	{pos={69.5,195},spawn="zeta.script.obj.turret"},
 	{pos={78.5,194},spawn="zeta.script.obj.turret"},
 	{pos={77.5,186},spawn="zeta.script.obj.turret"},
-	{pos={157.5,133},spawn="zeta.script.obj.trigger",trigger="-- push into the room\nplayer.pos=self.pos+{2,0}\n-- find the right wall\nrightWall = findName 'geemer-right-wall'\n-- TODO 'base.script.obj.solid'\nrightWall.bbox = box2(-.5, 0, .5, 3)\nrightWall.solid = true\nrightWall.pushPriority = math.huge\n-- make ourselves solid and blocking\nself.solid = true\nself.bbox = box2(-.5, 0, .5, 3)\n-- center view in room\ncenter=self.pos+{13,4}\ncenterView(center)\n-- create boss\ncreate'zeta.script.obj.boss-geemer'\n{\n\9pos=center,\n\9-- upon boss death...\n\9onDie=function(geemer)\n\9\9popup('defeated boss geemer!')\n\9\9-- drop a keycard\n\9\9create 'zeta.script.obj.keycard'{pos=geemer.pos, color={0,1,0,1}}\n\9\9-- center the view on the player\n\9\9stopCenterView()\n\9\9-- stop blocking the exit\n\9\9self.remove = true\n\9\9rightWall.remove = true\n\9end,\n}"},
-	{name="geemer-right-wall",pos={183.5,136},spawn="base.script.obj.object"},
+	{pos={157.5,131},spawn="zeta.script.obj.trigger",trigger="-- push into the room\nplayer.pos=self.pos+{2,0}\n-- find the right wall\nrightWall = findName 'geemer-right-wall'\n-- TODO 'base.script.obj.solid'\nrightWall.bbox = box2(-.5, 0, .5, 3)\nrightWall.solid = true\nrightWall.pushPriority = math.huge\n-- make ourselves solid and blocking\nself.solid = true\nself.bbox = box2(-.5, 0, .5, 3)\n-- center view in room\ncenter=self.pos+{13,4}\ncenterView(center)\n-- create boss\ncreate'zeta.script.obj.boss-geemer'\n{\n\9pos=center,\n\9-- upon boss death...\n\9onDie=function(geemer)\n\9\9popup('defeated boss geemer!')\n\9\9-- drop a keycard\n\9\9create 'zeta.script.obj.keycard'{pos=geemer.pos, color={0,1,0,1}}\n\9\9-- center the view on the player\n\9\9stopCenterView()\n\9\9-- stop blocking the exit\n\9\9self.remove = true\n\9\9rightWall.remove = true\n\9end,\n}"},
+	{name="geemer-right-wall",pos={183.5,134},spawn="base.script.obj.object"},
 	{pos={117.5,182},spawn="zeta.script.obj.attackbonus"},
 	{pos={37.5,243},spawn="zeta.script.obj.energytank"},
 	{color={0,1,0,1},pos={49.5,211},spawn="zeta.script.obj.door"},
@@ -283,4 +283,5 @@
 	{pos={197.5,247},spawn="zeta.script.obj.breakblock",tileIndex=321},
 	{pos={197.5,254},spawn="zeta.script.obj.breakblock",tileIndex=321},
 	{color={0,1,1,1},pos={177.5,163},spawn="zeta.script.obj.door"},
+	{color={0,1,0,1},pos={96.5,159},spawn="zeta.script.obj.door"},
 }

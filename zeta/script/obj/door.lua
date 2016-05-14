@@ -30,7 +30,6 @@ function Door:init(args)
 		and obj.startPos[2] == self.startPos[2]
 		and not obj.solid
 		then
-			print('found neighbor')
 			self:setState'open'
 		end
 	end
