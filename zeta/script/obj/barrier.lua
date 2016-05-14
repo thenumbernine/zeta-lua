@@ -32,7 +32,11 @@ end
 function Barrier:update(dt)
 	if not game.session.defensesDeactivated then
 		local t = (game.time + self.timeOffset) % (self.timeOn + self.timeOff)
-		self.shockEndTime = t < self.timeOn and game.time + .5 + .5 * math.random()
+		if t < self.timeOn then
+			self.shockEndTime = game.time + .5 + .5 * math.random()
+		else
+			self.shockEndTime = -1
+		end
 	end
 	if self.shockEndTime > game.time then
 		self.sprite = 'barrier' -- class default

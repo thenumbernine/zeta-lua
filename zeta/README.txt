@@ -9,11 +9,9 @@ TODO list
 - geemers and doors don’t mix.  one pushes the other and the geemer teleports.
 - second kind of defense monster: heat shields or something
 - second kind of cave monster ... bats or something? or separate ground from wall geemers?
-- spawn more monsters in the mining base area *after* beating the boss.  this is based on spawn conditions, based on rooms.
-- story items also need spawn conditions
+- spawn more monsters in the mining base area *after* beating the boss.  
+	- better add rooms, then flag rooms as 'can spawn geemers'	
 - environmental effects ... foreground warping (underwater, heat), blowing wind, falling snow/rain/leaves, etc
-- float text, missile explosions, puffs, all need to be inserted on top
-	- same with weapon shots?
 - get savepoint loading to work
 rooms:
 	- every time an item is grabbed, set a session var that says the item at this level at this index is grabbed
@@ -35,11 +33,24 @@ VETOED list:
 	to execute the spawn code, all the class will have to be require()'d somewhere in one spot anyways
 	it's better to list the names in 'spawnTypes' than have everything being required
 - don't separating playerLook vs canCarry.  set an item down by a terminal, and try to pick it up again.
-	- using 'a' for run and use item means ... you can't run / always run when using an item 
-	solution? get rid of carrying items altogether? options:
-		- carrying items (spelunky)
+	item system options:
+		- carrying items (spelunky / current system)
+			pros:
+			- most flexible
+			cons:
+			- using 'a' for run and use item means ... you can't run / always run when using an item 
+			- need terminal/savepoint button *and* object button, or else objects can get stuck if you put them down by terminals
+			- item order is never the same (can be fixed)
+			- have to have your hands empty to pick something up
+			- when you pick something up, it switches your inventory
 		- touch to get (metroid)
+			pros:
+			- most simple
+			cons:
+			- no easy way to switch between and use individual items
+			- need a distinct weapon for throwing objects
 		- push 'interact' button to to pick up (cave story)
+			- just like metroid style, but with an extra button to get things
 	item overhaul:
 		- touch/interaact to pick everything up -- no carrying
 		- left/right switches weapons only.  one weapon is 'throw grenades' -- only if you have grenades.
