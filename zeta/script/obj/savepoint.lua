@@ -75,7 +75,10 @@ function SavePoint:playerUse(player)
 		end
 		
 		file['zeta/save/save.txt'] = '{\n'
-			..game.objs:map(serialize):concat(',\n')
+			..'\tobjs={\n'
+			..game.objs:map(function(obj,index) return '\t\t'..serialize(obj) end):concat(',\n')
+			..'\t},\n'
+			..'\tsession='..tolua(game.session,{indent=true})..',\n'
 			..'}\n'
 
 		print('...done')

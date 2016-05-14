@@ -4,31 +4,17 @@ TODO list
 	- move texpack tiles and change map tiles accordingly
 	- separate 'object' into 'create object' and 'select object'
 - object classes use 'spawnfields' for editor fields, types, and tooltips
-- camera align via room info, or helper objects
 - fix collisions with sloped tiles.  determine ymin and ymax on the x side of sloped tiles and test that against object bbox. 
-- make deactivated turrets shoot at enemies.  do room links first to cut down on game.objs iterations.
-- geemers and doors don’t mix.  one pushes the other and the geemer teleports.
-- second kind of cave monster ... bats or something? or separate ground from wall geemers?
 - environmental effects ... foreground warping (underwater, heat), blowing wind, falling snow/rain/leaves, etc
 - get savepoint loading to work
-weapons:
-	- missile launcher missile ammo
-	- number-based rather than index-based ... and overhaul the item system
-rooms:
-	- every time an item is grabbed, set a session var that says the item at this level at this index is grabbed
-		then have the respawn system ignore it if that var is set
-		(serialize those session vars with the save file)
-	- same with the electric fields and 'toggleDisabled'
-	in fact, for both, why not just serialize all objects as they leave?
-	upon removing room spawns, serialize objects and store them in a session/cache file
-		then upon adding room spawns, create the objs, then check the cache and overwrite values
-		then double the caching system as the savegame system
-	- if an *object* leaves your neighborhood then remove it 
-	 	but if a *spawninfo* enters into your neighborhood (and it has no current object bound) then add it 
-		... but items would need all their positions updated to keep alive
-		... or get rid of items-as-objects completely - replace with items-as-values
-	- touch triggers don't get along with room system?
-	
+- missile launcher missile ammo
+monsters:
+	- turrets
+		- traceline before shoot
+		- deactivated turrets should shoot at enemies.
+	- geemers and doors don’t mix.  one pushes the other and the geemer teleports.
+	- moar cave monsters and moar rooms.  things that fly back and forth maybe. maybe some kind of shooter. 
+
 VETOED list:
 - screen base spawning
 	- first i tried spawn and remove based on spawninfo.  enemies would disappear if they walked too far from their start.
@@ -45,6 +31,7 @@ VETOED list:
 			cons:
 			- using 'a' for run and use item means ... you can't run / always run when using an item 
 			- need terminal/savepoint button *and* object button, or else objects can get stuck if you put them down by terminals
+				- for the record, spelunky was like this too.  one button for items, up for doors
 			- item order is never the same (can be fixed)
 			- have to have your hands empty to pick something up
 			- when you pick something up, it switches your inventory
