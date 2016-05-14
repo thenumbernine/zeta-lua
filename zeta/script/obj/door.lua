@@ -19,6 +19,7 @@ Door.blockTime = 0	-- last time it was blocked
 function Door:init(args)
 	Door.super.init(self, args)
 	self.startPos = vec2(self.pos:unpack())
+	self:setState'closed'
 
 	-- room system ...
 	-- if there's a door next to this, and it's open, then open this door too
@@ -30,11 +31,13 @@ function Door:init(args)
 		and not obj.solid
 		then
 			print('found neighbor')
-			self:openDoor()
+			self:setState'open'
 		end
 	end
 end
 
+-- but if player isn't moving then pretouch won't fire ...
+-- this is a common complaint ...
 function Door:pretouch(other, side)
 	if not other:isa(Hero) then return end
 	self.blockTime = game.time + 1
@@ -63,42 +66,72 @@ function Door:touch(other, side)
 			other:popupMessage('Security Access Level Required!')
 		end)
 	else
-		self:openDoor()
+		self:setState'opening'
 	end
 end
 
--- TODO turn this into a state machine, so it can start open 
-function Door:openDoor()
-	self.seq = 'unlock'
-	self.solid = false
-	threads:add(function()
-		repeat
-			-- open the door
-			local openStartTime = game.time
-			local openEndTime = openStartTime + self.timeOpening
-			while game.time < openEndTime do
-				coroutine.yield()
-				local y = (game.time - openStartTime) / self.timeOpening 
-				self.pos[2] = self.startPos[2] + 2 * y
+Door.states = {
+	opening = {
+		enter = function(self)
+			self.seq = 'unlock'
+			self.solid = false
+			self.openStartTime = game.time
+			self.openEndTime = self.openStartTime + self.timeOpening
+		end,
+		update = function(self,dt)
+			local y = (game.time - self.openStartTime) / self.timeOpening 
+			self.pos[2] = self.startPos[2] + 2 * y
+			if game.time >= self.openEndTime then
+				self:setState'open'
 			end
+		end,
+	},
+	open = {
+		enter = function(self)
+			self.seq = 'unlock'
+			self.solid = false
+			self.closeStartTime = game.time + self.timeOpen
+		end,
+		update = function(self,dt)
 			-- keep open
-			local closeStartTime = openEndTime + self.timeOpen
-			while game.time < closeStartTime do
-				coroutine.yield()
-				self.pos[2] = self.startPos[2] + 2
+			self.pos[2] = self.startPos[2] + 2
+			if game.time >= self.closeStartTime then
+				self:setState'closing'
 			end
-			-- and close
-			local closeEndTime = closeStartTime + self.timeOpening
-			while game.time < closeEndTime do
-				coroutine.yield()
-				local y = 1 - (game.time - closeStartTime) / self.timeOpening
-				self.pos[2] = self.startPos[2] + 2 * y
+		end,
+	},
+	closing = {
+		enter = function(self)
+			self.seq = 'unlock'
+			self.solid = false
+			self.closeEndTime = game.time + self.timeOpening
+		end,
+		update = function(self,dt)
+			local y = 1 - (game.time - self.closeStartTime) / self.timeOpening
+			self.pos[2] = self.startPos[2] + 2 * y
+			if game.time >= self.closeEndTime then
+				self:setState'closed'
 			end
-		until self.blockTime < game.time
-		-- and done
-		self.seq = 'stand'
-		self.solid = true
-	end)
+		end,
+	},
+	closed = {
+		enter = function(self,dt)
+			self.seq = 'stand'
+			self.solid = true
+		end,
+	},
+}
+
+function Door:setState(stateName)
+	local state = self.states[stateName] or error("failed to find state named "..tostring(stateName))
+	if self.state and self.state.exit then self.state.exit(self) end
+	self.state = state
+	if self.state and self.state.enter then self.state.enter(self) end
+end
+
+function Door:update(dt)
+	Door.super.update(self, dt)
+	if self.state and self.state.update then self.state.update(self,dt) end
 end
 
 local animsys = require 'base.script.singleton.animsys'
