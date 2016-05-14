@@ -14,4 +14,14 @@ function SpawnInfo:respawn()
 	self.obj.spawnInfo = self
 end
 
+function SpawnInfo:removeObj()
+	if self.obj then
+		self.obj.remove = true
+		-- when game unlinks this object, it'll go back to its spawnInfo to unlink
+		-- don't let it or it'll overwrite any possible new obj
+		self.obj.spawnInfo = nil
+		self.obj = nil
+	end
+end
+
 return SpawnInfo

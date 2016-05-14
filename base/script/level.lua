@@ -21,6 +21,34 @@ local game = require 'base.script.singleton.game'	-- this should exist by now, r
 local Image = require 'image'
 local SpawnInfo = require 'base.script.spawninfo'
 
+local Room = class()
+
+function Room:init(rx,ry)
+	-- in room coordinates ... 32 tile coordinates (or whatever level.roomTilesWide,roomTilesHigh says)
+	self.pos = vec2(rx,ry)
+	print('creating room at ',self.pos)
+end
+
+function Room:addSpawnInfo(spawnInfo)
+	if not self.spawnInfos then self.spawnInfos = table() end
+	self.spawnInfos:insert(spawnInfo)
+end
+
+function Room:removeAllObjs()
+	if not self.spawnInfos then return end
+	for _,spawnInfo in ipairs(self.spawnInfos) do
+		spawnInfo:removeObj()
+	end
+end
+
+function Room:spawnAllObjs()
+	if not self.spawnInfos then return end
+	for _,spawnInfo in ipairs(self.spawnInfos) do
+		spawnInfo:removeObj()
+		spawnInfo:respawn()
+	end
+end
+
 --[[
 Level api:
 pos = vec2()						level position offset ... experimental for multiple layers, and currently disabled
@@ -174,17 +202,22 @@ function Level:init(args)
 	self.rooms = {}
 	self.roomTilesWide = 32
 	self.roomTilesHigh = 32
-	local Room = class()
-	function Room:addSpawnInfo(spawnInfo)
-		if not self.spawnInfos then self.spawnInfos = table() end
-		self.spawnInfos:insert(spawnInfo)
-	end
+--[[
 	for i=1,math.ceil(self.size[1]/self.roomTilesWide) do
 		self.rooms[i] = {}
 		for j=1,math.ceil(self.size[2]/self.roomTilesHigh) do
-			self.rooms[i][j] = Room()
+			self.rooms[i][j] = Room(i,j)
 		end
 	end
+--]]
+-- [[ only make what rooms we need
+	local function addRoom(x,y)
+		local rx = math.floor((x-1) / self.roomTilesWide) + 1
+		local ry = math.floor((y-1) / self.roomTilesHigh) + 1
+		if not self.rooms[rx] then self.rooms[rx] = {} end
+		if not self.rooms[rx][ry] then self.rooms[rx][ry] = Room(rx,ry) end
+	end
+--]]
 
 	self.startPositions = table(args.startPositions)
 	self.spawnInfos = table()
@@ -209,7 +242,8 @@ function Level:init(args)
 				
 					local spawnInfo = SpawnInfo(args)
 					self.spawnInfos:insert(spawnInfo)	-- center on x and y
-				
+			
+					addRoom(args.pos:unpack())
 					local room = self:getRoom(args.pos:unpack())
 					if room then
 						room:addSpawnInfo(spawnInfo)

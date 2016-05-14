@@ -203,12 +203,59 @@ Hero.swimDelay = .5
 function Hero:update(dt)
 	local level = game.level
 
-	--[[ respawn objects near player
-	-- TODO rooms? and link by rooms?
-	for _,spawnInfo in ipairs(self.spawnInfos) do
-		spawnInfo:respawn()
+	-- only spawn what's in our room
+	self.room = level:getRoom(self.pos:unpack())
+	if self.room ~= self.lastRoom then
+		-- gather neighbor rooms
+		local roomsToAdd = table()
+		local roomsToRemove = table()
+		-- first assume we add all the new
+		if self.room then
+			for dy=-1,1 do
+				for dx=-1,1 do
+					roomsToAdd:insert(level:getRoom(
+						(self.room.pos[1] + dx) * level.roomTilesWide,
+						(self.room.pos[2] + dy) * level.roomTilesHigh
+					))
+				end
+			end
+		end
+		-- then check the old
+		-- if it's in the new, we're not adding it
+		-- if it's not in the new, we're removing it
+		if self.lastRoom then
+			for dy=-1,1 do
+				for dx=-1,1 do
+					local room = level:getRoom(
+						(self.lastRoom.pos[1] + dx) * level.roomTilesWide,
+						(self.lastRoom.pos[2] + dy) * level.roomTilesHigh
+					)
+					local index = roomsToAdd:find(room)
+					if index then
+						roomsToAdd:remove(index)
+					else
+						roomsToRemove:insert(room)
+					end
+				end
+			end
+		end
+
+		print()
+		for _,room in ipairs(roomsToAdd) do
+			print('adding room at',room.pos)
+			print('#objs was '..#game.objs)
+			room:removeAllObjs()
+			print('#objs is '..#game.objs)
+		end
+		for _,room in ipairs(roomsToAdd) do
+			print('removing room at',room.pos)
+			print('#objs was '..#game.objs)
+			room:spawnAllObjs()
+			print('#objs is '..#game.objs)
+		end
+		
+		self.lastRoom = self.room
 	end
-	--]]
 
 	self.ammoCells = math.min(self.maxAmmoCells, self.ammoCells + self.maxAmmoCells * dt / self.rechargeCellsTime)
 

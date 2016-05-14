@@ -736,13 +736,12 @@ function Editor:updateGUI()
 	local level = game.level
 	if ig.igButton('remove all objs') then
 		for _,spawnInfo in ipairs(level.spawnInfos) do
-			if spawnInfo.obj then
-				spawnInfo.obj.remove = true
-			end
+			spawnInfo:removeObj()
 		end
 	end
 	if ig.igButton('spawn all objs') then
 		for _,spawnInfo in ipairs(level.spawnInfos) do
+			spawnInfo:removeObj()
 			spawnInfo:respawn()
 		end
 	end
@@ -1177,9 +1176,7 @@ local function popup(...) return player:popupMessage(...) end
 				end
 			end
 			if ig.igButton('spawn obj') then
-				if self.selectedSpawnInfo.obj then
-					self.selectedSpawnInfo.obj.remove = true
-				end
+				self.selectedSpawnInfo:removeObj()
 				self.selectedSpawnInfo:respawn()
 			end
 		end
@@ -1298,9 +1295,7 @@ function Editor:update()
 					for i=#level.spawnInfos,1,-1 do
 						local spawnInfo = level.spawnInfos[i]
 						if spawnInfo.pos[1] == x+.5 and spawnInfo.pos[2] == y then
-							if spawnInfo.obj then
-								spawnInfo.obj.remove = true
-							end
+							spawnInfo:removeObj()
 							if self.selectedSpawnInfo == spawnInfo then
 								self.selectedSpawnInfo = nil
 							end
@@ -1314,6 +1309,7 @@ function Editor:update()
 						}
 						level.spawnInfos:insert(spawnInfo)
 						self.selectedSpawnInfo = spawnInfo
+						spawnInfo:removeObj()
 						spawnInfo:respawn()
 					end
 				end
