@@ -18,13 +18,13 @@ end
 
 -- use pretouch so we don't block
 function Trigger:pretouch(other, side)
-	if game.time < self.nextTriggerTime then return end
-	self.nextTriggerTime = game.time + self.wait
-
 	-- by default, triggers only operate when players touch them
 	-- maybe later I'll have a flag for enemies too
-	local Hero = require 'zeta.script.obj.hero'
-	if not other:isa(Hero) then return true end
+	local Player = require 'base.script.obj.player'
+	if not other:isa(Player) then return true end
+	
+	if game.time < self.nextTriggerTime then return end
+	self.nextTriggerTime = game.time + self.wait
 
 	-- TODO this should be 'touch' callback?
 	if self.trigger then
