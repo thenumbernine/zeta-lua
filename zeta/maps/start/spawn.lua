@@ -217,7 +217,7 @@
 	{color={0,1,1,1},pos={175.5,163},spawn="zeta.script.obj.door"},
 	{pos={161.5,236},spawn="zeta.script.obj.energyrefill"},
 	{pos={41.5,158},spawn="zeta.script.obj.energyrefill"},
-	{pos={197.5,240},spawn="zeta.script.obj.breakblock",tileIndex="321"},
+	{pos={197.5,240},spawn="zeta.script.obj.breakblock",tileIndex=321},
 	{pos={185.5,162},spawn="zeta.script.obj.missilelauncher"},
 	{pos={187.5,162},spawn="zeta.script.obj.grenadelauncher"},
 	{pos={189.5,162},spawn="zeta.script.obj.plasmarifle"},
@@ -249,7 +249,7 @@
 	{pos={198.5,163},spawn="zeta.script.obj.cells"},
 	{pos={198.5,162},spawn="zeta.script.obj.cells"},
 	{pos={198.5,161},spawn="zeta.script.obj.cells"},
-	{pos={37.5,167},spawn="zeta.script.obj.breakblock",tileIndex="5"},
+	{pos={37.5,167},spawn="zeta.script.obj.breakblock",tileIndex=5},
 	{pos={173.5,241},spawn="zeta.script.obj.heart"},
 	{pos={172.5,241},spawn="zeta.script.obj.heart"},
 }

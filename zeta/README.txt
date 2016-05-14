@@ -1,6 +1,11 @@
 TODO list
 
-- get load game working?
+- items and terminals: same button to get either (cave story)
+- editor: move texpack tiles 
+- editor: swap fg & bg
+- editor: tile field
+- objects use 'spawnclass' which auto-links
+- object classes use 'spawnfields' for fields, types, and tooltips
 - missile launcher missile ammo
 - link objs and spawninfos to rooms, respawn by room
 - room tags?  or camera align objects?
@@ -9,6 +14,7 @@ TODO list
 - fix collisions with sloped tiles
 - geemers and doors don’t mix
 - room environmental effects ... foreground warping (underwater, heat), blowing wind, falling snow/rain/leaves, etc
+- get load game working
 
 buttons:
 	- up/down to aim, left/right to move

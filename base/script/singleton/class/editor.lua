@@ -495,9 +495,6 @@ function Editor:init()
 	self.alignPatchToAnything = ffi.new('bool[1]',true)
 	self.smoothDiagLevel = ffi.new('int[1]',0)
 
-	self.fgTileWindowOpenedPtr = ffi.new('bool[1]',false)
-	self.bgTileWindowOpenedPtr = ffi.new('bool[1]',false)
-
 	self.selectedBrushIndex = ffi.new('int[1]',1)
 	
 	self.selectedTileTypeIndex = ffi.new('int[1]',0)
@@ -674,6 +671,63 @@ function Editor:updateGUI()
 		--]]
 	end
 
+	self.tileWindowOpenedPtr = self.tileWindowOpenedPtr or ffi.new('bool[1]',false)
+	local function openPickTileWindow(callback)
+		self.tileWindowOpenedPtr[0] = true
+		self.tileWindowCallback = callback
+	end
+	if self.tileWindowOpenedPtr[0] then
+		ig.igBegin(
+			'Tile Window',
+			self.tileWindowOpenedPtr,
+			ig.ImGuiWindowFlags_NoTitleBar)
+	
+		local tex = game.level.texpackTex
+		local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
+		local tilesWide = tex.width / 16
+		local tilesHigh = tex.height / 16
+
+		local texScreenPos = ig.igGetCursorScreenPos()
+		local mousePos = ig.igGetMousePos()
+		local cursorX = mousePos.x - texScreenPos.x - 4
+		local cursorY = mousePos.y - texScreenPos.y - 4
+		local x = math.clamp(math.floor(cursorX / tex.width * tilesWide), 0, tilesWide-1)
+		local y = math.clamp(math.floor(cursorY / tex.height * tilesHigh), 0, tilesHigh-1)
+
+		if ig.igImageButton(
+			texIDPtr,
+			ig.ImVec2(tex.width, tex.height))	-- size
+		then
+			self.tileWindowCallback(1+x+tilesWide*y)
+			self.tileWindowOpenedPtr[0] = false
+		end
+		if ig.igIsItemHovered() then
+			ig.igBeginTooltip()
+			ig.igImage(
+				texIDPtr, -- tex
+				ig.ImVec2(64, 64), -- size
+				ig.ImVec2(x/tilesWide, y/tilesHigh), -- uv0
+				ig.ImVec2((x+1)/tilesWide, (y+1)/tilesHigh)) -- uv1
+			ig.igEndTooltip()
+		end
+		
+		ig.igEnd()
+	end
+
+	local function tileButton(tileIndex)
+		local tex = game.level.texpackTex
+		local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
+		local tilesWide = tex.width / 16
+		local tilesHigh = tex.height / 16
+		local ti = (tileIndex - 1) % tilesWide
+		local tj = (tileIndex - 1 - ti) / tilesWide
+		return ig.igImageButton(
+			texIDPtr,
+			ig.ImVec2(16,16),	-- size
+			ig.ImVec2(ti/tilesWide, tj/tilesHigh),	-- uv0
+			ig.ImVec2((ti+1)/tilesWide, (tj+1)/tilesHigh))	-- uv1
+	end
+
 	ig.igCheckbox('Show Tile Types', self.showTileTypes)
 	ig.igCheckbox('Show Spawn Infos', self.showSpawnInfos)
 	ig.igCheckbox('Show Objects', self.showObjects)
@@ -845,60 +899,15 @@ local function popup(...) return player:popupMessage(...) end
 		for _,side in ipairs{'Fg', 'Bg'} do
 			ig.igPushIdStr(side)
 			local lc = side:lower()	
-			do	-- if ig.igCollapsingHeader(side..' Tile Options:') then
-					
-				local tex = game.level.texpackTex
-				local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
-				local tilesWide = tex.width / 16
-				local tilesHigh = tex.height / 16
-				local bw, bh = 16, 16	-- button size
-				local ti = (self['selected'..side..'TileIndex'] - 1) % tilesWide
-				local tj = (self['selected'..side..'TileIndex'] - 1 - ti) / tilesWide
-				if ig.igImageButton(
-					texIDPtr,
-					ig.ImVec2(bw,bh),	-- size
-					ig.ImVec2(ti/tilesWide, tj/tilesHigh),	-- uv0
-					ig.ImVec2((ti+1)/tilesWide, (tj+1)/tilesHigh))	-- uv1
-				then
-					-- popup of the whole thing?
-					self[lc..'TileWindowOpenedPtr'][0] = true
+			do -- if ig.igCollapsingHeader(side..' Tile Options:') then
+				if tileButton(self['selected'..side..'TileIndex']) then
+					openPickTileWindow(function(i)
+						self['selected'..side..'TileIndex'] = i
+					end)
 				end
 				ig.igSameLine()
 				if ig.igButton('Clear '..side..' Tile') then
 					self['selected'..side..'TileIndex'] = 0
-				end
-
-				if self[lc..'TileWindowOpenedPtr'][0] then
-					ig.igBegin(
-						side..' Tile Window',
-						self[lc..'TileWindowOpenedPtr'],
-						ig.ImGuiWindowFlags_NoTitleBar)
-					
-					local texScreenPos = ig.igGetCursorScreenPos()
-					local mousePos = ig.igGetMousePos()
-					local cursorX = mousePos.x - texScreenPos.x - 4
-					local cursorY = mousePos.y - texScreenPos.y - 4
-					local x = math.clamp(math.floor(cursorX / tex.width * tilesWide), 0, tilesWide-1)
-					local y = math.clamp(math.floor(cursorY / tex.height * tilesHigh), 0, tilesHigh-1)
-
-					if ig.igImageButton(
-						texIDPtr,
-						ig.ImVec2(tex.width, tex.height))	-- size
-					then
-						self['selected'..side..'TileIndex'] = 1+x+tilesWide*y
-						self[lc..'TileWindowOpenedPtr'][0] = false
-					end
-					if ig.igIsItemHovered() then
-						ig.igBeginTooltip()
-						ig.igImage(
-							texIDPtr, -- tex
-							ig.ImVec2(64, 64), -- size
-							ig.ImVec2(x/tilesWide, y/tilesHigh), -- uv0
-							ig.ImVec2((x+1)/tilesWide, (y+1)/tilesHigh)) -- uv1
-						ig.igEndTooltip()
-					end
-					
-					ig.igEnd()
 				end
 			end
 			ig.igPopId()
@@ -962,11 +971,14 @@ local function popup(...) return player:popupMessage(...) end
 			if ig.igCollapsingHeader('Object Properties:') then
 				local textBufferSize = 2048
 				
-				local fieldTypes = table{'value', 'boolean', '2D vector','color'}
+				local fieldTypes = table{'value', 'boolean', '2D vector','color','tile'}
 				local fieldTypeValue = 0
 				local fieldTypeBoolean = 1
 				local fieldTypeVec2D = 2
 				local fieldTypeColor = 3
+				-- fieldTypeTile is used for only specific fields
+				--  so auto-detect will be difficult 
+				local fieldTypeTile = 4
 				
 				local function createProp(k,v, fieldType)
 					if k == 'obj' then return end		-- obj is reserved
@@ -987,6 +999,8 @@ local function popup(...) return player:popupMessage(...) end
 						if type(v) == 'boolean' then fieldType = fieldTypeBoolean end
 						if type(v) == 'table' and #v == 2 then fieldType = fieldTypeVec2D end
 						if type(v) == 'table' and #v == 4 then fieldType = fieldTypeColor end
+						-- predefined, based on k: fieldTypeTile
+						if type(v) == 'number' and k == 'tileIndex' then fieldType = fieldTypeTile end
 					end
 					prop.fieldType = ffi.new('int[1]',fieldType)
 					
@@ -1001,6 +1015,8 @@ local function popup(...) return player:popupMessage(...) end
 						prop.vptr = ffi.new('float[2]', v[1], v[2])
 					elseif fieldType == fieldTypeColor then
 						prop.vptr = ffi.new('float[4]', v[1], v[2], v[3], v[4])
+					elseif fieldType == fieldTypeTile then
+						prop.vptr = ffi.new('int[1]', v)
 					end
 
 					return prop	
@@ -1067,6 +1083,15 @@ local function popup(...) return player:popupMessage(...) end
 						self.selectedSpawnInfo[prop.k][2] = prop.vptr[1]
 						self.selectedSpawnInfo[prop.k][3] = prop.vptr[2]
 						self.selectedSpawnInfo[prop.k][4] = prop.vptr[3]
+					elseif prop.fieldType[0] == fieldTypeTile then
+						if tileButton(prop.vptr[0]) then
+							openPickTileWindow(function(tileIndex)
+								prop.vptr[0] = tileIndex
+								self.selectedSpawnInfo[prop.k] = prop.vptr[0]
+							end)
+						end
+						ig.igSameLine()
+						ig.igText(prop.vptr[0]..' -- '..propTitle)
 					end
 					ig.igPopId()
 				end
@@ -1095,6 +1120,8 @@ local function popup(...) return player:popupMessage(...) end
 							v = vec2(0,0)
 						elseif fieldType == fieldTypeColor then
 							v = vec4(1,1,1,1)
+						elseif fieldType == fieldTypeTile then
+							v = 0
 						end
 						self.selectedSpawnInfo[k] = v
 						self.spawnInfoProps:insert(createProp(k, v, fieldType))
