@@ -1222,7 +1222,27 @@ function Editor:update()
 		return
 	end
 	sdl.SDL_ShowCursor(sdl.SDL_ENABLE)
-	
+
+	local player = game.players[1]
+	if self.noClipping[0] then
+		local dt = game.sysDeltaTime
+		local noClipSpeed = 2 * game.viewSize
+		player.pos[1] = player.pos[1] + dt * player.inputLeftRight * noClipSpeed
+		player.pos[2] = player.pos[2] + dt * player.inputUpDown * noClipSpeed
+		player.invincibleEndTime = game.time + .1
+		player.isClipping = true
+		player.useGravity = false
+		player.collidesWithWorld = false
+		player.collidesWithObjects = false
+	else
+		if player.isClipping then
+			player.isClipping = nil
+			player.useGravity = true
+			player.collidesWithWorld = nil
+			player.collidesWithObjects = nil
+		end
+	end
+
 	self.isHandlingMouse = ig.igGetIO()[0].WantCaptureMouse
 	if self.isHandlingMouse then return end
 	

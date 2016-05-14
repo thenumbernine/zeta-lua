@@ -237,41 +237,11 @@ function Hero:update(dt)
 		self.lookingUp = false
 		self.inputMaxSpeedTime = nil
 	else
-		self.useGravity = true
-	end
-	
-
-	--[[ fly hack
-	if self.inputJump then
-		self.useGravity = false
-		self.vel[1] = self.inputLeftRight * 5
-		self.vel[2] = self.inputUpDown * 5
-	else
-		self.useGravity = true
-	end
-	--]]
-	
-	-- TODO put this in base?
-	if editor.active
-	and editor.noClipping[0]
-	then
-		self.isClipping = true
-		self.useGravity = false
-		self.collidesWithWorld = false
-		self.collidesWithObjects = false
-		local flySpeed = 2 * game.viewSize
-		self.vel[1] = self.inputLeftRight * flySpeed
-		self.vel[2] = self.inputUpDown * flySpeed
-		self.invincibleEndTime = game.time + .1
-	else
-		if self.isClipping then
-			self.isClipping = nil
+		if not self.isClipping then
 			self.useGravity = true
-			self.collidesWithWorld = nil
-			self.collidesWithObjects = nil
 		end
 	end
-
+	
 	-- reattach to world
 	Hero.super.update(self, dt)
 	

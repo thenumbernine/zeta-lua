@@ -352,7 +352,7 @@ function GLApp:event(event, ...)
 			player.mouseScreenPos[2] = 1 - event.button.y / wy
 		end
 	end
-	
+
 	--[[ slowdown effect
 	if event.key.keysym.sym == sdl.SDLK_BACKQUOTE then	
 		timescale = 1 - 4/5 * (press and 1 or 0)
@@ -371,7 +371,9 @@ function GLApp:update(...)
 	sysThisTime = sdl.SDL_GetTicks() / 1000
 	local sysDeltaTime = sysThisTime - sysLastTime
 
+	game.sysLastTime = sysLastTime
 	game.sysTime = sysThisTime
+	game.sysDeltaTime = sysDeltaTime
 
 	if not game.paused then
 	--if sysThisTime > 5 then
@@ -394,7 +396,6 @@ function GLApp:update(...)
 			end
 			--if skips > 0 then print(skips,'skips') end			
 		end
-
 	end
 
 	--[[
