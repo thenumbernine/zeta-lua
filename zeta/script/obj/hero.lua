@@ -66,8 +66,6 @@ function Hero:init(args)
 	self.items = table()	-- self.items = {{obj1, ...}, {obj2, ...}, ...} for each unique class
 	self.holding = nil
 	self.color = nil	-- TODO team colors
-	self.mapTilePos = vec2()
-	self.mapTileLastPos = vec2()
 end
 
 function Hero:refreshSize()
@@ -205,68 +203,20 @@ Hero.swimDelay = .5
 function Hero:update(dt)
 	local level = game.level
 
-	-- only spawn what's in our mapTile
-	self.mapTilePos[1], self.mapTilePos[2] = level:getMapTilePos(self.pos:unpack())
-	if self.mapTilePos ~= self.mapTileLastPos then
-		-- gather neighbor mapTiles
-		local mapTilesToAdd = table()
-		local mapTilesToRemove = table()
-		local mapTileRemoveObjDist = 3	-- remove objs 2 or more mapTiles away 
-		local mapTileAddObjDist = 1	-- add objs within 1 mapTile away
-		-- first assume we add all the new
-		for dy=-mapTileAddObjDist,mapTileAddObjDist do
-			for dx=-mapTileAddObjDist,mapTileAddObjDist do
-				mapTilesToAdd:insert(level:getMapTile(
-					(self.mapTilePos[1] + dx) * level.mapTileSize[1],
-					(self.mapTilePos[2] + dy) * level.mapTileSize[2]
-				))
-			end
-		end
-		-- then check the old
-		-- if it's in the new, we're not adding it
-		-- if it's not in the new, we're removing it
-		for dy=-mapTileAddObjDist,mapTileAddObjDist do
-			for dx=-mapTileAddObjDist,mapTileAddObjDist do
-				local mapTile = level:getMapTile(
-					(self.mapTileLastPos[1] + dx) * level.mapTileSize[1],
-					(self.mapTileLastPos[2] + dy) * level.mapTileSize[2]
-				)
-				local index = mapTilesToAdd:find(mapTile)
-				if index then
-					mapTilesToAdd:remove(index)
-				else
-					mapTilesToRemove:insert(mapTile)
+	-- only spawn what's in our room
+	self.room = level:getRoom(self.pos:unpack())
+	if self.room ~= self.lastRoom then
+		for _,spawnInfo in ipairs(level.spawnInfos) do
+			local spawnInfoRoom = level:getRoom(table.unpack(spawnInfo.pos))
+			if spawnInfoRoom == self.room then
+				if not spawnInfo.obj then
+					spawnInfo:respawn()
 				end
+			elseif spawnInfoRoom == self.lastRoom then
+				spawnInfo:removeObj()
 			end
 		end
-
-		for _,mapTile in ipairs(mapTilesToAdd) do
-			if mapTile.spawnInfos then
-				for _,spawnInfo in ipairs(mapTile.spawnInfos) do
-					-- only spawn spawnInfos that have no current objects
-					-- (so no duplicates, and no removing objs that already exist)
-					if not spawnInfo.obj then
-						spawnInfo:respawn()
-					end
-				end
-			end
-		end
-		for _,mapTile in ipairs(mapTilesToRemove) do
-			-- remove objs themselves that are out of screen
-			-- TODO? obj linking to mapTiles? for faster searches with other things, like collision detection and interaction
-			-- and TODO only search objs in neighboring mapTiles
-			for _,obj in ipairs(game.objs) do
-				if not obj.permanent then
-					local orx, ory = level:getMapTilePos(obj.pos[1], obj.pos[2])
-					local lInfMapTileDist = math.max(math.abs(self.mapTilePos[1] - orx), math.abs(self.mapTilePos[2] - ory))
-					if lInfMapTileDist >= mapTileRemoveObjDist then
-						obj.remove = true
-					end
-				end
-			end
-		end
-		
-		self.mapTileLastPos[1], self.mapTileLastPos[2] = self.mapTilePos[1], self.mapTilePos[2]
+		self.lastRoom = self.room
 	end
 
 	self.ammoCells = math.min(self.maxAmmoCells, self.ammoCells + self.maxAmmoCells * dt / self.rechargeCellsTime)

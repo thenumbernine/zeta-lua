@@ -289,6 +289,17 @@ function Level:getMapTile(x,y)
 	return col and col[ry]
 end
 
+-- get the room # for this tile
+function Level:getRoom(x,y)
+	local rx, ry = self:getMapTilePos(x,y)
+	if rx < 1 and rx > self.sizeInMapTiles[1]
+	and ry < 1 and ry > self.sizeInMapTiles[2]
+	then
+		return -1
+	end
+	return self.roomMap[rx-1+self.sizeInMapTiles[1]*(ry-1)]
+end
+
 -- init stuff to be run after level is assigned as game.level (so objs can reference it)
 function Level:initialize()
 
