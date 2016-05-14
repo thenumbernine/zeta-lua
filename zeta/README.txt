@@ -29,6 +29,10 @@ rooms:
 	- touch triggers don't get along with room system?
 	
 VETOED list:
+- screen base spawning
+	- first i tried spawn and remove based on spawninfo.  enemies would disappear if they walked too far from their start.
+	- then i did spawn by spawninfo, remove by object.  if you lure an enemy too far from their home to kill them, they reappear.  this is frustrating. 
+	- finally i'm going back to metroid/castlevania/cavestory-styled rooms 
 - don't use 'spawnclass' as a class shortcut to register classes that are spawned.
 	to execute the spawn code, all the class will have to be require()'d somewhere in one spot anyways
 	it's better to list the names in 'spawnTypes' than have everything being required

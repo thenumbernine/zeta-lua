@@ -66,8 +66,8 @@ function Hero:init(args)
 	self.items = table()	-- self.items = {{obj1, ...}, {obj2, ...}, ...} for each unique class
 	self.holding = nil
 	self.color = nil	-- TODO team colors
-	self.roomPos = vec2()
-	self.roomLastPos = vec2()
+	self.mapTilePos = vec2()
+	self.mapTileLastPos = vec2()
 end
 
 function Hero:refreshSize()
@@ -205,44 +205,44 @@ Hero.swimDelay = .5
 function Hero:update(dt)
 	local level = game.level
 
-	-- only spawn what's in our room
-	self.roomPos[1], self.roomPos[2] = level:getRoomPos(self.pos:unpack())
-	if self.roomPos ~= self.roomLastPos then
-		-- gather neighbor rooms
-		local roomsToAdd = table()
-		local roomsToRemove = table()
-		local roomRemoveObjDist = 3	-- remove objs 2 or more rooms away 
-		local roomAddObjDist = 1	-- add objs within 1 room away
+	-- only spawn what's in our mapTile
+	self.mapTilePos[1], self.mapTilePos[2] = level:getMapTilePos(self.pos:unpack())
+	if self.mapTilePos ~= self.mapTileLastPos then
+		-- gather neighbor mapTiles
+		local mapTilesToAdd = table()
+		local mapTilesToRemove = table()
+		local mapTileRemoveObjDist = 3	-- remove objs 2 or more mapTiles away 
+		local mapTileAddObjDist = 1	-- add objs within 1 mapTile away
 		-- first assume we add all the new
-		for dy=-roomAddObjDist,roomAddObjDist do
-			for dx=-roomAddObjDist,roomAddObjDist do
-				roomsToAdd:insert(level:getRoom(
-					(self.roomPos[1] + dx) * level.roomTilesWide,
-					(self.roomPos[2] + dy) * level.roomTilesHigh
+		for dy=-mapTileAddObjDist,mapTileAddObjDist do
+			for dx=-mapTileAddObjDist,mapTileAddObjDist do
+				mapTilesToAdd:insert(level:getMapTile(
+					(self.mapTilePos[1] + dx) * level.mapTileWidth,
+					(self.mapTilePos[2] + dy) * level.mapTileHeight
 				))
 			end
 		end
 		-- then check the old
 		-- if it's in the new, we're not adding it
 		-- if it's not in the new, we're removing it
-		for dy=-roomAddObjDist,roomAddObjDist do
-			for dx=-roomAddObjDist,roomAddObjDist do
-				local room = level:getRoom(
-					(self.roomLastPos[1] + dx) * level.roomTilesWide,
-					(self.roomLastPos[2] + dy) * level.roomTilesHigh
+		for dy=-mapTileAddObjDist,mapTileAddObjDist do
+			for dx=-mapTileAddObjDist,mapTileAddObjDist do
+				local mapTile = level:getMapTile(
+					(self.mapTileLastPos[1] + dx) * level.mapTileWidth,
+					(self.mapTileLastPos[2] + dy) * level.mapTileHeight
 				)
-				local index = roomsToAdd:find(room)
+				local index = mapTilesToAdd:find(mapTile)
 				if index then
-					roomsToAdd:remove(index)
+					mapTilesToAdd:remove(index)
 				else
-					roomsToRemove:insert(room)
+					mapTilesToRemove:insert(mapTile)
 				end
 			end
 		end
 
-		for _,room in ipairs(roomsToAdd) do
-			if room.spawnInfos then
-				for _,spawnInfo in ipairs(room.spawnInfos) do
+		for _,mapTile in ipairs(mapTilesToAdd) do
+			if mapTile.spawnInfos then
+				for _,spawnInfo in ipairs(mapTile.spawnInfos) do
 					-- only spawn spawnInfos that have no current objects
 					-- (so no duplicates, and no removing objs that already exist)
 					if not spawnInfo.obj then
@@ -251,22 +251,22 @@ function Hero:update(dt)
 				end
 			end
 		end
-		for _,room in ipairs(roomsToRemove) do
+		for _,mapTile in ipairs(mapTilesToRemove) do
 			-- remove objs themselves that are out of screen
-			-- TODO? obj linking to rooms? for faster searches with other things, like collision detection and interaction
-			-- and TODO only search objs in neighboring rooms
+			-- TODO? obj linking to mapTiles? for faster searches with other things, like collision detection and interaction
+			-- and TODO only search objs in neighboring mapTiles
 			for _,obj in ipairs(game.objs) do
 				if not obj.permanent then
-					local orx, ory = level:getRoomPos(obj.pos[1], obj.pos[2])
-					local lInfRoomDist = math.max(math.abs(self.roomPos[1] - orx), math.abs(self.roomPos[2] - ory))
-					if lInfRoomDist >= roomRemoveObjDist then
+					local orx, ory = level:getMapTilePos(obj.pos[1], obj.pos[2])
+					local lInfMapTileDist = math.max(math.abs(self.mapTilePos[1] - orx), math.abs(self.mapTilePos[2] - ory))
+					if lInfMapTileDist >= mapTileRemoveObjDist then
 						obj.remove = true
 					end
 				end
 			end
 		end
 		
-		self.roomLastPos[1], self.roomLastPos[2] = self.roomPos[1], self.roomPos[2]
+		self.mapTileLastPos[1], self.mapTileLastPos[2] = self.mapTilePos[1], self.mapTilePos[2]
 	end
 
 	self.ammoCells = math.min(self.maxAmmoCells, self.ammoCells + self.maxAmmoCells * dt / self.rechargeCellsTime)
@@ -853,7 +853,7 @@ function Hero:draw(R, viewBBox, holdOveride)
 				--else
 				
 				-- update all items positions
-				-- so that they don't leave the player's room and get removed
+				-- so that they don't leave the player's mapTile and get removed
 				-- looks like the overlay drawing doesn't use their pos anyways
 				item.pos[1] = self.pos[1]
 				item.pos[2] = self.pos[2]

@@ -21,27 +21,27 @@ local game = require 'base.script.singleton.game'	-- this should exist by now, r
 local Image = require 'image'
 local SpawnInfo = require 'base.script.spawninfo'
 
-local Room = class()
+-- tile in the map system
+local MapTile = class()
 
-function Room:init(rx,ry)
-	-- in room coordinates ... 32 tile coordinates (or whatever level.roomTilesWide,roomTilesHigh says)
+function MapTile:init(rx,ry)
+	-- pos is in map tile coordinates ... 32 tile coordinates (or whatever level.mapTileWidth,mapTileHeight says)
 	self.pos = vec2(rx,ry)
-	print('creating room at ',self.pos)
 end
 
-function Room:addSpawnInfo(spawnInfo)
+function MapTile:addSpawnInfo(spawnInfo)
 	if not self.spawnInfos then self.spawnInfos = table() end
 	self.spawnInfos:insert(spawnInfo)
 end
 
-function Room:removeAllObjs()
+function MapTile:removeAllObjs()
 	if not self.spawnInfos then return end
 	for _,spawnInfo in ipairs(self.spawnInfos) do
 		spawnInfo:removeObj()
 	end
 end
 
-function Room:spawnAllObjs()
+function MapTile:spawnAllObjs()
 	if not self.spawnInfos then return end
 	for _,spawnInfo in ipairs(self.spawnInfos) do
 		spawnInfo:removeObj()
@@ -197,25 +197,25 @@ function Level:init(args)
 		self.texpackTex = texsys:load(texpackFile)
 	end
 
-	-- chop world up into 32x32 rooms, for the sake of linking and spawning
-	-- rooms will hold objs and spawnInfos
-	self.rooms = {}
-	self.roomTilesWide = 32
-	self.roomTilesHigh = 32
+	-- chop world up into 32x32 map tiles, for the sake of linking and spawning
+	-- map tiles will hold objs and spawnInfos
+	self.mapTiles = {}
+	self.mapTileWidth = 32
+	self.mapTileHeight = 32
 --[[
-	for i=1,math.ceil(self.size[1]/self.roomTilesWide) do
-		self.rooms[i] = {}
-		for j=1,math.ceil(self.size[2]/self.roomTilesHigh) do
-			self.rooms[i][j] = Room(i,j)
+	for i=1,math.ceil(self.size[1]/self.mapTileWidth) do
+		self.mapTiles[i] = {}
+		for j=1,math.ceil(self.size[2]/self.mapTileHeight) do
+			self.mapTiles[i][j] = MapTile(i,j)
 		end
 	end
 --]]
--- [[ only make what rooms we need
-	local function addRoom(x,y)
-		local rx = math.floor((x-1) / self.roomTilesWide) + 1
-		local ry = math.floor((y-1) / self.roomTilesHigh) + 1
-		if not self.rooms[rx] then self.rooms[rx] = {} end
-		if not self.rooms[rx][ry] then self.rooms[rx][ry] = Room(rx,ry) end
+-- [[ only make what mapTiles we need
+	local function addMapTile(x,y)
+		local rx = math.floor((x-1) / self.mapTileWidth) + 1
+		local ry = math.floor((y-1) / self.mapTileHeight) + 1
+		if not self.mapTiles[rx] then self.mapTiles[rx] = {} end
+		if not self.mapTiles[rx][ry] then self.mapTiles[rx][ry] = MapTile(rx,ry) end
 	end
 --]]
 
@@ -243,10 +243,10 @@ function Level:init(args)
 					local spawnInfo = SpawnInfo(args)
 					self.spawnInfos:insert(spawnInfo)	-- center on x and y
 			
-					addRoom(args.pos:unpack())
-					local room = self:getRoom(args.pos:unpack())
-					if room then
-						room:addSpawnInfo(spawnInfo)
+					addMapTile(args.pos:unpack())
+					local mapTile = self:getMapTile(args.pos:unpack())
+					if mapTile then
+						mapTile:addSpawnInfo(spawnInfo)
 					end
 				end
 			end
@@ -260,17 +260,17 @@ function Level:init(args)
 	self.initFile = initFile
 end
 
--- return room x,y for tile x,y
-function Level:getRoomPos(x,y)
-	local rx = math.floor((x-1) / self.roomTilesWide) + 1
-	local ry = math.floor((y-1) / self.roomTilesHigh) + 1
+-- return mapTile x,y for tile x,y
+function Level:getMapTilePos(x,y)
+	local rx = math.floor((x-1) / self.mapTileWidth) + 1
+	local ry = math.floor((y-1) / self.mapTileHeight) + 1
 	return rx, ry
 end
 
--- return room for tile x,y
-function Level:getRoom(x,y)
-	local rx, ry = self:getRoomPos(x,y)
-	local col = self.rooms[rx]
+-- return mapTile for tile x,y
+function Level:getMapTile(x,y)
+	local rx, ry = self:getMapTilePos(x,y)
+	local col = self.mapTiles[rx]
 	return col and col[ry]
 end
 

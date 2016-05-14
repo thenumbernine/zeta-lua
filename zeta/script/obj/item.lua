@@ -15,9 +15,7 @@ function Item:init(args)
 	-- SpawnInfo spawns objs with 'self' as 'args' ...
 	local spawnInfoIndex = game.level.spawnInfos:find(args)
 	if spawnInfoIndex then
-		print('found item spawn info',spawnInfoIndex)
 		if game.session['got permanent item '..spawnInfoIndex] then
-print('already have permanent item',spawnInfoIndex)
 			self.remove = true
 		end
 	end
@@ -40,7 +38,6 @@ function Item:playerGrab(player, side)
 		local spawnInfoIndex = game.level.spawnInfos:find(self.spawnInfo)
 		assert(spawnInfoIndex, "failed to find item spawnInfo in level")
 		game.session['got permanent item '..spawnInfoIndex] = true
-print('getting permanent item',spawnInfoIndex)	
 		if self.spawnInfo.obj == self then
 			self.spawnInfo.obj = nil
 		end
