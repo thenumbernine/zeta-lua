@@ -31,6 +31,13 @@ Geemer.searchYPaddingUp = 3
 function Geemer:init(...)
 	Geemer.super.init(self, ...)
 
+	if not game.session.geemerBossKilled	-- if the geemer boss wasn't killed yet
+	and not self.spawnAtFirst			-- and we're not a first-geemer
+	then
+		self.remove = true
+		return
+	end
+
 	-- see if there's a block near us
 	-- if so, stick to that block
 	local level = game.level
