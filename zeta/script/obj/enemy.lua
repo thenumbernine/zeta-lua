@@ -1,6 +1,7 @@
 local class = require 'ext.class'
 local Object = require 'base.script.obj.object'
 local takesDamageBehavior = require 'zeta.script.obj.takesdamage'
+local modio = require 'base.script.singleton.modio'
 
 local Enemy = class(takesDamageBehavior(Object))
 
@@ -24,7 +25,7 @@ function Enemy:die(damage, attacker, inflicter, side)
 	end
 
 	if self.onDie then
-		local sandbox = require 'zeta.script.sandbox'
+		local sandbox = modio:require 'script.sandbox'
 		sandbox(self.onDie,
 			'self, damage, attacker, inflicter, side',
 			self, damage, attacker, inflicter, side)

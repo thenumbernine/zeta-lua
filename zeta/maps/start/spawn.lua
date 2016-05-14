@@ -92,62 +92,7 @@
 	{pos={69.5,195},spawn="zeta.script.obj.turret"},
 	{pos={78.5,194},spawn="zeta.script.obj.turret"},
 	{pos={77.5,186},spawn="zeta.script.obj.turret"},
-	{
-		pos={157.5,131},
-		spawn="zeta.script.obj.trigger",
-		create=[[
--- re-spawn the geemers if the boss isn't dead yet
-if session.geemerBossKilled then return end
--- don't run immediately
-for _,spawnInfo in ipairs(level.spawnInfos) do
-	if spawnInfo.spawn == 'zeta.script.obj.geemer'
-	and level:getRoom(spawnInfo.pos:unpack())
-		== level:getRoom(self.pos:unpack())
-	then
-		spawnInfo:removeObj()	-- ... should already be removed
-		spawnInfo:respawn(true)
-	end
-end]],
-		trigger=[[
--- find the right wall
-local rightWall = findName 'geemer-right-wall'
-if session.geemerBossKilled then
-	self.remove = true
-	if rightWall then rightWall.remove = true end
-	return
-end
--- push into the room
-player.pos=self.pos+{2,0}
--- TODO 'base.script.obj.solid'
-if rightWall then
-	rightWall.bbox = box2(-.5, 0, .5, 3)
-	rightWall.solid = true
-end
-rightWall.pushPriority = math.huge
--- make ourselves solid and blocking
-self.solid = true
-self.bbox = box2(-.5, 0, .5, 3)
--- center view in room
-local center = self.pos+{13,4}
-centerView(center)
--- create boss
-create'zeta.script.obj.boss-geemer'
-{
-	pos=center,
-	-- upon boss death...
-	onDie=function(geemer)
-		session.geemerBossKilled = true
-		popup('defeated boss geemer!')
-		-- drop a keycard
-		create 'zeta.script.obj.keycard'{pos=geemer.pos, color={0,1,0,1}}
-		-- center the view on the player
-		stopCenterView()
-		-- stop blocking the exit
-		self.remove = true
-		if rightWall then rightWall.remove = true end
-	end
-}]],
-	},
+	{create="-- re-spawn the geemers if the boss isn't dead yet\nif session.geemerBossKilled then return end\n-- don't run immediately\nfor _,spawnInfo in ipairs(level.spawnInfos) do\n\9if spawnInfo.spawn == 'zeta.script.obj.geemer'\n\9and level:getRoom(spawnInfo.pos:unpack())\n\9\9== level:getRoom(self.pos:unpack())\n\9then\n\9\9spawnInfo:removeObj()\9-- ... should already be removed\n\9\9spawnInfo:respawn(true)\n\9end\nend",pos={157.5,131},spawn="zeta.script.obj.trigger",trigger="-- find the right wall\nlocal rightWall = findName 'geemer-right-wall'\nif session.geemerBossKilled then\n\9self.remove = true\n\9if rightWall then rightWall.remove = true end\n\9return\nend\n-- push into the room\nplayer.pos=self.pos+{2,0}\n-- TODO 'base.script.obj.solid'\nif rightWall then\n\9rightWall.bbox = box2(-.5, 0, .5, 3)\n\9rightWall.solid = true\nend\nrightWall.pushPriority = math.huge\n-- make ourselves solid and blocking\nself.solid = true\nself.bbox = box2(-.5, 0, .5, 3)\n-- center view in room\nlocal center = self.pos+{13,4}\ncenterView(center)\n-- create boss\ncreate'zeta.script.obj.boss-geemer'\n{\n\9pos=center,\n\9-- upon boss death...\n\9onDie=function(geemer)\n\9\9session.geemerBossKilled = true\n\9\9popup('defeated boss geemer!')\n\9\9-- drop a keycard\n\9\9create 'zeta.script.obj.keycard'{pos=geemer.pos, color={0,1,0,1}}\n\9\9-- center the view on the player\n\9\9stopCenterView()\n\9\9-- stop blocking the exit\n\9\9self.remove = true\n\9\9if rightWall then rightWall.remove = true end\n\9end\n}"},
 	{name="geemer-right-wall",pos={183.5,134},spawn="base.script.obj.object"},
 	{pos={117.5,182},spawn="zeta.script.obj.attackbonus"},
 	{pos={37.5,243},spawn="zeta.script.obj.energytank"},
@@ -260,7 +205,7 @@ create'zeta.script.obj.boss-geemer'
 	{color={0,1,0,1},pos={49.5,160},spawn="zeta.script.obj.door"},
 	{cells="2",pos={37.5,169},spawn="zeta.script.obj.cells"},
 	{pos={160.5,236},spawn="zeta.script.obj.savepoint"},
-	{cells="2",pos={118.5,148},spawn="zeta.script.obj.cells"},
+	{cells="2",pos={107.5,142},spawn="zeta.script.obj.cells"},
 	{pos={114.5,218},spawn="zeta.script.obj.energytank"},
 	{color={0,1,1,1},pos={176.5,163},spawn="zeta.script.obj.door"},
 	{pos={161.5,236},spawn="zeta.script.obj.energyrefill"},

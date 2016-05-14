@@ -1460,7 +1460,7 @@ function Editor:draw(R, viewBBox)
 			for ry=1,level.sizeInMapTiles[2] do
 				local roomIndex = level.roomMap[rx-1 + level.sizeInMapTiles[1] * (ry-1)]
 				gui.font:drawUnpacked(
-					(rx-1) * level.mapTileSize[1],
+					(rx-1) * level.mapTileSize[1]+1,
 					ry * level.mapTileSize[2],
 					level.mapTileSize[1]/3,
 					-level.mapTileSize[2]/2,

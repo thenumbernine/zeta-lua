@@ -108,7 +108,7 @@ GLApp.sdlInitFlags = bit.bor(sdl.SDL_INIT_VIDEO, sdl.SDL_INIT_JOYSTICK)
 function GLApp:initGL(gl, glname)
 	ImGuiApp.initGL(self, gl, glname)
 
-	local Renderer = modio:require('script.singleton.class.renderer')
+	local Renderer = modio:require 'script.singleton.class.renderer'
 	local rendererClass = Renderer.requireClasses[glname]
 	if not rendererClass then error("don't have support for "..tostring(glname)) end
 	R = rendererClass(gl)

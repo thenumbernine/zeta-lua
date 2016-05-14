@@ -310,8 +310,8 @@ function Level:initialize()
 	if self.initFile then
 		local initFile = modio:find(self.initFile)
 		if initFile then
--- TODO double with sandbox function?
-			self:runInitFile(initFile)
+			local sandbox = modio:require 'script.sandbox'
+			sandbox(assert(file[initFile]))
 		end
 	end
 end

@@ -1,5 +1,6 @@
 local class = require 'ext.class'
 local Object = require 'base.script.obj.object'
+local modio = require 'base.script.singleton.modio'
 local game = require 'base.script.singleton.game'
 
 local Trigger = class(Object)
@@ -25,16 +26,14 @@ function Trigger:pretouch(other, side)
 	local Hero = require 'zeta.script.obj.hero'
 	if not other:isa(Hero) then return true end
 
-	-- TODO this has a lot in common with terminal's "use"
+	-- TODO this should be 'touch' callback?
 	if self.trigger then
-		local sandbox = require 'zeta.script.sandbox'
+		local sandbox = modio:require 'script.sandbox'
 		sandbox(self.trigger, 'self, other, side', self, other, side)
-		-- TODO once by default?
 	end
 end
 
 function Trigger:draw(R, viewBBox)
-
 end
 
 return Trigger

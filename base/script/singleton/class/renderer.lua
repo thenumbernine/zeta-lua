@@ -29,7 +29,7 @@ do
 		GLProgram = require 'gl.program'
 		glreport = require 'gl.report'
 
-		local texsys = modio:require('script.singleton.texsys')
+		local texsys = modio:require 'script.singleton.texsys'
 		texsys:setVars(gl,GLTex2D,{
 			minFilter = gl.GL_NEAREST,
 			magFilter = gl.GL_NEAREST,
@@ -153,7 +153,7 @@ do
 		GLMatrix4x4 = require 'gles2.matrix4'
 		GLProgram = require 'gles2.program'
 		GLTex2D = require 'gles2.tex2d'
-		local texsys = modio:require('script.singleton.texsys')
+		local texsys = modio:require 'script.singleton.texsys'
 		texsys:setVars(gl, GLTex2D, {
 			minFilter = gl.GL_NEAREST, --gl.GL_LINEAR,
 			magFilter = gl.GL_NEAREST, --gl.GL_LINEAR,

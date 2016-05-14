@@ -127,7 +127,7 @@ function Game:reset()
 	if self.level then self.level.done = true end
 	
 	-- reload level ...
-	local Level = modio:require('script.level')
+	local Level = modio:require 'script.level'
 	self.level = Level(self.levelcfg)
 	
 	-- init spawns separate after game.level is assigned (in case they want to reference it)
