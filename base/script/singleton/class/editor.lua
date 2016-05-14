@@ -1229,6 +1229,8 @@ function Editor:update()
 		local noClipSpeed = 2 * game.viewSize
 		player.pos[1] = player.pos[1] + dt * player.inputLeftRight * noClipSpeed
 		player.pos[2] = player.pos[2] + dt * player.inputUpDown * noClipSpeed
+		player.vel[1] = 0
+		player.vel[2] = 0
 		player.invincibleEndTime = game.time + .1
 		player.isClipping = true
 		player.useGravity = false

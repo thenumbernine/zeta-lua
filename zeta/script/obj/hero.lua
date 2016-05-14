@@ -223,6 +223,8 @@ function Hero:update(dt)
 	end
 
 	self.inputRun = self.inputJumpAux
+		
+	if self.isClipping then return end
 
 	-- horz vels
 	local walkVel = 5
@@ -237,9 +239,7 @@ function Hero:update(dt)
 		self.lookingUp = false
 		self.inputMaxSpeedTime = nil
 	else
-		if not self.isClipping then
-			self.useGravity = true
-		end
+		self.useGravity = true
 	end
 	
 	-- reattach to world
