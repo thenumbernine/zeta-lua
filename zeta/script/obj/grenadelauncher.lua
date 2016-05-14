@@ -99,7 +99,7 @@ local Grenade = (function()
 	end
 
 	function Grenade:blast(alreadyHit)
-		if self.removeTime then return end
+		if self.remove then return end
 		
 		-- splash damage 
 		-- TODO ignore objects just hit by damage?

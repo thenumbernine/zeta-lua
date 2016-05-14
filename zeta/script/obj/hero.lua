@@ -893,7 +893,7 @@ end
 -- run as a coroutine
 
 function Hero:popupMessage(text)
-	self.popupMessageCloseSysTime = game.sysTime + 1
+	self.popupMessageCloseSysTime = game.sysTime + .3
 	self.popupMessageText = text
 	game.paused = true
 	repeat

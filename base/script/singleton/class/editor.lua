@@ -516,7 +516,7 @@ function Editor:init()
 	self.showObjects = ffi.new('bool[1]',true)
 	self.showRooms = ffi.new('bool[1]',true)
 	
-	self.noClipping = ffi.new('bool[1]',false)
+	self.noClipping = ffi.new('bool[1]',true)
 end
 
 local colorForTypeTable = table()
@@ -831,23 +831,9 @@ function Editor:updateGUI()
 		then
 			self.execBuffer[bufferSize-1] = 0
 			local code = ffi.string(self.execBuffer)
+			local sandbox = modio:require 'script.sandbox'
 			print('executing...\n'..code)
-			code = [[
-local ffi = require 'ffi'
-local vec2 = require 'vec.vec2'
-local vec4 = require 'vec.vec4'
-local box2 = require 'vec.box2'
-local game = require 'base.script.singleton.game'
-local level = game.level
-local player = game.players[1]
-local function popup(...) return player:popupMessage(...) end
-]] .. code
-			print('results...')
-			threads:add(function()
-				assert(load(code))()
-				io.stdout:flush()
-				io.stderr:flush()
-			end)
+			sandbox(code)
 		end
 		if ig.igButton('clear code') then
 			ffi.fill(self.execBuffer, bufferSize)
