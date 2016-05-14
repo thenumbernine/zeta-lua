@@ -213,7 +213,9 @@ function Level:initialize()
 	if self.initFile then
 		local initFile = modio:find(self.initFile)
 		if initFile then
-			assert(load(assert(file[initFile])))()
+-- TODO double with sandbox function?
+			local sandbox = require 'zeta.script.sandbox'
+			sandbox(file[initFile])
 		end
 	end
 end

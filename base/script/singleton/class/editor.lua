@@ -557,7 +557,7 @@ function Editor:setTileKeys()
 					ffi.cast('unsigned char',color[1]*255),
 					ffi.cast('unsigned char',color[2]*255),
 					ffi.cast('unsigned char',color[3]*255),
-					255
+					127
 			end
 			return 0,0,0,0
 		end)
@@ -750,24 +750,58 @@ function Editor:updateGUI()
 	self.showMoveWorldWindow = self.showMoveWorldWindow or ffi.new('bool[1]',false)
 	self.moveWorldWindowXPtr = self.moveWorldWindowXPtr or ffi.new('int[1]',0)
 	self.moveWorldWindowYPtr = self.moveWorldWindowYPtr or ffi.new('int[1]',0)
-	if ig.igButton('move world') then
+	if ig.igButton('Move World') then
 		self.showMoveWorldWindow[0] = true
 		self.moveWorldWindowXPtr[0] = 0
 		self.moveWorldWindowYPtr[0] = 0
 	end
 	if self.showMoveWorldWindow[0] then
-		ig.igBegin('move world', self.showMoveWorldWindow)
-		ig.igInputInt('move x', self.moveWorldWindowXPtr)
-		ig.igInputInt('move y', self.moveWorldWindowYPtr)
-		if ig.igButton('ok') then
+		ig.igBegin('Move World', self.showMoveWorldWindow)
+		ig.igInputInt('Move X', self.moveWorldWindowXPtr)
+		ig.igInputInt('Move Y', self.moveWorldWindowYPtr)
+		if ig.igButton('OK') then
 			doMoveWorld(self.moveWorldWindowXPtr[0], self.moveWorldWindowYPtr[0])
 			self.showMoveWorldWindow[0] = false
 		end
 		ig.igSameLine()
-		if ig.igButton('cancel') then
+		if ig.igButton('Cancel') then
 			self.showMoveWorldWindow[0] = false
 		end
 
+		ig.igEnd()
+	end
+
+	local initFileBufferSize = 65536
+	if not self.initFileBuffer then
+		self.initFileBuffer = ffi.new('char[?]', 65536)	-- hmm ... init files have a max size ...
+	end
+	self.showInitFileWindow = self.showInitFileWindow or ffi.new('bool[1]',false)
+	if ig.igButton('Edit Level Init Code') then
+		self.showInitFileWindow[0] = true
+		local level = game.level
+		local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
+		local initFileData = file[dir..'/init.lua'] or ''
+		ffi.copy(self.initFileBuffer, initFileData, math.min(#initFileData, initFileBufferSize-1))
+		self.initFileBuffer[initFileBufferSize-1] = 0
+	end
+	if self.showInitFileWindow[0] then
+		ig.igBegin('Level Init Code', self.showInitFileWindow)
+		ig.igInputTextMultiline('code', self.initFileBuffer, initFileBufferSize,
+			ig.ImVec2(0,0),
+			ig.ImGuiInputTextFlags_AllowTabInput)
+		if ig.igButton('Save') then
+			self.initFileBuffer[initFileBufferSize-1] = 0
+			local code = ffi.string(self.initFileBuffer)
+			print('saving code',code)
+			local level = game.level
+			local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
+			file[dir..'/init.lua'] = code
+			self.showInitFileWindow[0] = false
+		end
+		ig.igSameLine()
+		if ig.igButton('Cancel') then
+			self.showInitFileWindow[0] = false
+		end
 		ig.igEnd()
 	end
 
@@ -777,13 +811,15 @@ function Editor:updateGUI()
 	end
 	if self.consoleWindowOpenedPtr[0] then
 		ig.igBegin('Console', self.consoleWindowOpenedPtr)
-		self.execBuffer = self.execBuffer or ffi.new('char[2048]')
-		if ig.igInputTextMultiline('code', self.execBuffer, ffi.sizeof(self.execBuffer),
+		local bufferSize = 2048
+		self.execBuffer = self.execBuffer or ffi.new('char[?]', bufferSize)
+		if ig.igInputTextMultiline('code', self.execBuffer, bufferSize,
 			ig.ImVec2(0,0),
 			ig.ImGuiInputTextFlags_EnterReturnsTrue
 			+ ig.ImGuiInputTextFlags_AllowTabInput)
 		or ig.igButton('run code')
 		then
+			self.execBuffer[bufferSize-1] = 0
 			local code = ffi.string(self.execBuffer)
 			print('executing...\n'..code)
 			code = [[
@@ -804,7 +840,7 @@ local function popup(...) return player:popupMessage(...) end
 			end)
 		end
 		if ig.igButton('clear code') then
-			ffi.fill(self.execBuffer, ffi.sizeof(self.execBuffer))
+			ffi.fill(self.execBuffer, bufferSize)
 		end
 		ig.igEnd()
 	end
@@ -1141,11 +1177,13 @@ local function popup(...) return player:popupMessage(...) end
 				end
 			end
 			if ig.igButton('spawn obj') then
+				if self.selectedSpawnInfo.obj then
+					self.selectedSpawnInfo.obj.remove = true
+				end
 				self.selectedSpawnInfo:respawn()
 			end
 		end
 	end
-	
 end
 
 

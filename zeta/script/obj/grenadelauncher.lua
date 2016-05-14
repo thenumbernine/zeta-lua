@@ -63,6 +63,9 @@ local Grenade = (function()
 	function Grenade:hit()
 		self:blast()
 	end
+	function Grenade:die()
+		self:blast()
+	end
 
 	-- TODO need normals
 	function Grenade:touchTile(tile, side, plane)
