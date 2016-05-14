@@ -19,6 +19,7 @@ VETOED list:
 	to execute the spawn code, all the class will have to be require()'d somewhere in one spot anyways
 	it's better to list the names in 'spawnTypes' than have everything being required
 - don't separating playerLook vs canCarry.  set an item down by a terminal, and try to pick it up again.
+	- using 'a' for run and use item means ... you can't run / always run when using an item 
 	solution? get rid of carrying items altogether? options:
 		- carrying items (spelunky)
 		- touch to get (metroid)

@@ -12,7 +12,7 @@ end
 
 -- use zeta's sandbox
 -- TODO have zeta overload sandbox, put a default version in base, then have base level use base sandbox and get rid of this
-function Level:runInitFile(initFile)
+function ZetaLevel:runInitFile(initFile)
 	local sandbox = require 'zeta.script.sandbox'
 	sandbox(file[initFile])
 end

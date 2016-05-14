@@ -31,7 +31,7 @@ end)) end
 	end
 	if not f then
 		-- TODO imgui popup?
-		print('sandbox failed of code')
+		print('sandbox failed for code')
 		print(tostring(code))
 		print(tostring(reason))
 		print(debug.traceback())
