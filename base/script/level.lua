@@ -402,11 +402,7 @@ function Level:draw(R, viewBBox)
 	end
 
 	-- draw objects
-	--for _,obj in ipairs(game.objs) do
-	-- now that rooms are spawning/unspawning, player becomes first
-	-- so to prevent player drawn behind everything, reverse draw order
-	for i=#game.objs,1,-1 do
-		local obj = game.objs[i]
+	for _,obj in ipairs(game.objs) do
 		if not obj.drawn then
 			obj:draw(R, viewBBox)
 			obj.drawn = true

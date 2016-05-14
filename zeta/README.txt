@@ -12,6 +12,8 @@ TODO list
 - spawn more monsters in the mining base area *after* beating the boss.  this is based on spawn conditions, based on rooms.
 - story items also need spawn conditions
 - environmental effects ... foreground warping (underwater, heat), blowing wind, falling snow/rain/leaves, etc
+- float text, missile explosions, puffs, all need to be inserted on top
+	- same with weapon shots?
 - get savepoint loading to work
 rooms:
 	- every time an item is grabbed, set a session var that says the item at this level at this index is grabbed
@@ -22,8 +24,12 @@ rooms:
 	upon removing room spawns, serialize objects and store them in a session/cache file
 		then upon adding room spawns, create the objs, then check the cache and overwrite values
 		then double the caching system as the savegame system
-
-
+	- if an *object* leaves your neighborhood then remove it 
+	 	but if a *spawninfo* enters into your neighborhood (and it has no current object bound) then add it 
+		... but items would need all their positions updated to keep alive
+		... or get rid of items-as-objects completely - replace with items-as-values
+	- touch triggers don't get along with room system?
+	
 VETOED list:
 - don't use 'spawnclass' as a class shortcut to register classes that are spawned.
 	to execute the spawn code, all the class will have to be require()'d somewhere in one spot anyways

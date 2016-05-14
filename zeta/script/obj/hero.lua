@@ -212,9 +212,11 @@ function Hero:update(dt)
 		-- gather neighbor rooms
 		local roomsToAdd = table()
 		local roomsToRemove = table()
+		local roomRemoveObjDist = 3	-- remove objs 2 or more rooms away 
+		local roomAddObjDist = 1	-- add objs within 1 room away
 		-- first assume we add all the new
-		for dy=-1,1 do
-			for dx=-1,1 do
+		for dy=-roomAddObjDist,roomAddObjDist do
+			for dx=-roomAddObjDist,roomAddObjDist do
 				roomsToAdd:insert(level:getRoom(
 					(self.roomPos[1] + dx) * level.roomTilesWide,
 					(self.roomPos[2] + dy) * level.roomTilesHigh
@@ -224,8 +226,8 @@ function Hero:update(dt)
 		-- then check the old
 		-- if it's in the new, we're not adding it
 		-- if it's not in the new, we're removing it
-		for dy=-1,1 do
-			for dx=-1,1 do
+		for dy=-roomAddObjDist,roomAddObjDist do
+			for dx=-roomAddObjDist,roomAddObjDist do
 				local room = level:getRoom(
 					(self.roomLastPos[1] + dx) * level.roomTilesWide,
 					(self.roomLastPos[2] + dy) * level.roomTilesHigh
@@ -243,13 +245,32 @@ function Hero:update(dt)
 		for _,room in ipairs(roomsToAdd) do
 			print('adding room at',room.pos)
 			print('#objs was '..#game.objs)
-			room:spawnAllObjs()
+			if room.spawnInfos then
+				for _,spawnInfo in ipairs(room.spawnInfos) do
+					-- only spawn spawnInfos that have no current objects
+					-- (so no duplicates, and no removing objs that already exist)
+					if not spawnInfo.obj then
+						spawnInfo:respawn()
+					end
+				end
+			end
 			print('#objs is '..#game.objs)
 		end
 		for _,room in ipairs(roomsToRemove) do
 			print('removing room at',room.pos)
 			print('#objs was '..#game.objs)
-			room:removeAllObjs()
+			-- remove objs themselves that are out of screen
+			-- TODO? obj linking to rooms? for faster searches with other things, like collision detection and interaction
+			-- and TODO only search objs in neighboring rooms
+			for _,obj in ipairs(game.objs) do
+				if not obj.permanent then
+					local orx, ory = level:getRoomPos(obj.pos[1], obj.pos[2])
+					local lInfRoomDist = math.max(math.abs(self.roomPos[1] - orx), math.abs(self.roomPos[2] - ory))
+					if lInfRoomDist >= roomRemoveObjDist then
+						obj.remove = true
+					end
+				end
+			end
 			print('#objs is '..#game.objs)
 		end
 		
@@ -833,17 +854,20 @@ function Hero:draw(R, viewBBox, holdOveride)
 
 	for _,items in ipairs(self.items) do
 		for _,item in ipairs(items) do
-			if item ~= self.holding
-			and item ~= self.weapon
-			then
+			do--if item ~= self.holding and item ~= self.weapon then
 				if item.updateHeldPosition then
 					item:updateHeldPosition(R, viewBBox, true)
-				else
-					item.pos[1] = self.pos[1]
-					item.pos[2] = self.pos[2]
-					item.vel[1] = self.vel[1]
-					item.vel[2] = self.vel[2]
 				end
+				--else
+				
+				-- update all items positions
+				-- so that they don't leave the player's room and get removed
+				-- looks like the overlay drawing doesn't use their pos anyways
+				item.pos[1] = self.pos[1]
+				item.pos[2] = self.pos[2]
+				item.vel[1] = self.vel[1]
+				item.vel[2] = self.vel[2]
+				--end
 			end
 		end
 	end

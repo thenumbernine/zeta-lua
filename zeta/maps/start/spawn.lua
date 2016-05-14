@@ -207,7 +207,7 @@
 	{color={0,1,0,1},pos={50.5,160},spawn="zeta.script.obj.door"},
 	{cells="2",pos={37.5,169},spawn="zeta.script.obj.cells"},
 	{pos={160.5,236},spawn="zeta.script.obj.savepoint"},
-	{cells="5",pos={118.5,148},spawn="zeta.script.obj.cells"},
+	{cells="2",pos={118.5,148},spawn="zeta.script.obj.cells"},
 	{pos={151.5,130},spawn="zeta.script.obj.savepoint"},
 	{pos={114.5,218},spawn="zeta.script.obj.energytank"},
 	{color={0,1,1,1},pos={175.5,163},spawn="zeta.script.obj.door"},

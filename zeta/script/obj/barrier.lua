@@ -13,9 +13,11 @@ Barrier.bbox = box2(-.3, 0, .3, 3)
 
 function Barrier:init(args)
 	Barrier.super.init(self, args)
+	
 	if args.timeOn then self.timeOn = tonumber(args.timeOn) end
 	if args.timeOff then self.timeOff = tonumber(args.timeOff) end
 	if args.damage then self.damage = tonumber(args.damage) end
+	
 	self.timeOffset = math.random() * (self.timeOn + self.timeOff)
 end
 
@@ -27,7 +29,7 @@ function Barrier:pretouch(other, side)
 end
 
 function Barrier:update(dt)
-	if not self.deactivated then
+	if not game.session.defensesDeactivated then
 		local t = (game.time + self.timeOffset) % (self.timeOn + self.timeOff)
 		self.shockEndTime = t < self.timeOn and game.time + .5 + .5 * math.random() or 0
 	end

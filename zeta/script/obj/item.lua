@@ -17,6 +17,9 @@ function Item:pretouch(other, side)
 	return true	-- don't touch anything else
 end
 
+-- tell the room spawn system not to get rid of this
+Item.permanent = true
+
 function Item:playerGrab(player, side)
 	-- if the player is going to be holding it then unlink it from the room system
 	-- or else it'll be erased from the inventory as soon as the player changes rooms
@@ -27,7 +30,7 @@ function Item:playerGrab(player, side)
 		end
 		self.spawnInfo = nil
 	end
-	
+
 	-- add item to player
 	do
 		local found = false

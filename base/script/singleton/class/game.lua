@@ -43,10 +43,15 @@ function Game:init()
 		src:setRolloffFactor(1)
 		self.audioSources[i] = src
 	end
+
+	-- initialize the session variables
+	-- story state, etc
+	-- save and load these along with the levels
+	game.session = {}
 end
 
 function Game:addObject(obj)
-	self.objs:insert(obj)
+	self.newObjs:insert(obj)
 end
 
 function Game:setLevel(levelcfg)
@@ -100,10 +105,16 @@ function Game:update(dt)
 			end
 		end
 	end
+
+	-- add any new objects
+	while #self.newObjs > 0 do
+		self.objs:insert(1, self.newObjs:remove())
+	end
 end
 
 function Game:resetObjects()
 	self.objs = table()	-- enumeration of all active ents
+	self.newObjs= table()	-- accumulated every frame so the objs array doesn't get manipulated while iterating 
 	self.players = table()
 	self.time = 0
 end

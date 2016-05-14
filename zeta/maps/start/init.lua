@@ -1,16 +1,7 @@
-local Turret = require 'zeta.script.obj.turret'
-local Barrier = require 'zeta.script.obj.barrier'
-local defensesDeactivated = false
+game.session.defensesDeactivated = false
 function toggleDefenses()
-	defensesDeactivated = not defensesDeactivated
-	for _,obj in ipairs(game.objs) do
-		if obj:isa(Turret)
-		or obj:isa(Barrier)
-		then
-			obj.deactivated = defensesDeactivated
-		end
-	end
-	popup(defensesDeactivated
+	game.session.defensesDeactivated = not game.session.defensesDeactivated
+	popup(game.session.defensesDeactivated
 	and [[
 Emergency alarm deactivated.
 Defense systems disabled.]]

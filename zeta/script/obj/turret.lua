@@ -11,7 +11,6 @@ Turret.solid = false
 Turret.maxHealth = 3
 Turret.rotCenter = {.5, .5}
 Turret.angle = 90
-Turret.deactivated = false
 
 function Turret:init(...)
 	Turret.super.init(self, ...)
@@ -40,7 +39,7 @@ function Turret:update(dt)
 	if self.health == 0 then return end
 	
 	local targetAngle
-	if self.deactivated then
+	if game.session.defensesDeactivated then
 		self.seq = 'idle'
 		if self.angle ~= targetAngle then
 			targetAngle = (self.stuckAngle + 90) % 360
