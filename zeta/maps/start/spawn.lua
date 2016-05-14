@@ -338,7 +338,6 @@
 	{pos={90.5,198},spawn="zeta.script.obj.geemer"},
 	{pos={66.5,196},spawn="zeta.script.obj.geemer"},
 	{pos={67.5,198},spawn="zeta.script.obj.geemer"},
-	{pos={55.5,216},spawn="zeta.script.obj.geemer"},
 	{pos={62.5,215},spawn="zeta.script.obj.geemer"},
 	{pos={67.5,213},spawn="zeta.script.obj.geemer"},
 	{pos={77.5,216},spawn="zeta.script.obj.geemer"},
@@ -358,4 +357,7 @@
 	{pos={69.5,246},spawn="zeta.script.obj.redgeemer"},
 	{pos={67.5,249},spawn="zeta.script.obj.redgeemer"},
 	{pos={61.5,198},spawn="zeta.script.obj.geemer"},
+	{pos={54.5,198},spawn="zeta.script.obj.geemer"},
+	{pos={51.5,204},spawn="zeta.script.obj.geemer"},
+	{pos={64.5,213},spawn="zeta.script.obj.geemer"},
 }
