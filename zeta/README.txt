@@ -1,6 +1,8 @@
 TODO list
 
-- editor: move texpack tiles and change map tiles accordingly
+- editor: 
+	- move texpack tiles and change map tiles accordingly
+	- separate 'object' into 'create object' and 'select object'
 - object classes use 'spawnfields' for editor fields, types, and tooltips
 - missile launcher missile ammo
 - camera align via room info, or helper objects

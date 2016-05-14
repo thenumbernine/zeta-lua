@@ -217,8 +217,8 @@ function Hero:update(dt)
 		for dy=-mapTileAddObjDist,mapTileAddObjDist do
 			for dx=-mapTileAddObjDist,mapTileAddObjDist do
 				mapTilesToAdd:insert(level:getMapTile(
-					(self.mapTilePos[1] + dx) * level.mapTileWidth,
-					(self.mapTilePos[2] + dy) * level.mapTileHeight
+					(self.mapTilePos[1] + dx) * level.mapTileSize[1],
+					(self.mapTilePos[2] + dy) * level.mapTileSize[2]
 				))
 			end
 		end
@@ -228,8 +228,8 @@ function Hero:update(dt)
 		for dy=-mapTileAddObjDist,mapTileAddObjDist do
 			for dx=-mapTileAddObjDist,mapTileAddObjDist do
 				local mapTile = level:getMapTile(
-					(self.mapTileLastPos[1] + dx) * level.mapTileWidth,
-					(self.mapTileLastPos[2] + dy) * level.mapTileHeight
+					(self.mapTileLastPos[1] + dx) * level.mapTileSize[1],
+					(self.mapTileLastPos[2] + dy) * level.mapTileSize[2]
 				)
 				local index = mapTilesToAdd:find(mapTile)
 				if index then

@@ -25,7 +25,7 @@ local SpawnInfo = require 'base.script.spawninfo'
 local MapTile = class()
 
 function MapTile:init(rx,ry)
-	-- pos is in map tile coordinates ... 32 tile coordinates (or whatever level.mapTileWidth,mapTileHeight says)
+	-- pos is in map tile coordinates ... 32 tile coordinates (or whatever level.mapTileSize says)
 	self.pos = vec2(rx,ry)
 end
 
@@ -76,7 +76,8 @@ args:
 	backgroundFile. default background.png 
 	fgTileFile. default tile-fg.png
 	bgTileFile. default tile-bg.png
-	
+	roomFile.  default room.png
+
 	initFile = (optional) file to run when the level inits.
 		default "<path>/init.lua"
 	
@@ -116,6 +117,11 @@ function Level:init(args)
 	assert(tileFile, "couldn't find tile file")
 	local tileImage = Image(tileFile)
 	self.size = vec2(tileImage:size())
+	
+	self.mapTileSize = vec2(16, 16)
+	self.sizeInMapTiles = vec2(
+		math.ceil(self.size[1]/self.mapTileSize[1]),
+		math.ceil(self.size[2]/self.mapTileSize[2]))
 
 	self.tileMap = ffi.new('unsigned char[?]', self.size[1] * self.size[2])
 	for j=0,self.size[2]-1 do
@@ -131,6 +137,7 @@ function Level:init(args)
 	if not fgTileImage then
 		ffi.fill(self.fgTileMap, ffi.sizeof('unsigned short') * self.size[1] * self.size[2])
 	else
+		assert(vec2(fgTileImage:size()) == self.size)
 		for j=0,self.size[2]-1 do
 			for i=0,self.size[1]-1 do
 				self.fgTileMap[i+self.size[1]*j] = rgbAt(fgTileImage,i,self.size[2]-j-1)
@@ -145,9 +152,26 @@ function Level:init(args)
 	if not bgTileImage then
 		ffi.fill(self.bgTileMap, ffi.sizeof('unsigned short') * self.size[1] * self.size[2])
 	else
+		assert(vec2(bgTileImage:size()) == self.size)
 		for j=0,self.size[2]-1 do
 			for i=0,self.size[1]-1 do
 				self.bgTileMap[i+self.size[1]*j] = rgbAt(bgTileImage,i,self.size[2]-j-1)
+			end
+		end
+	end
+
+	-- load rooms here
+	local roomFile = args.roomFile or (mappath and (mappath..'/room.png'))
+	if roomFile then roomFile = modio:find(roomFile) end
+	local roomImage = roomFile and Image(roomFile)
+	self.roomMap = ffi.new('unsigned short[?]', self.sizeInMapTiles[1] * self.sizeInMapTiles[2])
+	if not roomImage then
+		ffi.fill(self.roomMap, ffi.sizeof('unsigned short') * self.sizeInMapTiles[1] * self.sizeInMapTiles[2])
+	else
+		assert(vec2(roomImage:size()) == self.sizeInMapTiles)
+		for j=0,self.size[2]-1 do
+			for i=0,self.size[1]-1 do
+				self.roomMap[i+self.sizeInMapTiles[1]*j] = rgbAt(roomImage,i,self.sizeInMapTiles[2]-j-1)
 			end
 		end
 	end
@@ -161,26 +185,18 @@ function Level:init(args)
 		end
 	end
 
-	local backgroundImage
-	do
-		local backgroundFile
-		if mappath then backgroundFile = mappath..'/background.png' end
-		if args.backgroundFile then backgroundFile = args.backgroundFile end
-		if backgroundFile then
-			local backgroundFile = modio:find(backgroundFile)
-			if backgroundFile then
-				backgroundImage = Image(backgroundFile)
-				assert(vec2(backgroundImage:size()) == self.size)
-			end
-		end
-	end
-	backgroundImage = backgroundImage or templateImage 
+	local backgroundFile
+	if mappath then backgroundFile = mappath..'/background.png' end
+	if args.backgroundFile then backgroundFile = args.backgroundFile end
+	if backgroundFile then backgroundFile = modio:find(backgroundFile) end
+	local backgroundImage = backgroundFile and Image(backgroundFile)
 	-- convert index enumeration into background map
 	-- one-based, so zero is empty
 	self.backgroundMap = ffi.new('unsigned char[?]', self.size[1] * self.size[2])
 	if not backgroundImage then	
 		ffi.fill(self.backgroundMap, self.size[1] * self.size[2])
 	else
+		assert(vec2(backgroundImage:size()) == self.size)
 		for j=0,self.size[2]-1 do
 			for i=0,self.size[1]-1 do
 				self.backgroundMap[i+self.size[1]*j] = rgbAt(backgroundImage,i,self.size[2]-j-1)
@@ -189,7 +205,7 @@ function Level:init(args)
 			end
 		end
 	end
-
+	
 	-- hold all textures in one place
 	do
 		local texpackFile = modio:find('texpack.png')
@@ -199,21 +215,20 @@ function Level:init(args)
 
 	-- chop world up into 32x32 map tiles, for the sake of linking and spawning
 	-- map tiles will hold objs and spawnInfos
+	-- because they're lua tables, these are 1-based (even though they're sparse)
 	self.mapTiles = {}
-	self.mapTileWidth = 32
-	self.mapTileHeight = 32
 --[[
-	for i=1,math.ceil(self.size[1]/self.mapTileWidth) do
+	for i=1,math.ceil(self.size[1]/self.mapTileSize[1]) do
 		self.mapTiles[i] = {}
-		for j=1,math.ceil(self.size[2]/self.mapTileHeight) do
+		for j=1,math.ceil(self.size[2]/self.mapTileSize[2]) do
 			self.mapTiles[i][j] = MapTile(i,j)
 		end
 	end
 --]]
 -- [[ only make what mapTiles we need
 	local function addMapTile(x,y)
-		local rx = math.floor((x-1) / self.mapTileWidth) + 1
-		local ry = math.floor((y-1) / self.mapTileHeight) + 1
+		local rx = math.floor((x-1) / self.mapTileSize[1]) + 1
+		local ry = math.floor((y-1) / self.mapTileSize[2]) + 1
 		if not self.mapTiles[rx] then self.mapTiles[rx] = {} end
 		if not self.mapTiles[rx][ry] then self.mapTiles[rx][ry] = MapTile(rx,ry) end
 	end
@@ -262,8 +277,8 @@ end
 
 -- return mapTile x,y for tile x,y
 function Level:getMapTilePos(x,y)
-	local rx = math.floor((x-1) / self.mapTileWidth) + 1
-	local ry = math.floor((y-1) / self.mapTileHeight) + 1
+	local rx = math.floor((x-1) / self.mapTileSize[1]) + 1
+	local ry = math.floor((y-1) / self.mapTileSize[2]) + 1
 	return rx, ry
 end
 

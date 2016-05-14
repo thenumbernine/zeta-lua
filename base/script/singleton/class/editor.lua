@@ -475,12 +475,12 @@ do
 end
 Editor.brushOptions:insert(smoothBrush)
 
-local editMethodTiles = 0	-- tile stuff
-local editMethodObjects = 1	-- TODO create object & select object (select allows click-and-drag to move objects around)
-local editMethodRooms = 2	-- room stuff
+local editModeTiles = 0
+local editModeObjects = 1
+local editModeRooms = 2
 
 function Editor:init()	
-	self.editMethod = ffi.new('int[1]', editMethodTiles)
+	self.editMode = ffi.new('int[1]', editModeTiles)
 	
 	self.paintingTileType = ffi.new('bool[1]',true)
 	self.paintingFgTile = ffi.new('bool[1]',true)
@@ -499,6 +499,7 @@ function Editor:init()
 	self.alignPatchToAnything = ffi.new('bool[1]',true)
 	self.smoothDiagLevel = ffi.new('int[1]',0)
 
+	-- used for editMode==tile painting
 	self.selectedBrushIndex = ffi.new('int[1]',1)
 	
 	self.selectedTileTypeIndex = ffi.new('int[1]',0)
@@ -506,10 +507,13 @@ function Editor:init()
 	self.selectedBgTileIndex = 0
 	self.selectedBackgroundIndex = ffi.new('int[1]',0)
 	self.selectedSpawnIndex = ffi.new('int[1]',0)
+	self.selectedRoomIndex = ffi.new('int[1]',0)
 
 	self.showTileTypes = ffi.new('bool[1]',true)
 	self.showSpawnInfos = ffi.new('bool[1]',true)
 	self.showObjects = ffi.new('bool[1]',true)
+	self.showRooms = ffi.new('bool[1]',true)
+	
 	self.noClipping = ffi.new('bool[1]',false)
 end
 
@@ -735,6 +739,7 @@ function Editor:updateGUI()
 	ig.igCheckbox('Show Tile Types', self.showTileTypes)
 	ig.igCheckbox('Show Spawn Infos', self.showSpawnInfos)
 	ig.igCheckbox('Show Objects', self.showObjects)
+	ig.igCheckbox('Show Rooms', self.showRooms)
 
 	ig.igCheckbox('no clipping', self.noClipping)
 	local level = game.level
@@ -866,11 +871,12 @@ local function popup(...) return player:popupMessage(...) end
 
 	ig.igSeparator()
 
-	ig.igRadioButton('Edit Tiles', self.editMethod, editMethodTiles)
-	ig.igRadioButton('Edit Objects', self.editMethod, editMethodObjects)
+	ig.igRadioButton('Edit Tiles', self.editMode, editModeTiles)
+	ig.igRadioButton('Edit Objects', self.editMode, editModeObjects)
+	ig.igRadioButton('Edit Rooms', self.editMode, editModeRooms)
 	ig.igSeparator()
 
-	if self.editMethod[0] == editMethodTiles then
+	if self.editMode[0] == editModeTiles then
 		-- not sure if I should use brushes for painting objects or not ...
 		ig.igCheckbox('Tile Type', self.paintingTileType)
 		ig.igCheckbox('Fg Tile', self.paintingFgTile)
@@ -986,7 +992,7 @@ local function popup(...) return player:popupMessage(...) end
 				end
 			end
 		end
-	elseif self.editMethod[0] == editMethodObjects then
+	elseif self.editMode[0] == editModeObjects then
 		if ig.igCollapsingHeader('Object Type:') then
 			for i,spawnOption in ipairs(self.spawnOptions) do
 				ig.igPushIdStr('spawnOption #'..i)
@@ -1184,6 +1190,8 @@ local function popup(...) return player:popupMessage(...) end
 				self.selectedSpawnInfo:respawn()
 			end
 		end
+	elseif self.editMode[0] == editModeRooms then
+		ig.igInputInt('Room Value', self.selectedRoomIndex)
 	end
 end
 
@@ -1253,12 +1261,12 @@ function Editor:update()
 	
 	local level = game.level
 	local mouse = gui.mouse
-	if mouse.leftDown and not found then
+	if mouse.leftDown then
 		local xf = self.viewBBox.min[1] + (self.viewBBox.max[1] - self.viewBBox.min[1]) * mouse.pos[1]
 		local yf = self.viewBBox.min[2] + (self.viewBBox.max[2] - self.viewBBox.min[2]) * mouse.pos[2]
 		local x = math.floor(xf)
 		local y = math.floor(yf)
-		if self.editMethod[0] == editMethodTiles then
+		if self.editMode[0] == editModeTiles then
 			if self.shiftDown then
 				if x >= 1 and y >= 1 and x <= level.size[1] and y <= level.size[2] then
 					if self.paintingTileType[0] then
@@ -1277,7 +1285,7 @@ function Editor:update()
 			else
 				self.brushOptions[self.selectedBrushIndex[0]].paint(self, x, y)
 			end
-		elseif self.editMethod[0] == editMethodObjects then	
+		elseif self.editMode[0] == editModeObjects then	
 			-- only on single click
 			do	--if mouse.leftDown and not mouse.lastLeftDown then
 				if self.shiftDown then
@@ -1318,6 +1326,15 @@ function Editor:update()
 					end
 				end
 			end
+		elseif self.editMode[0] == editModeRooms then
+			if x >= 1 and y >= 1 and x <= level.size[1] and y <= level.size[2] then
+				local rx, ry = level:getMapTilePos(x,y)
+				if self.shiftDown then
+					self.selectedRoomIndex[0] = level.roomMap[rx-1 + level.sizeInMapTiles[1]*(ry-1)]
+				else
+					 level.roomMap[rx-1 + level.sizeInMapTiles[1]*(ry-1)] = self.selectedRoomIndex[0]
+				end
+			end
 		end
 	end
 end
@@ -1329,7 +1346,25 @@ function Editor:draw(R, viewBBox)
 
 	self.viewBBox = box2(viewBBox)
 	local level = game.level
-	
+
+	-- show the rooms
+	if self.showRooms[0] then
+		for rx=1,level.sizeInMapTiles[1] do
+			for ry=1,level.sizeInMapTiles[2] do
+				local roomIndex = level.roomMap[rx-1 + level.sizeInMapTiles[1] * (ry-1)]
+				gui.font:drawUnpacked(
+					(rx-1) * level.mapTileSize[1],
+					ry * level.mapTileSize[2],
+					level.mapTileSize[1]/3,
+					-level.mapTileSize[2]/2,
+					tostring(roomIndex),
+					nil, nil,
+					1, 1, 1, .5)	-- color
+			end
+		end
+		gl.glEnable(gl.GL_TEXTURE_2D)
+	end
+
 	-- draw spawn infos in the level
 	if self.showSpawnInfos[0] then
 		for _,spawnInfo in ipairs(level.spawnInfos) do
@@ -1397,7 +1432,7 @@ function Editor:draw(R, viewBBox)
 			gl.glEnable(gl.GL_TEXTURE_2D)
 		end
 	end
-	
+
 	-- draw bboxes of objects
 	if self.showObjects[0] then
 		for _,obj in ipairs(game.objs) do
@@ -1477,7 +1512,7 @@ function Editor:draw(R, viewBBox)
 		local cy = math.floor(self.viewBBox.min[2] + (self.viewBBox.max[2] - self.viewBBox.min[2]) * mouse.pos[2])
 		local brushWidth, brushHeight = 1, 1
 		local brushOption
-		if self.editMethod[0] == editMethodTiles then	-- tiles
+		if self.editMode[0] == editModeTiles then	-- tiles
 			brushOption = self.brushOptions[self.selectedBrushIndex[0]]
 			if brushOption == paintBrush or brushOption == smoothBrush then
 				brushWidth = self.brushTileWidth[0]
@@ -1488,6 +1523,14 @@ function Editor:draw(R, viewBBox)
 		local ymin = math.floor(cy - tonumber(brushHeight-1)/2)
 		local xmax = xmin + brushWidth-1
 		local ymax = ymin + brushHeight-1
+		if self.editMode[0] == editModeRooms then
+			xmin, ymin = level:getMapTilePos(xmin, ymin)
+			xmax, ymax = level:getMapTilePos(xmax, ymax)
+			xmin = (xmin - 1) * level.mapTileSize[1] + 1
+			ymin = (ymin - 1) * level.mapTileSize[2] + 1
+			xmax = xmax * level.mapTileSize[1]
+			ymax = ymax * level.mapTileSize[2]
+		end
 		R:quad(
 			xmin + .1, ymin + .1,
 			xmax - xmin + .8, ymax - ymin + .8,
@@ -1516,18 +1559,20 @@ function Editor:saveMap()
 	
 	-- save tile files
 	for _,info in ipairs{
-		{src=level.tileMap, dst='tile.png'},
-		{src=level.fgTileMap, dst='tile-fg.png'},
-		{src=level.bgTileMap, dst='tile-bg.png'},
-		{src=level.backgroundMap, dst='background.png'},
+		{src=level.tileMap, dst='tile.png', size=level.size},
+		{src=level.fgTileMap, dst='tile-fg.png', size=level.size},
+		{src=level.bgTileMap, dst='tile-bg.png', size=level.size},
+		{src=level.backgroundMap, dst='background.png', size=level.size},
+		{src=level.roomMap, dst='room.png', size=level.sizeInMapTiles},
 	} do
-		local image = Image(level.size[1], level.size[2], 3, 'unsigned char')
-		for j=0,level.size[2]-1 do
-			for i=0,level.size[1]-1 do
-				local color = info.src[i+level.size[1]*(level.size[2]-j-1)]
-				image.buffer[0+3*(i+level.size[1]*j)] = bit.band(0xff, bit.rshift(color, 0))
-				image.buffer[1+3*(i+level.size[1]*j)] = bit.band(0xff, bit.rshift(color, 8))
-				image.buffer[2+3*(i+level.size[1]*j)] = bit.band(0xff, bit.rshift(color, 16))
+		local w, h = info.size:unpack()
+		local image = Image(w, h, 3, 'unsigned char')
+		for j=0,h-1 do
+			for i=0,w-1 do
+				local color = info.src[i+w*(h-j-1)]
+				image.buffer[0+3*(i+w*j)] = bit.band(0xff, bit.rshift(color, 0))
+				image.buffer[1+3*(i+w*j)] = bit.band(0xff, bit.rshift(color, 8))
+				image.buffer[2+3*(i+w*j)] = bit.band(0xff, bit.rshift(color, 16))
 			end
 		end
 		local dest = dir..'/' .. info.dst
