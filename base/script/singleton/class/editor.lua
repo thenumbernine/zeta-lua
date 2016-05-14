@@ -954,7 +954,8 @@ local function popup(...) return player:popupMessage(...) end
 				local spawnType = spawnOption.spawnType
 				local spawnClass = require(spawnType.spawn)
 				local sprite = spawnClass.sprite
-				local tex = sprite and animsys:getTex(sprite, 'stand')
+				-- can't animate, or we'll get back dif texIDs, and imgui won't distinguish what is clicked
+				local tex = sprite and animsys:getTex(sprite, 'stand', game.time)
 				local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex and tex.id or 0))
 				if ig.igImageButton(
 					texIDPtr,
