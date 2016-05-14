@@ -723,7 +723,7 @@ function Editor:updateGUI()
 		local tj = (tileIndex - 1 - ti) / tilesWide
 		return ig.igImageButton(
 			texIDPtr,
-			ig.ImVec2(16,16),	-- size
+			ig.ImVec2(32,32),	-- size
 			ig.ImVec2(ti/tilesWide, tj/tilesHigh),	-- uv0
 			ig.ImVec2((ti+1)/tilesWide, (tj+1)/tilesHigh))	-- uv1
 	end
@@ -882,9 +882,9 @@ local function popup(...) return player:popupMessage(...) end
 				then
 					self.selectedTileTypeIndex[0] = i
 				end
+				-- it would be nice if wrapping controls was automatic
 				local tileOptionsWide = 5
-				if (i+1) % tileOptionsWide > 0 and -- it would be nice if wrapping controls was automatic
-				i < #self.tileOptions then 
+				if (i+1) % tileOptionsWide > 0 and i < #self.tileOptions then 
 					ig.igSameLine()
 				end
 				
@@ -966,8 +966,15 @@ local function popup(...) return player:popupMessage(...) end
 				then
 					self.selectedSpawnIndex[0] = i
 				end
-				ig.igSameLine()	
-				ig.igRadioButton(spawnType.spawn, self.selectedSpawnIndex, i)
+				local tilesWide = 5
+				if i % tilesWide > 0 and i < #self.spawnOptions then
+					ig.igSameLine()	
+				end
+				if ig.igIsItemHovered() then
+					ig.igBeginTooltip()
+					ig.igText(spawnType.spawn)
+					ig.igEndTooltip()
+				end
 				ig.igPopId()
 			end
 		end
