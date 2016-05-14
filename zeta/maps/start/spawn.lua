@@ -92,62 +92,7 @@
 	{pos={69.5,195},spawn="zeta.script.obj.turret"},
 	{pos={78.5,194},spawn="zeta.script.obj.turret"},
 	{pos={77.5,186},spawn="zeta.script.obj.turret"},
-	{create=[[
--- re-spawn the geemers if the boss isn't dead yet
-if session.geemerBossKilled then return end
--- don't run immediately
-for _,spawnInfo in ipairs(level.spawnInfos) do
-	if spawnInfo.spawn == 'zeta.script.obj.geemer'
-	and level:getRoom(spawnInfo.pos:unpack())
-		== level:getRoom(self.pos:unpack())
-	then
-		spawnInfo:removeObj()	-- ... should already be removed
-		spawnInfo:respawn(true)
-	end
-end]],
-	pos={157.5,131},
-	spawn="zeta.script.obj.trigger",
-	trigger=[[
--- find the right wall
-local rightWall = findName 'geemer-right-wall'
-if session.geemerBossKilled then
-	self.remove = true
-	if rightWall then rightWall.remove = true end
-	return
-end
--- push into the room
-player.pos=self.pos+{2,0}
--- TODO 'base.script.obj.solid'
-if rightWall then
-	rightWall.bbox = box2(-.5, 0, .5, 3)
-	rightWall.solid = true
-end
-rightWall.pushPriority = math.huge
--- make ourselves solid and blocking
-self.solid = true
-self.bbox = box2(-.5, 0, .5, 3)
--- center view in room
-local center = self.pos+{13,4}
-centerView(center)
--- create boss
-local BossGeemer = create 'zeta.script.obj.boss-geemer'
-BossGeemer({
-	pos=center,
-	-- upon boss death...
-	onDie=function(geemer)
-		session.geemerBossKilled = true
-		popup('defeated boss geemer!')
-		-- drop a keycard
-		create 'zeta.script.obj.keycard'{pos=geemer.pos, color={0,1,0,1}}
-		-- center the view on the player
-		stopCenterView()
-		-- stop blocking the exit
-		self.remove = true
-		if rightWall then rightWall.remove = true end
-	end
-},
-true)	-- don't kill
-]]},
+	{create="-- re-spawn the geemers if the boss isn't dead yet\nif session.geemerBossKilled then return end\n-- don't run immediately\nfor _,spawnInfo in ipairs(level.spawnInfos) do\n\9if spawnInfo.spawn == 'zeta.script.obj.geemer'\n\9and level:getRoom(spawnInfo.pos:unpack())\n\9\9== level:getRoom(self.pos:unpack())\n\9then\n\9\9spawnInfo:removeObj()\9-- ... should already be removed\n\9\9spawnInfo:respawn(true)\n\9end\nend",pos={157.5,131},spawn="zeta.script.obj.trigger",trigger="-- find the right wall\nlocal rightWall = findName 'geemer-right-wall'\nif session.geemerBossKilled then\n\9self.remove = true\n\9if rightWall then rightWall.remove = true end\n\9return\nend\n-- push into the room\nplayer.pos=self.pos+{2,0}\n-- TODO 'base.script.obj.solid'\nif rightWall then\n\9rightWall.bbox = box2(-.5, 0, .5, 3)\n\9rightWall.solid = true\nend\nrightWall.pushPriority = math.huge\n-- make ourselves solid and blocking\nself.solid = true\nself.bbox = box2(-.5, 0, .5, 3)\n-- center view in room\nlocal center = self.pos+{13,4}\ncenterView(center)\n-- create boss\nlocal BossGeemer = create 'zeta.script.obj.boss-geemer'\nBossGeemer({\n\9pos=center,\n\9-- upon boss death...\n\9onDie=function(geemer)\n\9\9session.geemerBossKilled = true\n\9\9popup('defeated boss geemer!')\n\9\9-- drop a keycard\n\9\9create 'zeta.script.obj.keycard'{pos=geemer.pos, color={0,1,0,1}}\n\9\9-- center the view on the player\n\9\9stopCenterView()\n\9\9-- stop blocking the exit\n\9\9self.remove = true\n\9\9if rightWall then rightWall.remove = true end\n\9end\n},\ntrue)\9-- don't kill\n"},
 	{name="geemer-right-wall",pos={183.5,134},spawn="base.script.obj.object"},
 	{pos={117.5,182},spawn="zeta.script.obj.attackbonus"},
 	{pos={37.5,243},spawn="zeta.script.obj.energytank"},
@@ -339,4 +284,74 @@ true)	-- don't kill
 	{color={0,1,0,1},pos={96.5,159},spawn="zeta.script.obj.door"},
 	{pos={153.5,130},spawn="zeta.script.obj.geemer"},
 	{pos={155.5,131},spawn="zeta.script.obj.savepoint"},
+	{pos={77.5,146},spawn="zeta.script.obj.redgeemer"},
+	{pos={79.5,147},spawn="zeta.script.obj.redgeemer"},
+	{pos={83.5,152},spawn="zeta.script.obj.redgeemer"},
+	{pos={74.5,157},spawn="zeta.script.obj.geemer"},
+	{pos={71.5,161},spawn="zeta.script.obj.geemer"},
+	{pos={68.5,159},spawn="zeta.script.obj.geemer"},
+	{pos={67.5,161},spawn="zeta.script.obj.geemer"},
+	{pos={83.5,159},spawn="zeta.script.obj.geemer"},
+	{pos={85.5,161},spawn="zeta.script.obj.geemer"},
+	{pos={93.5,186},spawn="zeta.script.obj.geemer"},
+	{pos={56.5,162},spawn="zeta.script.obj.geemer"},
+	{pos={54.5,160},spawn="zeta.script.obj.geemer"},
+	{pos={53.5,164},spawn="zeta.script.obj.geemer"},
+	{pos={53.5,169},spawn="zeta.script.obj.geemer"},
+	{pos={54.5,180},spawn="zeta.script.obj.geemer"},
+	{pos={81.5,167},spawn="zeta.script.obj.redgeemer"},
+	{pos={80.5,170},spawn="zeta.script.obj.redgeemer"},
+	{pos={84.5,174},spawn="zeta.script.obj.redgeemer"},
+	{pos={88.5,175},spawn="zeta.script.obj.redgeemer"},
+	{pos={71.5,170},spawn="zeta.script.obj.redgeemer"},
+	{pos={69.5,174},spawn="zeta.script.obj.redgeemer"},
+	{pos={66.5,179},spawn="zeta.script.obj.redgeemer"},
+	{pos={66.5,178},spawn="zeta.script.obj.redgeemer"},
+	{pos={63.5,177},spawn="zeta.script.obj.redgeemer"},
+	{pos={65.5,174},spawn="zeta.script.obj.redgeemer"},
+	{pos={61.5,184},spawn="zeta.script.obj.redgeemer"},
+	{pos={61.5,183},spawn="zeta.script.obj.redgeemer"},
+	{pos={66.5,184},spawn="zeta.script.obj.redgeemer"},
+	{pos={69.5,187},spawn="zeta.script.obj.redgeemer"},
+	{pos={71.5,185},spawn="zeta.script.obj.redgeemer"},
+	{pos={79.5,184},spawn="zeta.script.obj.redgeemer"},
+	{pos={79.5,181},spawn="zeta.script.obj.redgeemer"},
+	{pos={85.5,182},spawn="zeta.script.obj.redgeemer"},
+	{pos={89.5,183},spawn="zeta.script.obj.redgeemer"},
+	{pos={85.5,188},spawn="zeta.script.obj.redgeemer"},
+	{pos={74.5,191},spawn="zeta.script.obj.redgeemer"},
+	{pos={81.5,192},spawn="zeta.script.obj.redgeemer"},
+	{pos={62.5,191},spawn="zeta.script.obj.redgeemer"},
+	{pos={66.5,194},spawn="zeta.script.obj.redgeemer"},
+	{pos={67.5,194},spawn="zeta.script.obj.redgeemer"},
+	{pos={69.5,190},spawn="zeta.script.obj.redgeemer"},
+	{pos={89.5,199},spawn="zeta.script.obj.geemer"},
+	{pos={82.5,199},spawn="zeta.script.obj.geemer"},
+	{pos={84.5,201},spawn="zeta.script.obj.geemer"},
+	{pos={68.5,201},spawn="zeta.script.obj.geemer"},
+	{pos={66.5,199},spawn="zeta.script.obj.geemer"},
+	{pos={61.5,199},spawn="zeta.script.obj.geemer"},
+	{pos={59.5,201},spawn="zeta.script.obj.geemer"},
+	{pos={78.5,206},spawn="zeta.script.obj.geemer"},
+	{pos={74.5,208},spawn="zeta.script.obj.geemer"},
+	{pos={76.5,208},spawn="zeta.script.obj.geemer"},
+	{pos={83.5,206},spawn="zeta.script.obj.geemer"},
+	{pos={90.5,208},spawn="zeta.script.obj.geemer"},
+	{pos={66.5,206},spawn="zeta.script.obj.geemer"},
+	{pos={67.5,208},spawn="zeta.script.obj.geemer"},
+	{pos={56.5,206},spawn="zeta.script.obj.geemer"},
+	{pos={55.5,216},spawn="zeta.script.obj.geemer"},
+	{pos={62.5,215},spawn="zeta.script.obj.geemer"},
+	{pos={67.5,213},spawn="zeta.script.obj.geemer"},
+	{pos={77.5,216},spawn="zeta.script.obj.geemer"},
+	{pos={77.5,223},spawn="zeta.script.obj.geemer"},
+	{pos={68.5,226},spawn="zeta.script.obj.geemer"},
+	{pos={70.5,223},spawn="zeta.script.obj.geemer"},
+	{pos={62.5,227},spawn="zeta.script.obj.geemer"},
+	{pos={55.5,227},spawn="zeta.script.obj.geemer"},
+	{pos={56.5,230},spawn="zeta.script.obj.geemer"},
+	{pos={57.5,233},spawn="zeta.script.obj.geemer"},
+	{pos={54.5,237},spawn="zeta.script.obj.geemer"},
+	{pos={60.5,237},spawn="zeta.script.obj.geemer"},
+	{pos={60.5,231},spawn="zeta.script.obj.geemer"},
 }

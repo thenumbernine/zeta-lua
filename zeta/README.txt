@@ -4,17 +4,16 @@ TODO list
 	- move texpack tiles and change map tiles accordingly
 	- separate 'object' into 'create object' and 'select object'
 - object classes use 'spawnfields' for editor fields, types, and tooltips
-- missile launcher missile ammo
 - camera align via room info, or helper objects
 - fix collisions with sloped tiles.  determine ymin and ymax on the x side of sloped tiles and test that against object bbox. 
 - make deactivated turrets shoot at enemies.  do room links first to cut down on game.objs iterations.
 - geemers and doors don’t mix.  one pushes the other and the geemer teleports.
-- second kind of defense monster: heat shields or something
 - second kind of cave monster ... bats or something? or separate ground from wall geemers?
-- spawn more monsters in the mining base area *after* beating the boss.  
-	- better add rooms, then flag rooms as 'can spawn geemers'	
 - environmental effects ... foreground warping (underwater, heat), blowing wind, falling snow/rain/leaves, etc
 - get savepoint loading to work
+weapons:
+	- missile launcher missile ammo
+	- number-based rather than index-based ... and overhaul the item system
 rooms:
 	- every time an item is grabbed, set a session var that says the item at this level at this index is grabbed
 		then have the respawn system ignore it if that var is set

@@ -204,7 +204,8 @@ function Hero:update(dt)
 	local level = game.level
 
 	-- only spawn what's in our room
-	self.room = level:getRoom(self.pos:unpack())
+	local roomPosX, roomPosY = level:getMapTilePos(self.pos:unpack())
+	self.room = level:getRoomAtMapTilePos(roomPosX, roomPosY)
 	if self.room ~= self.lastRoom then
 		for _,spawnInfo in ipairs(level.spawnInfos) do
 			local spawnInfoRoom = level:getRoom(table.unpack(spawnInfo.pos))
@@ -229,6 +230,28 @@ function Hero:update(dt)
 	else
 		self.viewPos[1] = self.viewPos[1] + .5 *  (self.pos[1] - self.viewPos[1])
 		self.viewPos[2] = self.viewPos[2] + .9 *  (self.pos[2] - self.viewPos[2])
+	
+		if not (editor and editor.active) then
+			local viewSizeX = (self.viewBBox.max[1] - self.viewBBox.min[1]) / 2 
+			local viewSizeY = (self.viewBBox.max[2] - self.viewBBox.min[2]) / 2
+
+			for side,dir in pairs(dirs) do
+				local sideRoom = level:getRoom(
+					self.viewPos[1] + level.mapTileSize[1] * dir[1],
+					self.viewPos[2] + level.mapTileSize[2] * dir[2])
+				if sideRoom ~= self.room then
+					if side == 'right' then					
+						self.viewPos[1] = roomPosX * level.mapTileSize[1] + 1 - viewSizeX
+					elseif side == 'left' then -- left side - so move right
+						self.viewPos[1] = (roomPosX-1) * level.mapTileSize[1] + 1 + viewSizeX
+					elseif side == 'up' then
+						self.viewPos[2] = roomPosY * level.mapTileSize[2] + 1 - viewSizeY
+					elseif side == 'down' then
+						self.viewPos[2] = (roomPosY-1) * level.mapTileSize[2] + 1 + viewSizeY
+					end
+				end
+			end
+		end
 	end
 
 	self.inputRun = self.inputJumpAux

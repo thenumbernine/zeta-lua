@@ -292,8 +292,12 @@ end
 -- get the room # for this tile
 function Level:getRoom(x,y)
 	local rx, ry = self:getMapTilePos(x,y)
-	if rx < 1 and rx > self.sizeInMapTiles[1]
-	and ry < 1 and ry > self.sizeInMapTiles[2]
+	return self:getRoomAtMapTilePos(rx,ry)
+end
+
+function Level:getRoomAtMapTilePos(rx,ry)
+	if rx < 1 or rx > self.sizeInMapTiles[1]
+	or ry < 1 or ry > self.sizeInMapTiles[2]
 	then
 		return -1
 	end
