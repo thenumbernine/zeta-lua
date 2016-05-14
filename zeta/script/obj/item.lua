@@ -1,12 +1,27 @@
 local class = require 'ext.class'
 local Object = require 'base.script.obj.object'
 local Hero = require 'zeta.script.obj.hero'
+local game = require 'base.script.singleton.game'
 
 local Item = class(Object)
 Item.canCarry = true
 Item.canStoreInv = true
 Item.playerHoldOffsetStanding = {.625, .125}
 Item.playerHoldOffsetDucking = {.625, -.25}
+
+function Item:init(args)
+	Item.super.init(self, args)
+
+	-- SpawnInfo spawns objs with 'self' as 'args' ...
+	local spawnInfoIndex = game.level.spawnInfos:find(args)
+	if spawnInfoIndex then
+		print('found item spawn info',spawnInfoIndex)
+		if game.session['got permanent item '..spawnInfoIndex] then
+print('already have permanent item',spawnInfoIndex)
+			self.remove = true
+		end
+	end
+end
 
 -- I want breakblocks to block items
 -- but I don't want items to block shots ...
@@ -17,14 +32,15 @@ function Item:pretouch(other, side)
 	return true	-- don't touch anything else
 end
 
--- tell the room spawn system not to get rid of this
-Item.permanent = true
-
 function Item:playerGrab(player, side)
 	-- if the player is going to be holding it then unlink it from the room system
 	-- or else it'll be erased from the inventory as soon as the player changes rooms
 	-- TODO tell the spawn object not to spawn it anymore 
 	if self.spawnInfo then
+		local spawnInfoIndex = game.level.spawnInfos:find(self.spawnInfo)
+		assert(spawnInfoIndex, "failed to find item spawnInfo in level")
+		game.session['got permanent item '..spawnInfoIndex] = true
+print('getting permanent item',spawnInfoIndex)	
 		if self.spawnInfo.obj == self then
 			self.spawnInfo.obj = nil
 		end

@@ -1,7 +1,7 @@
-game.session.defensesDeactivated = false
+session.defensesDeactivated = false
 function toggleDefenses()
-	game.session.defensesDeactivated = not game.session.defensesDeactivated
-	popup(game.session.defensesDeactivated
+	session.defensesDeactivated = not session.defensesDeactivated
+	popup(session.defensesDeactivated
 	and [[
 Emergency alarm deactivated.
 Defense systems disabled.]]

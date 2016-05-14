@@ -208,7 +208,6 @@ function Hero:update(dt)
 	-- only spawn what's in our room
 	self.roomPos[1], self.roomPos[2] = level:getRoomPos(self.pos:unpack())
 	if self.roomPos ~= self.roomLastPos then
-		if self.room then print('entering room',self.room.pos) end
 		-- gather neighbor rooms
 		local roomsToAdd = table()
 		local roomsToRemove = table()
@@ -241,10 +240,7 @@ function Hero:update(dt)
 			end
 		end
 
-		print()
 		for _,room in ipairs(roomsToAdd) do
-			print('adding room at',room.pos)
-			print('#objs was '..#game.objs)
 			if room.spawnInfos then
 				for _,spawnInfo in ipairs(room.spawnInfos) do
 					-- only spawn spawnInfos that have no current objects
@@ -254,11 +250,8 @@ function Hero:update(dt)
 					end
 				end
 			end
-			print('#objs is '..#game.objs)
 		end
 		for _,room in ipairs(roomsToRemove) do
-			print('removing room at',room.pos)
-			print('#objs was '..#game.objs)
 			-- remove objs themselves that are out of screen
 			-- TODO? obj linking to rooms? for faster searches with other things, like collision detection and interaction
 			-- and TODO only search objs in neighboring rooms
@@ -271,7 +264,6 @@ function Hero:update(dt)
 					end
 				end
 			end
-			print('#objs is '..#game.objs)
 		end
 		
 		self.roomLastPos[1], self.roomLastPos[2] = self.roomPos[1], self.roomPos[2]

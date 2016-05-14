@@ -10,6 +10,8 @@ function SpawnInfo:respawn()
 		error("failed to find spawn class")
 	end
 	-- self.spawn is a table, so self:spawn() is actually calling the table's ctor with self as the first param (after the table itself)
+	-- TODO if you ever stop passing 'self' 
+	-- TODO passing self with a metatable is dangerous - what if an obj wants 'respawn' or 'removeObj' ?
 	self.obj = require(self.spawn)(self)
 	self.obj.spawnInfo = self
 end

@@ -10,6 +10,7 @@ Barrier.timeOn = 3
 Barrier.timeOff = 1
 Barrier.damage = 2
 Barrier.bbox = box2(-.3, 0, .3, 3)
+Barrier.shockEndTime = -1
 
 function Barrier:init(args)
 	Barrier.super.init(self, args)
@@ -31,7 +32,7 @@ end
 function Barrier:update(dt)
 	if not game.session.defensesDeactivated then
 		local t = (game.time + self.timeOffset) % (self.timeOn + self.timeOff)
-		self.shockEndTime = t < self.timeOn and game.time + .5 + .5 * math.random() or 0
+		self.shockEndTime = t < self.timeOn and game.time + .5 + .5 * math.random()
 	end
 	if self.shockEndTime > game.time then
 		self.sprite = 'barrier' -- class default

@@ -47,7 +47,7 @@ function Game:init()
 	-- initialize the session variables
 	-- story state, etc
 	-- save and load these along with the levels
-	game.session = {}
+	self.session = {}
 end
 
 function Game:addObject(obj)
