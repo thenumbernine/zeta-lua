@@ -66,6 +66,8 @@ function Hero:init(args)
 	self.items = table()	-- self.items = {{obj1, ...}, {obj2, ...}, ...} for each unique class
 	self.holding = nil
 	self.color = nil	-- TODO team colors
+	self.roomPos = vec2()
+	self.roomLastPos = vec2()
 end
 
 function Hero:refreshSize()
@@ -204,38 +206,35 @@ function Hero:update(dt)
 	local level = game.level
 
 	-- only spawn what's in our room
-	self.room = level:getRoom(self.pos:unpack())
-	if self.room ~= self.lastRoom then
+	self.roomPos[1], self.roomPos[2] = level:getRoomPos(self.pos:unpack())
+	if self.roomPos ~= self.roomLastPos then
+		if self.room then print('entering room',self.room.pos) end
 		-- gather neighbor rooms
 		local roomsToAdd = table()
 		local roomsToRemove = table()
 		-- first assume we add all the new
-		if self.room then
-			for dy=-1,1 do
-				for dx=-1,1 do
-					roomsToAdd:insert(level:getRoom(
-						(self.room.pos[1] + dx) * level.roomTilesWide,
-						(self.room.pos[2] + dy) * level.roomTilesHigh
-					))
-				end
+		for dy=-1,1 do
+			for dx=-1,1 do
+				roomsToAdd:insert(level:getRoom(
+					(self.roomPos[1] + dx) * level.roomTilesWide,
+					(self.roomPos[2] + dy) * level.roomTilesHigh
+				))
 			end
 		end
 		-- then check the old
 		-- if it's in the new, we're not adding it
 		-- if it's not in the new, we're removing it
-		if self.lastRoom then
-			for dy=-1,1 do
-				for dx=-1,1 do
-					local room = level:getRoom(
-						(self.lastRoom.pos[1] + dx) * level.roomTilesWide,
-						(self.lastRoom.pos[2] + dy) * level.roomTilesHigh
-					)
-					local index = roomsToAdd:find(room)
-					if index then
-						roomsToAdd:remove(index)
-					else
-						roomsToRemove:insert(room)
-					end
+		for dy=-1,1 do
+			for dx=-1,1 do
+				local room = level:getRoom(
+					(self.roomLastPos[1] + dx) * level.roomTilesWide,
+					(self.roomLastPos[2] + dy) * level.roomTilesHigh
+				)
+				local index = roomsToAdd:find(room)
+				if index then
+					roomsToAdd:remove(index)
+				else
+					roomsToRemove:insert(room)
 				end
 			end
 		end
@@ -244,17 +243,17 @@ function Hero:update(dt)
 		for _,room in ipairs(roomsToAdd) do
 			print('adding room at',room.pos)
 			print('#objs was '..#game.objs)
-			room:removeAllObjs()
-			print('#objs is '..#game.objs)
-		end
-		for _,room in ipairs(roomsToAdd) do
-			print('removing room at',room.pos)
-			print('#objs was '..#game.objs)
 			room:spawnAllObjs()
 			print('#objs is '..#game.objs)
 		end
+		for _,room in ipairs(roomsToRemove) do
+			print('removing room at',room.pos)
+			print('#objs was '..#game.objs)
+			room:removeAllObjs()
+			print('#objs is '..#game.objs)
+		end
 		
-		self.lastRoom = self.room
+		self.roomLastPos[1], self.roomLastPos[2] = self.roomPos[1], self.roomPos[2]
 	end
 
 	self.ammoCells = math.min(self.maxAmmoCells, self.ammoCells + self.maxAmmoCells * dt / self.rechargeCellsTime)

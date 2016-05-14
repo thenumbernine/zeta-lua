@@ -260,9 +260,16 @@ function Level:init(args)
 	self.initFile = initFile
 end
 
-function Level:getRoom(x,y)
+-- return room x,y for tile x,y
+function Level:getRoomPos(x,y)
 	local rx = math.floor((x-1) / self.roomTilesWide) + 1
 	local ry = math.floor((y-1) / self.roomTilesHigh) + 1
+	return rx, ry
+end
+
+-- return room for tile x,y
+function Level:getRoom(x,y)
+	local rx, ry = self:getRoomPos(x,y)
 	local col = self.rooms[rx]
 	return col and col[ry]
 end

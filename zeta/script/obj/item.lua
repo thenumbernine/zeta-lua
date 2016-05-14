@@ -18,6 +18,16 @@ function Item:pretouch(other, side)
 end
 
 function Item:playerGrab(player, side)
+	-- if the player is going to be holding it then unlink it from the room system
+	-- or else it'll be erased from the inventory as soon as the player changes rooms
+	-- TODO tell the spawn object not to spawn it anymore 
+	if self.spawnInfo then
+		if self.spawnInfo.obj == self then
+			self.spawnInfo.obj = nil
+		end
+		self.spawnInfo = nil
+	end
+	
 	-- add item to player
 	do
 		local found = false

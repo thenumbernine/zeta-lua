@@ -3,16 +3,26 @@ TODO list
 - editor: move texpack tiles and change map tiles accordingly
 - object classes use 'spawnfields' for editor fields, types, and tooltips
 - missile launcher missile ammo
-- link objs and spawninfos to rooms, respawn by room
 - camera align via room info, or helper objects
 - fix collisions with sloped tiles.  determine ymin and ymax on the x side of sloped tiles and test that against object bbox. 
 - make deactivated turrets shoot at enemies.  do room links first to cut down on game.objs iterations.
 - geemers and doors don’t mix.  one pushes the other and the geemer teleports.
 - second kind of defense monster: heat shields or something
 - second kind of cave monster ... bats or something? or separate ground from wall geemers?
-- spawn more monsters in the mining base area *after* beating the boss
-- room environmental effects ... foreground warping (underwater, heat), blowing wind, falling snow/rain/leaves, etc
+- spawn more monsters in the mining base area *after* beating the boss.  this is based on spawn conditions, based on rooms.
+- story items also need spawn conditions
+- environmental effects ... foreground warping (underwater, heat), blowing wind, falling snow/rain/leaves, etc
 - get savepoint loading to work
+rooms:
+	- every time an item is grabbed, set a session var that says the item at this level at this index is grabbed
+		then have the respawn system ignore it if that var is set
+		(serialize those session vars with the save file)
+	- same with the electric fields and 'toggleDisabled'
+	in fact, for both, why not just serialize all objects as they leave?
+	upon removing room spawns, serialize objects and store them in a session/cache file
+		then upon adding room spawns, create the objs, then check the cache and overwrite values
+		then double the caching system as the savegame system
+
 
 VETOED list:
 - don't use 'spawnclass' as a class shortcut to register classes that are spawned.
