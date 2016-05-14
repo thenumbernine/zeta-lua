@@ -590,12 +590,20 @@ function Hero:update(dt)
 		end
 		--]]
 		-- [[
+		local bestObj
+		local bestDist = 1
 		for _,obj in ipairs(game.objs) do
-			if math.abs(self.pos[1] - obj.pos[1]) < 1 and math.abs(self.pos[2] - obj.pos[2]) < 1 then
-				if obj.playerLook then
-					obj:playerLook(self)
+			if obj.playerLook then
+				-- l-inf dist
+				local dist = math.max(math.abs(self.pos[1] - obj.pos[1]), math.abs(self.pos[2] - obj.pos[2]))
+				if dist < bestDist then
+					bestDist = dist
+					bestObj = obj
 				end
 			end
+		end
+		if bestObj then
+			bestObj:playerLook(self)
 		end
 		--]]
 	end

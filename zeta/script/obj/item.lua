@@ -4,10 +4,18 @@ local Hero = require 'zeta.script.obj.hero'
 
 local Item = class(Object)
 Item.canCarry = true
-Item.solid = false
 Item.canStoreInv = true
 Item.playerHoldOffsetStanding = {.625, .125}
 Item.playerHoldOffsetDucking = {.625, -.25}
+
+-- I want breakblocks to block items
+-- but I don't want items to block shots ...
+--Item.solid = false
+local BreakBlock = require 'zeta.script.obj.breakblock'
+function Item:pretouch(other, side)
+	if other:isa(BreakBlock) then return end
+	return true	-- don't touch anything else
+end
 
 function Item:playerGrab(player, side)
 	-- add item to player

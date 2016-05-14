@@ -46,6 +46,8 @@ local PlasmaShot = (function()
 	function PlasmaShot:pretouch(other, side)
 		if self.remove then return end	-- only hit one object
 		if other == self.shooter then return true end
+		local Item = require 'zeta.script.obj.item'
+		if other:isa(Item) then return end
 		if other.takeDamage then
 			other:takeDamage(self.damage, self.shooter, self, side)
 		end
@@ -76,33 +78,41 @@ end)()
 
 -- world object
 
-local PlasmaRifleItem = (function()
+local PlasmaRifle = (function()
 	local class = require 'ext.class'
 	local Weapon = require 'zeta.script.obj.weapon'
 	local game = require 'base.script.singleton.game'
 	
-	local PlasmaRifleItem = class(Weapon)
-	PlasmaRifleItem.sprite = 'plasma-rifle'
-	PlasmaRifleItem.shotDelay = .05
-	PlasmaRifleItem.shotSpeed = 40
-	PlasmaRifleItem.shotSound = 'shoot'
-	PlasmaRifleItem.rapidFire = true
-	PlasmaRifleItem.shotClass = PlasmaShot
-	PlasmaRifleItem.drawOffsetStanding = {.5, .25}
-	PlasmaRifleItem.rotCenter = {.25, .35}
-	PlasmaRifleItem.shotOffset = {0, .45}
+	local PlasmaRifle = class(Weapon)
+	PlasmaRifle.sprite = 'plasma-rifle'
+	PlasmaRifle.shotDelay = .05
+	PlasmaRifle.shotSpeed = 40
+	PlasmaRifle.shotSound = 'shoot'
+	PlasmaRifle.rapidFire = true
+	PlasmaRifle.shotClass = PlasmaShot
+	PlasmaRifle.drawOffsetStanding = {.5, .25}
+	PlasmaRifle.rotCenter = {.25, .35}
+	PlasmaRifle.shotOffset = {0, .45}
 	
-	PlasmaRifleItem.spreadAngle = 5
-	function PlasmaRifleItem:getShotPosVel(player)
-		local pos, vel = PlasmaRifleItem.super.getShotPosVel(self, player)
+	PlasmaRifle.spreadAngle = 5
+	function PlasmaRifle:getShotPosVel(player)
+		local pos, vel = PlasmaRifle.super.getShotPosVel(self, player)
 		local angle = (math.random() - .5) * self.spreadAngle
 		local theta = math.rad(angle)
 		local x, y = math.cos(theta), math.sin(theta)
 		vel[1], vel[2] = x * vel[1] - y * vel[2], x * vel[2] + y * vel[1]
 		return pos, vel
 	end
-	
-	return PlasmaRifleItem
+
+	function PlasmaRifle:canShoot(player)
+		if not PlasmaRifle.super.canShoot(self, player) then return end
+		if player.ammoCells < 1 then return end
+		player.ammoCells = player.ammoCells - 1
+		return true
+	end
+
+
+	return PlasmaRifle
 end)()
 
-return PlasmaRifleItem
+return PlasmaRifle

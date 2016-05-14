@@ -44,6 +44,8 @@ local BlasterShot = (function()
 
 	function BlasterShot:pretouch(other, side)
 		if self.remove then return end	-- only hit one object
+		local Item = require 'zeta.script.obj.item'
+		if other:isa(Item) then return end
 		if other == self.shooter then return true end
 		if other.takeDamage then
 			other:takeDamage(self.damage, self.shooter, self, side)

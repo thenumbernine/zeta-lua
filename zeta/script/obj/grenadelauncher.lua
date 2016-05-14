@@ -44,6 +44,8 @@ local Grenade = (function()
 	function Grenade:pretouch(other, side)
 		if not self.collidesWithWorld then return end
 		if self.remove then return end
+		local Item = require 'zeta.script.obj.item'
+		if other:isa(Item) then return end
 		if Grenade.super.pretouch(self, other, side) then return true end
 -- [[ detonate on impact?
 		if other.takeDamage then

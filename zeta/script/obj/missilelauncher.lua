@@ -35,6 +35,8 @@ local Missile = (function()
 
 	function Missile:pretouch(other, side)
 		if self.remove then return end
+		local Item = require 'zeta.script.obj.item'
+		if other:isa(Item) then return end
 		if other == self.shooter then return true end
 		local hit
 		if other.takeDamage then
