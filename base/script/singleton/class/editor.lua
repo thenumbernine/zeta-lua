@@ -475,8 +475,12 @@ do
 end
 Editor.brushOptions:insert(smoothBrush)
 
+local editMethodTiles = 0	-- tile stuff
+local editMethodObjects = 1	-- TODO create object & select object (select allows click-and-drag to move objects around)
+local editMethodRooms = 2	-- room stuff
+
 function Editor:init()	
-	self.editTilesOrObjects = ffi.new('int[1]',0)
+	self.editMethod = ffi.new('int[1]', editMethodTiles)
 	
 	self.paintingTileType = ffi.new('bool[1]',true)
 	self.paintingFgTile = ffi.new('bool[1]',true)
@@ -862,11 +866,11 @@ local function popup(...) return player:popupMessage(...) end
 
 	ig.igSeparator()
 
-	ig.igRadioButton('Edit Tiles', self.editTilesOrObjects, 0)
-	ig.igRadioButton('Edit Objects', self.editTilesOrObjects, 1)
+	ig.igRadioButton('Edit Tiles', self.editMethod, editMethodTiles)
+	ig.igRadioButton('Edit Objects', self.editMethod, editMethodObjects)
 	ig.igSeparator()
 
-	if self.editTilesOrObjects[0] == 0 then
+	if self.editMethod[0] == editMethodTiles then
 		-- not sure if I should use brushes for painting objects or not ...
 		ig.igCheckbox('Tile Type', self.paintingTileType)
 		ig.igCheckbox('Fg Tile', self.paintingFgTile)
@@ -982,7 +986,7 @@ local function popup(...) return player:popupMessage(...) end
 				end
 			end
 		end
-	elseif self.editTilesOrObjects[0] == 1 then
+	elseif self.editMethod[0] == editMethodObjects then
 		if ig.igCollapsingHeader('Object Type:') then
 			for i,spawnOption in ipairs(self.spawnOptions) do
 				ig.igPushIdStr('spawnOption #'..i)
@@ -1254,7 +1258,7 @@ function Editor:update()
 		local yf = self.viewBBox.min[2] + (self.viewBBox.max[2] - self.viewBBox.min[2]) * mouse.pos[2]
 		local x = math.floor(xf)
 		local y = math.floor(yf)
-		if self.editTilesOrObjects[0] == 0 then
+		if self.editMethod[0] == editMethodTiles then
 			if self.shiftDown then
 				if x >= 1 and y >= 1 and x <= level.size[1] and y <= level.size[2] then
 					if self.paintingTileType[0] then
@@ -1273,7 +1277,7 @@ function Editor:update()
 			else
 				self.brushOptions[self.selectedBrushIndex[0]].paint(self, x, y)
 			end
-		elseif self.editTilesOrObjects[0] == 1 then	
+		elseif self.editMethod[0] == editMethodObjects then	
 			-- only on single click
 			do	--if mouse.leftDown and not mouse.lastLeftDown then
 				if self.shiftDown then
@@ -1473,7 +1477,7 @@ function Editor:draw(R, viewBBox)
 		local cy = math.floor(self.viewBBox.min[2] + (self.viewBBox.max[2] - self.viewBBox.min[2]) * mouse.pos[2])
 		local brushWidth, brushHeight = 1, 1
 		local brushOption
-		if self.editTilesOrObjects[0] == 0 then	-- tiles
+		if self.editMethod[0] == editMethodTiles then	-- tiles
 			brushOption = self.brushOptions[self.selectedBrushIndex[0]]
 			if brushOption == paintBrush or brushOption == smoothBrush then
 				brushWidth = self.brushTileWidth[0]
