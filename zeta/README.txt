@@ -1,18 +1,34 @@
 TODO list
 
-- items and terminals: same button to get either (cave story)
-- editor: move texpack tiles 
-- objects use 'spawnclass' which auto-links
-- object classes use 'spawnfields' for fields, types, and tooltips
+- editor: move texpack tiles and change map tiles accordingly
+- object classes use 'spawnfields' for editor fields, types, and tooltips
 - missile launcher missile ammo
 - link objs and spawninfos to rooms, respawn by room
-- room tags?  or camera align objects?
-- ‘x’ to use computers, save points, etc?  that’s the item button …
-- deactivated turrets shoot at enemies
-- fix collisions with sloped tiles
-- geemers and doors don’t mix
+- camera align via room info, or helper objects
+- fix collisions with sloped tiles.  determine ymin and ymax on the x side of sloped tiles and test that against object bbox. 
+- make deactivated turrets shoot at enemies.  do room links first to cut down on game.objs iterations.
+- geemers and doors don’t mix.  one pushes the other and the geemer teleports.
+- second kind of defense monster: heat shields or something
+- second kind of cave monster ... bats or something? or separate ground from wall geemers?
+- spawn more monsters in the mining base area *after* beating the boss
 - room environmental effects ... foreground warping (underwater, heat), blowing wind, falling snow/rain/leaves, etc
-- get load game working
+- get savepoint loading to work
+
+VETOED list:
+- don't use 'spawnclass' as a class shortcut to register classes that are spawned.
+	to execute the spawn code, all the class will have to be require()'d somewhere in one spot anyways
+	it's better to list the names in 'spawnTypes' than have everything being required
+- don't separating playerLook vs canCarry.  set an item down by a terminal, and try to pick it up again.
+	solution? get rid of carrying items altogether? options:
+		- carrying items (spelunky)
+		- touch to get (metroid)
+		- push 'interact' button to to pick up (cave story)
+	item overhaul:
+		- touch/interaact to pick everything up -- no carrying
+		- left/right switches weapons only.  one weapon is 'throw grenades' -- only if you have grenades.
+		- canCarry only operates with a powerup: carry gloves, used for story stuff
+		- separate inventory screen for using non-weapon objects
+			(this means no more 'take the keycard out to open the door')
 
 buttons:
 	- up/down to aim, left/right to move

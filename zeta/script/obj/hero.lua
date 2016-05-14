@@ -343,6 +343,8 @@ function Hero:update(dt)
 				self:setHeld(self.holdCandidate)
 			end
 			--]]
+			
+			--[[
 			if self.collidedLeft and not self.touchEntLeft then
 				local x = self.pos[1] + self.bbox.min[1] - .5 - level.pos[1]
 				for y=math.floor(self.pos[2] + self.bbox.min[2] - level.pos[2]),math.floor(self.pos[2] + self.bbox.max[2] - level.pos[2]) do
@@ -384,6 +386,7 @@ function Hero:update(dt)
 					end
 				end
 			end	
+			--]]
 		end
 	end
 
@@ -583,8 +586,8 @@ function Hero:update(dt)
 		local tile = level:getTile(self.pos[1] - level.pos[1], self.pos[2] - level.pos[2])
 		if tile and tile.objs then
 			for _,obj in ipairs(tile.objs) do
-				if obj.playerLook then
-					obj:playerLook(self)
+				if obj.playerUse then
+					obj:playerUse(self)
 				end
 			end
 		end
@@ -593,7 +596,7 @@ function Hero:update(dt)
 		local bestObj
 		local bestDist = 1
 		for _,obj in ipairs(game.objs) do
-			if obj.playerLook then
+			if obj.playerUse then
 				-- l-inf dist
 				local dist = math.max(math.abs(self.pos[1] - obj.pos[1]), math.abs(self.pos[2] - obj.pos[2]))
 				if dist < bestDist then
@@ -603,7 +606,7 @@ function Hero:update(dt)
 			end
 		end
 		if bestObj then
-			bestObj:playerLook(self)
+			bestObj:playerUse(self)
 		end
 		--]]
 	end

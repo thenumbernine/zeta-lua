@@ -96,4 +96,14 @@ return {
 			stand={'stand1', 'stand2', 'stand3', 'stand4', 'stand5', freq=8},
 		},
 	},
+
+	-- enemies
+
+	{
+		name='barrier',
+		dir='barrier',
+		seqs={
+			stand={'stand1', 'stand2', 'stand3', 'stand4', 'stand5', freq=30},
+		},
+	},
 }

@@ -23,7 +23,7 @@ function EnergyRefill:init(args)
 	end
 end
 
-function EnergyRefill:playerLook(player)
+function EnergyRefill:playerUse(player)
 	threads:add(function()
 		player:popupMessage('health refilling...')
 		player.health = player.maxHealth

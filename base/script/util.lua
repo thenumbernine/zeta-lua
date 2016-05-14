@@ -37,4 +37,3 @@ function create(spawnTypeStr)
 	end
 	return require(spawnTypeStr)
 end
-

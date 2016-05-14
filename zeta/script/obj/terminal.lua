@@ -13,7 +13,7 @@ function Terminal:init(args)
 	self.use = args.use
 end
 
-function Terminal:playerLook(player)
+function Terminal:playerUse(player)
 	local threads = require 'base.script.singleton.threads'
 	if self.text then
 		threads:add(function()

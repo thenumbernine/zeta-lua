@@ -8,7 +8,7 @@ local SavePoint = class(Object)
 SavePoint.sprite = 'savepoint'
 SavePoint.solid = false
 
-function SavePoint:playerLook(player)
+function SavePoint:playerUse(player)
 	threads:add(function()
 		player:popupMessage('saving...')
 	end)
