@@ -169,8 +169,8 @@ function Level:init(args)
 		ffi.fill(self.roomMap, ffi.sizeof('unsigned short') * self.sizeInMapTiles[1] * self.sizeInMapTiles[2])
 	else
 		assert(vec2(roomImage:size()) == self.sizeInMapTiles)
-		for j=0,self.size[2]-1 do
-			for i=0,self.size[1]-1 do
+		for j=0,self.sizeInMapTiles[2]-1 do
+			for i=0,self.sizeInMapTiles[1]-1 do
 				self.roomMap[i+self.sizeInMapTiles[1]*j] = rgbAt(roomImage,i,self.sizeInMapTiles[2]-j-1)
 			end
 		end

@@ -478,6 +478,7 @@ Editor.brushOptions:insert(smoothBrush)
 local editModeTiles = 0
 local editModeObjects = 1
 local editModeRooms = 2
+local editModeMove = 3
 
 function Editor:init()	
 	self.editMode = ffi.new('int[1]', editModeTiles)
@@ -486,6 +487,7 @@ function Editor:init()
 	self.paintingFgTile = ffi.new('bool[1]',true)
 	self.paintingBgTile = ffi.new('bool[1]',true)
 	self.paintingBackground = ffi.new('bool[1]',true)
+	self.paintingObjects = ffi.new('bool[1]',true)	-- only used by move tool 
 
 	-- paint & smooth brush options:
 	self.brushTileWidth = ffi.new('int[1]',1)
@@ -565,7 +567,7 @@ function Editor:setTileKeys()
 					ffi.cast('unsigned char',color[1]*255),
 					ffi.cast('unsigned char',color[2]*255),
 					ffi.cast('unsigned char',color[3]*255),
-					127
+					255
 			end
 			return 0,0,0,0
 		end)
@@ -874,15 +876,23 @@ local function popup(...) return player:popupMessage(...) end
 	ig.igRadioButton('Edit Tiles', self.editMode, editModeTiles)
 	ig.igRadioButton('Edit Objects', self.editMode, editModeObjects)
 	ig.igRadioButton('Edit Rooms', self.editMode, editModeRooms)
+	ig.igRadioButton('Move Tool', self.editMode, editModeMove)
 	ig.igSeparator()
 
-	if self.editMode[0] == editModeTiles then
+	if self.editMode[0] == editModeTiles 
+	or self.editMode[0] == editModeMove
+	then
 		-- not sure if I should use brushes for painting objects or not ...
 		ig.igCheckbox('Tile Type', self.paintingTileType)
 		ig.igCheckbox('Fg Tile', self.paintingFgTile)
 		ig.igCheckbox('Bg Tile', self.paintingBgTile)
 		ig.igCheckbox('Background', self.paintingBackground)
-	
+	end
+	if self.editMode[0] == editModeMove then
+		ig.igCheckbox('Objects', self.paintingObjects)
+	end
+
+	if self.editMode[0] == editModeTiles then
 		if ig.igCollapsingHeader('Brush Options:') then
 			for i,brushOption in ipairs(self.brushOptions) do
 				ig.igRadioButton(brushOption.name..' brush', self.selectedBrushIndex, i)
@@ -1335,6 +1345,103 @@ function Editor:update()
 					 level.roomMap[rx-1 + level.sizeInMapTiles[1]*(ry-1)] = self.selectedRoomIndex[0]
 				end
 			end
+		elseif self.editMode[0] == editModeMove then
+			-- mouse press
+			if mouse.leftDown and not mouse.lastLeftDown then
+				self.movePressPos = vec2(x,y)
+				if self.moveBBox
+				and x >= self.moveBBox.min[1] and x <= self.moveBBox.max[1]
+				and y >= self.moveBBox.min[2] and y <= self.moveBBox.max[2]
+				then
+					self.isMoving = true
+				else
+					self.isMoving = false
+					self.moveBBox = box2()
+				end
+			-- mouse drag
+			else
+				if self.isMoving then
+					local dx = x - self.movePressPos[1]
+					local dy = y - self.movePressPos[2]
+					if dx ~= 0 or dy ~= 0 then
+						-- do the move
+						local x1,x2,x3 = self.moveBBox.min[1], self.moveBBox.max[1], 1
+						if dx > 0 then
+							x1,x2 = x2,x1
+							x3 = -x3
+						end
+						local y1,y2,y3 = self.moveBBox.min[2], self.moveBBox.max[2], 1
+						if dy > 0 then
+							y1,y2 = y2,y1
+							y3 = -y3
+						end
+						
+						for _,info in ipairs{
+							{map=level.tileMap, flag=self.paintingTileType[0]},
+							{map=level.fgTileMap, flag=self.paintingFgTile[0]},
+							{map=level.bgTileMap, flag=self.paintingBgTile[0]},
+							{map=level.backgroundMap, flag=self.paintingBackground[0]},
+						} do
+							if info.flag then
+								for y0=y1,y2,y3 do
+									for x0=x1,x2,x3 do
+										if math.min(x0,x0+dx) >= 1 and math.max(x0,x0+dx) <= level.size[1]
+										and math.min(y0,y0+dy) >= 1 and math.max(y0,y0+dy) <= level.size[2]
+										then
+											info.map[x0+dx-1+level.size[1]*(y0+dy-1)]
+												= info.map[x0-1+level.size[1]*(y0-1)] 
+										end
+									end
+								end
+							end
+						end
+					
+						if self.paintingObjects[0] then
+							for _,spawnInfo in ipairs(level.spawnInfos) do
+								if spawnInfo.pos[1]-.5 >= self.moveBBox.min[1]
+								and spawnInfo.pos[1]-.5 <= self.moveBBox.max[1]
+								and spawnInfo.pos[2] >= self.moveBBox.min[2]
+								and spawnInfo.pos[2] <= self.moveBBox.max[2]
+								then
+									spawnInfo.pos[1] = spawnInfo.pos[1] + dx
+									spawnInfo.pos[2] = spawnInfo.pos[2] + dy
+									-- if it moved then its ig vptr fields are invalidated
+									-- so just clear it and have the user select it to regen them again
+									if spawnInfo == self.selectedSpawnInfo then
+										self.selectedSpawnInfo = nil
+									end
+								
+									local obj = spawnInfo.obj
+									if obj
+									and obj.pos[1]-.5 >= self.moveBBox.min[1]
+									and obj.pos[1]-.5 <= self.moveBBox.max[1]
+									and obj.pos[2] >= self.moveBBox.min[2]
+									and obj.pos[2] <= self.moveBBox.max[2]
+									then
+										obj:setPos(obj.pos[1]+dx, obj.pos[2]+dy)
+									end
+								end
+							end
+						end
+					end
+					self.movePressPos[1] = x
+					self.movePressPos[2] = y
+					self.moveBBox= self.moveBBox + vec2(dx,dy)
+				else
+					self.moveBBox = box2()	
+					self.moveBBox.min[1] = math.min(x, self.movePressPos[1])
+					self.moveBBox.min[2] = math.min(y, self.movePressPos[2])
+					self.moveBBox.max[1] = math.max(x, self.movePressPos[1])
+					self.moveBBox.max[2] = math.max(y, self.movePressPos[2])
+				end
+			end
+		end
+	-- not mouse.leftDown
+	else
+		if self.editMode[0] == editModeMove then
+			if mouse.lastLeftDown then
+				self.isMoving = false
+			end
 		end
 	end
 end
@@ -1359,9 +1466,60 @@ function Editor:draw(R, viewBBox)
 					-level.mapTileSize[2]/2,
 					tostring(roomIndex),
 					nil, nil,
-					1, 1, 1, .5)	-- color
+					1, 1, 1, .6)	-- color
+			
 			end
 		end
+		gl.glEnable(gl.GL_TEXTURE_2D)
+		gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
+		gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
+		gl.glLineWidth(3)
+		for rx=1,level.sizeInMapTiles[1] do
+			for ry=1,level.sizeInMapTiles[2] do
+				local roomIndex = level.roomMap[rx-1 + level.sizeInMapTiles[1] * (ry-1)]
+				for side,dir in pairs(dirs) do
+					local nrx = rx + dir[1]
+					local nry = ry + dir[2]
+					local neighborRoomIndex = -1
+					if nrx >= 1 and nrx <= level.sizeInMapTiles[1]
+					and nry >= 1 and nry <= level.sizeInMapTiles[2]
+					then
+						neighborRoomIndex = level.roomMap[nrx-1 + level.sizeInMapTiles[1] * (nry-1)]
+					end
+					if neighborRoomIndex ~= roomIndex then
+						local x, y, w, h 
+						if side == 'up' then
+							x = (rx-1)*level.mapTileSize[1]+1
+							y = ry*level.mapTileSize[2]+1
+							w = level.mapTileSize[1]
+							h = .1
+						elseif side == 'down' then
+							x = (rx-1)*level.mapTileSize[1]+1
+							y = (ry-1)*level.mapTileSize[2]+1
+							w = level.mapTileSize[1]
+							h = .1
+						elseif side == 'left' then
+							x = (rx-1)*level.mapTileSize[1]+1
+							y = (ry-1)*level.mapTileSize[2]+1
+							w = .1
+							h = level.mapTileSize[2]
+						elseif side == 'right' then
+							x = rx*level.mapTileSize[1]+1
+							y = (ry-1)*level.mapTileSize[2]+1
+							w = .1
+							h = level.mapTileSize[2]
+						end
+						R:quad(
+							x,y,
+							w,h,
+							0, 0, 1, 1, 0,
+							0, 1, 0, .25)   --color
+					end
+				end
+			end
+		end
+		gl.glLineWidth(1)
+		gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
 		gl.glEnable(gl.GL_TEXTURE_2D)
 	end
 
@@ -1496,7 +1654,7 @@ function Editor:draw(R, viewBBox)
 						0, 0, 
 						1, 1,
 						0,
-						1,1,1,1)
+						1,1,1,.5)
 				end
 			end
 		end
@@ -1547,6 +1705,26 @@ function Editor:draw(R, viewBBox)
 				0, 0, 1, 1, 0,
 				0, 1, 0, 1)	--color	
 		end
+		gl.glLineWidth(1)
+		gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
+		gl.glEnable(gl.GL_TEXTURE_2D)
+	end
+
+	-- show move rectangle
+	if self.editMode[0] == editModeMove
+	and self.moveBBox
+	then
+		gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
+		gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
+		gl.glLineWidth(3)
+
+		R:quad(
+			self.moveBBox.min[1], self.moveBBox.min[2],
+			self.moveBBox.max[1]-self.moveBBox.min[1]+1,
+			self.moveBBox.max[2]-self.moveBBox.min[2]+1,
+			0, 0, 1, 1, 0,
+			1, 0, 0, 1)	--color	
+
 		gl.glLineWidth(1)
 		gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL)
 		gl.glEnable(gl.GL_TEXTURE_2D)
