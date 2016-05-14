@@ -1217,14 +1217,10 @@ function Editor:event(event)
 end
 
 function Editor:update()
-	if not self.active then
-		game.viewSize = nil
-		return
-	end
-	sdl.SDL_ShowCursor(sdl.SDL_ENABLE)
-
+	-- do tihs before checking editor.active
+	-- so if the editor shuts off, the player will be able to walk again
 	local player = game.players[1]
-	if self.noClipping[0] then
+	if self.active and self.noClipping[0] then
 		local dt = game.sysDeltaTime
 		local noClipSpeed = 2 * game.viewSize
 		player.pos[1] = player.pos[1] + dt * player.inputLeftRight * noClipSpeed
@@ -1244,6 +1240,12 @@ function Editor:update()
 			player.collidesWithObjects = nil
 		end
 	end
+	
+	if not self.active then
+		game.viewSize = nil
+		return
+	end
+	sdl.SDL_ShowCursor(sdl.SDL_ENABLE)
 
 	self.isHandlingMouse = ig.igGetIO()[0].WantCaptureMouse
 	if self.isHandlingMouse then return end
