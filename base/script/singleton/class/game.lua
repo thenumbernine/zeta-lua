@@ -28,7 +28,7 @@ function Game:glInit(R)
 	gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
 end
 
-Game.viewSize = 10
+Game.viewSize = 12
 
 function Game:init()
 	self:resetObjects()
@@ -174,17 +174,17 @@ function Game:render(preDrawCallback)
 		gl.glViewport(viewX * windowWidth / divX, viewY * windowHeight / divY, viewWidth, viewHeight)
 	
 		local viewSize = self.viewSize
-		R:ortho(-aspectRatio * viewSize, aspectRatio * viewSize, -viewSize, viewSize, -100, 100)
+		R:ortho(-viewSize, viewSize, -viewSize / aspectRatio, viewSize / aspectRatio, -100, 100)
 		R:viewPos(player.viewPos[1], player.viewPos[2])
 		
 		if preDrawCallback then preDrawCallback() end
 		
 		-- assuming no scaling ...
 		player.viewBBox = box2(
-			player.viewPos[1] - aspectRatio * viewSize,
-			player.viewPos[2] - viewSize,
-			player.viewPos[1] + aspectRatio * viewSize,
-			player.viewPos[2] + viewSize)
+			player.viewPos[1] - viewSize,
+			player.viewPos[2] - viewSize / aspectRatio,
+			player.viewPos[1] + viewSize,
+			player.viewPos[2] + viewSize / aspectRatio)
 		
 		if self.bgtex then
 			self.bgtex:bind()
