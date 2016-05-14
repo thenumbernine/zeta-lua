@@ -246,8 +246,6 @@
 	{pos={198.5,162},spawn="zeta.script.obj.cells"},
 	{pos={198.5,161},spawn="zeta.script.obj.cells"},
 	{pos={37.5,167},spawn="zeta.script.obj.breakblock",tileIndex=5},
-	{pos={173.5,241},spawn="zeta.script.obj.heart"},
-	{pos={172.5,241},spawn="zeta.script.obj.heart"},
 	{pos={63.5,206},spawn="zeta.script.obj.barrier"},
 	{pos={70.5,206},spawn="zeta.script.obj.barrier"},
 	{pos={80.5,206},spawn="zeta.script.obj.barrier"},
@@ -279,4 +277,6 @@
 	{pos={59.5,159},spawn="zeta.script.obj.barrier",timeOff="3",timeOn="1"},
 	{pos={58.5,159},spawn="zeta.script.obj.barrier",timeOff="3",timeOn="1"},
 	{pos={85.5,129},spawn="zeta.script.obj.terminal",use="toggleDefenses()"},
+	{pos={172.5,236},spawn="zeta.script.obj.heart"},
+	{pos={173.5,236},spawn="zeta.script.obj.heart"},
 }

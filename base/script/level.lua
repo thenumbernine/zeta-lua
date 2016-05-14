@@ -168,7 +168,24 @@ function Level:init(args)
 		assert(texpackFile, "better put your textures in a texpack")
 		self.texpackTex = texsys:load(texpackFile)
 	end
-	
+
+	-- chop world up into 32x32 rooms, for the sake of linking and spawning
+	-- rooms will hold objs and spawnInfos
+	self.rooms = {}
+	self.roomTilesWide = 32
+	self.roomTilesHigh = 32
+	local Room = class()
+	function Room:addSpawnInfo(spawnInfo)
+		if not self.spawnInfos then self.spawnInfos = table() end
+		self.spawnInfos:insert(spawnInfo)
+	end
+	for i=1,math.ceil(self.size[1]/self.roomTilesWide) do
+		self.rooms[i] = {}
+		for j=1,math.ceil(self.size[2]/self.roomTilesHigh) do
+			self.rooms[i][j] = Room()
+		end
+	end
+
 	self.startPositions = table(args.startPositions)
 	self.spawnInfos = table()
 	
@@ -189,8 +206,14 @@ function Level:init(args)
 					
 					assert(type(args.pos) == 'table')
 					args.pos = vec2(unpack(args.pos))
-					
-					self.spawnInfos:insert(SpawnInfo(args))	-- center on x and y
+				
+					local spawnInfo = SpawnInfo(args)
+					self.spawnInfos:insert(spawnInfo)	-- center on x and y
+				
+					local room = self:getRoom(args.pos:unpack())
+					if room then
+						room:addSpawnInfo(spawnInfo)
+					end
 				end
 			end
 		end
@@ -201,6 +224,13 @@ function Level:init(args)
 	if mappath then initFile = mappath..'/init.lua' end
 	if args.initFile then initFile = args.initFile end
 	self.initFile = initFile
+end
+
+function Level:getRoom(x,y)
+	local rx = math.floor((x-1) / self.roomTilesWide) + 1
+	local ry = math.floor((y-1) / self.roomTilesHigh) + 1
+	local col = self.rooms[rx]
+	return col and col[ry]
 end
 
 -- init stuff to be run after level is assigned as game.level (so objs can reference it)
