@@ -12,6 +12,7 @@ BossGeemer.drawScale = {2,2}
 BossGeemer.jumpVel = 20
 BossGeemer.runVel = 10
 BossGeemer.attackDist = 10
+BossGeemer.spawnAtFirst = true		-- dont' remove the boss before the boss is dead
 
 BossGeemer.itemDrops = nil
 function BossGeemer:calcVelForJump(delta)
