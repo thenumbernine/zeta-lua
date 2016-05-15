@@ -843,7 +843,7 @@ function Editor:updateGUI()
 
 	self.viewSizePtr = self.viewSizePtr or ffi.new('float[1]')
 	self.viewSizePtr[0] = game.viewSize
-	ig.igSliderFloat('zoom', self.viewSizePtr, 1, 100, '%.3f', 3)
+	ig.igSliderFloat('zoom', self.viewSizePtr, 1, math.max(level.size:unpack()), '%.3f', 3)
 	game.viewSize = tonumber(self.viewSizePtr[0])
 
 	ig.igSeparator()

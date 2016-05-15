@@ -3,6 +3,7 @@ TODO list
 - editor: 
 	- move texpack tiles and change map tiles accordingly
 	- separate 'object' into 'create object' and 'select object'
+	- click-and-drag on tile selection to form rectangles for brush + stamp size?
 - object classes use 'spawnfields' for editor fields, types, and tooltips
 - fix collisions with sloped tiles.  determine ymin and ymax on the x side of sloped tiles and test that against object bbox. 
 - environmental effects ... foreground warping (underwater, heat), blowing wind, falling snow/rain/leaves, etc

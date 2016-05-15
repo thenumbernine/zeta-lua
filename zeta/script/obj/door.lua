@@ -5,6 +5,7 @@ local threads = require 'base.script.singleton.threads'
 local game = require 'base.script.singleton.game'
 local Hero = require 'zeta.script.obj.hero'
 local vec2 = require 'vec.vec2'
+local vec4 = require 'vec.vec4'
 
 local Door = class(Object)
 Door.sprite = 'door'
@@ -40,18 +41,21 @@ function Door:pretouch(other, side)
 	self.blockTime = game.time + 1
 end
 
-local vec4 = require 'vec.vec4'
-local white = {1,1,1,1}
 function Door:touch(other, side)
 	if not self.solid then return end
 	if not other:isa(Hero) then return end
 
-	local KeyCard = require 'zeta.script.obj.keycard'
-	local hasKey = other.holding
-		and other.holding:isa(KeyCard)
-		and vec4.__eq(other.holding.color or white, self.color or white)
-	
-	if not hasKey then 
+	if not self.color then
+		canOpen = true
+	else	-- door needs a color keycard...
+		local KeyCard = require 'zeta.script.obj.keycard'
+		canOpen = other.holding
+			and other.holding:isa(KeyCard)
+			and other.holding.color
+			and vec4.__eq(other.holding.color, self.color)
+	end
+
+	if not canOpen then 
 		other.pos[1] = other.lastpos[1]
 		other.vel[1] = 0
 		if self.pos[1] < other.pos[1] then
@@ -142,21 +146,18 @@ function Door:draw(R, viewBBox)
 	Door.super.draw(self, R, viewBBox)
 	self.color = color
 
-	local tex = animsys:getTex('keycard', 'stand') 
-	tex:bind()
-	local cr,cg,cb,ca
 	if self.color then
-		cr,cg,cb,ca = table.unpack(self.color)
-	else
-		cr,cg,cb,ca = 1,1,1,1
+		local tex = animsys:getTex('keycard', 'stand') 
+		tex:bind()
+		local cr,cg,cb,ca = table.unpack(self.color)
+		R:quad(
+			self.pos[1]-.25, self.pos[2]+1,
+			.5,.5,
+			0,1,
+			1,-1,
+			0,
+			cr,cg,cb,ca)
 	end
-	R:quad(
-		self.pos[1]-.25, self.pos[2]+1,
-		.5,.5,
-		0,1,
-		1,-1,
-		0,
-		cr,cg,cb,ca)
 end
 
 return Door

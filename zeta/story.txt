@@ -39,10 +39,12 @@ find first monsters
 keep going to find first boss in the edge of the base - big evil alien monster
 find some doors are now unlocked
 get some first powerup ... 'lifting gloves' or something
-(from then on, go back and find the monsters repopulated the base)
+(from then on if go back to the mining base, you find it repopulated by monsters ...
+	... maybe only if the defense system is off? 
+	... or maybe have the defense system shoot at monsters too?)
 [section 1 first leads to section 2]
 [section 1 can see the door to secret weapon , access from next section plot point]
-	[this secret has access with first secret keycard to a rocket booster]
+	[this secret has access with first secret keycard to a escape rocket booster]
 
 section 2. - mining caves
 next you enter into the caves
@@ -55,7 +57,7 @@ find another boss - king of the evil robots
 (side quest: someone is talking about something they left back in the mining base
 	take their keycard, go back to an extra room, fight another miniboss,
 	get a powerup -- better weapon.
-	if you have the first secret keycard then you can find a rocket booster part.)
+	if you have the first secret keycard then you can find a escape rocket booster part.)
 keep going to find the entrance to the grassland
 [section 2 can see a door to the section 6 -- desert -- access with grappling or something]
 [section 2 leads to section 3]
@@ -67,7 +69,7 @@ grassland has trees and forests in it
 still only monsters
 find more survivors who are building cabins and stuff like that
 they tell you they're established things aren't so bad out there
-maybe find a piece of the failed rocket, someone asks you if it'll help
+maybe find a piece of the escape rocket, someone asks you if it'll help
 they ask you to look them up if a rescue ship ever comes
 
 section 4. - underground alien civilization
@@ -79,10 +81,10 @@ then you tell them about the humans lost in the caves
 	the native aliens help rescue some of them
 aliens then lead humans to the surface where colony #2 is
 
-section 5. - colony #2 whose rocket didn't leave
+section 5. - colony #2 whose escape rocket didn't leave
 make it to the first colony, next to the second
-find yet another rocket booster piece 
-(side quest: collect all parts to launch the rocket)
+find yet another escape rocket booster piece 
+(side quest: collect all parts to launch the escape rocket)
 find the place overrun with monsters
 fight a boss, get an item.
 humans re-settle here
@@ -136,13 +138,13 @@ fight the end boss of the whole game
 ending #1: boss dies, planet dies
 	- if humans got rescue message out then they get taken back
 		- if aliens and humans coop they can go back too
-	- if you got your rocket ship then you take off
+	- if you got your escape rocket ship then you take off
 run back to the surface
 find the humans getting rescued in time
 you have the choice to leave there
-or ... secret ending ... if you got all the rocket pieces 
-	then you take the rocket to the next planet of the evil alien home world 
-	... and if you failed on the rescue comm *and* got all rocket pieces
+or ... secret ending ... if you got all the escape rocket pieces 
+	then you take the escape rocket to the next planet of the evil alien home world 
+	... and if you failed on the rescue comm *and* got all escape rocket pieces
 		... then you take the humans back with you
 	otherwise maybe an alien or two or something? idk bff gil
 
@@ -174,7 +176,7 @@ another says
 	...and then you find his keycard -- for use later
 )
 
-go left you find the former launchpad from where the rocket had just took off.
+go left you find the former launchpad from where the escape rocket had just took off.
 
 keep going left and you find the entrance to the caves below the base
 
