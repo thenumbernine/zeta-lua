@@ -20,6 +20,7 @@ function Barrier:init(args)
 	if args.damage then self.damage = tonumber(args.damage) end
 	
 	self.timeOffset = math.random() * (self.timeOn + self.timeOff)
+	self.sprite = false
 end
 
 function Barrier:pretouch(other, side)
