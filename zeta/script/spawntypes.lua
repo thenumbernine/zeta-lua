@@ -22,8 +22,11 @@ return {
 	{spawn='zeta.script.obj.energytank'},
 	{spawn='zeta.script.obj.cells'},
 	-- monsters
+		-- mining base
 	{spawn='zeta.script.obj.turret'},
 	{spawn='zeta.script.obj.barrier'},
+	{spawn='zeta.script.obj.sawblade'},
+		-- caves
 	{spawn='zeta.script.obj.geemer'},
 	{spawn='zeta.script.obj.redgeemer'},
 	{spawn='zeta.script.obj.boss-geemer'},

@@ -4,6 +4,9 @@ TODO list
 	- move texpack tiles and change map tiles accordingly
 	- separate 'object' into 'create object' and 'select object'
 	- click-and-drag on tile selection to form rectangles for brush + stamp size?
+	- distinction between numbers and strings
+	- toggle editor for strings and multi-line strings (maybe a popup button?)
+	- for editing vec2's, show as a point or as a vector .. maybe even click and drag to change? 
 - object classes use 'spawnfields' for editor fields, types, and tooltips
 - fix collisions with sloped tiles.  determine ymin and ymax on the x side of sloped tiles and test that against object bbox. 
 - environmental effects ... foreground warping (underwater, heat), blowing wind, falling snow/rain/leaves, etc
@@ -166,16 +169,21 @@ craft materials, found on their own:
 	oil
 
 enemies:
-	green geemer -> 10% green tentacle 
-	red geemer -> 10% red tentacle 
+	
+		mining baes:
+	turret -> drop 5% grenade, 5% heart 
+	shocking things - vertical and horizontal
+	sawblades from mario world ... or indiana jones 
+	sentry? 
+	rogue robots ... that look like you?
+
+		intro to caves:
+	green geemer -> 10% heart 
+	red geemer -> 10% heart
 	venus fly trap / hides in background
 	some sort of close-range guy who walks slowly
-	bats or something that swoops from ceiling
-	sawblades from mario world / cave story egg zone
-
-	turret -> 10% metal 
-	flying sentry -> 10% metal
-
+	bats or something that hover in circles
+	something that shoots something out
 
 
 inspirations:
@@ -184,8 +192,8 @@ Super Mario World (1990.11.21)
 Super Metroid (1994.03.19)
 Abuse (1996.02.29)
 Castlevania: Symphony of the Night (Super Metroid) (1997.03.20)
-
 Cave Story (Super Metroid) (2004.12.20)
 Aquaria (Super Metroid) (2007.12.07)
 Spelunky (Super Mario World, La-Mulana, Rick Dangerous, Spelunker) (2008.12.21)
 Minecraft (Dwarf Fortress) (2009.03.17)
+Aliens: Infestation (2011.09.29)

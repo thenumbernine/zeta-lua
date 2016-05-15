@@ -37,14 +37,16 @@ you go down, underground the mining operation
 learn from terminal that monsters invaded 
 find first monsters
 keep going to find first boss in the edge of the base - big evil alien monster
-find some doors are now unlocked
-get some first powerup ... 'lifting gloves' or something
+get the green key door so you can go back through the locked doors in the mining base. 
 (from then on if go back to the mining base, you find it repopulated by monsters ...
 	... maybe only if the defense system is off? 
 	... or maybe have the defense system shoot at monsters too?)
 [section 1 first leads to section 2]
 [section 1 can see the door to secret weapon , access from next section plot point]
 	[this secret has access with first secret keycard to a escape rocket booster]
+have the way to the caves loop back through the base a few times?
+	second boss of section 1 - drilling machine that has gone wrong
+	get ... a shield?
 
 section 2. - mining caves
 next you enter into the caves

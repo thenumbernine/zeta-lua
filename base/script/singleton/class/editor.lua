@@ -21,10 +21,6 @@ local game = require 'base.script.singleton.game'
 local SpawnInfo = require 'base.script.spawninfo'
 local Object = require'base.script.obj.object'
 
---[[
-Editor api:
---]]
-
 local Editor = class()
 
 Editor.active = true
@@ -664,6 +660,7 @@ end
 
 function Editor:updateGUI()
 	ig.igText('EDITOR')
+	local level = game.level
 
 	local function alert(str)
 		-- [[
@@ -692,7 +689,7 @@ function Editor:updateGUI()
 			self.tileWindowOpenedPtr,
 			ig.ImGuiWindowFlags_NoTitleBar)
 	
-		local tex = game.level.texpackTex
+		local tex = level.texpackTex
 		local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
 		local tilesWide = tex.width / 16
 		local tilesHigh = tex.height / 16
@@ -725,7 +722,7 @@ function Editor:updateGUI()
 	end
 
 	local function tileButton(tileIndex)
-		local tex = game.level.texpackTex
+		local tex = level.texpackTex
 		local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
 		local tilesWide = tex.width / 16
 		local tilesHigh = tex.height / 16
@@ -738,13 +735,20 @@ function Editor:updateGUI()
 			ig.ImVec2((ti+1)/tilesWide, (tj+1)/tilesHigh))	-- uv1
 	end
 
-	ig.igCheckbox('Show Tile Types', self.showTileTypes)
-	ig.igCheckbox('Show Spawn Infos', self.showSpawnInfos)
-	ig.igCheckbox('Show Objects', self.showObjects)
-	ig.igCheckbox('Show Rooms', self.showRooms)
+	if ig.igCollapsingHeader('Display Options') then
+		self.viewSizePtr = self.viewSizePtr or ffi.new('float[1]')
+		self.viewSizePtr[0] = game.viewSize
+		ig.igSliderFloat('zoom', self.viewSizePtr, 1, math.max(level.size:unpack()), '%.3f', 3)
+		game.viewSize = tonumber(self.viewSizePtr[0])
+		
+		ig.igCheckbox('no clipping', self.noClipping)
 
-	ig.igCheckbox('no clipping', self.noClipping)
-	local level = game.level
+		ig.igCheckbox('Show Tile Types', self.showTileTypes)
+		ig.igCheckbox('Show Spawn Infos', self.showSpawnInfos)
+		ig.igCheckbox('Show Objects', self.showObjects)
+		ig.igCheckbox('Show Rooms', self.showRooms)
+
+	end
 	if ig.igButton('remove all objs') then
 		for _,spawnInfo in ipairs(level.spawnInfos) do
 			spawnInfo:removeObj()
@@ -788,7 +792,6 @@ function Editor:updateGUI()
 	self.showInitFileWindow = self.showInitFileWindow or ffi.new('bool[1]',false)
 	if ig.igButton('Edit Level Init Code') then
 		self.showInitFileWindow[0] = true
-		local level = game.level
 		local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
 		local initFileData = file[dir..'/init.lua'] or ''
 		ffi.copy(self.initFileBuffer, initFileData, math.min(#initFileData, initFileBufferSize-1))
@@ -803,7 +806,6 @@ function Editor:updateGUI()
 			self.initFileBuffer[initFileBufferSize-1] = 0
 			local code = ffi.string(self.initFileBuffer)
 			print('saving code',code)
-			local level = game.level
 			local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
 			file[dir..'/init.lua'] = code
 			self.showInitFileWindow[0] = false
@@ -840,11 +842,6 @@ function Editor:updateGUI()
 		end
 		ig.igEnd()
 	end
-
-	self.viewSizePtr = self.viewSizePtr or ffi.new('float[1]')
-	self.viewSizePtr[0] = game.viewSize
-	ig.igSliderFloat('zoom', self.viewSizePtr, 1, math.max(level.size:unpack()), '%.3f', 3)
-	game.viewSize = tonumber(self.viewSizePtr[0])
 
 	ig.igSeparator()
 	if ig.igButton('Save Map') then
@@ -1565,9 +1562,9 @@ function Editor:draw(R, viewBBox)
 			for k,v in pairs(spawnInfo) do
 				if k ~= 'pos' and getmetatable(v) == vec2 then
 					gl.glBegin(gl.GL_LINES)
-					gl.glColor2f(0,1,0)
+					gl.glColor3f(0,1,0)
 					gl.glVertex2f(x,y)
-					gl.glVertex2f(v:unpack())
+					gl.glVertex2f(x+v[1],y+v[2])
 					gl.glEnd()
 				
 					gui.font:drawUnpacked(v[1]-.5,v[2]+1,.5,-.5,k)
