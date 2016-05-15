@@ -267,7 +267,13 @@ function Object:move(moveX, moveY)
 			end
 			if self.collidesWithObjects then
 				for _,obj in ipairs(game.objs) do
-					if obj ~= self then
+					if obj ~= self 
+					-- this looks like a relic from the tile-linked obj lists
+					-- whatever it does...
+					-- with it, objects don't get hit by larger-than-1x1 objects if they're standing still
+					-- without it, as soon as the player hits a non-solid object, the both of them skate across the world
+					and xmin <= obj.pos[1]+1 and obj.pos[1]-1 <= xmax and math.abs(y-obj.pos[2]) < 1
+					then
 						do
 			
 --]]
@@ -457,7 +463,9 @@ function Object:move(moveX, moveY)
 			end
 			if self.collidesWithObjects then
 				for _,obj in ipairs(game.objs) do
-					if obj ~= self then
+					if obj ~= self 
+					and math.abs(x-obj.pos[1]) < 1 and ymin <= obj.pos[2]+1 and obj.pos[2]-1 <= ymax
+					then
 						do
 --]]
 							if obj.collidesWithObjects then
