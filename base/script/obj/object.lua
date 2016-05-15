@@ -267,9 +267,7 @@ function Object:move(moveX, moveY)
 			end
 			if self.collidesWithObjects then
 				for _,obj in ipairs(game.objs) do
-					if obj ~= self
-					and xmin <= obj.pos[1]+1 and obj.pos[1]-1 <= xmax and math.abs(y-obj.pos[2]) < 1
-					then
+					if obj ~= self then
 						do
 			
 --]]
@@ -459,9 +457,7 @@ function Object:move(moveX, moveY)
 			end
 			if self.collidesWithObjects then
 				for _,obj in ipairs(game.objs) do
-					if obj ~= self
-					and math.abs(x-obj.pos[1]) < 1 and ymin <= obj.pos[2]+1 and obj.pos[2]-1 <= ymax
-					then
+					if obj ~= self then
 						do
 --]]
 							if obj.collidesWithObjects then

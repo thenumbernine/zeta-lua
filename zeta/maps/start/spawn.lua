@@ -392,4 +392,6 @@
 	{pos={134.5,122},spawn="zeta.script.obj.geemer"},
 	{pos={135.5,122},spawn="zeta.script.obj.geemer"},
 	{pos={136.5,122},spawn="zeta.script.obj.geemer"},
+	{pos={41.5,198},spawn="zeta.script.obj.turret"},
+	{pos={44.5,198},spawn="zeta.script.obj.turret"},
 }
