@@ -164,7 +164,11 @@ local debugDraw = table()
 function Object:move(moveX, moveY)
 	local level = game.level
 	local epsilon = .001
-	
+
+	-- when doing line trace, and dividing by moveX or moveY, make sure we don't get near-infinite values
+	if math.abs(moveX) < epsilon then moveX = 0 end
+	if math.abs(moveY) < epsilon then moveY = 0 end
+
 --print('move start at',self.pos,'bbox',self.bbox + self.pos)
 	self.pos[2] = self.pos[2] + moveY
 --print('up/down move to',self.pos,'bbox',self.bbox + self.pos)
@@ -257,7 +261,6 @@ function Object:move(moveX, moveY)
 						if tile.touch then tile:touch(self) end
 					end
 				end
-				
 --[[ tile-bound entities
 				if self.collidesWithObjects then
 					if tile.objs then
@@ -265,24 +268,48 @@ function Object:move(moveX, moveY)
 --]]
 -- [[ world-bound entities
 			end
-			if self.collidesWithObjects then
-				for _,obj in ipairs(game.objs) do
-					if obj ~= self 
-					-- this looks like a relic from the tile-linked obj lists
-					-- whatever it does...
-					-- with it, objects don't get hit by larger-than-1x1 objects if they're standing still
-					-- without it, as soon as the player hits a non-solid object, the both of them skate across the world
-					and xmin <= obj.pos[1]+1 and obj.pos[1]-1 <= xmax and math.abs(y-obj.pos[2]) < 1
+		end
+		if self.collidesWithObjects then
+			for _,obj in ipairs(game.objs) do
+				if obj ~= self then
+					local t
+					if moveY > 0 then	-- going up, test top of self with bottom of obj
+						--self.pos[2] + self.bbox.max[2] + moveY * t = obj.pos[2] + obj.bbox.min[2]
+						 t = (obj.pos[2] + obj.bbox.min[2] - self.pos[2] - self.bbox.max[2]) / moveY
+					elseif moveY < 0 then
+						--self.pos[2] + self.bbox.min[2] + moveY * t = obj.pos[2] + obj.bbox.max[2]
+						 t = (obj.pos[2] + obj.bbox.max[2] - self.pos[2] - self.bbox.min[2]) / moveY
+					else
+						error("moveY = 0")
+					end
+					if t >= 0 and t <= 1
+					and self.pos[1] + self.bbox.min[1] + moveX * t <= obj.pos[1] + obj.bbox.max[1]
+					and self.pos[1] + self.bbox.max[1] + moveX * t >= obj.pos[1] + obj.bbox.min[1]
 					then
 						do
-			
+				
+				-- this looks like a relic from the tile-linked obj lists
+				-- whatever it does...
+				-- with it, objects don't get hit by larger-than-1x1 objects if they're standing still
+				-- without it, as soon as the player hits a non-solid object, the both of them skate across the world
+				--[=[
+				and xmin <= obj.pos[1]+1 and obj.pos[1]-1 <= xmax and math.abs(y-obj.pos[2]) < 1
+				--]=]
+				--[=[
+				and math.floor(self.pos[1] + self.bbox.min[1]) <= math.floor(obj.pos[1] + obj.bbox.max[1])
+				and math.floor(self.pos[1] + self.bbox.max[1]) >= math.floor(obj.pos[1] + obj.bbox.min[1])
+				and math.floor(self.pos[2] + self.bbox.min[2]) <= math.floor(obj.pos[2] + obj.bbox.max[2])
+				and math.floor(self.pos[2] + self.bbox.max[2]) >= math.floor(obj.pos[2] + obj.bbox.min[2])
+				--]=]
 --]]
 							if obj.collidesWithObjects then
+								do --[[
 								if self.pos[1] + self.bbox.min[1] <= obj.pos[1] + obj.bbox.max[1]
 								and self.pos[1] + self.bbox.max[1] >= obj.pos[1] + obj.bbox.min[1]
 								and self.pos[2] + self.bbox.min[2] <= obj.pos[2] + obj.bbox.max[2]
 								and self.pos[2] + self.bbox.max[2] >= obj.pos[2] + obj.bbox.min[2]
 								then
+								--]]
 									-- run a pretouch routine that has the option to prevent further collision
 									local donttouch
 									if self.preTouchPriority >= obj.preTouchPriority then
@@ -461,19 +488,46 @@ function Object:move(moveX, moveY)
 --]]
 -- [[ world-bound entities
 			end
-			if self.collidesWithObjects then
-				for _,obj in ipairs(game.objs) do
-					if obj ~= self 
-					and math.abs(x-obj.pos[1]) < 1 and ymin <= obj.pos[2]+1 and obj.pos[2]-1 <= ymax
+		end
+
+		if self.collidesWithObjects then
+			for _,obj in ipairs(game.objs) do
+				if obj ~= self then
+					local t
+					if moveX > 0 then	-- going up, test top of self with bottom of obj
+						--self.pos[1] + self.bbox.max[1] + moveX * t = obj.pos[1] + obj.bbox.min[1]
+						 t = (obj.pos[1] + obj.bbox.min[1] - self.pos[1] - self.bbox.max[1]) / moveX
+					elseif moveX < 0 then
+						--self.pos[1] + self.bbox.min[1] + moveX * t = obj.pos[1] + obj.bbox.max[1]
+						 t = (obj.pos[1] + obj.bbox.max[1] - self.pos[1] - self.bbox.min[1]) / moveX
+					else
+						error("moveX = 0")
+					end
+					if t >= 0 and t <= 1
+					and self.pos[2] + self.bbox.min[2] + moveY * t <= obj.pos[2] + obj.bbox.max[2]
+					and self.pos[2] + self.bbox.max[2] + moveY * t >= obj.pos[2] + obj.bbox.min[2]
 					then
 						do
+
+				
+				--[=[
+				and math.abs(x-obj.pos[1]) < 1 and ymin <= obj.pos[2]+1 and obj.pos[2]-1 <= ymax
+				--]=]
+				--[=[
+				and math.floor(self.pos[1] + self.bbox.min[1]) <= math.floor(obj.pos[1] + obj.bbox.max[1])
+				and math.floor(self.pos[1] + self.bbox.max[1]) >= math.floor(obj.pos[1] + obj.bbox.min[1])
+				and math.floor(self.pos[2] + self.bbox.min[2]) <= math.floor(obj.pos[2] + obj.bbox.max[2])
+				and math.floor(self.pos[2] + self.bbox.max[2]) >= math.floor(obj.pos[2] + obj.bbox.min[2])
+				--]=]
 --]]
 							if obj.collidesWithObjects then
+								do --[[
 								if self.pos[1] + self.bbox.min[1] <= obj.pos[1] + obj.bbox.max[1]
 								and self.pos[1] + self.bbox.max[1] >= obj.pos[1] + obj.bbox.min[1]
 								and self.pos[2] + self.bbox.min[2] <= obj.pos[2] + obj.bbox.max[2]
 								and self.pos[2] + self.bbox.max[2] >= obj.pos[2] + obj.bbox.min[2]
 								then
+								--]]
 									local donttouch
 									if self.preTouchPriority >= obj.preTouchPriority then
 										donttouch = self:pretouch(obj, side) or donttouch
