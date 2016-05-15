@@ -1,6 +1,5 @@
 local class = require 'ext.class'
 local Object = require 'base.script.obj.object'
-local box2 = require 'vec.box2'
 local threads = require 'base.script.singleton.threads'
 local game = require 'base.script.singleton.game'
 local Hero = require 'zeta.script.obj.hero'
@@ -11,7 +10,7 @@ local Door = class(Object)
 Door.sprite = 'door'
 Door.useGravity = false
 Door.pushPriority = math.huge
-Door.bbox = box2(-.5, 0, .5, 2)
+Door.bbox = {min={-.5,0}, max={.5,2}}
 
 Door.timeOpening = .5
 Door.timeOpen = 3

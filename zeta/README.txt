@@ -13,11 +13,17 @@ TODO list
 - get savepoint loading to work
 - missile launcher missile ammo
 monsters:
-	- turrets
-		- traceline before shoot
-		- deactivated turrets should shoot at enemies.
+	- barriers only hit players if player is moving
+	- sawblades only hit geemers if geemers are moving
 	- geemers and doors don’t mix.  one pushes the other and the geemer teleports.
-	- moar cave monsters and moar rooms.  things that fly back and forth maybe. maybe some kind of shooter. 
+	- moar mining base monsters:
+		- flying drones ...
+		- other evil robots like you
+	- moar cave monsters.  
+		- venus fly traps
+		- close-range guy
+		- things that fly back and forth maybe
+		- maybe some kind of shooter
 
 VETOED list:
 - screen base spawning

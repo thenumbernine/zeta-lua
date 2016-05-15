@@ -28,7 +28,7 @@ function Sawblade:init(args)
 end
 
 function Sawblade:pretouch(other, side)
-	if self.power < .5 then return end
+	if self.power < .5 then return true end
 	if other.takeDamage then
 		other:takeDamage(self.damage, self, self, side)
 		local delta = (other.pos - self.pos):normalize()

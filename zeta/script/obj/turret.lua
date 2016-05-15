@@ -33,6 +33,8 @@ end
 
 -- look for player
 -- shoot at player
+Turret.searchDist = 10
+Turret.shootDist = 8
 Turret.rotationSpeed = 360 	-- degrees per second
 function Turret:update(dt)
 	Turret.super.update(self, dt)
@@ -46,14 +48,45 @@ function Turret:update(dt)
 		end
 	else
 		self.seq = nil
-		for _,player in ipairs(game.players) do
-			local delta = player.pos - self.pos
-			if delta:length() < 8 then
-				targetAngle = math.deg(math.atan2(delta[2], delta[1]))
-				if math.abs(self.angle - targetAngle) < 30 then
-					self:shoot()
+		local level = game.level
+		
+		-- TODO - flag for 'detected by turrets' ? 
+		local bestDist, bestObj, bestDelta
+		local Hero = require 'zeta.script.obj.hero'
+		local Geemer = require 'zeta.script.obj.geemer'
+		for _,obj in ipairs(game.objs) do
+			if obj:isa(Hero) or obj:isa(Geemer) then
+				local delta = obj.pos - self.pos
+				if delta:length() < self.searchDist then
+					local blocked
+					
+					local dist = math.max(math.abs(delta[1]), math.abs(delta[2]))
+					for i=0,dist-1 do
+						local f = (i+.5)/dist
+						local x = self.pos[1] + f * delta[1]
+						local y = self.pos[2] + f * delta[2] + .5
+						local tile = game.level:getTile(x,y)
+						if tile and tile.solid then
+							blocked = true
+							break
+						end
+					end
+
+					if not blocked then
+						if not bestDist or dist < bestDist then
+							bestDist = dist
+							bestObj = obj
+							bestDelta = delta
+						end
+					end
 				end
-				break
+			end
+		end
+		if bestObj then
+			targetAngle = math.deg(math.atan2(bestDelta[2], bestDelta[1]))
+			if bestDelta:length() < self.shootDist
+			and math.abs(self.angle - targetAngle) < 30 then
+				self:shoot()
 			end
 		end
 	end
