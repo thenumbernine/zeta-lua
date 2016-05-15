@@ -35,15 +35,13 @@ function Door:init(args)
 	end
 end
 
--- but if player isn't moving then pretouch won't fire ...
--- this is a common complaint ...
 function Door:pretouch(other, side)
 	if not other:isa(Hero) then return end
 	self.blockTime = game.time + 1
 end
 
-local white = {1,1,1,1}
 local vec4 = require 'vec.vec4'
+local white = {1,1,1,1}
 function Door:touch(other, side)
 	if not self.solid then return end
 	if not other:isa(Hero) then return end
@@ -115,8 +113,12 @@ Door.states = {
 	},
 	closed = {
 		enter = function(self,dt)
-			self.seq = 'stand'
-			self.solid = true
+			if game.time < self.blockTime then
+				self:setState'opening'
+			else
+				self.seq = 'stand'
+				self.solid = true
+			end
 		end,
 	},
 }

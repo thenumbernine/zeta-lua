@@ -89,21 +89,37 @@ function Game:update(dt)
 		end
 		
 		if obj.remove then
-			self.objs:remove(i)	-- remove from array
-			-- make sure it's not a player?
-			local spawnInfo = obj.spawnInfo
-			if spawnInfo then	-- unlink from spawnInfo 
-				spawnInfo.obj = nil	-- ... and respawn?
-				if self.respawnTime then
-					self:respawn(spawnInfo)
-				end
-			end
+			self.objs:remove(i)
+			self:doRemoveObj(obj)
 		end
 	end
 
 	-- add any new objects
 	while #self.newObjs > 0 do
-		self.objs:insert(1, self.newObjs:remove())
+		local obj = self.newObjs:remove()
+		if obj.remove then
+			-- don't bother add objects if they're already to-be-removed
+			-- (no single-rendered frame of existence)
+			self:doRemoveObj(obj)
+		else
+			self.objs:insert(1, obj)
+		end
+	end
+end
+
+-- private?
+function Game:doRemoveObj(obj)
+	-- make sure it's not a player?
+	local spawnInfo = obj.spawnInfo
+	if spawnInfo then	-- unlink from spawnInfo 
+		-- unlink obj from spawnInfo
+		if spawnInfo.obj == obj then
+			spawnInfo.obj = nil
+		end
+		-- ... and respawn?
+		if self.respawnTime then
+			self:respawn(spawnInfo)
+		end
 	end
 end
 
