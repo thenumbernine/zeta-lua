@@ -59,7 +59,10 @@ collision issues so far:
 	- TODO test grenade bouncing on doors
 	- movement still needs pushPriority implementation 
 	- jumping on stacks of items still make the player float in the air.  too many stuck collision tests?
-	- even stacks of geemerchunks makes the game slow down (kill 3x bosses at once to see this)
+	- make sure there aren't any more physics slowdowns
+	- give geemers their own solid type.  geemers are blocked by 'world' and 'yes'.  geemers touch 'yes'.  geemers were 'no', so any old 'no' touches that aim for geemers now need to add geemers.
+		- or make a flag to not collide with your own class (that most monsters may be using)
+		- or make a solid_monster that doesn't collide with other solid_monsters, that acts like above described.
 
 monsters:
 	- barriers only hit players if player is moving
