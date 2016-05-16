@@ -735,7 +735,7 @@ function Editor:updateGUI()
 			ig.ImVec2((ti+1)/tilesWide, (tj+1)/tilesHigh))	-- uv1
 	end
 
-	if ig.igCollapsingHeader('Display Options') then
+	if ig.igCollapsingHeader('Display...') then
 		self.viewSizePtr = self.viewSizePtr or ffi.new('float[1]')
 		self.viewSizePtr[0] = game.viewSize
 		ig.igSliderFloat('zoom', self.viewSizePtr, 1, math.max(level.size:unpack()), '%.3f', 3)
@@ -747,7 +747,7 @@ function Editor:updateGUI()
 		ig.igCheckbox('Show Spawn Infos', self.showSpawnInfos)
 		ig.igCheckbox('Show Objects', self.showObjects)
 		ig.igCheckbox('Show Rooms', self.showRooms)
-
+		ig.igSeparator()
 	end
 	if ig.igButton('remove all objs') then
 		for _,spawnInfo in ipairs(level.spawnInfos) do
@@ -764,7 +764,7 @@ function Editor:updateGUI()
 	self.showMoveWorldWindow = self.showMoveWorldWindow or ffi.new('bool[1]',false)
 	self.moveWorldWindowXPtr = self.moveWorldWindowXPtr or ffi.new('int[1]',0)
 	self.moveWorldWindowYPtr = self.moveWorldWindowYPtr or ffi.new('int[1]',0)
-	if ig.igButton('Move World') then
+	if ig.igButton('Move Whole World') then
 		self.showMoveWorldWindow[0] = true
 		self.moveWorldWindowXPtr[0] = 0
 		self.moveWorldWindowYPtr[0] = 0
@@ -782,38 +782,6 @@ function Editor:updateGUI()
 			self.showMoveWorldWindow[0] = false
 		end
 
-		ig.igEnd()
-	end
-
-	local initFileBufferSize = 65536
-	if not self.initFileBuffer then
-		self.initFileBuffer = ffi.new('char[?]', 65536)	-- hmm ... init files have a max size ...
-	end
-	self.showInitFileWindow = self.showInitFileWindow or ffi.new('bool[1]',false)
-	if ig.igButton('Edit Level Init Code') then
-		self.showInitFileWindow[0] = true
-		local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
-		local initFileData = file[dir..'/init.lua'] or ''
-		ffi.copy(self.initFileBuffer, initFileData, math.min(#initFileData, initFileBufferSize-1))
-		self.initFileBuffer[initFileBufferSize-1] = 0
-	end
-	if self.showInitFileWindow[0] then
-		ig.igBegin('Level Init Code', self.showInitFileWindow)
-		ig.igInputTextMultiline('code', self.initFileBuffer, initFileBufferSize,
-			ig.ImVec2(0,0),
-			ig.ImGuiInputTextFlags_AllowTabInput)
-		if ig.igButton('Save') then
-			self.initFileBuffer[initFileBufferSize-1] = 0
-			local code = ffi.string(self.initFileBuffer)
-			print('saving code',code)
-			local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
-			file[dir..'/init.lua'] = code
-			self.showInitFileWindow[0] = false
-		end
-		ig.igSameLine()
-		if ig.igButton('Cancel') then
-			self.showInitFileWindow[0] = false
-		end
 		ig.igEnd()
 	end
 
@@ -843,18 +811,51 @@ function Editor:updateGUI()
 		ig.igEnd()
 	end
 
-	ig.igSeparator()
-	if ig.igButton('Save Map') then
-		self:saveMap()
+	self.showInitFileWindow = self.showInitFileWindow or ffi.new('bool[1]',false)
+	if ig.igCollapsingHeader('File...') then
+		if ig.igButton('Save Map') then
+			self:saveMap()
+		end
+		if ig.igButton('Save Backgrounds') then
+			self:saveBackgrounds()
+		end
+		if ig.igButton('Save Texpack') then
+			self:saveTexPack()
+		end
+
+		local initFileBufferSize = 65536
+		if not self.initFileBuffer then
+			self.initFileBuffer = ffi.new('char[?]', 65536)	-- hmm ... init files have a max size ...
+		end
+		if ig.igButton('Edit Level Init Code') then
+			self.showInitFileWindow[0] = true
+			local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
+			local initFileData = file[dir..'/init.lua'] or ''
+			ffi.copy(self.initFileBuffer, initFileData, math.min(#initFileData, initFileBufferSize-1))
+			self.initFileBuffer[initFileBufferSize-1] = 0
+		end
+		ig.igSeparator()
 	end
-	if ig.igButton('Save Backgrounds') then
-		self:saveBackgrounds()
-	end
-	if ig.igButton('Save Texpack') then
-		self:saveTexPack()
+	if self.showInitFileWindow[0] then
+		ig.igBegin('Level Init Code', self.showInitFileWindow)
+		ig.igInputTextMultiline('code', self.initFileBuffer, initFileBufferSize,
+			ig.ImVec2(0,0),
+			ig.ImGuiInputTextFlags_AllowTabInput)
+		if ig.igButton('Save') then
+			self.initFileBuffer[initFileBufferSize-1] = 0
+			local code = ffi.string(self.initFileBuffer)
+			print('saving code',code)
+			local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
+			file[dir..'/init.lua'] = code
+			self.showInitFileWindow[0] = false
+		end
+		ig.igSameLine()
+		if ig.igButton('Cancel') then
+			self.showInitFileWindow[0] = false
+		end
+		ig.igEnd()
 	end
 
-	ig.igSeparator()
 
 	ig.igRadioButton('Edit Tiles', self.editMode, editModeTiles)
 	ig.igRadioButton('Edit Objects', self.editMode, editModeObjects)
@@ -904,7 +905,9 @@ function Editor:updateGUI()
 				end
 			end
 		end
-		if ig.igCollapsingHeader('Tile Type Options:',0) then
+		if self.paintingTileType[0]
+		and ig.igCollapsingHeader('Tile Type Options:',0)
+		then
 			for i=0,#self.tileOptions do
 				local tileOption = self.tileOptions[i]	
 				local tex = tileOption.tex
@@ -933,8 +936,10 @@ function Editor:updateGUI()
 				end
 			end
 		end
-		
-		if ig.igCollapsingHeader('Tile Options:') then
+	
+		if (self.paintingFgTile[0] or self.paintingBgTile[0])
+		and ig.igCollapsingHeader('Tile Options:')
+		then
 			for _,side in ipairs{'Fg', 'Bg'} do
 				ig.igPushIdStr(side)
 				local lc = side:lower()	
@@ -954,7 +959,10 @@ function Editor:updateGUI()
 					self.selectedBgTileIndex, self.selectedFgTileIndex
 			end
 		end
-		if ig.igCollapsingHeader('Background Options:') then
+		
+		if self.paintingBackground[0]
+		and ig.igCollapsingHeader('Background Options:')
+		then
 			for i=0,#self.backgroundOptions do
 				local background = self.backgroundOptions[i].background
 				

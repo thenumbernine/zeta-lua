@@ -24,6 +24,9 @@ monsters:
 		- close-range guy
 		- things that fly back and forth maybe
 		- maybe some kind of shooter
+rooms
+	- fixed? 16x16? 24x24? 32x32?
+	- arbitrary?
 
 VETOED list:
 - screen base spawning
