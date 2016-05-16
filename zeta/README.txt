@@ -5,9 +5,10 @@ TODO list
 	- move texpack tiles and change map tiles accordingly
 	- separate 'object' into 'create object' and 'select object'
 	- click-and-drag on tile selection to form rectangles for brush + stamp size?
-	- distinction between numbers and strings
+	- separate fields for numbers and strings
 	- toggle editor for strings and multi-line strings (maybe a popup button?)
-	- for editing vec2's, show as a point or as a vector .. maybe even click and drag to change? 
+	- for editing vec2's, show as a point or as a vector .. maybe even click and drag to change? helped by obj ctor arg tips?
+	- for vec4's ... show as a box2? toggle-able, like vectors?
 	- object classes use 'spawnfields' for editor fields, types, and tooltips
 - environmental effects ... foreground warping (underwater, heat), blowing wind, falling snow/rain/leaves, etc
 - get savepoint loading to work
@@ -40,9 +41,6 @@ monsters:
 		- close-range guy
 		- things that fly back and forth maybe
 		- maybe some kind of shooter
-map:
-	- give object a 'bbox' field.  make it editor-friendly. change geemer-left-wall and geemer-right-wall to have a 1x3 bbox by default
-	- make the boss geemer a spawnpoint.  have it die-on-creation immediately.
 
 rooms
 	- fixed? 16x16? 24x24? 32x32?
