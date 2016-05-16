@@ -748,6 +748,11 @@ end
 
 
 function Object:move(dx,dy)
+	
+	-- make sure you can't hit an object twice in the same movement
+	-- TODO less allocations here. right now i'm making a vec2 every time I look up tilesTested
+	local objsTested
+	local tilesTested
 
 --print()
 --print('================')
@@ -759,11 +764,6 @@ function Object:move(dx,dy)
 	if math.abs(dx) < collisionEpsilon then dx = 0 end
 	if math.abs(dy) < collisionEpsilon then dy = 0 end
 --print('dx,dy after epsilon test:',vec2(dx,dy))
-
-	-- you can't hit an object twice in the same movement
-	-- key is object, value is true
-	local objsTested = {}
-	local tilesTested = {}
 
 	local t = 0
 	local dt = 1
@@ -820,7 +820,7 @@ function Object:move(dx,dy)
 						local tile = level:getTile(x,y)
 						if tile
 						and tile.solid
-						and not tilesTested[x..','..y]
+						and (not tilesTested or not table.find(tilesTested, vec2(x,y)))
 						then
 							local newSide
 							newSide, dt = testBox(self, x,y,x+1,y+1, dt, dx, dy)
@@ -853,7 +853,7 @@ function Object:move(dx,dy)
 				or bit.band(obj.blockFlags, self.solidFlags) ~= 0
 			)
 			-- don't check objects twice
-			and not objsTested[obj]
+			and (not objsTested or not table.find(objsTested, obj))
 			then
 				local newSide
 				newSide, dt = testBox(self, obj.pos[1]+obj.bbox.min[1], obj.pos[2]+obj.bbox.min[2], obj.pos[1]+obj.bbox.max[1], obj.pos[2]+obj.bbox.max[2], dt, dx, dy)
@@ -900,10 +900,12 @@ function Object:move(dx,dy)
 			-- then the next traceline won't check it
 			if touchedObj then
 --print('adding obj',touchedObj,'to the already-checked list')				
-				objsTested[touchedObj] = true
+				if not objsTested then objsTested = {} end
+				table.insert(objsTested, touchedObj)
 			end
 			if touchedTile then
-				tilesTested[touchedTileX..','..touchedTileY] = true
+				if not tilesTested then tilesTested = {} end
+				table.insert(tilesTested, vec2(touchedTileX,touchedTileY))
 			end
 
 			-- run 'touch' after velocity clipping
