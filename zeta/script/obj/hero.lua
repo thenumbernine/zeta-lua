@@ -206,6 +206,8 @@ function Hero:update(dt)
 	-- only spawn what's in our room
 	local roomPosX, roomPosY = level:getMapTilePos(self.pos:unpack())
 	self.room = level:getRoomAtMapTilePos(roomPosX, roomPosY)
+
+	-- [[ create/remove objects based on our current room 
 	if self.room ~= self.lastRoom then
 		for _,spawnInfo in ipairs(level.spawnInfos) do
 			local spawnInfoRoom = level:getRoom(table.unpack(spawnInfo.pos))
@@ -219,6 +221,7 @@ function Hero:update(dt)
 		end
 		self.lastRoom = self.room
 	end
+	--]]
 
 	self.ammoCells = math.min(self.maxAmmoCells, self.ammoCells + self.maxAmmoCells * dt / self.rechargeCellsTime)
 

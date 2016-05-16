@@ -1,5 +1,6 @@
 TODO list
 
+- go ahead and put ext & vec on global namespace.  they're probably already there.
 - editor: 
 	- move texpack tiles and change map tiles accordingly
 	- separate 'object' into 'create object' and 'select object'
@@ -7,11 +8,52 @@ TODO list
 	- distinction between numbers and strings
 	- toggle editor for strings and multi-line strings (maybe a popup button?)
 	- for editing vec2's, show as a point or as a vector .. maybe even click and drag to change? 
-- object classes use 'spawnfields' for editor fields, types, and tooltips
+	- object classes use 'spawnfields' for editor fields, types, and tooltips
 - fix collisions with sloped tiles.  determine ymin and ymax on the x side of sloped tiles and test that against object bbox. 
 - environmental effects ... foreground warping (underwater, heat), blowing wind, falling snow/rain/leaves, etc
 - get savepoint loading to work
 - missile launcher missile ammo
+collision:
+[player,geemer,turrets] + world = push
+[missiles,grenades] + world = push
+[missiles,grenades] + [player, 	
+
+										world	p.		g.		item	s.		b.		
+world									-
+player, geemer, turrets					push	push			
+shot									push	push	push
+item									push	touch	-		-
+saw blades and electric barriers		-		touch	touch	-		-
+
+'-': no collision
+'push': collision does not interpenetrate.  it stops on the surface to resolve.
+'touch': collision evaluation still happens at the surface, but the collision can interpenetrate.
+
+'shot': shots.  blaster shot, plasma shot, 
+	shot pushes all objects except sawblades and electric barriers ... only grenades hit them
+
+'item': anything pick-up-able (item subclasses) and anything interactable (playerLook behaviors) 
+	world pushes this.  nothing else pushes it.  it is affected by gravity. it doesn't push anything.
+
+how to implement this:
+collision flags:
+	world		is 00001 touches 00000 collides 00000 (map, doors, break blocks, ... lifts, ...)
+	solid		is 00010 touches 11111 collides 00011 (player, geemer, turret)
+	shot		is 00100 touches 10011 collides 00111 (blaster shot, plasma shot)
+	item		is 01000 touches 00011 collides 00001 (any item subclass, terminal, savepoint, energy refill)
+	nonsolid	is 10000 touches 00010 collides 00000
+
+
+collidesWithWorld:
+	- everyone should have this set
+	- except sawblades and barriers, and anything that wants to go through the floor
+		... and better not have 'useGravity' set
+
+issues so far:
+	- break blocks aren't hit by shots and don't block falling items 
+	- barriers don't stop players
+
+
 monsters:
 	- barriers only hit players if player is moving
 	- sawblades only hit geemers if geemers are moving

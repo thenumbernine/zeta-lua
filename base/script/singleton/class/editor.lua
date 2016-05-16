@@ -23,7 +23,8 @@ local Object = require'base.script.obj.object'
 
 local Editor = class()
 
-Editor.active = true
+--Editor.active = true
+Editor.active = false
 
 Editor.brushOptions = table()
 
