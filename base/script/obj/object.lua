@@ -50,6 +50,7 @@ function Object:init(args)
 	if args.solid ~= nil then self.solid = args.solid end
 	if args.drawScale then self.drawScale = vec2(table.unpack(args.drawScale)) end
 	if args.color then self.color = {table.unpack(args.color)} end 
+	if args.bbox then self.bbox = box2(table.unpack(args.bbox)) end
 
 	game:addObject(self)	-- only do this once per object.  don't reuse, or change the uid system
 

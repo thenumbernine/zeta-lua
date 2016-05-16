@@ -12,20 +12,20 @@ local level = game.level
 local session = game.session
 local player = game.players[1]
 -- find object named ...
-local function findObjNamed(objName)
+local function findObjNamed(name)
 	return select(2, game.objs:find(nil, function(obj)
-		return obj.spawnInfo and obj.spawnInfo.objName == objName
+		return obj.spawnInfo and obj.spawnInfo.name == name
 	end))
 end
 -- find spawn info named ...
-local function findSpawnInfoNamed(objName)
+local function findSpawnInfoNamed(name)
 	return select(2,level.spawnInfos:find(nil, function(spawnInfo)
-		return spawnInfo.objName == objName
+		return spawnInfo.name == name
 	end))
 end
 -- respawn an object.  removes it if it exists
-local function respawn(objName, ...)
-	local spawnInfo = findSpawnInfoNamed(objName)
+local function respawn(name, ...)
+	local spawnInfo = findSpawnInfoNamed(name)
 	if not spawnInfo then return end
 	spawnInfo:removeObj()
 	spawnInfo:respawn(...)
@@ -59,7 +59,12 @@ function Sandbox:init(f, argstr, ...)
 		local threads = require 'base.script.singleton.threads'
 		threads:add(function(...)
 			coroutine.yield()
-			f(...)
+			xpcall(f, function(err)
+				print('sandbox error while executing code')
+				print(tostring(code):split'\n':map(function(line,i) return i..': '..line end):concat'\n')
+				print(tostring(reason))
+				print(debug.traceback())
+			end, ...)
 		end, ...)
 	end
 end
