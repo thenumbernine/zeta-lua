@@ -242,28 +242,36 @@ function Hero:update(dt)
 					self.pos[2] + level.mapTileSize[2] * dir[2])
 				different[side] = sideRoom ~= self.room
 			end
-			if different.left and different.right then
-				targetPosX = (roomPosX - .5) * level.mapTileSize[1] + 1
-			elseif different.left or different.right then
-				if different.right then
-					targetPosX = math.min(targetPosX, roomPosX * level.mapTileSize[1] + 1 - viewSizeX)
-				elseif different.left then
-					targetPosX = math.max(targetPosX, (roomPosX-1) * level.mapTileSize[1] + 1 + viewSizeX)
-				end
+			
+			local pushedRight, pushedLeft
+			if different.right then
+				targetPosX = math.min(targetPosX, roomPosX * level.mapTileSize[1] + 1 - viewSizeX)
+				pushedRight = true
 			end
-			if different.up and different.down then
+			if different.left then
+				targetPosX = math.max(targetPosX, (roomPosX-1) * level.mapTileSize[1] + 1 + viewSizeX)
+				pushedLeft = true
+			end
+			if pushedRight and pushedLeft then
+				targetPosX = (roomPosX - .5) * level.mapTileSize[1] + 1
+			end
+			
+			local pushedUp, pushedDown
+			if different.up then
+				targetPosY = math.min(targetPosY, roomPosY * level.mapTileSize[2] + 1 - viewSizeY)
+				pushedUp = true
+			end
+			if different.down then
+				targetPosY = math.max(targetPosY, (roomPosY-1) * level.mapTileSize[2] + 1 + viewSizeY)
+				pushedDown = true
+			end
+			if pushedUp and pushedDown then
 				targetPosY = (roomPosY - .5) * level.mapTileSize[2] + 1
-			elseif different.up or different.down then
-				if different.up then
-					targetPosY = math.min(targetPosY, roomPosY * level.mapTileSize[2] + 1 - viewSizeY)
-				elseif different.down then
-					targetPosY = math.max(targetPosY, (roomPosY-1) * level.mapTileSize[2] + 1 + viewSizeY)
-				end
 			end
 		end
 		
-		self.viewPos[1] = self.viewPos[1] + .5 *  (targetPosX - self.viewPos[1])
-		self.viewPos[2] = self.viewPos[2] + .9 *  (targetPosY - self.viewPos[2])
+		self.viewPos[1] = self.viewPos[1] + .3 *  (targetPosX - self.viewPos[1])
+		self.viewPos[2] = self.viewPos[2] + .3 *  (targetPosY - self.viewPos[2])
 	end
 
 	self.inputRun = self.inputJumpAux
