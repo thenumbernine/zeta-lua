@@ -14,7 +14,9 @@ end
 GeemerChunk.bbox = box2(-.2, 0, .2, .4)
 GeemerChunk.collidesWithWorld = true
 GeemerChunk.collidesWithObjects = false
-
+GeemerChunk.solidFlags = 0
+GeemerChunk.touchFlags = 0
+GeemerChunk.blockFlags = GeemerChunk.SOLID_WORLD
 
 -- TODO personal gravity and personal fall speed limit
 function GeemerChunk:update(...)

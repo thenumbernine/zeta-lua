@@ -52,11 +52,12 @@ how the flags work:
 	if self's blockFlags and obj's solidFLags then this blocks the object
 
 collision issues so far:
-	- on the plus side, now you can run past terminals.  before a collision bug would force you to start walking again.
 	- player can still duck and jump on the top of a ladder with solid above and get halfway stuck in the ceiling
+	- duck then stand up with a monster on your head.  it doesn't work
 	- get slopes working
-	- jump near a wall and shoot. your jump will stop. 
-	- grenade bouncing is messy.  they fall thru floor sometimes.  they stop at doors.
+	- jump near a wall and shoot. your jump will stop midair. 
+	- TODO test grenade bouncing on doors
+	- movement still needs pushPriority implementation 
 
 monsters:
 	- barriers only hit players if player is moving
