@@ -35,7 +35,9 @@ function Barrier:pretouch(other, side)
 end
 
 Barrier.solidFlags = 0
-Barrier.touchFlags = Barrier.SOLID_YES + Barrier.SOLID_GRENADE
+Barrier.touchFlags = Barrier.SOLID_YES -- for player
+					+ Barrier.SOLID_NO -- for geemer
+					+ Barrier.SOLID_GRENADE -- for grenades
 Barrier.blockFlags = 0 
 Barrier.touch_v2 = Barrier.pretouch
 

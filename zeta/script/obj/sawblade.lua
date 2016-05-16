@@ -38,7 +38,9 @@ function Sawblade:pretouch(other, side)
 	end
 end
 Sawblade.solidFlags = 0
-Sawblade.touchFlags = Sawblade.SOLID_YES + Sawblade.SOLID_GRENADE
+Sawblade.touchFlags = Sawblade.SOLID_YES -- player
+					+ Sawblade.SOLID_NO -- geemer
+					+ Sawblade.SOLID_GRENADE -- grenades
 Sawblade.blockFlags = 0
 Sawblade.touch_v2 = Sawblade.pretouch
 
