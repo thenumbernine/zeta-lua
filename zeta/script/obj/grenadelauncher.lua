@@ -47,7 +47,10 @@ local Grenade = (function()
 			if tile.onHit then
 				tile:onHit(self, side)
 			end
-			self:bounceOff(plane or dirs[oppositeSide[side]])
+			if self:bounceOff(plane or dirs[oppositeSide[side]]) then
+				self.pos[1] = self.lastpos[1]
+				self.pos[2] = self.lastpos[2]
+			end
 		end
 	end
 
@@ -56,7 +59,9 @@ local Grenade = (function()
 		if self.remove then return end
 		local Item = require 'zeta.script.obj.item'
 		if other:isa(Item) then return end
-		if Grenade.super.pretouch(self, other, side) then return true end
+		if self.kickedBy == other and self.kickHandicapTime >= game.time then
+			return true
+		end
 -- [[ detonate on impact?
 		if other.takeDamage then
 			other:takeDamage(self.damage, self.shooter, self, side)
@@ -65,7 +70,10 @@ local Grenade = (function()
 		end
 --]]
 		if other.solid then
-			self:bounceOff(dirs[oppositeSide[side]])
+			if self:bounceOff(dirs[oppositeSide[side]]) then
+				self.pos[1] = self.lastpos[1]
+				self.pos[2] = self.lastpos[2]
+			end
 		end
 		return true
 	end
@@ -77,15 +85,10 @@ local Grenade = (function()
 	function Grenade:touchTile_v2(tile, side, normal)
 		if tile and tile.solid then
 			self:bounceOff(normal)
-			if self.vel:dot(normal) <= 0 then 
-				return
-			end
-			--return true
 		end
 	end
 	function Grenade:touch_v2(other, side)
 		if self.remove then return true end
---		if other == self.shooter then return true end
 		if self.kickedBy == other and self.kickHandicapTime >= game.time then
 			return true
 		end
@@ -100,10 +103,6 @@ local Grenade = (function()
 		-- bounce
 		local normal = dirs[oppositeSide[side]]
 		self:bounceOff(normal)
-		if self.vel:dot(normal) <= 0 then
-			return
-		end
-		return true
 	end
 
 	function Grenade:hit()
@@ -127,10 +126,9 @@ local Grenade = (function()
 		vel[2] = vel[2] - normal[2] * r 
 		self.rotation = (math.random()*2-1) * 360
 		self.vel = vel
-		self.pos[1] = self.lastpos[1]
-		self.pos[2] = self.lastpos[2]
 		-- TODO transfer force into the object we hit?
 		-- esp if it's a grenade?
+		return true
 	end
 
 	function Grenade:blast(alreadyHit)

@@ -5,7 +5,8 @@ local game = require 'base.script.singleton.game'
 local Sawblade = class(Object)
 Sawblade.sprite = 'sawblade'
 Sawblade.solid = false
-Sawblade.bbox = {min={-.85,-.85+.5}, max={.85,.85+.5}}
+local radius = .5
+Sawblade.bbox = {min={-radius,-radius+.5}, max={radius,radius+.5}}
 Sawblade.rotCenter = {.5,.5}
 Sawblade.useGravity = false
 Sawblade.travel = {0,3}

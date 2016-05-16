@@ -9,8 +9,8 @@ SavePoint.sprite = 'savepoint'
 SavePoint.solid = false
 
 SavePoint.solidFlags = 0
-SavePoint.touchFlags = Object.SOLID_WORLD + Object.SOLID_YES
-SavePoint.blockFlags = Object.SOLID_WORLD
+SavePoint.touchFlags = SavePoint.SOLID_WORLD + SavePoint.SOLID_YES
+SavePoint.blockFlags = SavePoint.SOLID_WORLD
 
 function SavePoint:playerUse(player)
 	threads:add(function()

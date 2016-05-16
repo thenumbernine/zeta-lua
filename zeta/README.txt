@@ -51,12 +51,9 @@ how the flags work:
 	if self's touchFlags and obj's solidFlags then we run the touch function
 	if self's blockFlags and obj's solidFLags then this blocks the object
 
-collidesWithWorld:
-	- everyone should have this set
-	- except sawblades and barriers, and anything that wants to go through the floor
-		... and better not have 'useGravity' set
-
 collision issues so far:
+	- on the plus side, now you can run past terminals.  before a collision bug would force you to start walking again.
+	- player can still duck and jump on the top of a ladder with solid above and get halfway stuck in the ceiling
 	- get slopes working
 	- jump near a wall and shoot. your jump will stop. 
 	- grenade bouncing is messy.  they fall thru floor sometimes.  they stop at doors.

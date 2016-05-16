@@ -184,6 +184,11 @@ function Geemer:touch(other, side)
 	end
 end
 
+function Geemer:touch_v2(other, side)
+	if self:pretouch(other, side) then return true end
+	self:touch(other, side)
+end
+
 function Geemer:draw(R, viewBBox, ...)
 	local ofs = 0
 	if game.time < self.shakeEndTime then

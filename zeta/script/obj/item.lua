@@ -32,8 +32,8 @@ end
 
 -- new touch system
 Item.solidFlags = 0
-Item.touchFlags = Object.SOLID_WORLD + Object.SOLID_YES
-Item.blockFlags = Object.SOLID_WORLD
+Item.touchFlags = Item.SOLID_WORLD + Item.SOLID_YES
+Item.blockFlags = Item.SOLID_WORLD
 function Item:touch_v2(other, side)
 	if other == self.heldby then return true end
 end

@@ -9,8 +9,8 @@ EnergyRefill.sprite = 'energyrefill'
 EnergyRefill.solid = false
 
 EnergyRefill.solidFlags = 0
-EnergyRefill.touchFlags = Object.SOLID_WORLD + Object.SOLID_YES
-EnergyRefill.blockFlags = Object.SOLID_WORLD
+EnergyRefill.touchFlags = EnergyRefill.SOLID_WORLD + EnergyRefill.SOLID_YES
+EnergyRefill.blockFlags = EnergyRefill.SOLID_WORLD
 
 -- TODO get from animsys:
 local sparkSeqTime = .5

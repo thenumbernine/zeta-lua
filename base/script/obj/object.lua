@@ -606,9 +606,20 @@ Object.SOLID_SHOT = 4
 Object.SOLID_ITEM = 8
 Object.SOLID_NO = 16
 Object.SOLID_GRENADE = 32
+
+-- what you are.  used as a reference for others.
 Object.solidFlags = Object.SOLID_YES	-- have 'yes'-flags react to you
+
+-- what you can touch.  
+-- if your touch flag matches their solid flag (or vice versa) 
+-- then both yours and their touch functions will trigger,
+-- in order according to each of your touchPriority
 Object.touchFlags = -1					-- call touch for everything
+
+-- what blocks you
+-- notice if you want something's block to pass thru then have your touch function to return true 
 Object.blockFlags = Object.SOLID_WORLD + Object.SOLID_YES
+
 function Object:move(dx,dy)
 
 local Hero = {}--require 'zeta.script.obj.hero'
@@ -647,7 +658,6 @@ print('dx,dy after epsilon test:',vec2(dx,dy))
 		local touchedTile
 		local touchedTileX, touchedTileY
 		local side
-		local sideDim
 print(' =================')
 print(' == BEGIN TRACE ==')
 print(' =================')
@@ -689,14 +699,12 @@ print('testing bbox',box)
 				-- TODO push back as well?
 				if depthX > depthY then
 					side = sideX
-					sideDim = 1
 					touchedObj = obj
 					touchedTile = tile
 					touchedTileX = box.min[1]
 					touchedTileY = box.min[2]
 				else
 					side = sideY
-					sideDim = 2
 					touchedObj = obj
 					touchedTile = tile
 					touchedTileX = box.min[1]
@@ -769,7 +777,6 @@ print('checking x collision time',dtx,'to current step time',dt)
 print('found it is better - using it')				
 					dt = dtx
 					side = sideX
-					sideDim = 1
 					touchedObj = obj
 					touchedTile = tile
 					touchedTileX = box.min[1]
@@ -780,7 +787,6 @@ print('checking y collision time',dty,'to current step time',dt)
 print('found it is better - using it')
 					dt = dty
 					side = sideY
-					sideDim = 2
 					touchedObj = obj
 					touchedTile = tile
 					touchedTileX = box.min[1]
@@ -883,10 +889,8 @@ print('stepping by timestep dt=',dt)
 print('collided on side',side)
 		if side then
 			local lside = side:lower()
-
-			-- if we got a side then we shoul dget a sideDim that goes along with this
-			-- TODO replace sideDim with surface normal
-			assert(sideDim, "got side set without sideDim")
+			local normal = dirs[oppositeSide[lside]]
+			assert(normal, "got side set without normal")
 
 			-- don't check this object again
 			-- that way if it can be passed through
@@ -905,7 +909,6 @@ print('adding obj',touchedObj,'to the already-checked list')
 			if touchedTile then
 print('calling self.touchTile_v2',self.touchTile_v2,touchedTile,lside,plane)
 				local plane = nil	-- TODO for sloped tiles
-				local normal = dirs[oppositeSide[lside]]
 				if self.touchTile_v2 then dontblock = self:touchTile_v2(touchedTile, lside, normal) or dontblock end
 			end
 			
@@ -944,12 +947,17 @@ print('setting collision flags for side',side,'for obj',touchedObj)
 				self['touchEnt'..side] = touchedObj
 
 				-- clip velocity and movement on the collided axis and try again
-print('zeroing velocity on side',sideDim)
-				self.vel[sideDim] = 0
-				if sideDim == 1 then
-					dx = 0
-				else
-					dy = 0
+print('zeroing velocity against normal',normal)
+				local vDotN = self.vel:dot(normal)
+				if vDotN < 0 then
+					self.vel[1] = self.vel[1] - normal[1] * vDotN
+					self.vel[2] = self.vel[2] - normal[2] * vDotN
+				end
+				
+				local deltaDotN = dx * normal[1] + dy * normal[2]
+				if deltaDotN < 0 then
+					dx = dx - normal[1] * deltaDotN
+					dy = dy - normal[2] * deltaDotN
 				end
 			end
 		end
