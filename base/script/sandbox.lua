@@ -24,11 +24,11 @@ local function findSpawnInfoNamed(objName)
 	end))
 end
 -- respawn an object.  removes it if it exists
-local function respawn(objName)
+local function respawn(objName, ...)
 	local spawnInfo = findSpawnInfoNamed(objName)
 	if not spawnInfo then return end
 	spawnInfo:removeObj()
-	spawnInfo:respawn()
+	spawnInfo:respawn(...)
 	return spawnInfo.obj
 end
 ]] 

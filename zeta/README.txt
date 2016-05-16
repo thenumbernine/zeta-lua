@@ -9,54 +9,18 @@ TODO list
 	- toggle editor for strings and multi-line strings (maybe a popup button?)
 	- for editing vec2's, show as a point or as a vector .. maybe even click and drag to change? 
 	- object classes use 'spawnfields' for editor fields, types, and tooltips
-- fix collisions with sloped tiles.  determine ymin and ymax on the x side of sloped tiles and test that against object bbox. 
 - environmental effects ... foreground warping (underwater, heat), blowing wind, falling snow/rain/leaves, etc
 - get savepoint loading to work
 - missile launcher missile ammo
-collision:
-[player,geemer,turrets] + world = push
-[missiles,grenades] + world = push
-[missiles,grenades] + [player, 	
-
-										world	p.		g.		item	s.		b.		
-world									-
-player, geemer, turrets					push	push			
-shot									push	push	push
-item									push	touch	-		-
-saw blades and electric barriers		-		touch	touch	-		-
-
-'-': no collision
-'push': collision does not interpenetrate.  it stops on the surface to resolve.
-'touch': collision evaluation still happens at the surface, but the collision can interpenetrate.
-
-'shot': shots.  blaster shot, plasma shot, 
-	shot pushes all objects except sawblades and electric barriers ... only grenades hit them
-
-'item': anything pick-up-able (item subclasses) and anything interactable (playerLook behaviors) 
-	world pushes this.  nothing else pushes it.  it is affected by gravity. it doesn't push anything.
-
-how to implement this:
-collision flags:
-	world		solidFlags 00001 touchFlags 00000 blockFlags 00000 (map, doors, break blocks, ... lifts, ...)
-	yes			solidFlags 00010 touchFlags 11111 blockFlags 00011 (player, geemer, turret)
-	shot		solidFlags 00100 touchFlags 10011 blockFlags 00111 (blaster shot, plasma shot)
-	item		solidFlags 01000 touchFlags 00011 blockFlags 00001 (any item subclass, terminal, savepoint, energy refill)
-	no			solidFlags 10000 touchFlags 00010 blockFlags 00000
-	grenade		solidFlags 00000 touchFlags 10011 blockFlags 00001
-
-how the flags work:
-	if self is moving
-	and it hits obj
-	then...
-	if self's touchFlags and obj's solidFlags then we run the touch function
-	if self's blockFlags and obj's solidFLags then this blocks the object
-
-collision issues so far:
+- environment for level/init.lua and for sandboxes
+collision v1:
+	- fix collisions with sloped tiles.  determine ymin and ymax on the x side of sloped tiles and test that against object bbox. 
+collision v2:
 	- player can still duck and jump on the top of a ladder with solid above and get halfway stuck in the ceiling
-	- duck then stand up with a monster on your head.  it doesn't work
+	- duck then stand up with a monster on your head.  you get stuck in the monster.
 	- get slopes working
 	- jump near a wall and shoot. your jump will stop midair. 
-	- TODO test grenade bouncing on doors
+	- grenades still don't bounce on doors
 	- movement still needs pushPriority implementation 
 	- jumping on stacks of items still make the player float in the air.  too many stuck collision tests?
 	- make sure there aren't any more physics slowdowns
@@ -76,6 +40,10 @@ monsters:
 		- close-range guy
 		- things that fly back and forth maybe
 		- maybe some kind of shooter
+map:
+	- give object a 'bbox' field.  make it editor-friendly. change geemer-left-wall and geemer-right-wall to have a 1x3 bbox by default
+	- make the boss geemer a spawnpoint.  have it die-on-creation immediately.
+
 rooms
 	- fixed? 16x16? 24x24? 32x32?
 	- arbitrary?

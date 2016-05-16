@@ -28,7 +28,7 @@ function Game:glInit(R)
 	gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
 end
 
-Game.viewSize = 12
+Game.viewSize = 16
 
 function Game:init()
 	self:resetObjects()
