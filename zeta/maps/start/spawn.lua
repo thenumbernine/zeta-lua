@@ -360,7 +360,7 @@
 	{pos={74.5,142},spawn="zeta.script.obj.redgeemer"},
 	{pos={78.5,143},spawn="zeta.script.obj.geemer"},
 	{pos={77.5,143},spawn="zeta.script.obj.geemer"},
-	{pos={90.5,196},spawn="zeta.script.obj.terminal",text="Journal Entry:\nWhen mining in the crust of this planet we stumbled across a unique cave system.\nNot sure how they were formed.\nThe minerals seem to proceed through the caves.\nThe prospecting company is eager for us to follow."},
+	{pos={58.5,196},spawn="zeta.script.obj.terminal",text="Journal Entry:\nWhen mining in the crust of this planet we stumbled across a unique cave system.\nNot sure how they were formed.\nThe minerals seem to proceed through the caves.\nThe prospecting company is eager for us to follow."},
 	{color={1,0,0,1},pos={48.5,189},spawn="zeta.script.obj.door"},
 	{color={1,0,0,1},pos={49.5,189},spawn="zeta.script.obj.door"},
 	{color={1,0,0,1},pos={49.5,167},spawn="zeta.script.obj.door"},

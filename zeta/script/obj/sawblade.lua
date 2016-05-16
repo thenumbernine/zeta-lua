@@ -1,8 +1,8 @@
 local class = require 'ext.class'
-local Enemy = require 'zeta.script.obj.enemy'
+local Object = require 'base.script.obj.object'
 local game = require 'base.script.singleton.game'
 
-local Sawblade = class(Enemy)
+local Sawblade = class(Object)
 Sawblade.sprite = 'sawblade'
 Sawblade.solid = false
 Sawblade.bbox = {min={-.85,-.85+.5}, max={.85,.85+.5}}
@@ -36,6 +36,10 @@ function Sawblade:pretouch(other, side)
 		other.vel[2] = other.vel[2] + delta[2] * self.pushForce
 	end
 end
+Sawblade.solidFlags = 0
+Sawblade.touchFlags = Sawblade.SOLID_YES + Sawblade.SOLID_GRENADE
+Sawblade.blockFlags = 0
+Sawblade.touch_v2 = Sawblade.pretouch
 
 Sawblade.powerChangeRate = 3	-- how long does it take to start/stop?
 function Sawblade:update(dt)

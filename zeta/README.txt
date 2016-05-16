@@ -37,22 +37,29 @@ saw blades and electric barriers		-		touch	touch	-		-
 
 how to implement this:
 collision flags:
-	world		is 00001 touches 00000 collides 00000 (map, doors, break blocks, ... lifts, ...)
-	solid		is 00010 touches 11111 collides 00011 (player, geemer, turret)
-	shot		is 00100 touches 10011 collides 00111 (blaster shot, plasma shot)
-	item		is 01000 touches 00011 collides 00001 (any item subclass, terminal, savepoint, energy refill)
-	nonsolid	is 10000 touches 00010 collides 00000
+	world		solidFlags 00001 touchFlags 00000 blockFlags 00000 (map, doors, break blocks, ... lifts, ...)
+	yes			solidFlags 00010 touchFlags 11111 blockFlags 00011 (player, geemer, turret)
+	shot		solidFlags 00100 touchFlags 10011 blockFlags 00111 (blaster shot, plasma shot)
+	item		solidFlags 01000 touchFlags 00011 blockFlags 00001 (any item subclass, terminal, savepoint, energy refill)
+	no			solidFlags 10000 touchFlags 00010 blockFlags 00000
+	grenade		solidFlags 00000 touchFlags 10011 blockFlags 00001
 
+how the flags work:
+	if self is moving
+	and it hits obj
+	then...
+	if self's touchFlags and obj's solidFlags then we run the touch function
+	if self's blockFlags and obj's solidFLags then this blocks the object
 
 collidesWithWorld:
 	- everyone should have this set
 	- except sawblades and barriers, and anything that wants to go through the floor
 		... and better not have 'useGravity' set
 
-issues so far:
-	- break blocks aren't hit by shots and don't block falling items 
-	- barriers don't stop players
-
+collision issues so far:
+	- get slopes working
+	- jump near a wall and shoot. your jump will stop. 
+	- grenade bouncing is messy
 
 monsters:
 	- barriers only hit players if player is moving

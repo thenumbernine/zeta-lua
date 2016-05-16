@@ -995,7 +995,7 @@ function Editor:updateGUI()
 			end
 		end
 	elseif self.editMode[0] == editModeObjects then
-		if ig.igCollapsingHeader('Object Type:') then
+		if ig.igCollapsingHeader('Object Type:', ig.ImGuiTreeNodeFlags_DefaultOpen) then
 			for i,spawnOption in ipairs(self.spawnOptions) do
 				ig.igPushIdStr('spawnOption #'..i)
 				local spawnType = spawnOption.spawnType

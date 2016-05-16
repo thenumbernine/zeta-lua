@@ -18,7 +18,7 @@ local PlasmaShot = (function()
 		PlasmaShot.super.init(self, args, ...)
 		
 		self.shooter = args.shooter
-		self:hasBeenKicked(args.shooter)
+		args.shooter:hasKicked(self)
 		
 		self.angle = self.shooter.weapon.angle
 		self.drawMirror = self.shooter.weapon.drawMirror
@@ -55,6 +55,25 @@ local PlasmaShot = (function()
 			self:blast()
 			return
 		end
+		return true
+	end
+
+	PlasmaShot.solidFlags = PlasmaShot.SOLID_SHOT
+	PlasmaShot.touchFlags = PlasmaShot.SOLID_WORLD + PlasmaShot.SOLID_YES + PlasmaShot.SOLID_NO
+	PlasmaShot.blockFlags = PlasmaShot.SOLID_WORLD + PlasmaShot.SOLID_YES
+	function PlasmaShot:touchTile_v2(tile, side)
+		self:blast()
+	end
+	function PlasmaShot:touch_v2(other, side)
+		if self.remove then return true end
+		if other == self.shooter then return true end
+		if other.takeDamage then
+			other:takeDamage(self.damage, self.shooter, self, side)
+		end
+		if other.takeDamage then
+			self:blast()
+		end
+		if bit.band(other.solidFlags, other.SOLID_NO) ~= 0 then return end
 		return true
 	end
 

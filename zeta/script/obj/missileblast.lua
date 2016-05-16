@@ -9,6 +9,10 @@ MissileBlast.collidesWithWorld = false
 MissileBlast.useGravity = false
 MissileBlast.sprite = 'missileblast'
 
+MissileBlast.solidFlags = 0
+MissileBlast.touchFlags = 0
+MissileBlast.blockFlags = 0
+
 function MissileBlast:init(args)
 	MissileBlast.super.init(self, args)
 	self.removeTime = game.time + .75

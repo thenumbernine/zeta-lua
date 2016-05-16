@@ -8,6 +8,9 @@ return function(args)
 	tick.solid = false
 	tick.collidesWithWorld = false
 	tick.collidesWithObjects = false
+	tick.solidFlags = 0
+	tick.touchFlags = 0
+	tick.blockFlags = 0
 	tick.removeTime = game.time + 1
 	tick.vel[2] = 1
 	tick.useGravity = false

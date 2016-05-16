@@ -30,6 +30,14 @@ function Item:pretouch(other, side)
 	return true	-- don't touch anything else
 end
 
+-- new touch system
+Item.solidFlags = 0
+Item.touchFlags = Object.SOLID_WORLD + Object.SOLID_YES
+Item.blockFlags = Object.SOLID_WORLD
+function Item:touch_v2(other, side)
+	if other == self.heldby then return true end
+end
+
 function Item:playerGrab(player, side)
 	-- if the player is going to be holding it then unlink it from the room system
 	-- or else it'll be erased from the inventory as soon as the player changes rooms

@@ -14,6 +14,10 @@ function Terminal:init(args)
 	self.use = args.use
 end
 
+Terminal.solidFlags = 0
+Terminal.touchFlags = Object.SOLID_WORLD + Object.SOLID_YES
+Terminal.blockFlags = Object.SOLID_WORLD
+
 function Terminal:playerUse(player)
 	local threads = require 'base.script.singleton.threads'
 	if self.text then

@@ -8,6 +8,10 @@ local SavePoint = class(Object)
 SavePoint.sprite = 'savepoint'
 SavePoint.solid = false
 
+SavePoint.solidFlags = 0
+SavePoint.touchFlags = Object.SOLID_WORLD + Object.SOLID_YES
+SavePoint.blockFlags = Object.SOLID_WORLD
+
 function SavePoint:playerUse(player)
 	threads:add(function()
 		player:popupMessage('saving...')

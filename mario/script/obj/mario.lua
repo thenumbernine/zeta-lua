@@ -119,8 +119,11 @@ Mario.extraBounceVel = 40
 Mario.idleBounceVel = 10
 
 function Mario:pretouch(other, side)
-	if Mario.super.pretouch(self, other, side) then return true end
-	
+	-- kick ignore 
+	if other == self.kickedBy and self.kickHandicapTime >= game.time then
+		return true
+	end
+
 	if self.inputRun	-- if we're holding the grab button
 	and not self.holding	-- and we're not holding anything atm
 	and other.canCarry		-- and we can carry the other object
@@ -130,6 +133,40 @@ function Mario:pretouch(other, side)
 	end
 	
 	if other == self.holding then return true end	-- skip push collisions
+end
+
+-- TODO DON'T APPEND OBJECT HERE
+--[[
+give the kicker a temp non-collide window
+--]]
+function Object:hasBeenKicked(other)
+	self.kickedBy = other
+	self.kickHandicapTime = game.time + .5
+end
+--[[
+kick an object from carrying it
+other: who is kicking
+dx: their intended left/right kick direction
+dy: their intended up/down kick direction
+--]]
+function Object:playerKick(other, dx, dy)
+	local holderLookDir = 0
+	if other.drawMirror then
+		holderLookDir = -1
+	else
+		holderLookDir = 1
+	end
+	if dy > 0 then	-- kick up
+		self.vel[2] = self.vel[2] + 40
+	elseif dy >= 0 and dx ~= 0	then	-- kicking and not setting down
+		self.vel[2] = self.vel[2] + 6
+		self.vel[1] = self.vel[1] + holderLookDir * 10
+	else	-- setting down
+		self.vel[2] = self.vel[2] + 4
+		self.vel[1] = self.vel[1] + holderLookDir * 4
+	end
+	
+	self:hasBeenKicked(other)
 end
 
 function Mario:tryToStand()

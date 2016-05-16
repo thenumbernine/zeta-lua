@@ -20,7 +20,7 @@ local Missile = (function()
 		Missile.super.init(self, args)
 	
 		self.shooter = args.shooter
-		self:hasBeenKicked(args.shooter)
+		args.shooter:hasKicked(self)
 	
 		self.angle = math.deg(math.atan2(self.vel[2], self.vel[1]))
 	end
@@ -55,6 +55,25 @@ local Missile = (function()
 			tile:onHit(self, side)
 		end
 		self:blast()
+	end
+
+	Missile.solidFlags = Missile.SOLID_GRENADE
+	Missile.touchFlags = Missile.SOLID_WORLD + Missile.SOLID_YES + Missile.SOLID_GRENADE
+	Missile.blockFlags = Missile.SOLID_WORLD
+	function Missile:touchTile_v2(tile, solid)
+		if self.remove then return true end
+		self:blast()
+	end
+	function Missile:touch_v2(other, side)
+		if self.remove then return true end
+		if other == self.shooter then return true end
+		if other.takeDamage then
+			other:takeDamage(self.damage, self.shooter, self, side)
+		end
+		if bit.band(other.solidFlags, other.SOLID_GRENADE) == 0 then
+			return
+		end
+		self:blast(other)
 	end
 
 	function Missile:blast(alreadyHit)

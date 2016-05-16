@@ -17,7 +17,6 @@ local BlasterShot = (function()
 		BlasterShot.super.init(self, args, ...)
 		
 		self.shooter = args.shooter
-		self:hasBeenKicked(args.shooter)
 		
 		--self.angle = self.shooter.weapon.angle
 		--self.drawMirror = self.shooter.weapon.drawMirror
@@ -57,6 +56,21 @@ local BlasterShot = (function()
 			return
 		end
 		return true
+	end
+
+	BlasterShot.solidFlags = BlasterShot.SOLID_SHOT	
+	BlasterShot.touchFlags = BlasterShot.SOLID_WORLD + BlasterShot.SOLID_YES + BlasterShot.SOLID_NO
+	BlasterShot.blockFlags = BlasterShot.SOLID_WORLD + BlasterShot.SOLID_YES
+	function BlasterShot:touchTile_v2(tile, side)
+		self.remove = true
+	end
+	function BlasterShot:touch_v2(other, side)
+		if self.remove then return true end
+		if other == self.shooter then return true end	-- don't hit shooter
+		if other.takeDamage then
+			other:takeDamage(self.damage, self.shooter, self, side)
+		end
+		self.remove = true
 	end
 
 	return BlasterShot

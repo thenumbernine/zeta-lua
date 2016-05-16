@@ -8,6 +8,10 @@ local EnergyRefill = class(Object)
 EnergyRefill.sprite = 'energyrefill'
 EnergyRefill.solid = false
 
+EnergyRefill.solidFlags = 0
+EnergyRefill.touchFlags = Object.SOLID_WORLD + Object.SOLID_YES
+EnergyRefill.blockFlags = Object.SOLID_WORLD
+
 -- TODO get from animsys:
 local sparkSeqTime = .5
 local numSparks = 4

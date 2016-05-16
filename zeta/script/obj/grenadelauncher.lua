@@ -23,7 +23,7 @@ local Grenade = (function()
 		Grenade.super.init(self, args)
 	
 		self.shooter = args.shooter
-		self:hasBeenKicked(args.shooter)
+		args.shooter:hasKicked(self)
 	
 		self.angle = math.deg(math.atan2(self.vel[2], self.vel[1]))
 		self.rotation = (math.random()*2-1) * 360
@@ -33,14 +33,24 @@ local Grenade = (function()
 
 	function Grenade:update(dt)
 		Grenade.super.update(self, dt)
-		if self.collidesWithWorld then
+		if not self.onground then
 			self.angle = self.angle + dt * self.rotation
-			if game.time > self.detonateTime then
-				self:blast()
-			end
+		end
+		if game.time > self.detonateTime then
+			self:blast()
 		end
 	end
 	
+	-- TODO pass normals to touch functions?
+	function Grenade:touchTile(tile, side, plane)
+		if tile and tile.solid then
+			if tile.onHit then
+				tile:onHit(self, side)
+			end
+			self:bounceOff(plane or dirs[oppositeSide[side]])
+		end
+	end
+
 	function Grenade:pretouch(other, side)
 		if not self.collidesWithWorld then return end
 		if self.remove then return end
@@ -60,34 +70,59 @@ local Grenade = (function()
 		return true
 	end
 
-	function Grenade:hit()
-		self:blast()
+	Grenade.solidFlags = Grenade.SOLID_GRENADE
+	Grenade.touchFlags = Grenade.SOLID_WORLD + Grenade.SOLID_YES + Grenade.SOLID_GRENADE
+	Grenade.blockFlags = Grenade.SOLID_WORLD
+	
+	function Grenade:touchTile_v2(tile, side, normal)
+		if tile and tile.solid then
+			self:bounceOff(normal)
+			if self.vel:dot(normal) <= 0 then 
+				return
+			end
+			--return true
+		end
 	end
-	function Grenade:die()
-		self:blast()
+	function Grenade:touch_v2(other, side)
+		if self.remove then return true end
+--		if other == self.shooter then return true end
+		if self.kickedBy == other and self.kickHandicapTime >= game.time then
+			return true
+		end
+-- [[ detonate on impact?
+		if other.takeDamage then
+			self.detonateTime = game.time
+		end
+--]]
+		if bit.band(other.blockFlags, other.SOLID_GRENADE) == 0 then
+			return
+		end
+		-- bounce
+		local normal = dirs[oppositeSide[side]]
+		self:bounceOff(normal)
+		if self.vel:dot(normal) <= 0 then
+			return
+		end
+		return true
 	end
 
-	-- TODO need normals
-	function Grenade:touchTile(tile, side, plane)
-		if tile and tile.solid then
-			if tile.onHit then
-				tile:onHit(self, side)
-			end
-			self:bounceOff(plane or dirs[oppositeSide[side]])
-		end
+	function Grenade:hit()
+		self.detonateTime = math.min(self.detonateTime, game.time + math.random() * .5)
+	end
+	function Grenade:die()
+		self.detonateTime = math.min(self.detonateTime, game.time + math.random() * .5)
 	end
 
 	Grenade.restitution = .5
 	function Grenade:bounceOff(normal)
 		normal = vec2(table.unpack(normal)):normalize()
 		local vel = vec2(self.lastvel:unpack())
-		if math.abs(vel[1]) < 1e-2 and math.abs(vel[2]) < 1e-2 then 
-			self.vel[1] = 0
-			self.vel[2] = 0
+		if vel[1] == 0 and vel[2] == 0 then
 			self.rotation = 0
 			return
 		end
-		local r = vel:dot(normal) * (1 + self.restitution)
+		local vDotN = vel:dot(normal)
+		local r = vDotN * (1 + self.restitution)
 		vel[1] = vel[1] - normal[1] * r 
 		vel[2] = vel[2] - normal[2] * r 
 		self.rotation = (math.random()*2-1) * 360
@@ -100,7 +135,12 @@ local Grenade = (function()
 
 	function Grenade:blast(alreadyHit)
 		if self.remove then return end
-		
+
+		Puff.puffAt(self.pos[1], self.pos[2]-.5)
+		MissileBlast{pos={self.pos[1], self.pos[2]-.5}}
+		self:playSound('explode2')
+		self.remove = true
+
 		-- splash damage 
 		-- TODO ignore objects just hit by damage?
 		local force = 10
@@ -122,11 +162,6 @@ local Grenade = (function()
 				end
 			end
 		end
-
-		Puff.puffAt(self.pos[1], self.pos[2]-.5)
-		MissileBlast{pos={self.pos[1], self.pos[2]-.5}}
-		self:playSound('explode2')
-		self.remove = true
 	end
 	
 	return Grenade

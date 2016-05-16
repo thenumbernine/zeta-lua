@@ -11,6 +11,10 @@ Puff.collidesWithObjects = false
 Puff.useGravity = false
 Puff.baseLiveTime = 1
 
+Puff.solidFlags = 0
+Puff.touchFlags = 0
+Puff.blockFlags = 0
+
 function Puff:init(args)
 	Puff.super.init(self, args)
 	self.color = vec4(1,1,1,1)

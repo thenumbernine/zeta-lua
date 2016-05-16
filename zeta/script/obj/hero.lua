@@ -78,12 +78,21 @@ end
 
 function Hero:setHeld(other)
 	if self.holding and self.holding ~= other then
-		--self.holding:playerKick(self, self.inputLeftRight, self.inputUpDown)
+-- restore to class originals
+-- this assumes only classes set flags and not objects
+-- TODO getters and setters for custom behavior per-object
+self.holding.solidFlags = nil
+self.holding.touchFlags = nil
+self.holding.blockFlags = nil
+		
 		self.holding.vel[1] = self.vel[1]
 		self.holding.vel[2] = self.vel[2]
-self.holding.pos[1] = self.pos[1]
-self.holding.pos[2] = self.pos[2]
-		self.holding:hasBeenKicked(self)
+-- 1) this should be updated by setHeld or updateOverlay or whatever
+--		and that should put it in front of the player
+-- 2) even so, it's being overriden by update code setting it ontop of us
+--self.holding.pos[1] = self.pos[1]
+--self.holding.pos[2] = self.pos[2]
+		self:hasKicked(self.holding)
 		
 		-- true for any Item subclass, who calls Item:playerGrab
 		for j=#self.items,1,-1 do
@@ -114,7 +123,14 @@ self.holding.pos[2] = self.pos[2]
 		self.holding.heldby = self
 		self.holding.collidesWithObjects = false
 		self.holding.collidesWithWorld = false
-		
+	
+-- clear collision flags 
+-- this assumes only classes set flags and not objects
+-- TODO getters and setters for custom behavior per-object
+self.holding.solidFlags = 0
+self.holding.touchFlags = 0
+self.holding.blockFlags = 0
+
 		self.nextHoldTime = game.time + .1
 	end
 end
@@ -153,7 +169,12 @@ Hero.extraBounceVel = 40
 Hero.idleBounceVel = 10
 
 function Hero:pretouch(other, side)
-	if Hero.super.pretouch(self, other, side) then return true end
+	-- kick ignore 
+	if other.kickedBy == self
+	and other.kickHandicapTime >= game.time
+	then
+		return true
+	end
 
 	-- skip push collisions
 	for _,items in ipairs(self.items) do
@@ -165,11 +186,23 @@ function Hero:pretouch(other, side)
 	if other == self.weapon then return true end
 end
 
+Hero.touch_v2 = Hero.pretouch
+
+--[[
+give the kicker a temp non-collide window
+--]]
+function Hero:hasKicked(other)
+	other.kickedBy = self
+	other.kickHandicapTime = game.time + .5
+end
+
 function Hero:tryToStand()
 	local level = game.level
 	local cantStand = false
-	local y = self.pos[2] + self.bbox.max[2] + .5 - level.pos[2]
-	for x=math.floor(self.pos[1] + self.bbox.min[1] - level.pos[1]),math.floor(self.pos[1] + self.bbox.max[1] - level.pos[1]) do
+	local y = math.floor(self.pos[2] + self.bbox.max[2] + .5 - level.pos[2])
+	for x=math.floor(self.pos[1] + self.bbox.min[1] - level.pos[1]),
+		math.floor(self.pos[1] + self.bbox.max[1] - level.pos[1])
+	do
 		local tile = level:getTile(x,y)
 		if tile and tile.solid then
 			cantStand = true
@@ -290,7 +323,7 @@ function Hero:update(dt)
 	
 	if self.climbing then
 		self.useGravity = false
-		self.ducking = false
+		if self.ducking then self:tryToStand() end
 		self.lookingUp = false
 		self.inputMaxSpeedTime = nil
 	else
@@ -455,7 +488,11 @@ function Hero:update(dt)
 			end
 		end
 		if canClimb then
-			if self.inputUpDown ~= 0 then		-- push up/down to get on a climbable surface
+			-- push up/down to get on a climbable surface
+			if self.inputUpDown ~= 0
+			-- but if you're on the ground, allow them to duck/crawl
+			and (self.inputUpDown > 0 or not self.onground)
+			then
 				self.climbing = true
 			end
 		else
