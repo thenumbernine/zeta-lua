@@ -1,5 +1,6 @@
 return {
 	-- interaction
+	{spawn='zeta.script.obj.solid'},	-- solid, but can be moved/removed by script 
 	{spawn='zeta.script.obj.trigger'},	-- touch to perform events 
 	{spawn='zeta.script.obj.breakblock'},	-- shoot to break
 	{spawn='zeta.script.obj.door'},

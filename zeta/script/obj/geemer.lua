@@ -184,8 +184,18 @@ function Geemer:touch(other, side)
 	end
 end
 
+Geemer.solidFlags = Geemer.SOLID_NO
+Geemer.touchFlags = Geemer.SOLID_YES
+Geemer.blockFlags = Geemer.SOLID_WORLD
 function Geemer:touch_v2(other, side)
-	if self:pretouch(other, side) then return true end
+	-- this makes collision run incredibly slow in crowds
+	-- give this its own flags?
+	-- make it non-solid?
+	if other:isa(Geemer) then
+		self.avoiding = other
+		return true
+	end
+	
 	self:touch(other, side)
 end
 

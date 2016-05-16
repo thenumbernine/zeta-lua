@@ -11,10 +11,25 @@ local game = require 'base.script.singleton.game'
 local level = game.level
 local session = game.session
 local player = game.players[1]
-local function findName(name)
+-- find object named ...
+local function findObjNamed(objName)
 	return select(2, game.objs:find(nil, function(obj)
-		return obj.spawnInfo and obj.spawnInfo.name == name
+		return obj.spawnInfo and obj.spawnInfo.objName == objName
 	end))
+end
+-- find spawn info named ...
+local function findSpawnInfoNamed(objName)
+	return select(2,level.spawnInfos:find(nil, function(spawnInfo)
+		return spawnInfo.objName == objName
+	end))
+end
+-- respawn an object.  removes it if it exists
+local function respawn(objName)
+	local spawnInfo = findSpawnInfoNamed(objName)
+	if not spawnInfo then return end
+	spawnInfo:removeObj()
+	spawnInfo:respawn()
+	return spawnInfo.obj
 end
 ]] 
 

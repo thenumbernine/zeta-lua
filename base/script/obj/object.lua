@@ -169,9 +169,9 @@ function Object:move(moveX, moveY)
 	if math.abs(moveX) < epsilon then moveX = 0 end
 	if math.abs(moveY) < epsilon then moveY = 0 end
 
-print('move start at',self.pos,'bbox',self.bbox + self.pos)
+--print('move start at',self.pos,'bbox',self.bbox + self.pos)
 	self.pos[2] = self.pos[2] + moveY
-print('up/down move to',self.pos,'bbox',self.bbox + self.pos)
+--print('up/down move to',self.pos,'bbox',self.bbox + self.pos)
 
 	if moveY ~= 0 then
 		local y
@@ -229,7 +229,7 @@ print('up/down move to',self.pos,'bbox',self.bbox + self.pos)
 								end
 								local destY = (cy + y + level.pos[2]) - edge
 								self.pos[2] = destY --(moveY > 0 and math.min or math.max)(self.pos[2], destY)
-print('up/down plane push to',self.pos,'bbox',self.bbox + self.pos)
+--print('up/down plane push to',self.pos,'bbox',self.bbox + self.pos)
 								collides = true
 							end
 						end
@@ -245,7 +245,7 @@ print('up/down plane push to',self.pos,'bbox',self.bbox + self.pos)
 							destY = oymin - self.bbox.max[2] - epsilon
 						end
 						self.pos[2] = (moveY > 0 and math.min or math.max)(self.pos[2], destY)
-print('up/down block push to',self.pos,'bbox',self.bbox + self.pos)
+--print('up/down block push to',self.pos,'bbox',self.bbox + self.pos)
 						collides = true
 					end
 					if collides then
@@ -344,7 +344,7 @@ print('up/down block push to',self.pos,'bbox',self.bbox + self.pos)
 											else
 												self.pos[2] = obj.pos[2] + obj.bbox.min[2] - self.bbox.max[2] - epsilon
 											end
-print('up/down object push to',self.pos,'bbox',self.bbox + self.pos)
+--print('up/down object push to',self.pos,'bbox',self.bbox + self.pos)
 										end
 										if moveY < 0 then
 											self.collidedDown = true
@@ -373,7 +373,7 @@ print('up/down object push to',self.pos,'bbox',self.bbox + self.pos)
 	end
 	
 	self.pos[1] = self.pos[1] + moveX
-print('left/right move to',self.pos,'bbox',self.bbox + self.pos)
+--print('left/right move to',self.pos,'bbox',self.bbox + self.pos)
 
 	-- left/right
 	if moveX ~= 0 then
@@ -399,7 +399,7 @@ print('left/right move to',self.pos,'bbox',self.bbox + self.pos)
 					local collides
 					if tile.plane then
 						local plane = tile.plane
-print('found planes, first plane is',table.unpack(plane))
+--print('found planes, first plane is',table.unpack(plane))
 						if plane[2] > 0 then
 							local cx
 							if plane[1] > 0 then	-- plane normal facing right / slope up&left
@@ -407,13 +407,13 @@ print('found planes, first plane is',table.unpack(plane))
 							else	-- plane normal facing left / slope up&right
 								cx = self.pos[1] + self.bbox.max[1] - (x + level.pos[1])
 							end
-print('tile slope collision cx=',cx)							
+--print('tile slope collision cx=',cx)							
 							cx = math.clamp(cx, 0, 1)
 							do --if cx >= -epsilon and cx <= 1+epsilon then
 								local cy = -(cx * plane[1] + plane[3]) / plane[2]
 								local destY = (cy + y + level.pos[2]) - self.bbox.min[2]
 								self.pos[2] = math.max(self.pos[2], destY)
-print('left/right plane push up/down to',self.pos,'bbox',self.bbox + self.pos)
+--print('left/right plane push up/down to',self.pos,'bbox',self.bbox + self.pos)
 								self.vel[2] = 0
 								self.collidedDown = true
 								self.onground = true
@@ -472,7 +472,7 @@ print('left/right plane push up/down to',self.pos,'bbox',self.bbox + self.pos)
 								self.pos[1] = oxmin - self.bbox.max[1] - epsilon
 								self.collidedRight = true
 							end
-print('left/right block push to',self.pos,'bbox',self.bbox + self.pos)
+--print('left/right block push to',self.pos,'bbox',self.bbox + self.pos)
 							self.vel[1] = 0
 							if self.touchTile then self:touchTile(tile, side) end
 							if tile.touch then tile:touch(self) end
@@ -560,7 +560,7 @@ print('left/right block push to',self.pos,'bbox',self.bbox + self.pos)
 											else
 												self.pos[1] = obj.pos[1] + obj.bbox.min[1] - self.bbox.max[1] - epsilon
 											end
-print('left/right object push to',self.pos,'bbox',self.bbox + self.pos)
+--print('left/right object push to',self.pos,'bbox',self.bbox + self.pos)
 										end
 										if moveX < 0 then
 											self.collidedLeft = true
@@ -585,7 +585,7 @@ print('left/right object push to',self.pos,'bbox',self.bbox + self.pos)
 			end
 		end
 	end
-print('move finished at',self.pos,'bbox',self.bbox + self.pos)
+--print('move finished at',self.pos,'bbox',self.bbox + self.pos)
 end
 
 
@@ -620,23 +620,145 @@ Object.touchFlags = -1					-- call touch for everything
 -- notice if you want something's block to pass thru then have your touch function to return true 
 Object.blockFlags = Object.SOLID_WORLD + Object.SOLID_YES
 
+local collisionEpsilon = 1e-4
+
+local function testBox(self, bxmin, bymin, bxmax, bymax, dt, dx, dy)
+	local side
+
+--print('  ====================')
+--print('  == BEGIN BOX TEST ==')
+--print('  ====================')
+--print('testing bbox',box2(bxmin,bymin,bxmax,bymax))	
+
+	-- see if we're touching at our current time
+	if self.pos[1]+self.bbox.min[1] < bxmax
+	and self.pos[1]+self.bbox.max[1] > bxmin
+	and self.pos[2]+self.bbox.min[2] < bymax
+	and self.pos[2]+self.bbox.max[2] > bymin
+	then
+		dt = 0
+		-- side is the smallest penetrating side
+		local depthXMin = bxmax - self.pos[1] - self.bbox.min[1]
+		local depthXMax = self.pos[1] + self.bbox.max[1] - bxmin
+		local depthYMin = bymax - self.pos[2] - self.bbox.min[2]
+		local depthYMax = self.pos[2] + self.bbox.max[2] - bymin
+		local sideX, depthX
+		if depthXMin > depthXMax then
+			sideX = 'Left'
+			depthX = depthXMin
+		else
+			sideX = 'Right'
+			depthX = depthXMax
+		end
+		local sideY, depthY
+		if depthYMin > depthYMax then
+			sideY = 'Down'
+			depthY = depthYMin
+		else
+			sideY = 'Up'
+			depthY = depthYMax
+		end
+		-- TODO push back as well?
+		if depthX > depthY then
+			side = sideX
+		else
+			side = sideY
+		end
+--print('stuck with box:',box2(bxmin,bymin,bxmax,bymax))
+	else
+	
+		-- not yet touching, see if our step is touching
+		local dtx = dt	-- time to x collision
+		local sideX
+		if dx > 0 then
+--print('dtx',dtx,' > 0 so testing right side')
+			--self.pos[1] + self.bbox.max[1] + dtx*dx = bxmin 
+			dtx = (bxmin - self.pos[1] - self.bbox.max[1]) / dx
+			sideX = 'Right'
+		elseif dx < 0 then
+--print('dtx',dtx,' < 0 so testing left side')
+			--self.pos[1] + self.bbox.min[1] + dtx*dx = bxmax 
+			dtx = (bxmax - self.pos[1] - self.bbox.min[1]) / dx
+			sideX = 'Left'
+		end
+		if dtx then
+			if math.abs(dtx) < collisionEpsilon then dtx = 0 end
+--print('found x movement collision',dtx)
+			-- if, at that time, we will not be colliding on the other axis, then clear it
+			-- because a clear dtx means a full step
+--print('blocking y axis info:',tolua({dy = dy,dtx = dtx,self_ymin = self.pos[2] + self.bbox.min[2] + dtx * dy,self_ymax = self.pos[2] + self.bbox.max[2] + dtx * dy,box_ymin = bymin,box_ymax = bymax},{indent=true}))
+			-- use < > instead of <= >= to let objects slide across the sides of others
+			if not (self.pos[2] + self.bbox.min[2] + dtx * dy < bymax 
+			and self.pos[2] + self.bbox.max[2] + dtx * dy > bymin)
+			then
+--print('recalled x movement collision -- not being blocked on y axis')
+				sideX = nil
+				dtx = dt 
+			else
+
+			end
+		end
+
+		local dty = dt	-- time to y collision
+		local sideY
+		if dy > 0 then
+--print('dty',dty,' > 0 so testing up side')
+			--self.pos[2] + self.bbox.max[2] + dty*dy = bymin 
+			dty = (bymin - self.pos[2] - self.bbox.max[2]) / dy
+			sideY = 'Up'
+		elseif dy < 0 then
+--print('dty',dty,' < 0 so testing down side')
+			--self.pos[2] + self.bbox.min[2] + dty*dy = bymax 
+			dty = (bymax - self.pos[2] - self.bbox.min[2]) / dy
+			sideY = 'Down'
+		end
+		if dty then
+			if math.abs(dty) < collisionEpsilon then dty = 0 end
+--print('found y movement collision',dty)			
+--print('blocking x axis info:',tolua({dx = dx,dty = dty,self_xmin = self.pos[1] + self.bbox.min[1] + dty * dx,self_xmax = self.pos[1] + self.bbox.max[1] + dty * dx,box_xmin = bxmin, box_xmax = bxmax},{indent=true}))
+			if not (self.pos[1] + self.bbox.min[1] + dty * dx < bxmax
+			and self.pos[1] + self.bbox.max[1] + dty * dx > bxmin)
+			then
+--print('recalled y movement collision - not being blocked on x axis')					
+				dty = dt
+				sideY = nil
+			end
+		end
+
+		-- if our collision will happen in positive time then find when that is 
+--print('checking x collision time',dtx,'to current step time',dt)			
+		if 0 <= dtx and dtx < dt then
+--print('found it is better - using it')				
+			dt = dtx
+			side = sideX
+		end
+--print('checking y collision time',dty,'to current step time',dt)
+		if 0 <= dty and dty < dt then
+--print('found it is better - using it')
+			dt = dty
+			side = sideY
+		end
+--print('possible collision on side',side,'dt',dt,'tile',touchedTile,'obj',touchedObj)
+	end
+--print('  ==================')
+--print('  == END BOX TEST ==')
+--print('  ==================')
+	return side, dt
+end
+
+
 function Object:move(dx,dy)
 
-local Hero = {}--require 'zeta.script.obj.hero'
-local print = self:isa(Hero) and _G.print or function() end
-
-
-print()
-print('================')
-print('== BEGIN MOVE ==')
-print('================')
+--print()
+--print('================')
+--print('== BEGIN MOVE ==')
+--print('================')
 
 	local level = game.level
-	local epsilon = 1e-4
-print('dx,dy before epsilon test:',vec2(dx,dy))
-	if math.abs(dx) < epsilon then dx = 0 end
-	if math.abs(dy) < epsilon then dy = 0 end
-print('dx,dy after epsilon test:',vec2(dx,dy))
+--print('dx,dy before epsilon test:',vec2(dx,dy))
+	if math.abs(dx) < collisionEpsilon then dx = 0 end
+	if math.abs(dy) < collisionEpsilon then dy = 0 end
+--print('dx,dy after epsilon test:',vec2(dx,dy))
 
 	-- you can't hit an object twice in the same movement
 	-- key is object, value is true
@@ -654,158 +776,23 @@ print('dx,dy after epsilon test:',vec2(dx,dy))
 		if tries == maxTries+1 then
 			print("too many collision tries")
 		end
+--print(' =================')
+--print(' == BEGIN TRACE ==')
+--print(' =================')
+--print('obj pos',self.pos,'box',self.bbox+self.pos,'moving',vec2(dx,dy))
+		
+		local side
 		local touchedObj
 		local touchedTile
 		local touchedTileX, touchedTileY
-		local side
-print(' =================')
-print(' == BEGIN TRACE ==')
-print(' =================')
-print('obj pos',self.pos,'box',self.bbox+self.pos,'moving',vec2(dx,dy))
-		local function testBox(box, tile, obj)
-print('  ====================')
-print('  == BEGIN BOX TEST ==')
-print('  ====================')
-			box = box2(box)
-print('testing bbox',box)	
-			-- see if we're touching at our current time
-			if self.pos[1]+self.bbox.min[1] < box.max[1]
-			and self.pos[1]+self.bbox.max[1] > box.min[1]
-			and self.pos[2]+self.bbox.min[2] < box.max[2]
-			and self.pos[2]+self.bbox.max[2] > box.min[2]
-			then
-				dt = 0
-				-- side is the smallest penetrating side
-				local depthXMin = box.max[1] - self.pos[1] - self.bbox.min[1]
-				local depthXMax = self.pos[1] + self.bbox.max[1] - box.min[1]
-				local depthYMin = box.max[2] - self.pos[2] - self.bbox.min[2]
-				local depthYMax = self.pos[2] + self.bbox.max[2] - box.min[2]
-				local sideX, depthX
-				if depthXMin > depthXMax then
-					sideX = 'Left'
-					depthX = depthXMin
-				else
-					sideX = 'Right'
-					depthX = depthXMax
-				end
-				local sideY, depthY
-				if depthYMin > depthYMax then
-					sideY = 'Down'
-					depthY = depthYMin
-				else
-					sideY = 'Up'
-					depthY = depthYMax
-				end
-				-- TODO push back as well?
-				if depthX > depthY then
-					side = sideX
-					touchedObj = obj
-					touchedTile = tile
-					touchedTileX = box.min[1]
-					touchedTileY = box.min[2]
-				else
-					side = sideY
-					touchedObj = obj
-					touchedTile = tile
-					touchedTileX = box.min[1]
-					touchedTileY = box.min[2]
-				end
-print('stuck with box:',box)
-			else
-			
-				-- not yet touching, see if our step is touching
-				local dtx = dt	-- time to x collision
-				local sideX
-				if dx > 0 then
-print('dtx',dtx,' > 0 so testing right side')
-					--self.pos[1] + self.bbox.max[1] + dtx*dx = box.min[1]
-					dtx = (box.min[1] - self.pos[1] - self.bbox.max[1]) / dx
-					sideX = 'Right'
-				elseif dx < 0 then
-print('dtx',dtx,' < 0 so testing left side')
-					--self.pos[1] + self.bbox.min[1] + dtx*dx = box.max[1]
-					dtx = (box.max[1] - self.pos[1] - self.bbox.min[1]) / dx
-					sideX = 'Left'
-				end
-				if dtx then
-					if math.abs(dtx) < epsilon then dtx = 0 end
-print('found x movement collision',dtx)
-					-- if, at that time, we will not be colliding on the other axis, then clear it
-					-- because a clear dtx means a full step
-print('blocking y axis info:',tolua({dy = dy,dtx = dtx,self_ymin = self.pos[2] + self.bbox.min[2] + dtx * dy,self_ymax = self.pos[2] + self.bbox.max[2] + dtx * dy,box_ymin = box.min[2],box_ymax = box.max[2],},{indent=true}))
-					-- use < > instead of <= >= to let objects slide across the sides of others
-					if not (self.pos[2] + self.bbox.min[2] + dtx * dy < box.max[2]
-					and self.pos[2] + self.bbox.max[2] + dtx * dy > box.min[2])
-					then
-print('recalled x movement collision -- not being blocked on y axis')
-						sideX = nil
-						dtx = dt 
-					else
-
-					end
-				end
-
-				local dty = dt	-- time to y collision
-				local sideY
-				if dy > 0 then
-print('dty',dty,' > 0 so testing up side')
-					--self.pos[2] + self.bbox.max[2] + dty*dy = box.min[2]
-					dty = (box.min[2] - self.pos[2] - self.bbox.max[2]) / dy
-					sideY = 'Up'
-				elseif dy < 0 then
-print('dty',dty,' < 0 so testing down side')
-					--self.pos[2] + self.bbox.min[2] + dty*dy = box.max[2]
-					dty = (box.max[2] - self.pos[2] - self.bbox.min[2]) / dy
-					sideY = 'Down'
-				end
-				if dty then
-					if math.abs(dty) < epsilon then dty = 0 end
-print('found y movement collision',dty)			
-print('blocking x axis info:',tolua({dx = dx,dty = dty,self_xmin = self.pos[1] + self.bbox.min[1] + dty * dx,self_xmax = self.pos[1] + self.bbox.max[1] + dty * dx,box_xmin = box.min[1],box_xmax = box.max[1],},{indent=true}))
-					if not (self.pos[1] + self.bbox.min[1] + dty * dx < box.max[1]
-					and self.pos[1] + self.bbox.max[1] + dty * dx > box.min[1])
-					then
-print('recalled y movement collision - not being blocked on x axis')					
-						dty = dt
-						sideY = nil
-					end
-				end
-
-				-- if our collision will happen in positive time then find when that is 
-print('checking x collision time',dtx,'to current step time',dt)			
-				if 0 <= dtx and dtx < dt then
-print('found it is better - using it')				
-					dt = dtx
-					side = sideX
-					touchedObj = obj
-					touchedTile = tile
-					touchedTileX = box.min[1]
-					touchedTileY = box.min[2]
-				end
-print('checking y collision time',dty,'to current step time',dt)
-				if 0 <= dty and dty < dt then
-print('found it is better - using it')
-					dt = dty
-					side = sideY
-					touchedObj = obj
-					touchedTile = tile
-					touchedTileX = box.min[1]
-					touchedTileY = box.min[2]
-				end
-print('possible collision on side',side,'dt',dt,'tile',touchedTile,'obj',touchedObj)
-			end
-print('  ==================')
-print('  == END BOX TEST ==')
-print('  ==================')
-		end
 		
 		-- get combined bbox of current bbox and destination bbox
 		local cxmin = self.pos[1] + self.bbox.min[1] + math.min(dt * dx,0)
 		local cymin = self.pos[2] + self.bbox.min[2] + math.min(dt * dy,0)
 		local cxmax = self.pos[1] + self.bbox.max[1] + math.max(dt * dx,0)
 		local cymax = self.pos[2] + self.bbox.max[2] + math.max(dt * dy,0)
-print('testing entire bbox',box2(cxmin,cymin,cxmax,cymax)) 
-
+--print('testing entire bbox',box2(cxmin,cymin,cxmax,cymax)) 
+		
 		-- if we can collide with the world
 		-- I'm not checking touchFlags because allowing touching non-blocking tiles 
 		--  would mean rechecking tiles with certain tiles (previously checked, touched, and non-blocked) excluded
@@ -817,17 +804,17 @@ print('testing entire bbox',box2(cxmin,cymin,cxmax,cymax))
 			local ymin = math.floor(cymin)-1
 			local xmax = math.floor(cxmax)+1
 			local ymax = math.floor(cymax)+1
-print('testing tile bounds',box2(xmin,ymin,xmax,ymax))
+--print('testing tile bounds',box2(xmin,ymin,xmax,ymax))
 			-- test oob
 			if xmax < 1 or ymax < 1 or xmin > level.size[1] or ymin > level.size[2] then
-print('movement off the tile map')
+--print('movement off the tile map')
 			else
 				-- clamp size
 				if xmin < 1 then xmin = 1 end
 				if xmax > level.size[1] then xmax = level.size[1] end
 				if ymin < 1 then ymin = 1 end
 				if ymax > level.size[2] then ymax = level.size[2] end
-print('clamped tile bounds to',box2(xmin,ymin,xmax,ymax))			
+--print('clamped tile bounds to',box2(xmin,ymin,xmax,ymax))			
 				for y=ymin,ymax do
 					for x=xmin,xmax do
 						local tile = level:getTile(x,y)
@@ -835,7 +822,15 @@ print('clamped tile bounds to',box2(xmin,ymin,xmax,ymax))
 						and tile.solid
 						and not tilesTested[x..','..y]
 						then
-							testBox({min={x,y}, max={x+1,y+1}}, tile, nil)
+							local newSide
+							newSide, dt = testBox(self, x,y,x+1,y+1, dt, dx, dy)
+							if newSide then
+								side = newSide
+								touchedObj = obj
+								touchedTile = tile
+								touchedTileX = x
+								touchedTileY = y
+							end
 						end
 					end
 				end
@@ -860,23 +855,31 @@ print('clamped tile bounds to',box2(xmin,ymin,xmax,ymax))
 			-- don't check objects twice
 			and not objsTested[obj]
 			then
-				testBox({min=obj.pos+obj.bbox.min, max=obj.pos+obj.bbox.max}, nil, obj)
+				local newSide
+				newSide, dt = testBox(self, obj.pos[1]+obj.bbox.min[1], obj.pos[2]+obj.bbox.min[2], obj.pos[1]+obj.bbox.max[1], obj.pos[2]+obj.bbox.max[2], dt, dx, dy)
+				if newSide then
+					side = newSide
+					touchedObj = obj
+					touchedTile = nil
+					touchedTileX = nil
+					touchedTileY = nil
+				end
 			end
 		end
 
-		if math.abs(dt) < epsilon then dt = 0 end
+		if math.abs(dt) < collisionEpsilon then dt = 0 end
 		assert(dt >= 0)
 
 		-- move up to the point of collision
-print('starttime is t=',t)
-print('stepping by timestep dt=',dt)
+--print('starttime is t=',t)
+--print('stepping by timestep dt=',dt)
 		t = t + dt
 		self.pos[1] = self.pos[1] + dt * dx
 		self.pos[2] = self.pos[2] + dt * dy
 
 		if t < 1 then
 			dt = 1 - t
-			if math.abs(dt) < epsilon then 
+			if math.abs(dt) < collisionEpsilon then 
 				t = 1
 				dt = 0 
 			end
@@ -886,7 +889,7 @@ print('stepping by timestep dt=',dt)
 		-- so long as I'm using newDT < dt tests to register new collisions, they should be
 		assert(t == 1 or side)
 
-print('collided on side',side)
+--print('collided on side',side)
 		if side then
 			local lside = side:lower()
 			local normal = dirs[oppositeSide[lside]]
@@ -896,7 +899,7 @@ print('collided on side',side)
 			-- that way if it can be passed through
 			-- then the next traceline won't check it
 			if touchedObj then
-print('adding obj',touchedObj,'to the already-checked list')				
+--print('adding obj',touchedObj,'to the already-checked list')				
 				objsTested[touchedObj] = true
 			end
 			if touchedTile then
@@ -907,18 +910,18 @@ print('adding obj',touchedObj,'to the already-checked list')
 			-- pass collision velocity as a separate parameter?
 			local dontblock
 			if touchedTile then
-print('calling self.touchTile_v2',self.touchTile_v2,touchedTile,lside,plane)
+--print('calling self.touchTile_v2',self.touchTile_v2,touchedTile,lside,plane)
 				local plane = nil	-- TODO for sloped tiles
 				if self.touchTile_v2 then dontblock = self:touchTile_v2(touchedTile, lside, normal) or dontblock end
 			end
 			
-print('touchedObj is',touchedObj)			
+--print('touchedObj is',touchedObj)			
 			if touchedObj then
-print('checking self.touchFlags',self.touchFlags,'vs touchedObj.solidFlags',touchedObj.solidFlags)
+--print('checking self.touchFlags',self.touchFlags,'vs touchedObj.solidFlags',touchedObj.solidFlags)
 				if bit.band(self.touchFlags, touchedObj.solidFlags) ~= 0 
 				or bit.band(touchedObj.touchFlags, self.solidFlags) ~= 0
 				then
-print('running touches based on priority. self.touchPriority=',self.touchPriority,'touchedObj.touchPriority=',touchedObj.touchPriority)					
+--print('running touches based on priority. self.touchPriority=',self.touchPriority,'touchedObj.touchPriority=',touchedObj.touchPriority)					
 					local opposite = oppositeSide[lside] or error("can't find opposite side for side "..tostring(side))
 					if self.touchPriority >= touchedObj.touchPriority then
 						if self.touch_v2 then dontblock = self:touch_v2(touchedObj, lside) or dontblock end
@@ -927,14 +930,14 @@ print('running touches based on priority. self.touchPriority=',self.touchPriorit
 						if touchedObj.touch_v2 then dontblock = touchedObj:touch_v2(self, opposite) or dontblock end
 						if self.touch_v2 then dontblock = self:touch_v2(touchedObj, lside) or dontblock end
 					end
-print('after calling touch, dontblock=',dontblock)				
+--print('after calling touch, dontblock=',dontblock)				
 				end
 			end
 			
 			-- flags of who we're touching.  or WORLD if we're touching the world.
 			local touchedSolidFlags = touchedObj and touchedObj.solidFlags or Object.SOLID_WORLD
 			local touchedBlockFlags = touchedObj and touchedObj.blockFlags or 0
-print('checking self.blockFlags=',self.blockFlags,' vs touchedSolidFlags=',touchedSolidFlags,' and not dontblock=',dontblock)
+--print('checking self.blockFlags=',self.blockFlags,' vs touchedSolidFlags=',touchedSolidFlags,' and not dontblock=',dontblock)
 			-- if the touch didn't override the blocking
 			if not dontblock
 			-- if we're supposed to be blocked by this entity
@@ -942,12 +945,12 @@ print('checking self.blockFlags=',self.blockFlags,' vs touchedSolidFlags=',touch
 			or bit.band(touchedBlockFlags, self.solidFlags) ~= 0)
 			then
 				-- TODO push objects out of the way
-print('setting collision flags for side',side,'for obj',touchedObj)
+--print('setting collision flags for side',side,'for obj',touchedObj)
 				self['collided'..side] = true
 				self['touchEnt'..side] = touchedObj
 
 				-- clip velocity and movement on the collided axis and try again
-print('zeroing velocity against normal',normal)
+--print('zeroing velocity against normal',normal)
 				local vDotN = self.vel:dot(normal)
 				if vDotN < 0 then
 					self.vel[1] = self.vel[1] - normal[1] * vDotN
@@ -962,27 +965,27 @@ print('zeroing velocity against normal',normal)
 			end
 		end
 
-print(' ===============')
-print(' == END TRACE ==')
-print(' ===============')
+--print(' ===============')
+--print(' == END TRACE ==')
+--print(' ===============')
 
 		if t == 1 then
-print('completely whole timestep -- breaking')
+--print('completely whole timestep -- breaking')
 			break
 		end
 		if dx == 0 and dy == 0 then
-print('movement stuck -- breaking')
+--print('movement stuck -- breaking')
 			break
 		end
 	end
 
 	-- TODO onground = collidedDown only if collision was with a solid object
 	self.onground = self.collidedDown
-print('onground',self.onground)
+--print('onground',self.onground)
 
-print('==============')
-print('== END MOVE ==')
-print('==============')
+--print('==============')
+--print('== END MOVE ==')
+--print('==============')
 end
 
 

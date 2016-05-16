@@ -58,6 +58,8 @@ collision issues so far:
 	- jump near a wall and shoot. your jump will stop midair. 
 	- TODO test grenade bouncing on doors
 	- movement still needs pushPriority implementation 
+	- jumping on stacks of items still make the player float in the air.  too many stuck collision tests?
+	- even stacks of geemerchunks makes the game slow down (kill 3x bosses at once to see this)
 
 monsters:
 	- barriers only hit players if player is moving

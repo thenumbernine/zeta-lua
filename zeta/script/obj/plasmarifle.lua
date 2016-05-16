@@ -88,7 +88,10 @@ local PlasmaShot = (function()
 
 		self.collidesWithWorld = false
 		self.collidesWithObjects = false
-		
+		self.solidFlags = 0
+		self.touchFlags = 0
+		self.blockFlags = 0
+
 		self.removeTime = game.time + 5/8
 	end
 

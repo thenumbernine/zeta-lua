@@ -87,11 +87,9 @@ self.holding.blockFlags = nil
 		
 		self.holding.vel[1] = self.vel[1]
 		self.holding.vel[2] = self.vel[2]
--- 1) this should be updated by setHeld or updateOverlay or whatever
---		and that should put it in front of the player
--- 2) even so, it's being overriden by update code setting it ontop of us
---self.holding.pos[1] = self.pos[1]
---self.holding.pos[2] = self.pos[2]
+-- without this, items fall through floor
+self.holding.pos[1] = self.pos[1]
+self.holding.pos[2] = self.pos[2]
 		self:hasKicked(self.holding)
 		
 		-- true for any Item subclass, who calls Item:playerGrab
