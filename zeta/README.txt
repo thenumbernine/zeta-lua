@@ -59,7 +59,7 @@ collidesWithWorld:
 collision issues so far:
 	- get slopes working
 	- jump near a wall and shoot. your jump will stop. 
-	- grenade bouncing is messy
+	- grenade bouncing is messy.  they fall thru floor sometimes.  they stop at doors.
 
 monsters:
 	- barriers only hit players if player is moving

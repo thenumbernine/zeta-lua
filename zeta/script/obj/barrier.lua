@@ -37,13 +37,6 @@ end
 Barrier.solidFlags = 0
 Barrier.touchFlags = Barrier.SOLID_YES + Barrier.SOLID_GRENADE
 Barrier.blockFlags = 0 
--- i would like to have block grenade and then touch return true to optionally not block 
--- ... but it is always blocking.
--- that appears to be due to the grenade's touch running, then it bounces ... 
--- then it calls this touch and gets a 'dontblock' true
--- but by then the velocity is already bounced
--- TODO incorporate bouncing into the movement model?
---Barrier.blockFlags = Barrier.SOLID_GRENADE
 Barrier.touch_v2 = Barrier.pretouch
 
 function Barrier:update(dt)

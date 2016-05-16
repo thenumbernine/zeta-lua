@@ -11,6 +11,9 @@ BreakBlock.useGravity = false
 BreakBlock.pushPriority = math.huge
 BreakBlock.bbox = box2(-.5, 0, .5, 1)
 BreakBlock.maxHealth = 1
+BreakBlock.solidFlags = BreakBlock.SOLID_WORLD
+BreakBlock.touchFlags = 0
+BreakBlock.blockFlags = 0
 
 function BreakBlock:init(args)
 	if args.health then self.maxHealth = tonumber(args.health) end

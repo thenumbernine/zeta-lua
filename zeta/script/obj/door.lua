@@ -70,16 +70,26 @@ function Door:touch(other, side)
 	end
 end
 
+Door.solidFlags = Door.SOLID_WORLD
+Door.touchFlags = 0
+Door.blockFlags = 0
+function Door:touch_v2(other, side)
+	if not other:isa(Hero) then return end
+	self.blockTime = game.time + 1
+	self:touch(other, side)
+end
+
 Door.states = {
 	opening = {
 		enter = function(self)
 			self.seq = 'unlock'
 			self.solid = false
+			self.solidFlags = 0
 			self.openStartTime = game.time
 			self.openEndTime = self.openStartTime + self.timeOpening
 		end,
 		update = function(self,dt)
-			local y = (game.time - self.openStartTime) / self.timeOpening 
+			local y = math.clamp((game.time - self.openStartTime) / self.timeOpening, 0, 1)
 			self.pos[2] = self.startPos[2] + 2 * y
 			if game.time >= self.openEndTime then
 				self:setState'open'
@@ -90,6 +100,7 @@ Door.states = {
 		enter = function(self)
 			self.seq = 'unlock'
 			self.solid = false
+			self.solidFlags = 0
 			self.closeStartTime = game.time + self.timeOpen
 		end,
 		update = function(self,dt)
@@ -104,10 +115,11 @@ Door.states = {
 		enter = function(self)
 			self.seq = 'unlock'
 			self.solid = false
+			self.solidFlags = 0
 			self.closeEndTime = game.time + self.timeOpening
 		end,
 		update = function(self,dt)
-			local y = 1 - (game.time - self.closeStartTime) / self.timeOpening
+			local y = math.clamp(1 - (game.time - self.closeStartTime) / self.timeOpening, 0, 1)
 			self.pos[2] = self.startPos[2] + 2 * y
 			if game.time >= self.closeEndTime then
 				self:setState'closed'
@@ -121,6 +133,7 @@ Door.states = {
 			else
 				self.seq = 'stand'
 				self.solid = true
+				self.solidFlags = nil
 			end
 		end,
 	},
