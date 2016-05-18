@@ -143,8 +143,6 @@ function Turret:die()
 	-- item drops
 	Turret.super.die(self, damage, attacker, inflicter, side)
 	MissileBlast{pos={self.pos[1],self.pos[2]-.5}}
-	self:playSound('explode2')
-	self.remove = true
 end
 
 function Turret:draw(R, viewBBox, ...)

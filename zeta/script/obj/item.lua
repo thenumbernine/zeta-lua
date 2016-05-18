@@ -9,10 +9,10 @@ Item.canStoreInv = true
 Item.playerHoldOffsetStanding = {.625, .125}
 Item.playerHoldOffsetDucking = {.625, -.25}
 
-function Item:init(args)
-	Item.super.init(self, args)
+function Item:init(args, ...)
+	Item.super.init(self, args, ...)
 
-	-- SpawnInfo spawns objs with 'self' as 'args' ...
+	-- if SpawnInfo created it then 'args' is the SpawnInfo ...
 	local spawnInfoIndex = game.level.spawnInfos:find(args)
 	if spawnInfoIndex then
 		if game.session['got permanent item '..spawnInfoIndex] then

@@ -15,12 +15,6 @@ BreakBlock.solidFlags = BreakBlock.SOLID_WORLD
 BreakBlock.touchFlags = 0
 BreakBlock.blockFlags = 0
 
-function BreakBlock:init(args)
-	if args.health then self.maxHealth = tonumber(args.health) end
-	BreakBlock.super.init(self, args)
-	if args.tileIndex then self.tileIndex = tonumber(args.tileIndex) end
-end
-
 function BreakBlock:draw(R, viewBBox)
 	if not self.tileIndex then return end
 	local level = game.level

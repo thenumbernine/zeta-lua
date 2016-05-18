@@ -12,13 +12,8 @@ Barrier.damage = 2
 Barrier.bbox = box2(-.3, 0, .3, 3)
 Barrier.shockEndTime = -1
 
-function Barrier:init(args)
-	Barrier.super.init(self, args)
-	
-	if args.timeOn then self.timeOn = tonumber(args.timeOn) end
-	if args.timeOff then self.timeOff = tonumber(args.timeOff) end
-	if args.damage then self.damage = tonumber(args.damage) end
-	
+function Barrier:init(...)
+	Barrier.super.init(self, ...)
 	self.timeOffset = math.random() * (self.timeOn + self.timeOff)
 	self.sprite = false
 end

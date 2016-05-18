@@ -15,8 +15,8 @@ Puff.solidFlags = 0
 Puff.touchFlags = 0
 Puff.blockFlags = 0
 
-function Puff:init(args)
-	Puff.super.init(self, args)
+function Puff:init(...)
+	Puff.super.init(self, ...)
 	self.color = vec4(1,1,1,1)
 	self.liveTime = self.baseLiveTime
 end

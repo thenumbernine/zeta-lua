@@ -7,9 +7,9 @@ local GeemerChunk = class(Object)
 GeemerChunk.sprite = 'geemer'
 GeemerChunk.seq = 'chunk'
 
-function GeemerChunk:init(args)
-	GeemerChunk.super.init(self, args)
-	self.removeTime = game.time + 2
+function GeemerChunk:init(...)
+	GeemerChunk.super.init(self, ...)
+	self.removeTime = game.time + 1.5 + math.random()
 end
 GeemerChunk.bbox = box2(-.2, 0, .2, .4)
 GeemerChunk.collidesWithWorld = true

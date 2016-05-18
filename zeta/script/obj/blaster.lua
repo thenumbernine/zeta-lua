@@ -13,15 +13,13 @@ local BlasterShot = (function()
 	BlasterShot.damage = 1
 	BlasterShot.rotCenter = {.5, .5}
 
-	function BlasterShot:init(args, ...)
-		BlasterShot.super.init(self, args, ...)
-		
-		self.shooter = args.shooter
+	function BlasterShot:init(...)
+		BlasterShot.super.init(self, ...)
 		
 		--self.angle = self.shooter.weapon.angle
 		--self.drawMirror = self.shooter.weapon.drawMirror
-		self.angle = math.deg(math.atan2(args.vel[2], args.vel[1]))
-		self.drawMirror = args.vel[1] < 0
+		self.angle = math.deg(math.atan2(self.vel[2], self.vel[1]))
+		self.drawMirror = self.vel[1] < 0
 		if self.drawMirror then self.angle = -self.angle end
 
 		setTimeout(.2, function() self.remove = true end)

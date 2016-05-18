@@ -26,7 +26,7 @@ function BossGeemer:calcVelForJump(delta)
 end
 
 function BossGeemer:die(damage, attacker, inflicter, side)
-	BossGeemer.super.die(self, attacker, inflicter, side)
+	BossGeemer.super.die(self, damage, attacker, inflicter, side)
 	for i=1,4 do
 		GeemerChunk.makeAt{
 			pos = self.pos,

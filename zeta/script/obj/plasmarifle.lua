@@ -14,15 +14,12 @@ local PlasmaShot = (function()
 	PlasmaShot.damage = 3
 	PlasmaShot.rotCenter = {.5, .5}
 
-	function PlasmaShot:init(args, ...)
-		PlasmaShot.super.init(self, args, ...)
+	function PlasmaShot:init(...)
+		PlasmaShot.super.init(self, ...)
 		
-		self.shooter = args.shooter
-		args.shooter:hasKicked(self)
-		
+		self.shooter:hasKicked(self)
 		self.angle = self.shooter.weapon.angle
 		self.drawMirror = self.shooter.weapon.drawMirror
-		
 		--setTimeout(.2, function() self.remove = true end)
 	end
 

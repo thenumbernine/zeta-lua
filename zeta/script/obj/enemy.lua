@@ -5,13 +5,8 @@ local modio = require 'base.script.singleton.modio'
 
 local Enemy = class(takesDamageBehavior(Object))
 
-function Enemy:init(args)
-	Enemy.super.init(self, args)
-	self.onDie = args.onDie
-end
-
 Enemy.itemDrops = nil
-function Enemy:die(damage, attacker, inflicter, side)
+function Enemy:die(...)
 	if self.itemDrops then
 		local r = math.random()
 		for k,v in pairs(self.itemDrops) do
@@ -23,13 +18,7 @@ function Enemy:die(damage, attacker, inflicter, side)
 			r = r - v
 		end
 	end
-
-	if self.onDie then
-		local sandbox = modio:require 'script.sandbox'
-		sandbox(self.onDie,
-			'self, damage, attacker, inflicter, side',
-			self, damage, attacker, inflicter, side)
-	end
+	Enemy.super.die(self, ...)
 end
 
 return Enemy

@@ -16,8 +16,8 @@ Door.timeOpening = .5
 Door.timeOpen = 3
 Door.blockTime = 0	-- last time it was blocked
 
-function Door:init(args)
-	Door.super.init(self, args)
+function Door:init(...)
+	Door.super.init(self, ...)
 	self.startPos = vec2(self.pos:unpack())
 	self:setState'closed'
 

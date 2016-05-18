@@ -44,13 +44,34 @@ function Object:init(args)
 	self.lastvel = vec2()
 	self.bbox = box2(self.bbox.min[1], self.bbox.min[2], self.bbox.max[1], self.bbox.max[2])
 
-	if args.pos then self.pos[1], self.pos[2] = args.pos[1], args.pos[2] end
-	if args.vel then self.vel[1], self.vel[2] = args.vel[1], args.vel[2] end
-	if args.sprite then self.sprite = args.sprite end
-	if args.solid ~= nil then self.solid = args.solid end
-	if args.drawScale then self.drawScale = vec2(table.unpack(args.drawScale)) end
-	if args.color then self.color = {table.unpack(args.color)} end 
-	if args.bbox then self.bbox = box2(table.unpack(args.bbox)) end
+	for k,v in pairs(args) do
+		local unknown
+		local typev = type(v)
+		if typev == 'number'
+		or typev == 'boolean'
+		or typev == 'string'
+		or typev == 'function'
+		then
+			self[k] = v
+		elseif typev == 'table' then
+			if #v == 2 then
+				self[k] = vec2(table.unpack(v))
+			elseif #v == 4 then
+				self[k] = vec4(table.unpack(v))
+			elseif v.min then
+				self[k] = box2(v)
+			else
+				self[k] = v
+				-- complain about unknown?
+			end
+		else
+			unknown = true
+		end
+		if unknown then
+			print('got unknown spawninfo type',typev,'key',k,'value',v)
+			self[k] = v
+		end
+	end
 
 	game:addObject(self)	-- only do this once per object.  don't reuse, or change the uid system
 

@@ -10,12 +10,6 @@ Trigger.pushPriority = math.huge	-- can't push
 Trigger.nextTriggerTime = -1
 Trigger.wait = math.huge	-- wait forever, so default trigger only once
 
-function Trigger:init(args)
-	Trigger.super.init(self, args)
-	self.trigger = args.trigger
-	self.wait = args.wait
-end
-
 local Player = require 'base.script.obj.player'
 
 -- use pretouch so we don't block

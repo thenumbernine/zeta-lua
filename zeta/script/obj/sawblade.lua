@@ -15,15 +15,12 @@ Sawblade.damage = 3
 Sawblade.rotation = 3000
 Sawblade.pushForce = 7
 
-function Sawblade:init(args)
-	Sawblade.super.init(self, args)
-	if args.travel then self.travel = {table.unpack(args.travel)} end
-	if args.travelTime then self.travelTime = tonumber(args.travelTime) end 
-	if args.damage then self.damage = tonumber(args.damage) end
+function Sawblade:init(...)
+	Sawblade.super.init(self, ...)
 	self.startPos = {self.pos:unpack()}
 	-- start our internal clock
 	self.t = math.random() * self.travelTime
-	if args.timeOffset then self.t = tonumber(args.timeOffset) end
+	if self.timeOffset then self.t = tonumber(self.timeOffset) end
 	-- do we have power?
 	self.power = game.session.defensesDeactivated and 0 or 1
 end

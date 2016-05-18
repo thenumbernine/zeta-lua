@@ -813,7 +813,8 @@ function Editor:updateGUI()
 	end
 
 	self.showInitFileWindow = self.showInitFileWindow or ffi.new('bool[1]',false)
-	self.initFileBuffer = self.initFileBuffer or ffi.new('char[?]', 65536)	-- hmm ... init files have a max size ...
+	local initFileBufferSize = 65536 
+	self.initFileBuffer = self.initFileBuffer or ffi.new('char[?]', initFileBufferSize)	-- hmm ... init files have a max size ...
 	if ig.igCollapsingHeader('File...') then
 		if ig.igButton('Save Map') then
 			self:saveMap()
@@ -825,7 +826,6 @@ function Editor:updateGUI()
 			self:saveTexPack()
 		end
 
-		local initFileBufferSize = ffi.sizeof(self.initFileBuffer) 
 		if ig.igButton('Edit Level Init Code') then
 			self.showInitFileWindow[0] = true
 			local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
@@ -837,13 +837,13 @@ function Editor:updateGUI()
 	end
 	if self.showInitFileWindow[0] then
 		ig.igBegin('Level Init Code', self.showInitFileWindow)
-		ig.igInputTextMultiline('code', self.initFileBuffer, ffi.sizeof(self.initFileBuffer),
-			ig.ImVec2(0,0),
+		local size = ig.igGetWindowSize()
+		ig.igInputTextMultiline('code', self.initFileBuffer, initFileBufferSize,
+			ig.ImVec2(size.x, size.y - 56),	-- minus titlebar height and button height
 			ig.ImGuiInputTextFlags_AllowTabInput)
 		if ig.igButton('Save') then
 			self.initFileBuffer[initFileBufferSize-1] = 0
 			local code = ffi.string(self.initFileBuffer)
-			print('saving code',code)
 			local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
 			file[dir..'/init.lua'] = code
 			self.showInitFileWindow[0] = false

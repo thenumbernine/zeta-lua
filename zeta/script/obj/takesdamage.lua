@@ -6,12 +6,15 @@ local game = require 'base.script.singleton.game'
 local function takesDamageBehavior(parentClass)
 	local TakesDamageTemplate = class(parentClass)
 
-	TakesDamageTemplate.maxHealth = TakesDamageTemplate.maxHealth or 1
 	TakesDamageTemplate.invincibleEndTime = -1
 
 	function TakesDamageTemplate:init(...)
 		TakesDamageTemplate.super.init(self, ...)
-		self.health = self.maxHealth
+		-- start out with full health, if health wasn't already explicitly specified and maxHealth was
+		assert(self.health or self.maxHealth, "you need to provide either health or maxHealth")
+		if self.maxHealth and not self.health then
+			self.health = self.maxHealth
+		end
 	end
 	
 	TakesDamageTemplate.showDamageAmount = 0
@@ -48,7 +51,10 @@ local function takesDamageBehavior(parentClass)
 		self.showDamageTime = game.time + self.showDamageDelay 
 		self.showDamageAmount = self.showDamageAmount + damage
 
-		self.health = math.clamp(self.health - damage, 0, self.maxHealth)
+		self.health = math.max(self.health - damage, 0)
+		if self.maxHealth and self.health > self.maxHealth then
+			self.health = self.maxHealth
+		end
 		if damage >= 0 then
 			if self.health > 0 then 
 				if self.hit then
@@ -62,9 +68,17 @@ local function takesDamageBehavior(parentClass)
 		if self.remove then self:showDamage() end
 	end
 
+	TakesDamageTemplate.deathSound = 'explode2'
+	TakesDamageTemplate.removeOnDie = true
 	function TakesDamageTemplate:die(damage, attacker, inflicter, side)
-		self.remove = true
-		self:playSound('explode2')
+		if self.onDie then
+			local sandbox = modio:require 'script.sandbox'
+			sandbox(self.onDie,
+				'self, damage, attacker, inflicter, side',
+				self, damage, attacker, inflicter, side)
+		end
+		if self.deathSound then self:playSound(self.deathSound) end
+		if self.removeOnDie then self.remove = true end
 	end
 
 	return TakesDamageTemplate

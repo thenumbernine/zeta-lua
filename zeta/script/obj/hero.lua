@@ -61,8 +61,8 @@ Hero.maxAmmoCells = 0
 Hero.ammoCells = Hero.maxAmmoCells
 Hero.rechargeCellsTime = 10	-- seconds
 
-function Hero:init(args)
-	Hero.super.init(self, args)
+function Hero:init(...)
+	Hero.super.init(self, ...)
 	self.items = table()	-- self.items = {{obj1, ...}, {obj2, ...}, ...} for each unique class
 	self.holding = nil
 	self.color = nil	-- TODO team colors
@@ -748,11 +748,11 @@ function Hero:update(dt)
 	self.ongroundLast = self.onground
 end
 
+Hero.removeOnDie = false
 function Hero:die(damage, attacker, inflicter, side)
 	-- nothing atm
 	if self.dead then return end
 	if self.heldby then self.heldby:setHeld(nil) end
-	self:playSound('explode2')
 	self:setHeld(nil)
 	self.warping = false
 	self.climbing = false
@@ -761,6 +761,8 @@ function Hero:die(damage, attacker, inflicter, side)
 	self.solid = false
 	self.collidesWithObjects = false
 	self.dead = true
+	
+	Hero.super.die(self, damage, attacker, inflicter, side)
 	
 	-- if we're respawning, keep items and weapon?
 	-- but really I should be restarting the whole level
@@ -899,6 +901,10 @@ end
 function Hero:drawHUD(R, viewBBox)
 	if Hero.super.drawHUD then Hero.super.drawHUD(self, R, viewBBox) end
 
+	-- TODO if start button pushed ...
+	-- then show inventory
+	-- otherwise have 'l' and 'r' cycle ... weapons only? 
+
 	local y = viewBBox.min[2]+1
 	-- draw gui
 	-- health:
@@ -927,6 +933,9 @@ function Hero:drawHUD(R, viewBBox)
 		end
 		if #items > 1 then
 			gui.font:drawUnpacked(viewBBox.min[1]+2.5, y, 1, -1, 'x'..#items)
+		end
+		if item.name then
+			gui.font:drawUnpacked(viewBBox.min[1]+3.5, y, 1, -1, item.name)
 		end
 	end
 	

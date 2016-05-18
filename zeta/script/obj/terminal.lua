@@ -8,12 +8,6 @@ Terminal.sprite = 'terminal'
 Terminal.solid = false
 Terminal.collidesWithObjs = false
 
-function Terminal:init(args)
-	Terminal.super.init(self, args)
-	self.text = args.text
-	self.use = args.use
-end
-
 Terminal.solidFlags = 0
 Terminal.touchFlags = Terminal.SOLID_WORLD + Terminal.SOLID_YES
 Terminal.blockFlags = Terminal.SOLID_WORLD

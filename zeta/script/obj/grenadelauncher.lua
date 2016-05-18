@@ -17,17 +17,14 @@ local Grenade = (function()
 	Grenade.splashDamage = 3
 	Grenade.rotCenter = {.5, .5}
 
-	function Grenade:init(args)
-		args.vel[1] = args.vel[1] * (math.random() * .2 + .9)
-		args.vel[2] = args.vel[2] * (math.random() * .2 + .9)
-		Grenade.super.init(self, args)
-	
-		self.shooter = args.shooter
-		args.shooter:hasKicked(self)
-	
+	function Grenade:init(...)
+		Grenade.super.init(self, ...)
+		
+		self.vel[1] = self.vel[1] * (math.random() * .2 + .9)
+		self.vel[2] = self.vel[2] * (math.random() * .2 + .9)
+		self.shooter:hasKicked(self)
 		self.angle = math.deg(math.atan2(self.vel[2], self.vel[1]))
 		self.rotation = (math.random()*2-1) * 360
-	
 		self.detonateTime = game.time + 2.9 + math.random() * .2
 	end
 
@@ -108,8 +105,12 @@ local Grenade = (function()
 	function Grenade:hit()
 		self.detonateTime = math.min(self.detonateTime, game.time + math.random() * .5)
 	end
-	function Grenade:die()
+	Grenade.deathSound = nil
+	Grenade.removeOnDie = false
+	function Grenade:die(...)
 		self.detonateTime = math.min(self.detonateTime, game.time + math.random() * .5)
+		-- call any onDie callbacks
+		Grenade.super.die(self, ...)
 	end
 
 	Grenade.restitution = .5

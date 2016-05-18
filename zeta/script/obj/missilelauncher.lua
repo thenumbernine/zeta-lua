@@ -16,12 +16,10 @@ local Missile = (function()
 	Missile.splashDamage = 3
 	Missile.rotCenter = {.5, .5}
 
-	function Missile:init(args)
-		Missile.super.init(self, args)
+	function Missile:init(...)
+		Missile.super.init(self, ...)
 	
-		self.shooter = args.shooter
-		args.shooter:hasKicked(self)
-	
+		self.shooter:hasKicked(self)
 		self.angle = math.deg(math.atan2(self.vel[2], self.vel[1]))
 	end
 

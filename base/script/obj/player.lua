@@ -13,14 +13,14 @@ Player.inputJumpAux = false
 Player.inputShoot = false
 Player.inputShootAux = false
 
-function Player:init(args)
+function Player:init(...)
 	self.viewPos = vec2()
 	self.viewBBox = box2()
 	-- only needed for games that use the mouse ... hmm ...
 	self.mouseScreenPos = vec2()
 	self.mousePos = vec2()
 	
-	Player.super.init(self, args)
+	Player.super.init(self, ...)
 end
 
 return Player

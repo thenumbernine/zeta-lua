@@ -5,6 +5,8 @@ local Object = require 'base.script.obj.object'
 --[[
 'items' are overlays in rendering (called from Player's draw)
 and execute upon player inputRun
+
+for that reason it's disconnected from the game.objs (doesn't call Object:init())
 --]]
 
 local PlayerItem = class()

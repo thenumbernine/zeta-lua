@@ -13,8 +13,8 @@ MissileBlast.solidFlags = 0
 MissileBlast.touchFlags = 0
 MissileBlast.blockFlags = 0
 
-function MissileBlast:init(args)
-	MissileBlast.super.init(self, args)
+function MissileBlast:init(...)
+	MissileBlast.super.init(self, ...)
 	self.removeTime = game.time + .75
 	self.seqStartTime = game.time
 end

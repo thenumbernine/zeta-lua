@@ -236,10 +236,9 @@ end
 Geemer.itemDrops = {
 	['zeta.script.obj.heart'] = .1,
 }
-
+Geemer.deathSound = 'explode1'
 function Geemer:die(damage, attacker, inflicter, side)
-	self:playSound('explode1')
-	-- spawn item drops
+	-- spawn item drops, remove self, sound explosion
 	Geemer.super.die(self, damage, attacker, inflicter, side)
 	-- puff of smoke	
 	--local Puff = require 'zeta.script.obj.puff'
@@ -250,8 +249,6 @@ function Geemer:die(damage, attacker, inflicter, side)
 		dir = (self.pos - attacker.pos):normalize(),
 		color = self.color,
 	}
-	-- get rid of self
-	self.remove = true
 	-- piss off the geemers around you
 	for _,other in ipairs(game.objs) do
 		if other:isa(Geemer) then
