@@ -623,6 +623,7 @@ this means non-solid objects will potentially be starting inside other objects
 but they don't collide with other objects anyways, do they?
 --]]
 Object.SOLID_WORLD = 1
+-- TODO all this is mod-specific.  move it to zeta.
 Object.SOLID_YES = 2
 Object.SOLID_SHOT = 4
 Object.SOLID_ITEM = 8

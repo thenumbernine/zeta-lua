@@ -924,6 +924,7 @@ function Hero:drawHUD(R, viewBBox)
 			pos = {viewBBox.min[1] + 1, y-1},
 			angle = 0,
 			color = item.color,
+			drawScale = item.drawScale,
 		}, R, viewBBox)
 		if items:find(self.holding) then
 			gui.font:drawUnpacked(viewBBox.min[1]+1.5, y, 1, -1, '<')

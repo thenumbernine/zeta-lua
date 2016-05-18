@@ -14,7 +14,7 @@ local player = game.players[1]
 -- find object named ...
 local function findObjNamed(name)
 	return select(2, game.objs:find(nil, function(obj)
-		return obj.spawnInfo and obj.spawnInfo.name == name
+		return obj.name == name
 	end))
 end
 -- find spawn info named ...

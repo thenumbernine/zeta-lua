@@ -186,7 +186,7 @@ end
 
 Geemer.solidFlags = Geemer.SOLID_NO
 Geemer.touchFlags = Geemer.SOLID_YES
-Geemer.blockFlags = Geemer.SOLID_WORLD
+Geemer.blockFlags = Geemer.SOLID_WORLD + Geemer.SOLID_YES
 function Geemer:touch_v2(other, side)
 	-- this makes collision run incredibly slow in crowds
 	-- give this its own flags?

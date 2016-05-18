@@ -33,7 +33,7 @@ local Grenade = (function()
 		if not self.onground then
 			self.angle = self.angle + dt * self.rotation
 		end
-		if game.time > self.detonateTime then
+		if game.time >= self.detonateTime then
 			self:blast()
 		end
 	end

@@ -58,6 +58,7 @@ function Item:playerGrab(player, side)
 		for _,items in ipairs(player.items) do
 			if self.class ~= require 'zeta.script.obj.keycard'	-- they have to be held uniquely
 			and items[1].class == self.class
+			and items[1].name == self.name
 			then
 				items:insert(self)
 				found = true

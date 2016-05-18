@@ -17,17 +17,14 @@ TODO list
 collision v1:
 	- fix collisions with sloped tiles.  determine ymin and ymax on the x side of sloped tiles and test that against object bbox. 
 collision v2:
+	- get slopes working
 	- player can still duck and jump on the top of a ladder with solid above and get halfway stuck in the ceiling
 	- duck then stand up with a monster on your head.  you get stuck in the monster.
-	- get slopes working
 	- jump near a wall and shoot. your jump will stop midair. 
 	- grenades still don't bounce on doors
 	- movement still needs pushPriority implementation 
 	- jumping on stacks of items still make the player float in the air.  too many stuck collision tests?
 	- make sure there aren't any more physics slowdowns
-	- give geemers their own solid type.  geemers are blocked by 'world' and 'yes'.  geemers touch 'yes'.  geemers were 'no', so any old 'no' touches that aim for geemers now need to add geemers.
-		- or make a flag to not collide with your own class (that most monsters may be using)
-		- or make a solid_monster that doesn't collide with other solid_monsters, that acts like above described.
 	- sometimes grenades will hit a turret and ... not explode
 
 monsters:
