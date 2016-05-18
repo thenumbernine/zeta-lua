@@ -1111,14 +1111,18 @@ function Editor:updateGUI()
 					if prop.fieldType[0] == fieldTypeText then
 						local done
 						if prop.multiLineVisible then
+							ig.igPushIdStr('multiline')
 							-- ctrl+enter returns by default?
 							done = ig.igInputTextMultiline(propTitle, prop.vptr, textBufferSize,
 								ig.ImVec2(0,0),
 								ig.ImGuiInputTextFlags_EnterReturnsTrue
 								+ ig.ImGuiInputTextFlags_AllowTabInput)
-							done = ig.igButton('done editing') or done
+							done = done or ig.igButton('done editing')
+							ig.igPopId()
 						else
+							ig.igPushIdStr('singleline')
 							done = ig.igInputText(propTitle, prop.vptr, textBufferSize, ig.ImGuiInputTextFlags_EnterReturnsTrue + ig.ImGuiInputTextFlags_AllowTabInput)
+							ig.igPopId()
 						end
 						if done then
 							-- save changes
@@ -1141,6 +1145,19 @@ function Editor:updateGUI()
 						ig.igInputFloat2(propTitle, prop.vptr)
 						self.selectedSpawnInfo[prop.k][1] = prop.vptr[0]
 						self.selectedSpawnInfo[prop.k][2] = prop.vptr[1]
+		
+						--[[ it'd be nice to toggle fields between vector/point
+						but that'd meen keeping track of that flag even after it is deselected
+						and that would mean keeping track of the flag for *all* objs
+						two ways to do that:
+						1) make different types for vectors vs points (needlessly complex for file formats)
+						2) allow the user/script to toggle/specify them for all objects at once
+						in the end ... just use spawninfos for positions whenever possible
+						ig.igSameLine()
+						local bool = ffi.new('bool[1]', prop.isAbsolute)
+						ig.igCheckbox('abs', bool)
+						prop.isAbsolute = bool
+						--]]
 					elseif prop.fieldType[0] == fieldTypeVec4 then
 						ig.igInputFloat4(propTitle, prop.vptr)
 						self.selectedSpawnInfo[prop.k][1] = prop.vptr[0]
