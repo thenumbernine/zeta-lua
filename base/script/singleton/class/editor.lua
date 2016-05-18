@@ -1028,15 +1028,11 @@ function Editor:updateGUI()
 			if ig.igCollapsingHeader('Object Properties:') then
 				local textBufferSize = 2048
 			
-				local fieldTypes = table{'text', 'number', 'boolean', 'vec2', 'vec4', 'tile'}
-				local fieldTypeText = 0
-				local fieldTypeNumber = 1
-				local fieldTypeBoolean = 2
-				local fieldTypeVec2 = 3
-				local fieldTypeVec4 = 4
-				-- fieldTypeTile is used for only specific fields
-				--  so auto-detect will be difficult 
-				local fieldTypeTile = 5
+				local fieldTypeNames = table{'text', 'number', 'boolean', 'vec2', 'vec4', 'box2', 'tile'}
+				local fieldTypeEnum = {}
+				for i,fieldTypeName in ipairs(fieldTypeNames) do
+					fieldTypeEnum[fieldTypeName] = i-1	-- minus one because the combo is 0-based
+				end
 				
 				local function createProp(k,v, fieldType)
 					if k == 'obj' then return end		-- obj is reserved
@@ -1053,30 +1049,35 @@ function Editor:updateGUI()
 			
 					if not fieldType then
 						-- deduce from value
-						fieldType = fieldTypeText
-						if type(v) == 'boolean' then fieldType = fieldTypeBoolean end
-						if type(v) == 'table' and #v == 2 then fieldType = fieldTypeVec2 end
-						if type(v) == 'table' and #v == 4 then fieldType = fieldTypeVec4 end
-						-- predefined, based on k: fieldTypeTile
-						if type(v) == 'number' and k == 'tileIndex' then fieldType = fieldTypeTile end
-						if type(v) == 'number' then fieldType = fieldTypeNumber end
+						fieldType = fieldTypeEnum.text
+						if type(v) == 'boolean' then fieldType = fieldTypeEnum.boolean end
+						if type(v) == 'table' and #v == 2 then fieldType = fieldTypeEnum.vec2 end
+						if type(v) == 'table' and #v == 4 then fieldType = fieldTypeEnum.vec4 end
+						if type(v) == 'table' and v.min and v.max then fieldType = fieldTypeEnum.box2 end
+						-- fieldTypeEnum.tile is used for only specific fields
+						--  so auto-detect will be difficult 
+						-- for now it's predefined, based on k: fieldTypeEnum.tile
+						if type(v) == 'number' and k == 'tileIndex' then fieldType = fieldTypeEnum.tile end
+						if type(v) == 'number' then fieldType = fieldTypeEnum.number end
 					end
 					prop.fieldType = ffi.new('int[1]',fieldType)
 					
-					if fieldType == fieldTypeText then
+					if fieldType == fieldTypeEnum.text then
 						prop.vptr = ffi.new('char[?]', textBufferSize)
 						local vs = tostring(v)
 						ffi.copy(prop.vptr, vs, math.min(#vs+1, textBufferSize-1)) 
 						prop.vptr[textBufferSize-1] = 0
-					elseif fieldType == fieldTypeNumber then
+					elseif fieldType == fieldTypeEnum.number then
 						prop.vptr = ffi.new('float[1]', v)
-					elseif fieldType == fieldTypeBoolean then 
+					elseif fieldType == fieldTypeEnum.boolean then 
 						prop.vptr = ffi.new('bool[1]', v)
-					elseif fieldType == fieldTypeVec2 then
+					elseif fieldType == fieldTypeEnum.vec2 then
 						prop.vptr = ffi.new('float[2]', v[1], v[2])
-					elseif fieldType == fieldTypeVec4 then
+					elseif fieldType == fieldTypeEnum.vec4 then
 						prop.vptr = ffi.new('float[4]', v[1], v[2], v[3], v[4])
-					elseif fieldType == fieldTypeTile then
+					elseif fieldType == fieldTypeEnum.box2 then
+						prop.vptr = ffi.new('float[4]', v.min[1], v.min[2], v.max[1], v.max[2])
+					elseif fieldType == fieldTypeEnum.tile then
 						prop.vptr = ffi.new('int[1]', v)
 					end
 
@@ -1104,9 +1105,7 @@ function Editor:updateGUI()
 					
 					ig.igPushIdStr('spawnprop #'..i)
 								
-					-- changing mid-edit means changing the underlying c arrays that communicate with imgui
-					--ig.igCombo(propTitle..' type', prop.fieldType, fieldTypes)
-					if prop.fieldType[0] == fieldTypeText then
+					if prop.fieldType[0] == fieldTypeEnum.text then
 						local done
 						if prop.multiLineVisible then
 							ig.igPushIdStr('multiline')
@@ -1133,13 +1132,13 @@ function Editor:updateGUI()
 						ig.igCheckbox('...', bool)
 						prop.multiLineVisible = bool[0]
 			
-					elseif prop.fieldType[0] == fieldTypeNumber then
+					elseif prop.fieldType[0] == fieldTypeEnum.number then
 						ig.igInputFloat(propTitle, prop.vptr) 
 						self.selectedSpawnInfo[prop.k] = prop.vptr[0]
-					elseif prop.fieldType[0] == fieldTypeBoolean then
+					elseif prop.fieldType[0] == fieldTypeEnum.boolean then
 						ig.igCheckbox(propTitle, prop.vptr)
 						self.selectedSpawnInfo[prop.k] = prop.vptr[0]
-					elseif prop.fieldType[0] == fieldTypeVec2 then
+					elseif prop.fieldType[0] == fieldTypeEnum.vec2 then
 						ig.igInputFloat2(propTitle, prop.vptr)
 						self.selectedSpawnInfo[prop.k][1] = prop.vptr[0]
 						self.selectedSpawnInfo[prop.k][2] = prop.vptr[1]
@@ -1156,13 +1155,19 @@ function Editor:updateGUI()
 						ig.igCheckbox('abs', bool)
 						prop.isAbsolute = bool
 						--]]
-					elseif prop.fieldType[0] == fieldTypeVec4 then
+					elseif prop.fieldType[0] == fieldTypeEnum.vec4 then
 						ig.igInputFloat4(propTitle, prop.vptr)
 						self.selectedSpawnInfo[prop.k][1] = prop.vptr[0]
 						self.selectedSpawnInfo[prop.k][2] = prop.vptr[1]
 						self.selectedSpawnInfo[prop.k][3] = prop.vptr[2]
 						self.selectedSpawnInfo[prop.k][4] = prop.vptr[3]
-					elseif prop.fieldType[0] == fieldTypeTile then
+					elseif prop.fieldType[0] == fieldTypeEnum.box2 then
+						ig.igInputFloat4(propTitle, prop.vptr)
+						self.selectedSpawnInfo[prop.k].min[1] = prop.vptr[0]
+						self.selectedSpawnInfo[prop.k].min[2] = prop.vptr[1]
+						self.selectedSpawnInfo[prop.k].max[1] = prop.vptr[2]
+						self.selectedSpawnInfo[prop.k].max[2] = prop.vptr[3]
+					elseif prop.fieldType[0] == fieldTypeEnum.tile then
 						if tileButton(prop.vptr[0]) then
 							openPickTileWindow(function(tileIndex)
 								prop.vptr[0] = tileIndex
@@ -1187,7 +1192,7 @@ function Editor:updateGUI()
 				ig.igSeparator()
 	
 				self.newFieldType = self.newFieldType or ffi.new('int[1]', 0)
-				ig.igCombo('new field type', self.newFieldType, fieldTypes)
+				ig.igCombo('new field type', self.newFieldType, fieldTypeNames)
 
 				self.newFieldStr = self.newFieldStr or ffi.new('char[?]', textBufferSize)
 				if ig.igInputText('new field name', self.newFieldStr, textBufferSize, ig.ImGuiInputTextFlags_EnterReturnsTrue)
@@ -1200,17 +1205,19 @@ function Editor:updateGUI()
 					else
 						local fieldType = self.newFieldType[0]
 						local v
-						if fieldType == fieldTypeText then
+						if fieldType == fieldTypeEnum.text then
 							v = ''
-						elseif fieldType == fieldTypeNumber then
+						elseif fieldType == fieldTypeEnum.number then
 							v = 0
-						elseif fieldType == fieldTypeBoolean then
+						elseif fieldType == fieldTypeEnum.boolean then
 							v = false
-						elseif fieldType == fieldTypeVec2 then
+						elseif fieldType == fieldTypeEnum.vec2 then
 							v = vec2(0,0)
-						elseif fieldType == fieldTypeVec4 then
+						elseif fieldType == fieldTypeEnum.vec4 then
 							v = vec4(1,1,1,1)
-						elseif fieldType == fieldTypeTile then
+						elseif fieldType == fieldTypeEnum.box2 then
+							v = box2(-.5, 0, .5, 1)
+						elseif fieldType == fieldTypeEnum.tile then
 							v = 0
 						end
 						self.selectedSpawnInfo[k] = v
