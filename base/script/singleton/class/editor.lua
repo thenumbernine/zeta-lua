@@ -1030,14 +1030,15 @@ function Editor:updateGUI()
 			if ig.igCollapsingHeader('Object Properties:') then
 				local textBufferSize = 2048
 			
-				local fieldTypes = table{'value', 'boolean', 'vec2', 'vec4', 'tile'}
-				local fieldTypeValue = 0
-				local fieldTypeBoolean = 1
-				local fieldTypeVec2 = 2
-				local fieldTypeVec4 = 3
+				local fieldTypes = table{'text', 'number', 'boolean', 'vec2', 'vec4', 'tile'}
+				local fieldTypeText = 0
+				local fieldTypeNumber = 1
+				local fieldTypeBoolean = 2
+				local fieldTypeVec2 = 3
+				local fieldTypeVec4 = 4
 				-- fieldTypeTile is used for only specific fields
 				--  so auto-detect will be difficult 
-				local fieldTypeTile = 4
+				local fieldTypeTile = 5
 				
 				local function createProp(k,v, fieldType)
 					if k == 'obj' then return end		-- obj is reserved
@@ -1054,20 +1055,23 @@ function Editor:updateGUI()
 			
 					if not fieldType then
 						-- deduce from value
-						fieldType = fieldTypeValue
+						fieldType = fieldTypeText
 						if type(v) == 'boolean' then fieldType = fieldTypeBoolean end
 						if type(v) == 'table' and #v == 2 then fieldType = fieldTypeVec2 end
 						if type(v) == 'table' and #v == 4 then fieldType = fieldTypeVec4 end
 						-- predefined, based on k: fieldTypeTile
 						if type(v) == 'number' and k == 'tileIndex' then fieldType = fieldTypeTile end
+						if type(v) == 'number' then fieldType = fieldTypeNumber end
 					end
 					prop.fieldType = ffi.new('int[1]',fieldType)
 					
-					if fieldType == fieldTypeValue then
+					if fieldType == fieldTypeText then
 						prop.vptr = ffi.new('char[?]', textBufferSize)
 						local vs = tostring(v)
 						ffi.copy(prop.vptr, vs, math.min(#vs+1, textBufferSize-1)) 
 						prop.vptr[textBufferSize-1] = 0
+					elseif fieldType == fieldTypeNumber then
+						prop.vptr = ffi.new('float[1]', v)
 					elseif fieldType == fieldTypeBoolean then 
 						prop.vptr = ffi.new('bool[1]', v)
 					elseif fieldType == fieldTypeVec2 then
@@ -1097,38 +1101,39 @@ function Editor:updateGUI()
 				end
 					
 				for i=#self.spawnInfoProps,1,-1 do
-					ig.igPushIdStr('spawnprop #'..i)
 					local prop = self.spawnInfoProps[i]
 					local propTitle = prop.k
-				
-					if prop.k ~= 'pos' and prop.k ~= 'spawn' then
-						if ig.igButton('remove '..propTitle) then
-							self.spawnInfoProps:remove(i)
-							self.selectedSpawnInfo[prop.k] = nil
-						end
-					end
 					
+					ig.igPushIdStr('spawnprop #'..i)
+								
 					-- changing mid-edit means changing the underlying c arrays that communicate with imgui
 					--ig.igCombo(propTitle..' type', prop.fieldType, fieldTypes)
-					if prop.fieldType[0] == fieldTypeValue then
-						if not prop.multiLineVisible then 
-							if ig.igButton(ffi.string(prop.vptr)..' -- '..propTitle) then
-								prop.multiLineVisible = true
-							end
-						end
+					if prop.fieldType[0] == fieldTypeText then
+						local done
 						if prop.multiLineVisible then
 							-- ctrl+enter returns by default?
-							if ig.igInputTextMultiline(propTitle, prop.vptr, textBufferSize,
+							done = ig.igInputTextMultiline(propTitle, prop.vptr, textBufferSize,
 								ig.ImVec2(0,0),
 								ig.ImGuiInputTextFlags_EnterReturnsTrue
 								+ ig.ImGuiInputTextFlags_AllowTabInput)
-							or ig.igButton('done editing')
-							then
-								-- save changes
-								self.selectedSpawnInfo[prop.k] = ffi.string(prop.vptr)
-								prop.multiLineVisible = false
-							end
+							done = ig.igButton('done editing') or done
+						else
+							done = ig.igInputText(propTitle, prop.vptr, textBufferSize, ig.ImGuiInputTextFlags_EnterReturnsTrue + ig.ImGuiInputTextFlags_AllowTabInput)
 						end
+						if done then
+							-- save changes
+							self.selectedSpawnInfo[prop.k] = ffi.string(prop.vptr)
+							prop.multiLineVisible = false
+						end					
+					
+						ig.igSameLine()
+						local bool = ffi.new('bool[1]', prop.multiLineVisible or false)
+						ig.igCheckbox('...', bool)
+						prop.multiLineVisible = bool[0]
+			
+					elseif prop.fieldType[0] == fieldTypeNumber then
+						ig.igInputFloat(propTitle, prop.vptr) 
+						self.selectedSpawnInfo[prop.k] = prop.vptr[0]
 					elseif prop.fieldType[0] == fieldTypeBoolean then
 						ig.igCheckbox(propTitle, prop.vptr)
 						self.selectedSpawnInfo[prop.k] = prop.vptr[0]
@@ -1152,6 +1157,15 @@ function Editor:updateGUI()
 						ig.igSameLine()
 						ig.igText(prop.vptr[0]..' -- '..propTitle)
 					end
+					
+					if prop.k ~= 'pos' and prop.k ~= 'spawn' then
+						ig.igSameLine()
+						if ig.igButton('X') then
+							self.spawnInfoProps:remove(i)
+							self.selectedSpawnInfo[prop.k] = nil
+						end
+					end
+					
 					ig.igPopId()
 				end
 				
@@ -1171,8 +1185,10 @@ function Editor:updateGUI()
 					else
 						local fieldType = self.newFieldType[0]
 						local v
-						if fieldType == fieldTypeValue then
+						if fieldType == fieldTypeText then
 							v = ''
+						elseif fieldType == fieldTypeNumber then
+							v = 0
 						elseif fieldType == fieldTypeBoolean then
 							v = false
 						elseif fieldType == fieldTypeVec2 then

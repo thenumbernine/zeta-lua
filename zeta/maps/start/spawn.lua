@@ -1,7 +1,7 @@
 {
 	{pos={163.5,236},spawn="zeta.script.obj.terminal",text="Evacuation orders given!\nPlease proceed to launchpad 1 for immediate departure!"},
 	{pos={197.5,215},spawn="zeta.script.obj.terminal",text="Journal Entry:\nTeam 1 left without us.\nTeam 2's rocket won't start.\nI think I'm going to go activate the defense robot to help us fight these creatures off...",use="if session.cyanKeyGiven then return end\nsession.cyanKeyGiven = true\ncreate\n 'zeta.script.obj.keycard'\n {pos = self.pos + {-1,0},\n  color = {0,1,1,1}}"},
-	{pos={166.5,236},spawn="zeta.script.obj.terminal",text="defense protocols initiated\nweapons storage unlocked",use="if session.colonyWeaponLockerGiven then return end\nsession.colonyWeaponLockerGiven = true\ncreate'zeta.script.obj.blaster'\n\9{pos=self.pos+{1,0}}\ncreate'zeta.script.obj.cells'\n\9{pos=self.pos+{2,0},\n\9cells=5}\nfor i=1,5 do\n\9create'zeta.script.obj.grenadeitem'\n\9\9{pos=self.pos+{3,0}}\nend"},
+	{pos={166.5,236},spawn="zeta.script.obj.terminal",text="defense protocols initiated\nweapons storage unlocked",use="if session.colonyWeaponLockerGiven then return end\nsession.colonyWeaponLockerGiven = true\ncreate'zeta.script.obj.blaster'{pos=self.pos+{1,0}}\ncreate'zeta.script.obj.cells'{pos=self.pos+{2,0},cells=5}\nfor i=1,5 do\n\9create'zeta.script.obj.grenadeitem'{pos=self.pos+{3,0}}\nend"},
 	{pos={73.5,196},spawn="zeta.script.obj.turret"},
 	{pos={56.5,189},spawn="zeta.script.obj.turret"},
 	{pos={73.5,189},spawn="zeta.script.obj.turret"},
@@ -92,18 +92,9 @@
 	{pos={78.5,184},spawn="zeta.script.obj.turret"},
 	{pos={77.5,176},spawn="zeta.script.obj.turret"},
 	{create="-- re-spawn the geemers if the boss isn't dead yet\nif session.geemerBossKilled then\n\9self.remove = true\n\9removeBossGeemerWalls()\nelse\n\9-- don't run immediately\n\9for _,spawnInfo in ipairs(level.spawnInfos) do\n\9\9if spawnInfo.spawn == 'zeta.script.obj.geemer'\n\9\9and level:getRoom(spawnInfo.pos:unpack())\n\9\9\9== level:getRoom(self.pos:unpack())\n\9\9then\n\9\9\9-- the obj should already be removed, but to be safe:\n\9\9\9spawnInfo:removeObj()\n\9\9\9-- respawn with extra arg to tell geemers not to die-on-spawn\n\9\9\9spawnInfo:respawn(true)\n\9\9end\n\9end\nend\n",pos={163.5,117},spawn="zeta.script.obj.trigger",trigger="self.remove = true\nif session.geemerBossKilled then return end\nrespawn 'geemer-left-wall'\nrespawn 'geemer-right-wall'\ncenterView(findSpawnInfoNamed 'boss-geemer'.pos)\nrespawn('boss-geemer', true)"},
-	{name="geemer-right-wall",pos={183.5,124},spawn="zeta.script.obj.solid",bbox={-.5,0,.5,3}},
-	{name="geemer-left-wall",pos={157.5,121},spawn="zeta.script.obj.solid",bbox={-.5,0,.5,3}},
-	{name="boss-geemer",pos={170.5,125},spawn="zeta.script.obj.boss-geemer",onDie=[[
-session.geemerBossKilled = true
-popup('defeated boss geemer!')
--- drop a keycard
-create 'zeta.script.obj.keycard'{pos=self.pos, color={0,1,0,1}}
--- center the view on the player
-stopCenterView()
--- stop blocking the exit
-removeBossGeemerWalls()
-]]},
+	{bbox={-0.5,0,0.5,3},name="geemer-right-wall",pos={183.5,124},spawn="zeta.script.obj.solid"},
+	{bbox={-0.5,0,0.5,3},name="geemer-left-wall",pos={157.5,121},spawn="zeta.script.obj.solid"},
+	{name="boss-geemer",onDie="session.geemerBossKilled = true\npopup('defeated boss geemer!')\n-- drop a keycard\ncreate 'zeta.script.obj.keycard'{pos=self.pos, color={0,1,0,1}}\n-- center the view on the player\nstopCenterView()\n-- stop blocking the exit\nremoveBossGeemerWalls()\n",pos={170.5,125},spawn="zeta.script.obj.boss-geemer"},
 	{pos={117.5,182},spawn="zeta.script.obj.attackbonus"},
 	{pos={35.5,246},spawn="zeta.script.obj.energytank"},
 	{color={0,1,0,1},pos={49.5,214},spawn="zeta.script.obj.door"},
