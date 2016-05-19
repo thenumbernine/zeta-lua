@@ -5,15 +5,16 @@ TODO list
 	- move texpack tiles and change map tiles accordingly
 	- separate 'object' into 'create object' and 'select object'
 	- click-and-drag on tile selection to form rectangles for brush + stamp size?
-	- separate fields for numbers and strings
-	- toggle editor for strings and multi-line strings (maybe a popup button?)
-	- for editing vec2's, show as a point or as a vector .. maybe even click and drag to change? helped by obj ctor arg tips?
-	- for vec4's ... show as a box2? toggle-able, like vectors?
+	- show bbox box2 field
+	- show vec2 fields as offsets ...? or absolute positions if the meta editor info says so.
 	- object classes use 'spawnfields' for editor fields, types, and tooltips
 - environmental effects ... foreground warping (underwater, heat), blowing wind, falling snow/rain/leaves, etc
-- get savepoint loading to work
+- savepoint loading won't restore threads or function upvalues correctly
+	i fixed this with player = game.players by filling in the game.player object rather than overwriting it ... 
+	but still can't save upvalues like local game = require '...' within serialized functions
+	fix would be to tinker with upvalues
 - missile launcher missile ammo
-- arbitrary room sizes
+- arbitrary room sizes (no fixed grid) - in fact, double as spawnInfo and bbox
 - separate lua env for level/init.lua and for sandboxes
 collision v1:
 	- fix collisions with sloped tiles.  determine ymin and ymax on the x side of sloped tiles and test that against object bbox. 
@@ -25,7 +26,7 @@ collision v2:
 	- duck then stand up with a monster on your head.  you get stuck in the monster.
 	- jump near a wall and shoot. your jump will stop midair. 
 	- grenades still don't bounce on doors
-	- movement still needs pushPriority implementation 
+	- movement still needs pushing (making use of pushPriority) implementation 
 	- jumping on stacks of items still make the player float in the air.  too many stuck collision tests?
 	- make sure there aren't any more physics slowdowns
 	- sometimes grenades will hit a turret and ... not explode

@@ -792,8 +792,8 @@ function Object:move(dx,dy)
 	-- assume self.pos is the position at time 't'
 	-- if we're not letting passthru objects then up to 2 tries
 	--for tries=1,2 do	-- up to 2 tries before all axii are blocked completely
-	-- if we are then ... infinite ...
-	local maxTries = 10
+	-- if we are then ... #game.objs ...
+	local maxTries = 100
 	for tries=1,maxTries+1 do
 		if tries == maxTries+1 then
 			print("too many collision tries")

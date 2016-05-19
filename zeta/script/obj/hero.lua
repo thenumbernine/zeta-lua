@@ -78,12 +78,10 @@ end
 
 function Hero:setHeld(other)
 	if self.holding and self.holding ~= other then
--- restore to class originals
--- this assumes only classes set flags and not objects
--- TODO getters and setters for custom behavior per-object
-self.holding.solidFlags = nil
-self.holding.touchFlags = nil
-self.holding.blockFlags = nil
+-- revert to class originals
+rawset(self.holding, 'solidFlags', self.holdingLastSolidFlags)
+rawset(self.holding, 'touchFlags', self.holdingLastTouchFlags)
+rawset(self.holding, 'blockFlags', self.holdingLastBlockFlags)
 		
 		self.holding.vel[1] = self.vel[1]
 		self.holding.vel[2] = self.vel[2]
@@ -125,6 +123,9 @@ self.holding.pos[2] = self.pos[2]
 -- clear collision flags 
 -- this assumes only classes set flags and not objects
 -- TODO getters and setters for custom behavior per-object
+self.holdingLastSolidFlags = rawget(self.holding, 'solidFlags')
+self.holdingLastTouchFlags = rawget(self.holding, 'touchFlags')
+self.holdingLastBlockFlags = rawget(self.holding, 'blockFlags')
 self.holding.solidFlags = 0
 self.holding.touchFlags = 0
 self.holding.blockFlags = 0

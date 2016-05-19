@@ -43,36 +43,75 @@ function SavePoint:playerUse(player)
 		local function serialize(obj, tab)
 			local lines = table()
 			for k,v in pairs(obj) do
-				local vstr = "error('no serialization for key: "..k.."')"
-				if type(v) == 'table' then
-					local m = getmetatable(v)
-					-- hmm, explicit control of all objects ...
-					if m == nil then
-						vstr = serialize(v, tab..'\t')
-					elseif m == vec2 then
-						vstr = 'vec2('..table.concat(v,',')..')'
-					elseif m == vec4 then
-						vstr = 'vec4('..table.concat(v,',')..')'
-					elseif m == box2 then
-						vstr = 'box2'..tolua(v)
-					elseif m == table then
-						vstr = 'table'..serialize(v, tab..'\t')
-					elseif Object.is(v) then 
-						vstr = arrayNamed(v, game.objs, 'game.objs', 'Object')
-					elseif SpawnInfo.is(v) then
-						vstr = arrayNamed(v, game.level.spawnInfos, 'game.level.spawnInfos', 'SpawnInfo')
-					elseif k == 'playerServerObj' then
-						vstr = arrayNamed(v, game.server.playerServerObjs, 'game.server.playerServerObjs', 'PlayerServerObj')
-					else
-						vstr = "error('can\\'t serialize unknown table from key "..k.."')"
-					end
-				elseif type(v) == 'ctype' then
-					vstr = "error('can\\'t save ctype data!')"
-				else
-					vstr = tolua(v)
-				end
-				local kstr = (type(k) == 'string' and k:match('^[_,a-z,A-Z][_,a-z,A-Z,0-9]*$'))
-					and k or '['..tolua(k)..']'
+				local vstr = tolua(v, {
+					serializeForType = table(tolua.defaultSerializeForType, {
+						table = function(state, v)	--, tab, path, keyRef)
+							local m = getmetatable(v)
+							-- hmm, explicit control of all objects ...						
+							-- [[ looks much better, but less flexible
+							if m == nil then
+								return serialize(v, tab..'\t')
+							elseif m == vec2 then
+								return 'vec2('..table.concat(v,',')..')'
+							elseif m == vec4 then
+								return 'vec4('..table.concat(v,',')..')'
+							elseif m == box2 then
+								return 'box2'..tolua(v)
+							elseif m == table then
+								return 'table'..serialize(v, tab..'\t')
+							--]]
+							--[[ the ugly way
+							if m == nil
+							or m == vec2
+							or m == vec4
+							or m == box2
+							or m == table
+							then
+								return serialize(v, tab..'\t')
+							--]]
+							elseif Object.is(v) then 
+								return arrayNamed(v, game.objs, 'game.objs', 'Object')
+							elseif SpawnInfo.is(v) then
+								return arrayNamed(v, game.level.spawnInfos, 'game.level.spawnInfos', 'SpawnInfo')
+							elseif k == 'playerServerObj' then
+								return arrayNamed(v, game.server.playerServerObjs, 'game.server.playerServerObjs', 'PlayerServerObj')
+							else
+								return "error('can\\'t serialize unknown table from key "..k.."')"
+							end
+						end,
+						ctype = function()
+							return "error('can\\'t save ctype data!')"
+						end,
+					}),
+--[[ too all-encompassing?
+					serializeMetatables = true,
+					serializeMetatableFunc = function(state, m, v)
+						-- elimiate all those debug metatables i set up on default types
+						local mb = getmetatable(true)
+						if mb ~= nil and m == mb then return 'nil' end
+						local mf = getmetatable(function()end)
+						if mf ~= nil and m == mf then return 'nil' end
+						local mn = getmetatable(1)
+						if mn ~= nil and m == mn then return 'nil' end
+						local ms = getmetatable('')
+						if ms ~= nil and m == ms then return 'nil' end
+
+						-- now see if it's an object
+						if type(v) == 'table' and v.spawn and m == require(v.spawn) then
+							return "require '"..v.spawn.."'"
+						end
+						
+						-- now for the ones we care about
+						if m == vec2 then return 'vec2' end
+						if m == vec4 then return 'vec4' end
+						if m == box2 then return 'box2' end
+						if m == table then return 'table' end
+
+						return tolua.defaultSerializeMetatableFunc(state, m)
+					end,
+--]]
+				})
+				local kstr = tolua.isVarName(k) and k or '['..tolua(k)..']'
 				if vstr ~= nil then
 					lines:insert(kstr..' = '..vstr)
 				end
