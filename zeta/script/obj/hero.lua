@@ -1000,6 +1000,15 @@ function Hero:centerView(pos)
 	self.fixedViewPos = pos
 end
 
+function Hero:hasItemNamed(name)
+	for _,items in ipairs(self.items) do
+		for _,item in ipairs(items) do
+			if item.name == name then return true end
+		end
+	end
+	return false
+end
+
 -- remove an item from the inventory with matching class, or callback
 function Hero:removeItem(itemclass, callback)
 	for i=#self.items,1,-1 do
