@@ -794,8 +794,9 @@ function Editor:updateGUI()
 		ig.igBegin('Console', self.consoleWindowOpenedPtr)
 		local bufferSize = 2048
 		self.execBuffer = self.execBuffer or ffi.new('char[?]', bufferSize)
+		local size = ig.igGetWindowSize()
 		if ig.igInputTextMultiline('code', self.execBuffer, bufferSize,
-			ig.ImVec2(0,0),
+			ig.ImVec2(size.x,size.y - 56),
 			ig.ImGuiInputTextFlags_EnterReturnsTrue
 			+ ig.ImGuiInputTextFlags_AllowTabInput)
 		or ig.igButton('run code')
@@ -806,6 +807,7 @@ function Editor:updateGUI()
 			print('executing...\n'..code)
 			sandbox(code)
 		end
+		ig.igSameLine()
 		if ig.igButton('clear code') then
 			ffi.fill(self.execBuffer, bufferSize)
 		end
