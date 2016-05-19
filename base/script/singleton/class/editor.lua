@@ -1574,6 +1574,9 @@ function Editor:draw(R, viewBBox)
 					sx = tex.width/16
 					sy = tex.height/16
 				end
+				if spawnClass.drawScale then
+					sx, sy = table.unpack(spawnClass.drawScale)
+				end
 				
 				R:quad(
 					x - sx*.5, 

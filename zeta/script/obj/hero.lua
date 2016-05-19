@@ -240,18 +240,18 @@ function Hero:update(dt)
 	self.room = level:getRoomAtMapTilePos(roomPosX, roomPosY)
 
 	-- [[ create/remove objects based on our current room 
-	if self.room ~= self.lastRoom then
+	if self.room ~= self.roomLast then
 		for _,spawnInfo in ipairs(level.spawnInfos) do
 			local spawnInfoRoom = level:getRoom(table.unpack(spawnInfo.pos))
 			if spawnInfoRoom == self.room then
 				if not spawnInfo.obj then
 					spawnInfo:respawn()
 				end
-			elseif spawnInfoRoom == self.lastRoom then
+			elseif spawnInfoRoom == self.roomLast then
 				spawnInfo:removeObj()
 			end
 		end
-		self.lastRoom = self.room
+		self.roomLast = self.room
 	end
 	--]]
 
@@ -1001,12 +1001,14 @@ end
 function Hero:removeItem(itemclass, callback)
 	for i=#self.items,1,-1 do
 		local items = self.items[i]
-		if items[1]
-		and items[1]:isa(itemclass)
-		then
-			local item = items:remove()
-			if #items == 0 then self.items:remove(i) end
-			return item
+		for j,item in ipairs(items) do
+			if callback and callback(item) or item:isa(itemclass) then
+				items:remove(j)
+				if #items == 0 then self.items:remove(i) end
+				if self.holding == item then self.holding = nil end
+				if self.weapon == item then self.weapon = nil end
+				return item
+			end
 		end
 	end
 end

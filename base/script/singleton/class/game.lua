@@ -70,6 +70,9 @@ function Game:respawn(spawnInfo)
 end
 
 function Game:update(dt)
+	-- don't pass so many variables?
+	self.deltaTime = dt
+	
 	-- add dt at update start instead of finish
 	--  so the last update's "game.time" matches the next render's "game.time"
 	self.time = self.time + dt

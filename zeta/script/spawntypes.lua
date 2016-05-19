@@ -12,6 +12,7 @@ return {
 	{spawn='zeta.script.obj.keycard'},
 	-- weapons
 	{spawn='zeta.script.obj.blaster'},
+	{spawn='zeta.script.obj.skillsaw'},
 	{spawn='zeta.script.obj.missilelauncher'},
 	{spawn='zeta.script.obj.grenadelauncher'},
 	{spawn='zeta.script.obj.plasmarifle'},

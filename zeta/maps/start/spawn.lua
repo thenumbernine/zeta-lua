@@ -413,5 +413,5 @@
 	{pos={210.5,194},spawn="zeta.script.obj.missileitem"},
 	{pos={210.5,195},spawn="zeta.script.obj.missileitem"},
 	{pos={211.5,195},spawn="zeta.script.obj.missileitem"},
-	{pos={200.5,151},spawn="zeta.script.obj.terminal",text=""},
+	{pos={200.5,151},spawn="zeta.script.obj.terminal",use="local searchName = 'damaged sawblade'\nif not (player.holding\n\9and player.holding.name == searchName)\nthen\n\9popup[[] fabrication facilities offline...]]\nelse\n\9popup[[looks like you could put together something to defend yourself...]]\n\9player:removeItem(nil, function(item) return item.name == searchName end)\n\9create'zeta.script.obj.skillsaw'{pos=self.pos+{2,0}}\nend"},
 }

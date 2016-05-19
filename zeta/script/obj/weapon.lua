@@ -60,19 +60,27 @@ function Weapon:canShoot(player)
 	return true
 end
 
-function Weapon:onShoot(player)
-	if not self:canShoot(player) then return end
-
-	if self.shotSound then
-		player:playSound(self.shotSound)
-	end
-
-	local pos, vel = self:getShotPosVel(player)
+function Weapon:doShoot(player, pos, vel)
 	self.shotClass{
 		shooter = player,
 		pos = pos,
 		vel = vel, 
 	}
+end
+
+function Weapon:playShotSound(player)
+	if self.shotSound then
+		player:playSound(self.shotSound)
+	end
+end
+
+function Weapon:onShoot(player)
+	if not self:canShoot(player) then return end
+
+	self:playShotSound(player)
+
+	local pos, vel = self:getShotPosVel(player)
+	self:doShoot(player, pos, vel)
 end
 
 Weapon.drawOffsetStanding = vec2(.5, .75)
