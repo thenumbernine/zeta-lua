@@ -1030,7 +1030,7 @@ function Editor:updateGUI()
 			if ig.igCollapsingHeader('Object Properties:') then
 				local textBufferSize = 2048
 			
-				local fieldTypeNames = table{'text', 'number', 'boolean', 'vec2', 'vec4', 'box2', 'tile'}
+				local fieldTypeNames = table{'string', 'number', 'boolean', 'vec2', 'vec4', 'box2', 'tile'}
 				local fieldTypeEnum = {}
 				for i,fieldTypeName in ipairs(fieldTypeNames) do
 					fieldTypeEnum[fieldTypeName] = i-1	-- minus one because the combo is 0-based
@@ -1051,7 +1051,7 @@ function Editor:updateGUI()
 			
 					if not fieldType then
 						-- deduce from value
-						fieldType = fieldTypeEnum.text
+						fieldType = fieldTypeEnum.string
 						if type(v) == 'boolean' then fieldType = fieldTypeEnum.boolean end
 						if type(v) == 'table' and #v == 2 then fieldType = fieldTypeEnum.vec2 end
 						if type(v) == 'table' and #v == 4 then fieldType = fieldTypeEnum.vec4 end
@@ -1064,7 +1064,7 @@ function Editor:updateGUI()
 					end
 					prop.fieldType = ffi.new('int[1]',fieldType)
 					
-					if fieldType == fieldTypeEnum.text then
+					if fieldType == fieldTypeEnum.string then
 						prop.vptr = ffi.new('char[?]', textBufferSize)
 						local vs = tostring(v)
 						ffi.copy(prop.vptr, vs, math.min(#vs+1, textBufferSize-1)) 
@@ -1107,7 +1107,7 @@ function Editor:updateGUI()
 					
 					ig.igPushIdStr('spawnprop #'..i)
 								
-					if prop.fieldType[0] == fieldTypeEnum.text then
+					if prop.fieldType[0] == fieldTypeEnum.string then
 						local done
 						if prop.multiLineVisible then
 							ig.igPushIdStr('multiline')
@@ -1207,7 +1207,7 @@ function Editor:updateGUI()
 					else
 						local fieldType = self.newFieldType[0]
 						local v
-						if fieldType == fieldTypeEnum.text then
+						if fieldType == fieldTypeEnum.string then
 							v = ''
 						elseif fieldType == fieldTypeEnum.number then
 							v = 0
