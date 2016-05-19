@@ -72,7 +72,7 @@ local Missile = (function()
 		end
 		-- if it blocks us then cause an explosion
 		-- TODO determine block before touch, and allow touch to modify it?
-		if bit.band(other.blockFlags, self.solidFlags) == 0 then
+		if bit.band(other.solidFlags, self.blockFlags) == 0 then
 			return true
 		end
 		self:blast(other)

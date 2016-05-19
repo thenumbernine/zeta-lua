@@ -94,7 +94,7 @@ local Grenade = (function()
 			self.detonateTime = game.time
 		end
 --]]
-		if bit.band(other.blockFlags, self.solidFlags) == 0 then
+		if bit.band(other.solidFlags, self.blockFlags) == 0 then
 			return true
 		end
 		-- bounce

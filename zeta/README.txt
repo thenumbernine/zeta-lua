@@ -5,7 +5,7 @@ TODO list
 	- move texpack tiles and change map tiles accordingly
 	- separate 'object' into 'create object' and 'select object'
 	- click-and-drag on tile selection to form rectangles for brush + stamp size?
-	- show bbox box2 field
+	- show bbox box2 field around object and have manipulators
 	- show vec2 fields as offsets ...? or absolute positions if the meta editor info says so.
 	- object classes use 'spawnfields' for editor fields, types, and tooltips
 - environmental effects ... foreground warping (underwater, heat), blowing wind, falling snow/rain/leaves, etc
