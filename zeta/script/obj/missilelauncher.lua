@@ -102,19 +102,25 @@ local Missile = (function()
 	return Missile
 end)()
 
-local MissileLauncherItem = (function()
+local MissileLauncher = (function()
 	local class = require 'ext.class'
 	local Weapon  = require 'zeta.script.obj.weapon'
 	
-	local MissileLauncherItem = class(Weapon)
-	MissileLauncherItem.sprite = 'missilelauncher'
-	MissileLauncherItem.shotDelay = .5
-	MissileLauncherItem.shotSpeed = 50
-	MissileLauncherItem.shotSound = 'explode1'
-	MissileLauncherItem.rotCenter = {.25,.5}
-	MissileLauncherItem.shotClass = Missile 
-	
-	return MissileLauncherItem
+	local MissileLauncher = class(Weapon)
+	MissileLauncher.sprite = 'missilelauncher'
+	MissileLauncher.shotDelay = .5
+	MissileLauncher.shotSpeed = 50
+	MissileLauncher.shotSound = 'explode1'
+	MissileLauncher.rotCenter = {.25,.5}
+	MissileLauncher.shotClass = Missile 
+
+	function MissileLauncher:canShoot(player)
+		if not MissileLauncher.super.canShoot(self, player) then return end
+		local MissileItem = require 'zeta.script.obj.missileitem'
+		return not not player:removeItem(MissileItem)
+	end
+
+	return MissileLauncher
 end)()
 
-return MissileLauncherItem
+return MissileLauncher

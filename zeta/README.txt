@@ -1,6 +1,11 @@
 TODO list
 
 - go ahead and put ext & vec on global namespace.  they're probably already there.
+- merge grenade items and grenade shots.
+	make grenade launchers shoot the item itself
+	same with missiles
+	this way someone can pick up a shot grenade (and throw it back) ... maybe
+	it makes for custom ammo though
 - editor: 
 	- move texpack tiles and change map tiles accordingly
 	- separate 'object' into 'create object' and 'select object'
@@ -20,19 +25,18 @@ collision v1:
 	- fix collisions with sloped tiles.  determine ymin and ymax on the x side of sloped tiles and test that against object bbox. 
 	- barriers only hit players if player is moving
 	- sawblades only hit geemers if geemers are moving
+	- geemers and doors don’t mix.  one pushes the other and the geemer teleports.
 collision v2:
 	- get slopes working
 	- player can still duck and jump on the top of a ladder with solid above and get halfway stuck in the ceiling
 	- duck then stand up with a monster on your head.  you get stuck in the monster.
 	- jump near a wall and shoot. your jump will stop midair. 
-	- grenades still don't bounce on doors
 	- movement still needs pushing (making use of pushPriority) implementation 
-	- jumping on stacks of items still make the player float in the air.  too many stuck collision tests?
+	- jumping on >100 solid_no objects and the player will float in the air...
 	- make sure there aren't any more physics slowdowns
 	- sometimes grenades will hit a turret and ... not explode
 
 monsters:
-	- geemers and doors don’t mix.  one pushes the other and the geemer teleports.
 	- add moar mining base monsters:
 		- flying drones ...
 		- other evil robots like you

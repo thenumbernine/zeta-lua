@@ -997,4 +997,18 @@ function Hero:centerView(pos)
 	self.fixedViewPos = pos
 end
 
+-- remove an item from the inventory with matching class, or callback
+function Hero:removeItem(itemclass, callback)
+	for i=#self.items,1,-1 do
+		local items = self.items[i]
+		if items[1]
+		and items[1]:isa(itemclass)
+		then
+			local item = items:remove()
+			if #items == 0 then self.items:remove(i) end
+			return item
+		end
+	end
+end
+
 return Hero

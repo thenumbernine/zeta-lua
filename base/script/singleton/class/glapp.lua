@@ -255,7 +255,7 @@ return ]]..file[savefile]
 		-- so I'll have the game keep track of it, and block the thread here
 		if game.levelInitThread then
 			-- wait for it to finish
-			repeat print('waiting to finish') until not threads:updateThread(game.levelInitThread)
+			repeat until not threads:updateThread(game.levelInitThread)
 			game.levelInitThread = nil
 		end
 		
@@ -332,7 +332,20 @@ return ]]..file[savefile]
 			player[k] = v
 		end
 		game.objs[playerObjIndex] = player
-		
+	
+		player.inputUp = nil
+		player.inputDown = nil
+		player.inputUpDown = 0
+		player.inputLeft = nil
+		player.inputRight = nil
+		player.inputLeftRight = 0
+		player.inputShoot = nil
+		player.inputJump = nil
+		player.inputJumpAux = nil
+		player.inputShootAux = nil
+		player.inputPageUp = nil
+		player.inputPageDown = nil
+
 		for _,keys in ipairs(spawnObjFields) do
 			local objIndex = keys:remove()
 			local dst = game.objs 

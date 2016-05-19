@@ -196,17 +196,9 @@ local GrenadeLauncher = (function()
 		local GrenadeItem = require 'zeta.script.obj.grenadeitem'
 
 		-- TODO if player:takeItem(require'zeta.script.obj.grenadeitem') then ...
-		local found
-		for i=#player.items,1,-1 do
-			local items = player.items[i]
-			if items[1]
-			and items[1]:isa(GrenadeItem)
-			then
-				items:remove()
-				if #items == 0 then player.items:remove(i) end
-				return true
-			end
-		end
+		local grenade = player:removeItem(GrenadeItem)
+		-- TODO return the grenade ... and shoot it ... the same object
+		if grenade then return true end
 		
 		-- didn't find it
 		-- TODO play out of ammo sound?
