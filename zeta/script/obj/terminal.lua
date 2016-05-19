@@ -1,6 +1,5 @@
 local class = require 'ext.class'
 local Object = require 'base.script.obj.object'
-local modio = require 'base.script.singleton.modio'
 local game = require 'base.script.singleton.game'
 
 local Terminal = class(Object)
@@ -20,7 +19,7 @@ function Terminal:playerUse(player)
 		end)
 	end
 	if self.use then
-		local sandbox = modio:require 'script.sandbox'
+		local sandbox = require 'base.script.singleton.sandbox'
 		sandbox(self.use, 'self, player', self, player)
 	end
 end

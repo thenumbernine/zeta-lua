@@ -26,65 +26,99 @@ function SavePoint:playerUse(player)
 
 	threads:add(function()
 		coroutine.yield()
-		
-		local function serialize(obj)
-			local t = {}
+
+		-- shouldn't be any objects in waiting to attach when this runs
+		-- i.e. it should run from the thread update, not the game object loop
+		assert(#game.newObjs == 0)
+
+		local function arrayNamed(v,array,arrayname,classname)
+			local i = array:find(v)
+			if not i then
+				return "error('can\\'t serialize "..classname.." outside of the "..arrayname.."')"
+			end
+			--return arrayname..'['..i..']'
+			return tolua{src=arrayname, index=i}
+		end
+
+		local function serialize(obj, tab)
+			local lines = table()
 			for k,v in pairs(obj) do
+				local vstr = "error('no serialization for key: "..k.."')"
 				if type(v) == 'table' then
 					local m = getmetatable(v)
 					-- hmm, explicit control of all objects ...
 					if m == nil then
-						v = serialize(v)
-					elseif m == vec2 
-					or m == vec4 
-					or m == box2 
-					or m == table
-					then
-						v = tostring(v)
+						vstr = serialize(v, tab..'\t')
+					elseif m == vec2 then
+						vstr = 'vec2('..table.concat(v,',')..')'
+					elseif m == vec4 then
+						vstr = 'vec4('..table.concat(v,',')..')'
+					elseif m == box2 then
+						vstr = 'box2'..tolua(v)
+					elseif m == table then
+						vstr = 'table'..serialize(v, tab..'\t')
 					elseif Object.is(v) then 
-						local objIndex = game.objs:find(v)
-						if not objIndex then
-							return "error('can\\'t serialize Object outside of the game')"
-						end
-						v = 'objs['..objIndex..']'
+						vstr = arrayNamed(v, game.objs, 'game.objs', 'Object')
 					elseif SpawnInfo.is(v) then
-						--[[ don't save spawninfos
-						local i = game.level.spawnInfos:find(v)
-						if not i then
-							error("can't serialize SpawnInfo outside of the game")
-						end
-						return 'spawnInfos['..i..']'
-						--]]
-						v = nil
-					-- omit certain fields
-					elseif Object.is(t) and ({
-						playerServerObj=1,
-					})[k] then
-						v = nil
+						vstr = arrayNamed(v, game.level.spawnInfos, 'game.level.spawnInfos', 'SpawnInfo')
+					elseif k == 'playerServerObj' then
+						vstr = arrayNamed(v, game.server.playerServerObjs, 'game.server.playerServerObjs', 'PlayerServerObj')
 					else
-						return "error('can\\'t serialize unknown table from key "..k.."')"
+						vstr = "error('can\\'t serialize unknown table from key "..k.."')"
 					end
 				elseif type(v) == 'ctype' then
-					return "error('can\\'t save ctype data!')"
+					vstr = "error('can\\'t save ctype data!')"
+				else
+					vstr = tolua(v)
 				end
-				t[k] = v
+				local kstr = (type(k) == 'string' and k:match('^[_,a-z,A-Z][_,a-z,A-Z,0-9]*$'))
+					and k or '['..tolua(k)..']'
+				if vstr ~= nil then
+					lines:insert(kstr..' = '..vstr)
+				end
 			end
-			assert(not t.spawnType, "can't set field 'spawnType' in objects")
-			if getmetatable(t) == Object then
-				t.spawnType = assert(game.levelcfg.spawnTypes:find(nil, function(spawnType)
-					return require(spawnType.spawn) == getmetatable(t)
-				end), "failed to find spawnType for obj").spawn
-			end
-			return tolua(t,{indent=true})
+			return '{\n'..lines:map(function(line)
+				return tab..'\t'..line..',\n'
+			end):concat()..tab..'}'
 		end
 		
 		file['zeta/save/save.txt'] = '{\n'
 			..'\tobjs={\n'
-			..game.objs:map(function(obj,index) return '\t\t'..serialize(obj) end):concat(',\n')
-			..'\t},\n'
-			..'\tsession='..tolua(game.session,{indent=true})..',\n'
-			..'}\n'
+			..game.objs:map(function(obj,index)
+					
+					local m = getmetatable(obj)
+					local _, spawntype = game.levelcfg.spawnTypes:find(nil, function(spawnType)
+						return m == require(spawnType.spawn)
+					end)
+					if not spawntype
+					and m == require 'zeta.script.obj.hero'
+					then
+						spawntype = {spawn='zeta.script.obj.hero'}
+					end
 
+					obj = setmetatable(table(obj),nil)
+					obj.spawn = spawntype and spawntype.spawn or "error('can\\'t find spawntype')"
+				
+					local tab = '\t\t'
+					local s = serialize(obj, tab)
+					return tab..s
+				end):concat(',\n')..'\n'
+			..'\t},\n'
+			..'\ttime='..game.time..',\n'
+			..'\tsysTime='..game.sysTime..',\n'
+			..'\tlevelcfg={path='..tolua(game.levelcfg.path)..'},\n'
+			..'\tsession='
+			..tolua(game.session,{indent=true}):split'\n':map(function(line,i)
+				return (i==1 and '' or '\t')..line
+			end):concat('\n')
+			..',\n'
+			..'}\n'
+--[[
+TODO serialize threads
+	this means serializing functions
+		who might have local references to objects ...
+		see how that can get messy?
+--]]
 		print('...done')
 	end)
 end

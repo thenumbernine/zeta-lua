@@ -66,7 +66,7 @@ function Game:getStartPos()
 end
 
 function Game:respawn(spawnInfo)
-	setTimeout(self.respawnTime, spawnInfo.respawn, spawnInfo)
+	self.respawnThread = setTimeout(self.respawnTime, spawnInfo.respawn, spawnInfo)
 end
 
 function Game:update(dt)
@@ -125,7 +125,7 @@ end
 
 function Game:resetObjects()
 	self.objs = table()	-- enumeration of all active ents
-	self.newObjs= table()	-- accumulated every frame so the objs array doesn't get manipulated while iterating 
+	self.newObjs = table()	-- accumulated every frame so the objs array doesn't get manipulated while iterating 
 	self.players = table()
 	self.time = 0
 
@@ -147,7 +147,7 @@ function Game:reset()
 	self.level = Level(self.levelcfg)
 	
 	-- init spawns separate after game.level is assigned (in case they want to reference it)
-	self.level:initialize()
+	self.levelInitThread = self.level:initialize()
 	
 	-- ... and reattach players ...
 	if self.onReset then self:onReset() end	-- callback

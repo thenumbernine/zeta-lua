@@ -13,9 +13,12 @@ TODO list
 - environmental effects ... foreground warping (underwater, heat), blowing wind, falling snow/rain/leaves, etc
 - get savepoint loading to work
 - missile launcher missile ammo
-- environment for level/init.lua and for sandboxes
+- arbitrary room sizes
+- separate lua env for level/init.lua and for sandboxes
 collision v1:
 	- fix collisions with sloped tiles.  determine ymin and ymax on the x side of sloped tiles and test that against object bbox. 
+	- barriers only hit players if player is moving
+	- sawblades only hit geemers if geemers are moving
 collision v2:
 	- get slopes working
 	- player can still duck and jump on the top of a ladder with solid above and get halfway stuck in the ceiling
@@ -28,21 +31,16 @@ collision v2:
 	- sometimes grenades will hit a turret and ... not explode
 
 monsters:
-	- barriers only hit players if player is moving
-	- sawblades only hit geemers if geemers are moving
 	- geemers and doors don’t mix.  one pushes the other and the geemer teleports.
-	- moar mining base monsters:
+	- add moar mining base monsters:
 		- flying drones ...
 		- other evil robots like you
-	- moar cave monsters.  
+	- add moar cave monsters.  
 		- venus fly traps
 		- close-range guy
 		- things that fly back and forth maybe
 		- maybe some kind of shooter
 
-rooms
-	- fixed? 16x16? 24x24? 32x32?
-	- arbitrary?
 
 VETOED list:
 - screen base spawning

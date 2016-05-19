@@ -170,15 +170,26 @@ function GLApp:initGL(gl, glname)
 	if server then
 		game.server = server
 	end				
-	
+
+	local savefile = 'zeta/save/save.txt'
+	local save
+	if io.fileexists(savefile) then
+		local code = [[
+local table = require 'ext.table'
+local vec2 = require 'vec.vec2'
+local vec4 = require 'vec.vec4'
+local box2 = require 'vec.box2'
+return ]]..file[savefile]
+		save = assert(load(code))()
+	end
+
 	-- set load level info
 		-- first get it from the modio
-	local levelcfg = modio.levelcfg
-		-- next try the levelcfg file
-	if not levelcfg and io.fileexists('levelcfg.lua') then
-		levelcfg = assert(load('return '..file['levelcfg.lua']))()
-	end
-	assert(levelcfg, "failed to find levelcfg info in modio or levelcfg.lua file")
+	local levelcfg = 
+		(save and save.levelcfg)
+		or modio.levelcfg
+		or (io.fileexists'levelcfg.lua' and assert(load('return '..file['levelcfg.lua']))())
+	assert(levelcfg, "failed to find levelcfg info in save file, modio, or levelcfg.lua file")
 	
 	local tileTypes = table()
 	local spawnTypes = table()
@@ -226,7 +237,105 @@ function GLApp:initGL(gl, glname)
 	end
 	
 	game:reset()
-	
+
+	if save then
+		-- NOTICE Game:respawn() uses setTimeout to create objs the next frame
+		-- that would mess this up
+		-- luckily zeta overrides that to do nothing
+		-- (since spawn is room-driven)
+		if game.respawnThread then
+			threads.threads:removeObject(game.respawnThread)
+			game.respawnThread = nil
+		end
+		-- after loading, game:reset is called, which calls level:initialize
+		--  which sandbox calls the level initFile
+		-- sandbox is a thread, it's delayed one frame
+		-- this means the level initFile can overwrite the loaded game state
+		-- so I'll have the game keep track of it, and block the thread here
+		if game.levelInitThread then
+			threads.threads:removeObject(game.levelInitThread)
+			game.levelInitThread = nil
+		end
+		
+		for k in pairs(game.objs) do
+			game.objs[k] = nil
+		end
+		for k in pairs(game.newObjs) do
+			game.newObjs[k] = nil
+		end	
+		for _,spawnInfo in ipairs(game.level.spawnInfos) do
+			spawnInfo.obj = nil
+		end
+		for k in pairs(game.players) do
+			game.players[k] = nil
+		end
+		for k in pairs(game.session) do
+			game.session[k] = nil
+		end
+		for k,v in pairs(save.session) do
+			game.session[k] = v
+		end
+		
+		game.time = save.time
+		game.sysTime = save.sysTime
+
+		local spawnObjFields = table()
+		local playerObjIndex
+		for i,saveObj in ipairs(save.objs) do
+			-- copy
+			-- remape spawnInfos (hope they haven't changed)
+			local keystack = table{i}
+			local function deserialize(saveObj, keystack)
+				local obj = {}
+				for k,v in pairs(saveObj) do
+					if type(v) == 'table' then
+						local m = getmetatable(v)
+						if v.src and v.index then
+							if v.src == 'game.server.playerServerObjs' then
+								assert(v.index == 1)
+								playerObjIndex = i
+								obj[k] = game.server.playerServerObjs[v.index]
+								game.server.playerServerObjs[v.index].player = obj
+							elseif v.src == 'game.objs' then
+								spawnObjFields:insert(table(keystack):append{k, v.index})
+							elseif v.src == 'game.level.spawnInfos' then
+								obj[k] = game.level.spawnInfos[v.index]
+							else
+								error("can't handle source array "..v.src)
+							end
+						else
+							keystack:insert(k)
+							obj[k] = setmetatable(deserialize(v, keystack), m)
+							assert(k == keystack:remove())
+						end
+					else
+						obj[k] = v
+					end
+				end
+				return obj
+			end
+			local obj = deserialize(saveObj, keystack)
+			local objclass = require((assert(obj.spawn, "didn't find spawn for obj "..i)))
+			setmetatable(obj, objclass)
+			game.objs[i] = obj
+		end
+		
+		local player = game.objs[playerObjIndex]
+		game.players[1] = player
+		game.playerClientObjs[1].player = player
+		game.clientConn.players[1] = player
+		game.clientConn.playerIndexes[1] = 1
+		
+		for _,keys in ipairs(spawnObjFields) do
+			local objIndex = keys:remove()
+			local dst = game.objs 
+			while #keys > 1 do
+				dst = dst[keys:remove(1)]
+			end
+			dst[keys[1]] = game.objs[objIndex]
+		end
+	end
+
 	netcom:addObject{name='game', object=game}
 	
 	-- don't include this til after opengl is initialized
@@ -367,13 +476,15 @@ end
 function GLApp:update(...)
 	R:report('update begin')
 
+	-- don't use these.  they're based on the sdl time.
 	sysLastTime = sysThisTime
 	sysThisTime = sdl.SDL_GetTicks() / 1000
 	local sysDeltaTime = sysThisTime - sysLastTime
 
-	game.sysLastTime = sysLastTime
-	game.sysTime = sysThisTime
+	-- use these. they're based on the game time, updated at the sdl clock rate.
 	game.sysDeltaTime = sysDeltaTime
+	game.sysLastTime = game.sysTime 
+	game.sysTime = game.sysTime + sysDeltaTime 
 
 	if not game.paused then
 	--if sysThisTime > 5 then

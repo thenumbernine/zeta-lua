@@ -2,7 +2,6 @@ local ffi = require 'ffi'
 local class = require 'ext.class'
 local vec2 = require 'vec.vec2'
 local box2 = require 'vec.box2'
-local modio = require 'base.script.singleton.modio'
 local animsys = require 'base.script.singleton.animsys'
 local game = require 'base.script.singleton.game'
 
@@ -77,7 +76,7 @@ function Object:init(args)
 
 	if args.create then
 		local threads = require 'base.script.singleton.threads'
-		local sandbox = modio:require 'script.sandbox'
+		local sandbox = require 'base.script.singleton.sandbox'
 		threads:add(function()
 			-- wait for ctor to resolve
 			coroutine.yield()

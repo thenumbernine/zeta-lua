@@ -1,6 +1,5 @@
 local class = require 'ext.class'
 local Object = require 'base.script.obj.object'
-local modio = require 'base.script.singleton.modio'
 local game = require 'base.script.singleton.game'
 
 local Trigger = class(Object)
@@ -23,7 +22,7 @@ function Trigger:pretouch(other, side)
 
 	-- TODO this should be 'touch' callback?
 	if self.trigger then
-		local sandbox = modio:require 'script.sandbox'
+		local sandbox = require 'base.script.singleton.sandbox'
 		sandbox(self.trigger, 'self, other, side', self, other, side)
 	end
 end

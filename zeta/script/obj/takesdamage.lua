@@ -72,7 +72,7 @@ local function takesDamageBehavior(parentClass)
 	TakesDamageTemplate.removeOnDie = true
 	function TakesDamageTemplate:die(damage, attacker, inflicter, side)
 		if self.onDie then
-			local sandbox = modio:require 'script.sandbox'
+			local sandbox = require 'base.script.singleton.sandbox'
 			sandbox(self.onDie,
 				'self, damage, attacker, inflicter, side',
 				self, damage, attacker, inflicter, side)

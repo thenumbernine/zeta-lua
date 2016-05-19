@@ -802,7 +802,7 @@ function Editor:updateGUI()
 		then
 			self.execBuffer[bufferSize-1] = 0
 			local code = ffi.string(self.execBuffer)
-			local sandbox = modio:require 'script.sandbox'
+			local sandbox = require 'base.script.singleton.sandbox'
 			print('executing...\n'..code)
 			sandbox(code)
 		end

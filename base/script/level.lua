@@ -314,8 +314,8 @@ function Level:initialize()
 	if self.initFile then
 		local initFile = modio:find(self.initFile)
 		if initFile then
-			local sandbox = modio:require 'script.sandbox'
-			sandbox(assert(file[initFile]))
+			local sandbox = require 'base.script.singleton.sandbox' 
+			return sandbox(assert(file[initFile]))
 		end
 	end
 end

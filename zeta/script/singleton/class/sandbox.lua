@@ -1,5 +1,5 @@
 local class = require 'ext.class'
-local Sandbox = require 'base.script.sandbox'
+local Sandbox = require 'base.script.singleton.class.sandbox'
 local ZetaSandbox = class(Sandbox)
 
 -- zeta-specific

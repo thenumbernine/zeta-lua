@@ -1,7 +1,6 @@
 local class = require 'ext.class'
 local Object = require 'base.script.obj.object'
 local takesDamageBehavior = require 'zeta.script.obj.takesdamage'
-local modio = require 'base.script.singleton.modio'
 
 local Enemy = class(takesDamageBehavior(Object))
 
