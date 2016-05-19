@@ -39,6 +39,7 @@ Sawblade.touchFlags = Sawblade.SOLID_YES -- player
 					+ Sawblade.SOLID_NO -- geemer
 					+ Sawblade.SOLID_GRENADE -- grenades
 Sawblade.blockFlags = 0
+Sawblade.touchPriority = 9	-- above shots, below hero
 Sawblade.touch_v2 = Sawblade.pretouch
 
 Sawblade.powerChangeRate = 3	-- how long does it take to start/stop?

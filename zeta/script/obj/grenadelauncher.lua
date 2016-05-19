@@ -95,7 +95,7 @@ local Grenade = (function()
 		end
 --]]
 		if bit.band(other.blockFlags, other.SOLID_GRENADE) == 0 then
-			return
+			return true
 		end
 		-- bounce
 		local normal = dirs[oppositeSide[side]]

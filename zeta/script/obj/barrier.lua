@@ -23,8 +23,6 @@ function Barrier:pretouch(other, side)
 		if other.takeDamage then
 			other:takeDamage(self.damage, self, self, side)
 		end
-		-- shots and grenades
-		if other.blast then other:blast() end
 	end
 	return true
 end
@@ -34,6 +32,7 @@ Barrier.touchFlags = Barrier.SOLID_YES -- for player
 					+ Barrier.SOLID_NO -- for geemer
 					+ Barrier.SOLID_GRENADE -- for grenades
 Barrier.blockFlags = 0 
+Barrier.touchPriority = 9	-- above shots, below hero
 Barrier.touch_v2 = Barrier.pretouch
 
 function Barrier:update(dt)
