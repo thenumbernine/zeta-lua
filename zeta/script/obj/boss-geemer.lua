@@ -32,7 +32,6 @@ function BossGeemer:die(damage, attacker, inflicter, side)
 			pos = self.pos,
 			-- should be inflicter.pos, but the shot needs to stop at the surface for that to happen
 			dir = (self.pos - attacker.pos):normalize(),
-			color = self.color,
 		}
 	end
 end

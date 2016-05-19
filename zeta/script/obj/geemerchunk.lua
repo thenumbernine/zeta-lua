@@ -34,7 +34,6 @@ function GeemerChunk.makeAt(args)
 			pos = args.pos,
 			vel = (args.dir + {math.cos(theta), math.sin(theta)}) * baseVel + {0,baseVelY},
 		}
-		chunk.color = args.color
 	end
 end
 

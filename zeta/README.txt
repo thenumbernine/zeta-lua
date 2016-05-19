@@ -1,5 +1,8 @@
 TODO list
 
+next: add next cave section
+	and some more cave monsters
+
 - go ahead and put ext & vec on global namespace.  they're probably already there.
 - merge grenade items and grenade shots.
 	make grenade launchers shoot the item itself
@@ -27,6 +30,7 @@ collision v1:
 	- sawblades only hit geemers if geemers are moving
 	- geemers and doors don’t mix.  one pushes the other and the geemer teleports.
 collision v2:
+	- as doors close on you, they still ask for keycards
 	- get slopes working
 	- player can still duck and jump on the top of a ladder with solid above and get halfway stuck in the ceiling
 	- duck then stand up with a monster on your head.  you get stuck in the monster.
@@ -37,6 +41,7 @@ collision v2:
 	- sometimes grenades will hit a turret and ... not explode
 
 monsters:
+	- fix geemer chunks 
 	- add moar mining base monsters:
 		- flying drones ...
 		- other evil robots like you

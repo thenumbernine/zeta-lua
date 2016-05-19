@@ -5,14 +5,7 @@ local GeemerChunk = require 'zeta.script.obj.geemerchunk'
 local Hero = require 'zeta.script.obj.hero'
 
 local Geemer = class(Enemy)
-
-Geemer.color = {.4,.7,.4,1}
 Geemer.sprite = 'geemer'
-
-local hidden = false
-if hidden then
-	Geemer.seq = 'hiding'
-end
 
 Geemer.solid = true
 
@@ -40,6 +33,10 @@ function Geemer:init(args, dontKill)
 		return
 	end
 
+	if self.hidden then
+		self.seq = 'hiding'
+	end
+
 	-- see if there's a block near us
 	-- if so, stick to that block
 	local level = game.level
@@ -50,7 +47,7 @@ function Geemer:init(args, dontKill)
 			self.stuckPos = pos
 			self.stuckSide = side
 			self.useGravity = false
-			if not hidden then
+			if not self.hidden then
 				self.angle = math.deg(math.atan2(dir[2], dir[1])) + 90
 			end
 			self.rotCenter = {.5, .5}
@@ -134,18 +131,14 @@ Geemer.states = {
 					self.stuckPos = nil
 					self.stuckSide = nil
 					self.state = self.states.searching
-					if hidden then
-						self.seq = 'stand'
-					end
+					self.seq = nil	-- clear hidden seq if you got it
 				end)
 				self.state = nil
 			elseif self.irritatedAt then
-				if not hidden then
-					-- shake and let him know you're irritated
-					if game.time > self.nextShakeTime then
-						self.shakeEndTime = game.time + 1 + math.random()
-						self.nextShakeTime = game.time + 3 + 2 * math.random()
-					end
+				-- shake and let him know you're irritated
+				if game.time > self.nextShakeTime then
+					self.shakeEndTime = game.time + 1 + math.random()
+					self.nextShakeTime = game.time + 3 + 2 * math.random()
 				end
 			end
 		end
@@ -247,7 +240,6 @@ function Geemer:die(damage, attacker, inflicter, side)
 		pos = self.pos,
 		-- should be inflicter.pos, but the shot needs to stop at the surface for that to happen
 		dir = (self.pos - attacker.pos):normalize(),
-		color = self.color,
 	}
 	-- piss off the geemers around you
 	for _,other in ipairs(game.objs) do
