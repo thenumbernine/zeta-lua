@@ -204,7 +204,7 @@
 	{pos={42.5,242},spawn="zeta.script.obj.redgeemer"},
 	{pos={42.5,241},spawn="zeta.script.obj.redgeemer"},
 	{color={0,1,0,1},pos={49.5,150},spawn="zeta.script.obj.door"},
-	{cells="2",pos={37.5,159},spawn="zeta.script.obj.cells"},
+	{cells="2",pos={36.5,159},spawn="zeta.script.obj.cells"},
 	{pos={160.5,236},spawn="zeta.script.obj.savepoint"},
 	{cells="2",pos={107.5,139},spawn="zeta.script.obj.cells"},
 	{pos={114.5,218},spawn="zeta.script.obj.energytank"},
@@ -243,7 +243,7 @@
 	{pos={200.5,153},spawn="zeta.script.obj.cells"},
 	{pos={200.5,152},spawn="zeta.script.obj.cells"},
 	{pos={200.5,151},spawn="zeta.script.obj.cells"},
-	{pos={37.5,157},spawn="zeta.script.obj.breakblock",tileIndex=5},
+	{pos={36.5,157},spawn="zeta.script.obj.breakblock",tileIndex=5},
 	{pos={63.5,196},spawn="zeta.script.obj.barrier"},
 	{pos={70.5,196},spawn="zeta.script.obj.barrier"},
 	{pos={80.5,196},spawn="zeta.script.obj.barrier"},
@@ -398,4 +398,5 @@
 	{pos={44.5,198},spawn="zeta.script.obj.turret"},
 	{name="happy fun ball",pos={189.5,236},spawn="zeta.script.obj.item",sprite="blaster-shot"},
 	{drawScale={1,1},name="damaged sawblade",pos={95.5,197},spawn="zeta.script.obj.item",sprite="sawblade"},
+	{pos={40.5,148},spawn="zeta.script.obj.savepoint"},
 }

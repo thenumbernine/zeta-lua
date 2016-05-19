@@ -244,7 +244,8 @@ return ]]..file[savefile]
 		-- luckily zeta overrides that to do nothing
 		-- (since spawn is room-driven)
 		if game.respawnThread then
-			threads.threads:removeObject(game.respawnThread)
+			-- wait for it to finish
+			repeat until not threads:updateThread(game.respawnThread)
 			game.respawnThread = nil
 		end
 		-- after loading, game:reset is called, which calls level:initialize
@@ -253,7 +254,8 @@ return ]]..file[savefile]
 		-- this means the level initFile can overwrite the loaded game state
 		-- so I'll have the game keep track of it, and block the thread here
 		if game.levelInitThread then
-			threads.threads:removeObject(game.levelInitThread)
+			-- wait for it to finish
+			repeat print('waiting to finish') until not threads:updateThread(game.levelInitThread)
 			game.levelInitThread = nil
 		end
 		
@@ -266,9 +268,9 @@ return ]]..file[savefile]
 		for _,spawnInfo in ipairs(game.level.spawnInfos) do
 			spawnInfo.obj = nil
 		end
-		for k in pairs(game.players) do
-			game.players[k] = nil
-		end
+--		for k in pairs(game.players) do
+--			game.players[k] = nil
+--		end
 		for k in pairs(game.session) do
 			game.session[k] = nil
 		end
@@ -280,7 +282,7 @@ return ]]..file[savefile]
 		game.sysTime = save.sysTime
 
 		local spawnObjFields = table()
-		local playerObjIndex
+		local playerObjIndex, playerServerObjIndex
 		for i,saveObj in ipairs(save.objs) do
 			-- copy
 			-- remape spawnInfos (hope they haven't changed)
@@ -294,8 +296,8 @@ return ]]..file[savefile]
 							if v.src == 'game.server.playerServerObjs' then
 								assert(v.index == 1)
 								playerObjIndex = i
+								playerServerObjIndex = v.index
 								obj[k] = game.server.playerServerObjs[v.index]
-								game.server.playerServerObjs[v.index].player = obj
 							elseif v.src == 'game.objs' then
 								spawnObjFields:insert(table(keystack):append{k, v.index})
 							elseif v.src == 'game.level.spawnInfos' then
@@ -319,12 +321,17 @@ return ]]..file[savefile]
 			setmetatable(obj, objclass)
 			game.objs[i] = obj
 		end
-		
-		local player = game.objs[playerObjIndex]
-		game.players[1] = player
-		game.playerClientObjs[1].player = player
-		game.clientConn.players[1] = player
-		game.clientConn.playerIndexes[1] = 1
+	
+		-- use original player objs (for upvalues in anything sandboxed)
+		local srcPlayer = game.objs[playerObjIndex]
+		local player = game.players[1]
+		for k in pairs(player) do
+			player[k] = nil
+		end
+		for k,v in pairs(srcPlayer) do
+			player[k] = v
+		end
+		game.objs[playerObjIndex] = player
 		
 		for _,keys in ipairs(spawnObjFields) do
 			local objIndex = keys:remove()

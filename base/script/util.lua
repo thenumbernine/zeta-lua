@@ -19,12 +19,11 @@ oppositeSide = {
 function setTimeout(delay, func, ...)
 	local game = require 'base.script.singleton.game'
 	local threads = require 'base.script.singleton.threads'
-	local args = {...}
-	return threads:add(function()
+	return threads:add(function(...)
 		local runtime = game.time + delay
 		repeat coroutine.yield() until game.time > runtime
-		func(unpack(args))
-	end)
+		func(...)
+	end, ...)
 end
 
 -- helper, same as require, but verifies spawnTypeStr is valid 

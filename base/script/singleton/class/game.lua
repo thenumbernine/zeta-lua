@@ -128,6 +128,7 @@ function Game:resetObjects()
 	self.newObjs = table()	-- accumulated every frame so the objs array doesn't get manipulated while iterating 
 	self.players = table()
 	self.time = 0
+	self.sysTime = 0
 
 	-- initialize the session variables
 	-- story state, etc
