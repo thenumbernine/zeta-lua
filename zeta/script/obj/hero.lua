@@ -1000,25 +1000,25 @@ function Hero:centerView(pos)
 	self.fixedViewPos = pos
 end
 
-function Hero:hasItemNamed(name)
+function Hero:findItemNamed(name)
 	for _,items in ipairs(self.items) do
 		for _,item in ipairs(items) do
-			if item.name == name then return true end
+			if item.name == name then return item end
 		end
 	end
 	return false
 end
 
 -- remove an item from the inventory with matching class, or callback
-function Hero:removeItem(itemclass, callback)
+function Hero:removeItem(removeItem, callback)
 	for i=#self.items,1,-1 do
 		local items = self.items[i]
 		for j,item in ipairs(items) do
 			local found
 			if callback then
-				found = callback(item)
+				found = callback(item, removeItem)
 			else
-				found = item:isa(itemclass)
+				found = item == removeItem
 			end
 			if found then
 				items:remove(j)

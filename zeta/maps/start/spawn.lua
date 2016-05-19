@@ -455,8 +455,12 @@
 	{pos={53.5,91},spawn="zeta.script.obj.sawblade",travel={7,0}},
 	{pos={53.5,93},spawn="zeta.script.obj.sawblade",travel={7,0}},
 	{bbox={max={0.5,12},min={-0.5,0}},name="main mining defense wall",pos={51.5,82},spawn="zeta.script.obj.solid"},
-	{pos={68.5,82},spawn="zeta.script.obj.terminal",use="popup[[mineral surveying system ... scanning for minerals ...]]\nif player:hasItemNamed'special rocks'\nand player:hasItemNamed'more special rocks'\nand player:hasItemNamed'even more special rocks'\nand player:hasItemNamed'more candy'\nand player:hasItemNamed'best candy ever'\nand player:hasItemNamed'super special rocks'\nand player:hasItemNamed'meh ok rocks'\nthen\n\9popup[[Circuit Overload!]]\n\9for _,obj in ipairs(game.objs) do\n\9\9if obj.spawn == 'zeta.script.obj.sawblade'\n\9\9or obj.spawn == 'zeta.script.obj.barrier'\n\9\9then\n\9\9\9obj.remove = true\n\9\9end\n\9end\n\9findObjNamed'main mining defense wall'.remove = true\nelse\n\9popup[[No anomalies detected...]]\nend"},
+	{pos={68.5,82},spawn="zeta.script.obj.terminal",use="popup[[mineral surveying system ... scanning for minerals ...]]\nlocal names = table{'special rocks', 'more special rocks', 'even more special rocks', 'more candy', 'best candy ever', 'super special rocks', 'meh ok rocks'}\nlocal items = names:map(function(name,_,t)\n\9return player:findItemNamed(name), #t+1\nend)\nif #items == #names then\n\9popup[[Circuit Overload!]]\n\9for _,obj in ipairs(game.objs) do\n\9\9if obj.spawn == 'zeta.script.obj.sawblade'\n\9\9or obj.spawn == 'zeta.script.obj.barrier'\n\9\9then\n\9\9\9obj.remove = true\n\9\9end\n\9end\n\9findObjNamed'main mining defense wall'.remove = true\nfor _,item in ipairs(items) do\n\9\9player:removeItem(item)\n\9end\nelse\n\9popup[[No anomalies detected...]]\nend"},
 	{color={0.5,0.5,1,1},name="best candy ever",pos={173.5,103},spawn="zeta.script.obj.item",sprite="crystal"},
 	{color={1,0.5,1,1},name="super special rocks",pos={126.5,86},spawn="zeta.script.obj.item",sprite="crystal"},
 	{color={0.20000000298023,0.20000000298023,0.20000000298023,1},name="meh ok rocks",pos={153.5,66},spawn="zeta.script.obj.item",sprite="crystal"},
+	{pos={239.5,62},spawn="zeta.script.obj.energytank"},
+	{pos={192.5,22},spawn="zeta.script.obj.cells"},
+	{color={1,0,1,1},pos={176.5,182},spawn="zeta.script.obj.door"},
+	{color={1,0,1,1},pos={177.5,182},spawn="zeta.script.obj.door"},
 }

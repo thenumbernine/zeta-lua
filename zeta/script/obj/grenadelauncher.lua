@@ -199,7 +199,8 @@ local GrenadeLauncher = (function()
 		local GrenadeItem = require 'zeta.script.obj.grenadeitem'
 
 		-- TODO if player:takeItem(require'zeta.script.obj.grenadeitem') then ...
-		local grenade = player:removeItem(GrenadeItem)
+		local grenade = player:removeItem(nil, GrenadeItem.is)
+		
 		-- TODO return the grenade ... and shoot it ... the same object
 		if grenade then return true end
 		

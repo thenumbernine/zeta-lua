@@ -965,6 +965,7 @@ function Editor:updateGUI()
 		and ig.igCollapsingHeader('Background Options:')
 		then
 			for i=0,#self.backgroundOptions do
+				ig.igPushIdStr('background '..i)
 				local background = self.backgroundOptions[i].background
 				
 				local tex = background.tex
@@ -982,16 +983,18 @@ function Editor:updateGUI()
 				ig.igRadioButton(background.name, self.selectedBackgroundIndex, i)
 	
 				if i > 0 then
-					if ig.igTreeNode('background '..i..': '..background.name) then
+					ig.igSameLine()
+					if ig.igTreeNode('') then
 						local float = ffi.new('float[1]')
 						for _,field in ipairs{'scaleX', 'scaleY', 'scrollX', 'scrollY'} do
 							float[0] = background[field] or 0
-							ig.igInputFloat('background '..i..' '..field, float)
+							ig.igInputFloat(field, float)
 							background[field] = float[0]
 						end
 						ig.igTreePop()
 					end
 				end
+				ig.igPopId()
 			end
 		end
 	elseif self.editMode[0] == editModeObjects then
