@@ -59,7 +59,8 @@ Hero.attackStat = 0
 Hero.defenseStat = 0
 Hero.maxAmmoCells = 0
 Hero.ammoCells = Hero.maxAmmoCells
-Hero.rechargeCellsTime = 10	-- seconds
+Hero.rechargeCellsDuration = 10	-- seconds
+Hero.nextRechargeCellsTime = -1
 
 function Hero:init(...)
 	Hero.super.init(self, ...)
@@ -255,7 +256,9 @@ function Hero:update(dt)
 	end
 	--]]
 
-	self.ammoCells = math.min(self.maxAmmoCells, self.ammoCells + self.maxAmmoCells * dt / self.rechargeCellsTime)
+	if game.time > self.nextRechargeCellsTime then
+		self.ammoCells = math.min(self.maxAmmoCells, self.ammoCells + self.maxAmmoCells * dt / self.rechargeCellsDuration)
+	end
 
 	-- slowly track player
 	local editor = require 'base.script.singleton.editor'
@@ -1002,7 +1005,13 @@ function Hero:removeItem(itemclass, callback)
 	for i=#self.items,1,-1 do
 		local items = self.items[i]
 		for j,item in ipairs(items) do
-			if callback and callback(item) or item:isa(itemclass) then
+			local found
+			if callback then
+				found = callback(item)
+			else
+				found = item:isa(itemclass)
+			end
+			if found then
 				items:remove(j)
 				if #items == 0 then self.items:remove(i) end
 				if self.holding == item then self.holding = nil end

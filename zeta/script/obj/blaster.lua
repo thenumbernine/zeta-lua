@@ -92,6 +92,7 @@ local Blaster = (function()
 		if not Blaster.super.canShoot(self, player) then return end
 		if player.ammoCells < 1 then return end
 		player.ammoCells = player.ammoCells - 1
+		player.nextRechargeCellsTime = game.time + .5 
 		return true
 	end
 
