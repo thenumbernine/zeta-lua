@@ -56,7 +56,10 @@ local Missile = (function()
 	end
 
 	Missile.solidFlags = Missile.SOLID_GRENADE
-	Missile.touchFlags = Missile.SOLID_WORLD + Missile.SOLID_YES + Missile.SOLID_GRENADE
+	Missile.touchFlags = Missile.SOLID_WORLD 
+						+ Missile.SOLID_YES 
+						+ Missile.SOLID_NO 
+						+ Missile.SOLID_GRENADE
 	Missile.blockFlags = Missile.SOLID_WORLD
 	function Missile:touchTile_v2(tile, solid)
 		if self.remove then return true end

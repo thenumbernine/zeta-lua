@@ -76,7 +76,10 @@ local Grenade = (function()
 	end
 
 	Grenade.solidFlags = Grenade.SOLID_GRENADE
-	Grenade.touchFlags = Grenade.SOLID_WORLD + Grenade.SOLID_YES + Grenade.SOLID_GRENADE
+	Grenade.touchFlags = Grenade.SOLID_WORLD 
+						+ Grenade.SOLID_YES 
+						+ Grenade.SOLID_NO 
+						+ Grenade.SOLID_GRENADE
 	Grenade.blockFlags = Grenade.SOLID_WORLD
 	
 	function Grenade:touchTile_v2(tile, side, normal)
