@@ -23,6 +23,8 @@ function Barrier:pretouch(other, side)
 		if other.takeDamage then
 			other:takeDamage(self.damage, self, self, side)
 		end
+		-- stop grenades immediately.  stops missiles as well.
+		if other.blast then other:blast() end
 	end
 	return true
 end

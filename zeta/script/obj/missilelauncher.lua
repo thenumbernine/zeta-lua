@@ -49,7 +49,7 @@ local Missile = (function()
 	end
 
 	function Missile:touchTile(tile, side)
-		if tile and tile.solid and tile.onHit then
+		if tile and tile.onHit then
 			tile:onHit(self, side)
 		end
 		self:blast()
@@ -67,15 +67,19 @@ local Missile = (function()
 		if other == self.shooter then return true end
 		if other.takeDamage then
 			other:takeDamage(self.damage, self.shooter, self, side)
-		end
-		if bit.band(other.solidFlags, other.SOLID_GRENADE) == 0 then
+			self:blast(other)
 			return
+		end
+		-- if it blocks us then cause an explosion
+		-- TODO determine block before touch, and allow touch to modify it?
+		if bit.band(other.blockFlags, self.solidFlags) == 0 then
+			return true
 		end
 		self:blast(other)
 	end
 
 	function Missile:blast(alreadyHit)
-		if self.removeTime then return end
+		if self.remove then return end
 		
 		-- splash damage 
 		-- TODO ignore objects just hit by damage?
