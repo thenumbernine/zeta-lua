@@ -199,7 +199,7 @@ select the upper-left corner of a preset patch
 this looks over the tiles under it
 for any that are in the patch, converts them to the correct patch tile, based on the neighbors
 --]]
-local patchNeighbors = {
+local patchNeighbors = table{
 	{name='c8', differOffsets={{-1,-1},{0,-1},{1,-1},{1,0},{1,1},{0,1},{-1,1},{-1,0}}}, -- center, with nothing around it 
 	{name='c4', differOffsets={{1,1},{-1,1},{1,-1},{-1,-1}}}, -- center, with diagonals missing
 	
@@ -428,6 +428,12 @@ do
 											end
 										end
 										if neighborIsValid then
+											-- if unsmooth then force it to the center
+											if self.unsmooth[0] then
+												neighbor = select(2, patchNeighbors:find(nil, function(neighbor)
+													return neighbor.name == 'c'
+												end))
+											end
 											-- find the offset in the patch that this neighbor represents
 											local done = false
 											if drawingTileType then
@@ -444,7 +450,6 @@ do
 												for j,row in ipairs(patchTemplate) do
 													for i,name in ipairs(row) do
 														if name == neighbor.name then
-															-- TODO instead of painting the selected patch,
 															--  use the patch that the current tile belongs to
 															local tx = seltx + i-1
 															local ty = selty + j-1
@@ -514,6 +519,7 @@ function Editor:init()
 	self.showRooms = ffi.new('bool[1]',true)
 	
 	self.noClipping = ffi.new('bool[1]',true)
+	self.unsmooth = ffi.new('bool[1]',false)
 end
 
 local colorForTypeTable = table()
@@ -899,6 +905,7 @@ function Editor:updateGUI()
 				if brushOption == smoothBrush
 				or (brushOption == paintBrush and self.smoothWhilePainting[0])
 				then
+					ig.igCheckbox('Unsmooth', self.unsmooth)
 					ig.igCheckbox('Smooth Aligns Patch to Anything', self.alignPatchToAnything)
 					ig.igRadioButton("Smooth Tiles to 90'", self.smoothDiagLevel, 0)
 					ig.igRadioButton("Smooth Tiles to 45'", self.smoothDiagLevel, 1)

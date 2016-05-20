@@ -1183,13 +1183,16 @@ end
 
 local sounds = require 'base.script.singleton.sounds'
 
-function Object:playSound(name)	
+function Object:playSound(name, volume, pitch)
 	-- clientside ...
 	local source = game:getNextAudioSource()
 	if source then
 		local sound = sounds:load(name..'.wav')
 		source:setBuffer(sound)
 		
+		if volume then source:setGain(volume) end
+		if pitch then source:setPitch(pitch) end
+
 		-- openal supports only one listener
 		-- rather than reposition the listener according to what player is closest ... position the sound!
 		-- and don't bother with listener velocity
@@ -1208,6 +1211,8 @@ function Object:playSound(name)
 			source:setVelocity(self.vel[1], self.vel[2], 0)
 			source:play()
 		end
+	
+		return source
 	else
 		print('all audio sources used')
 	end

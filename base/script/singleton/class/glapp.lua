@@ -519,8 +519,22 @@ function GLApp:updateGUI(...)
 	return editor:updateGUI(...)
 end
 
+local frames = 0
+local lastTime = os.time()
 function GLApp:update(...)
 	R:report('update begin')
+
+	--[[ show fps
+	do
+		frames = frames + 1
+		local thisTime = os.time() 
+		if thisTime ~= lastTime then
+			print('fps: '..frames/(thisTime-lastTime))
+			frames = 0
+			lastTime = thisTime
+		end
+	end
+	--]]
 
 	-- don't use these.  they're based on the sdl time.
 	sysLastTime = sysThisTime
