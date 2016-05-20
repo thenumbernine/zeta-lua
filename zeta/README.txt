@@ -27,17 +27,15 @@ collision v1:
 	- sawblades only hit geemers if geemers are moving
 	- geemers and doors don’t mix.  one pushes the other and the geemer teleports.
 collision v2:
-	- as doors close on you, they still ask for keycards
 	- get slopes working
-	- player can still duck and jump on the top of a ladder with solid above and get halfway stuck in the ceiling
 	- jump near a wall and shoot. your jump will stop midair. 
 	- movement still needs pushing (making use of pushPriority) implementation ... maybe ...
 	- jumping on >100 solid_no objects and the player will float in the air...
 	- make sure there aren't any more physics slowdowns
-	- fix tryToStand
+	- fix tryToStand to use the new collision system
 	
 monsters:
-	- fix geemer chunks 
+	- fix geemer chunks ... to be new sprites?  and let you pick them up and craft health with them? 
 	- add moar mining base monsters:
 		- flying drones ...
 		- other evil robots like you

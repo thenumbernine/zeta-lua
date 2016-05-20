@@ -47,6 +47,11 @@ function Barrier:update(dt)
 		end
 	end
 	if self.shockEndTime > game.time then
+		-- if we're turning on then play a electricity sound
+		if self.sprite == false then
+			self:playSound'electricity'
+		end
+		
 		self.sprite = 'barrier' -- class default
 	else
 		self.sprite = false	-- tell Object:draw not to draw anything
