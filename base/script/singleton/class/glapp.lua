@@ -318,6 +318,12 @@ return ]]..file[savefile]
 						end
 					elseif type(v) == 'function' then
 						-- update upvalues within functions
+						-- TODO this assumes the upvalue of 'game' is the game.  
+						-- if you had: do local game = 2 obj.func = function() print(game) end end 
+						--  then the upvalue would be incorrectly replaced
+						-- solution? in any non-class function (like states), don't use upvalues 
+						--  instead require() locally
+						--  or just don't use member functions
 						local j = 1
 						while true do
 							local n = debug.getupvalue(v, j)
@@ -342,9 +348,7 @@ return ]]..file[savefile]
 		end
 	
 		-- use original player objs (for upvalues in anything sandboxed)
-print('playerObjIndex',playerObjIndex)
 		local srcPlayer = game.objs[playerObjIndex]
-print('srcPlayer',srcPlayer)
 		local player = game.players[1]
 		for k in pairs(player) do
 			player[k] = nil
