@@ -874,7 +874,7 @@ print('boxVtxsInPlane',boxVtxsInPlane)
 			vtxs:insert{0,0}
 			assert(fracleft < 1)
 			if fracleft > 0 then
-				planes:insert{1,0,-1}
+				planes:insert{-1,0,0}
 				vtxs:insert{0,fracleft}
 			end
 			planes:insert{clipPlane[1],clipPlane[2],clipPlane[3]}
@@ -892,11 +892,11 @@ print('boxVtxsInPlane',boxVtxsInPlane)
 			vtxs:insert{1,0}
 			planes:insert{0,-1,0}
 			vtxs:insert{0,0}
-			planes:insert{1,0,-1}
+			planes:insert{-1,0,0}
 			vtxs:insert{0,1}
 			assert(fracup < 1)
 			if fracup > 0 then
-				planes:insert{0,-1,0}
+				planes:insert{0,1,-1}
 				vtxs:insert{fracup,1}
 			end
 			planes:insert{clipPlane[1],clipPlane[2],clipPlane[3]}
