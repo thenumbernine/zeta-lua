@@ -647,9 +647,9 @@ local collisionEpsilon = 1e-4
 local function testBoxBox(self, bxmin, bymin, bxmax, bymax, dt, dx, dy)
 	local side
 
---print('  ====================')
---print('  == BEGIN BOX TEST ==')
---print('  ====================')
+--print('  ========================')
+--print('  == BEGIN BOX/BOX TEST ==')
+--print('  ========================')
 --print('testing bbox',box2(bxmin,bymin,bxmax,bymax))	
 
 	-- see if we're touching at our current time
@@ -711,7 +711,7 @@ local function testBoxBox(self, bxmin, bymin, bxmax, bymax, dt, dx, dy)
 --print('blocking y axis info:',tolua({dy = dy,dtx = dtx,self_ymin = self.pos[2] + self.bbox.min[2] + dtx * dy,self_ymax = self.pos[2] + self.bbox.max[2] + dtx * dy,box_ymin = bymin,box_ymax = bymax},{indent=true}))
 			-- use < > instead of <= >= to let objects slide across the sides of others
 			if not (self.pos[2] + self.bbox.min[2] + dtx * dy < bymax 
-			and self.pos[2] + self.bbox.max[2] + dtx * dy > bymin)
+				and self.pos[2] + self.bbox.max[2] + dtx * dy > bymin)
 			then
 --print('recalled x movement collision -- not being blocked on y axis')
 				sideX = nil
@@ -739,7 +739,7 @@ local function testBoxBox(self, bxmin, bymin, bxmax, bymax, dt, dx, dy)
 --print('found y movement collision',dty)			
 --print('blocking x axis info:',tolua({dx = dx,dty = dty,self_xmin = self.pos[1] + self.bbox.min[1] + dty * dx,self_xmax = self.pos[1] + self.bbox.max[1] + dty * dx,box_xmin = bxmin, box_xmax = bxmax},{indent=true}))
 			if not (self.pos[1] + self.bbox.min[1] + dty * dx < bxmax
-			and self.pos[1] + self.bbox.max[1] + dty * dx > bxmin)
+				and self.pos[1] + self.bbox.max[1] + dty * dx > bxmin)
 			then
 --print('recalled y movement collision - not being blocked on x axis')					
 				dty = dt
@@ -765,49 +765,279 @@ local function testBoxBox(self, bxmin, bymin, bxmax, bymax, dt, dx, dy)
 --print('  ==================')
 --print('  == END BOX TEST ==')
 --print('  ==================')
-	return side, dt
+	return dt, side
 end
 
 --[[
 self has pos and bbox
-obj is a bbox clipped by a plane
+x is the 1x1 bbox lower left coordinate
+plane is the plane that chops the box
 --]]
-function testBoxPoly(self, bxmin, bymin, bxmax, bymax, dt, dx, dy, plane)
-	-- 1) find separating plane greatest depth (positive means we're separating) (plane depth is min of depths of all vtxs, intersection depth is max plane depth)
+local function testBoxSlope(self, x, y, clipPlane, dt, dx, dy)
+
+print('  ==========================')
+print('  == BEGIN BOX/SLOPE TEST ==')
+print('  ==========================')
+print('testing sloped box at',x,y,'with plane',table.unpack(clipPlane))
 	
+	-- normalize the clip plane normal
+	local clipPlane = {table.unpack(clipPlane)}
+	local n = math.sqrt(clipPlane[1]*clipPlane[1] + clipPlane[2]*clipPlane[2])
+	clipPlane[1] = clipPlane[1] / n
+	clipPlane[2] = clipPlane[2] / n
+	clipPlane[3] = clipPlane[3] / n
+
+	-- find what bbox vtxs are inside the plane
+	local bll = clipPlane[3] <= 0
+	local blr = clipPlane[1] + clipPlane[3] <= 0
+	local bul = clipPlane[2] + clipPlane[3] <= 0
+	local bur = clipPlane[1] + clipPlane[2] + clipPlane[3] <= 0
+print(tolua{bll=bll,blr=blr,bul=bul,bur=bur})
+	local boxVtxsInPlane = (bll and 1 or 0) + (blr and 1 or 0) + (bul and 1 or 0) + (bur and 1 or 0)
+print('boxVtxsInPlane',boxVtxsInPlane)
+	if boxVtxsInPlane == 4 then
+		error("this isn't a poly, it's a box!")
+	end
+
+	-- intersections of each edge of the box	
+	-- plane a x + b y + c = 0
+	-- y = -(ax+c)/b
+	-- for x=0: y=-c/b
+	-- for x=1: y=-(a+c)/b
+	-- x = -(by+c)/a
+	-- for y=0: x=-c/a
+	-- for y=1: x=-(b+c)/a
+	
+	local fracleft = -clipPlane[3] / clipPlane[2]	-- x=0
+	local fracright = -(clipPlane[1] + clipPlane[3]) / clipPlane[2]	-- x=1
+	local fracdown = -clipPlane[3] / clipPlane[1]	-- y=0
+	local fracup = -(clipPlane[2] + clipPlane[3]) / clipPlane[1]	-- y=1
+
+	local vtxs = table()
+	local planes = table()
+
+	if boxVtxsInPlane == 3 then
+		if not bll then
+			-- 1---2
+			-- |   |
+			-- b   |
+			--  \  |
+			--   a-3
+			vtxs:insert{0,1}	--1
+			planes:insert{0,1,-1}
+			vtxs:insert{1,1}	--2
+			planes:insert{1,0,-1}
+			vtxs:insert{1,0}	--3
+			assert(fracdown > 0)	-- or that vtx would be there
+			if fracdown < 1 then	-- a is needed
+				planes:insert{0,-1,0}
+				vtxs:insert{fracdown,0}
+			end
+			planes:insert{clipPlane[1],clipPlane[2],clipPlane[3]}
+			assert(fracleft > 0)	-- or that vtx would be there
+			if fracleft < 1 then	-- b is needed
+				vtxs:insert{0,fracleft}
+				planes:insert{-1,0,0}
+			end
+		elseif not blr then
+			-- 2---3
+			-- |   |
+			-- |   a
+			-- |  /
+			-- 1-b
+			vtxs:insert{0,0}	--1
+			planes:insert{-1,0,0}
+			vtxs:insert{0,1}	--2
+			planes:insert{0,1,-1}
+			vtxs:insert{1,1}
+			assert(fracright > 0)
+			if fracright < 1 then
+				planes:insert{1,0,-1}
+				vtxs:insert{1,fracright} --a
+			end
+			planes:insert{clipPlane[1],clipPlane[2],clipPlane[3]}
+			assert(fracleft < 1)
+			if fracleft > 0 then
+				vtxs:insert{fracleft,0}	-- b
+				planes:insert{0,-1,0}
+			end
+		elseif not bul then
+			--   b-1
+			--  /  |
+			-- a   |
+			-- |   |
+			-- 3---2
+			vtxs:insert{1,1}
+			planes:insert{1,0,-1}
+			vtxs:insert{1,0}
+			planes:insert{0,-1,0}
+			vtxs:insert{0,0}
+			assert(fracleft < 1)
+			if fracleft > 0 then
+				planes:insert{1,0,-1}
+				vtxs:insert{0,fracleft}
+			end
+			planes:insert{clipPlane[1],clipPlane[2],clipPlane[3]}
+			assert(fracup > 0)
+			if fracup < 1 then
+				vtxs:insert{fracleft,1}
+				planes:insert{0,1,-1}
+			end
+		elseif not bur then
+			-- 3-a
+			-- |  \
+			-- |   b
+			-- |   |
+			-- 2---1
+			vtxs:insert{1,0}
+			planes:insert{0,-1,0}
+			vtxs:insert{0,0}
+			planes:insert{1,0,-1}
+			vtxs:insert{0,1}
+			assert(fracup < 1)
+			if fracup > 0 then
+				planes:insert{0,-1,0}
+				vtxs:insert{fracup,1}
+			end
+			planes:insert{clipPlane[1],clipPlane[2],clipPlane[3]}
+			assert(fracright < 1)
+			if fracright > 0 then
+				vtxs:insert{1,fracright}
+				planes:insert{1,0,-1}
+			end
+		end
+	elseif boxVtxsInPlane == 2 then
+		if not bll and not blr then
+			-- 1---2
+			-- |   |
+			-- b_  |
+			--   \_a
+			--
+			vtxs:insert{1,0}
+			planes:insert{0,1,-1}
+			vtxs:insert{1,1}
+			assert(fracright > 0)
+			if fracright < 1 then
+				planes:insert{1,0,-1}
+				vtxs:insert{1,fracright}
+			end
+			planes:insert{clipPlane[1],clipPlane[2],clipPlane[3]}
+			assert(fracleft > 0)
+			if fracleft < 1 then
+				vtxs:insert{0,fracleft}
+				planes:insert{-1,0,0}
+			end
+		elseif not bul and not bur then
+			--
+			--   __b
+			-- a/  |
+			-- |   |
+			-- 2---1
+			vtxs:insert{1,0}
+			planes:insert{0,-1,0}
+			vtxs:insert{0,0}
+			assert(fracleft < 1)
+			if fracleft > 0 then
+				planes:insert{-1,0,0}
+				vtxs:insert{0,fracleft}
+			end
+			planes:insert{clipPlane[1],clipPlane[2],clipPlane[3]}
+			assert(fracright < 1)
+			if fracright > 0 then
+				vtxs:insert{1,fracright}
+				planes:insert{1,0,-1}
+			end
+		elseif not bll and not bul then
+			--  b--1
+			--  |  |
+			--  |  |
+			--  \  |
+			--   a-2
+			vtxs:insert{1,1}
+			planes:insert{1,0,-1}
+			vtxs:insert{1,0}
+			assert(fracdown > 0)
+			if fracdown < 1 then
+				planes:insert{0,-1,0}
+				vtxs:insert{fracdown,0}
+			end
+			planes:insert{clipPlane[1],clipPlane[2],clipPlane[3]}
+			assert(fracup > 0)
+			if fracup < 1 then
+				vtxs:insert{fracup,1}
+				planes:insert{0,1,-1}
+			end
+		elseif not blr and not bur then
+			-- 2--a
+			-- |  |
+			-- |  |
+			-- |  /
+			-- 1-b 
+			vtxs:insert{0,0}
+			planes:insert{-1,0,0}
+			vtxs:insert{0,1}
+			assert(fracup < 1)
+			if fracup > 0 then
+				planes:insert{0,1,-1}
+				vtxs:insert{fracup,1}
+			end
+			planes:insert{clipPlane[1],clipPlane[2],clipPlane[3]}
+			assert(fracdown < 1)
+			if fracdown > 0 then
+				vtxs:insert{fracdown,0}
+				planes:insert{0,-1,0}
+			end
+		else
+			error("how did one plane chop out diagonal vertices?")
+		end
+	else
+		error("no support for only one vertex in bbox polys")
+	end
+	assert(#vtxs == #planes)
+print('vtxs:',table.map(vtxs,function(vtx) return '['..table.concat(vtx,',')..']' end):concat(' '))
+print('planes:',table.map(planes,function(vtx) return '['..table.concat(vtx,',')..']' end):concat(' '))
+
+	-- offset by block position
+	for _,vtx in ipairs(vtxs) do
+		vtx[1] = vtx[1] + x
+		vtx[2] = vtx[2] + y
+	end
+
+	-- 1) find separating plane greatest depth (positive means we're separating) (plane depth is min of depths of all vtxs, intersection depth is max plane depth)
+
 		-- test self bbox to obj vtxs
 			-- right
 	local bestPlaneDepth = -math.huge
 	local bestNormal	-- pointing towards self, so when self tests obj, bestNormal is negative of the plane normal
 	local planeDepth = math.huge
-	for _,vtx in ipairs(obj.vtxs) do
+	for _,vtx in ipairs(vtxs) do
 		planeDepth = math.min(planeDepth, vtx[1] - (self.pos[1] + self.bbox.max[1]))
 	end
 	if planeDepth > bestPlaneDepth then
 		bestPlaneDepth = planeDepth
 		bestNormal = {-1, 0}
 	end
-		-- left	
+			-- left	
 	local planeDepth = math.huge
-	for _,vtx in ipairs(obj.vtxs) do
+	for _,vtx in ipairs(vtxs) do
 		planeDepth = math.min(planeDepth, (self.pos[1] + self.bbox.min[1]) - vtx[1])
 	end
 	if planeDepth > bestPlaneDepth then
 		bestPlaneDepth = planeDepth
 		bestNormal = {1, 0}
 	end
-		-- up
+			-- up
 	local planeDepth = math.huge
-	for _,vtx in ipairs(obj.vtxs) do
+	for _,vtx in ipairs(vtxs) do
 		planeDepth = math.min(planeDepth, vtx[2] - (self.pos[2] + self.bbox.max[2]))
 	end
 	if planeDepth > bestPlaneDepth then
 		bestPlaneDepth = planeDepth
 		bestNormal = {0, -1}
 	end	
-		-- down
+			-- down
 	local planeDepth = math.huge
-	for _,vtx in ipairs(obj.vtxs) do
+	for _,vtx in ipairs(vtxs) do
 		planeDepth = math.min(planeDepth, (self.pos[2] + self.bbox.min[2]) - vtx[2])
 	end
 	if planeDepth > bestPlaneDepth then
@@ -816,29 +1046,148 @@ function testBoxPoly(self, bxmin, bymin, bxmax, bymax, dt, dx, dy, plane)
 	end
 
 		-- test obj planes to self bbox corners
-	for _,plane in ipairs(obj.planes) do
+	for _,plane in ipairs(planes) do
 		local planeDepth = math.huge
 		for xminmax=1,2 do
 			for yminmax=1,2 do
-				local x = self.pos[1] + (xminmax == 1 and self.bbox.min[1] or self.bbox.max[1])
-				local y = self.pos[2] + (yminmax == 1 and self.bbox.min[2] or self.bbox.max[2])
-				local planeDepth = math.min(planeDepth, plane[1] * x + plane[2] * y + plane[3])
+				local vx = self.pos[1] + (xminmax == 1 and self.bbox.min[1] or self.bbox.max[1])
+				local vy = self.pos[2] + (yminmax == 1 and self.bbox.min[2] or self.bbox.max[2])
+				planeDepth = math.min(planeDepth, plane[1] * (vx - x) + plane[2] * (vy - y) + plane[3])
+print('self bbox corner',vx,vy,'got depth',planeDepth)
 			end
 		end
+print('testing planeDepth',planeDepth,'> bestPlaneDepth',bestPlaneDepth)
 		if planeDepth > bestPlaneDepth then
 			bestPlaneDepth = planeDepth
 			bestNormal = plane
+print('assigning bestPlaneDepth',bestPlaneDepth,'bestNormal',table.unpack(bestNormal))
+		end
+	end
+print('bestPlaneDepth',bestPlaneDepth,'bestNormal',table.unpack(bestNormal))
+	if bestPlaneDepth < 0 then
+print("bestPlaneDepth < 0 means we're stuck")		
+		dt = 0		-- stuck
+	else
+print('bestPlaneDepth >= 0 means we test movement')		
+		-- not moving?
+		bestNormal = nil	-- will this cause problems?
+		if dx ~= 0 or dy ~= 0 then
+
+			-- 2) find intersection of movement along dx,dy
+			-- trace all 'self' vtxs forward on dx,dy, test with intersection against normals within vtxs
+			-- then do the same with vtxs backward on dx,dy, test with self sides.
+
+			-- move 4 vtxs of self.pos+self.bbox
+
+print('testing self vtxs against slopebox planes') 
+			-- normal[i] is the normal of the edge between vtxs[i] and vtxs[i+1]
+			-- but really just use -y,x and normalize it ...
+			for i=1,#vtxs do
+				local va = vtxs[i]
+				local vb = vtxs[i%#vtxs+1]
+print('testing slopebox edge ['..va[1]..','..va[2]..'] -> ['..vb[1]..','..vb[2]..']')
+				local xbmin, xbmax = 1, 2
+				if dx < 0 then xbmax = 1 end
+				if dx > 0 then xbmin = 2 end
+				local ybmin, ybmax = 1, 2
+				if dy < 0 then ybmax = 1 end
+				if dy > 0 then ybmin = 2 end
+				for xminmax=xbmin,xbmax do
+					for yminmax=ybmin,ybmax do
+						local vx = self.pos[1] + (xminmax == 1 and self.bbox.min[1] or self.bbox.max[1])
+						local vy = self.pos[2] + (yminmax == 1 and self.bbox.min[2] or self.bbox.max[2])
+print('testing self vtx ['..vx..','..vy..']')
+						
+						local vabx = vb[1] - va[1]
+						local vaby = vb[2] - va[2]
+						-- vx + dtv * dx = va[1] + s * vabx
+						-- vy + dtv * dy = va[2] + s * vaby
+						--
+						-- [dx -vabx][dtv] = va[1] - vx = v_va_x
+						-- [dy -vaby][ s ] = va[2] - vy = v_va_y
+						-- [dtv] = [-vaby vabx] v_va_x
+						-- [ s ] = [ -dy   dx ] v_va_y
+						local v_va_x = va[1] - vx
+						local v_va_y = va[2] - vy
+
+						local det = -dx * vaby + dy * vabx
+						if det ~= 0 then	-- 0 means perpendicular
+							local s = (-dy * v_va_x + dx * v_va_y) / det
+							if s > 0 and s < 1 then	-- not using >= <= so we don't hit corners
+								local dtv = (-vaby * v_va_x + vabx * v_va_y) / det
+								if math.abs(dtv) < collisionEpsilon then dtv = 0 end
+								if dtv >= 0 and dtv < dt then
+									dt = dtv
+									bestNormal = planes[i]
+print('found collision at dt',dt,'normal',table.unpack(bestNormal))									
+								end
+							end
+						end
+					end
+				end
+			end
+
+print('testing slopebox vtxs against self planes') 
+			-- move poly by -dx, -dy against bbox
+			for _,vtx in ipairs(vtxs) do
+print('testing vtx',table.unpack(vtx))				
+
+				local dtx
+				if dx < 0 then
+					-- left of self
+					-- vtx[1] - dx * dtu = self.pos[1] + self.bbox.max[1]
+					dtx = (self.pos[1] + self.bbox.min[1] - vtx[1]) / -dx
+				elseif dx > 0 then
+					-- right of self
+					-- vtx[1] - dx * dtx = self.pos[1] + self.bbox.max[1]
+					dtx = (self.pos[1] + self.bbox.max[1] - vtx[1]) / -dx
+				end
+				if dtx then
+					if math.abs(dtx) < collisionEpsilon then dtx = 0 end
+					-- make sure our collision time 
+					if 0 <= dtx and dtx < dt 
+					-- make sure we're colliding on the self at that point
+					and self.pos[2] + self.bbox.min[2] < vtx[2] - dtx * dy
+					and self.pos[2] + self.bbox.max[2] > vtx[2] - dtx * dy
+					then
+						dt = dtx
+						bestNormal = dx < 0 and {1,0} or {-1,0}
+print('found x collision at dt',dt,'normal',table.unpack(bestNormal))									
+					end
+				end
+				
+				local dty
+				if dy < 0 then
+					-- bottom of self 
+					-- vtx[2] - dy * dtu = self.pos[2] + self.bbox.max[2]
+					dty = (self.pos[2] + self.bbox.min[2] - vtx[2]) / -dy
+				elseif dy > 0 then
+					-- top of self 
+					-- vtx[2] - dy * dty = self.pos[2] + self.bbox.max[2]
+					dty = (self.pos[2] + self.bbox.max[2] - vtx[2]) / -dy
+				end
+				if dty then
+					if math.abs(dty) < collisionEpsilon then dty = 0 end
+					if 0 <= dty and dty < dt 
+					-- make sure we're colliding on the self at that point
+					and self.pos[1] + self.bbox.min[1] < vtx[1] - dty * dx
+					and self.pos[1] + self.bbox.max[1] > vtx[1] - dty * dx
+					then
+						dt = dty
+						bestNormal = dy < 0 and {0,1} or {0,-1}
+print('found y collision at dt',dt,'normal',table.unpack(bestNormal))									
+					end
+				end		
+			end
 		end
 	end
 
-	if bestNormal <= 0 then
-		-- stuck
-	end
+print('returning dt',dt,'bestNormal',bestNormal and table.unpack(bestNormal))
+print('  ========================')
+print('  == END BOX/SLOPE TEST ==')
+print('  ========================')
 
-	-- 2) find intersection of movement along dx,dy
-	-- trace all 'self' vtxs forward on dx,dy, test with intersection against obj.planes within vtxs
-	-- then do the same with obj.vtxs backward on dx,dy, test with self sides.
-
+	return dt, bestNormal
 end
 
 function Object:move(dx,dy)
@@ -917,15 +1266,34 @@ function Object:move(dx,dy)
 						and tile.solid
 						and (not tilesTested or not table.find(tilesTested, vec2(x,y)))
 						then
-							local newSide
-							newSide, dt = testBoxBox(self, x,y,x+1,y+1, dt, dx, dy)
-							if newSide then
-								side = newSide
-								normal = dirs[oppositeSide[side:lower()]]
-								touchedObj = obj
-								touchedTile = tile
-								touchedTileX = x
-								touchedTileY = y
+							if not tile.plane then
+								local newSide
+								dt, newSide = testBoxBox(self, x,y,x+1,y+1, dt, dx, dy)
+								if newSide then
+									side = newSide
+									normal = dirs[oppositeSide[side:lower()]]
+									touchedObj = nil
+									touchedTile = tile
+									touchedTileX = x
+									touchedTileY = y
+								end
+							else
+								local newNormal
+								dt, newNormal = testBoxSlope(self, x, y, tile.plane, dt, dx, dy)
+								if newNormal then
+									normal = newNormal
+									local adx = math.abs(normal[1])
+									local ady = math.abs(normal[2])
+									if adx > ady then
+										side = normal[1] < 0 and 'Right' or 'Left'
+									else
+										side = normal[2] < 0 and 'Up' or 'Down'
+									end
+									touchedObj = nil
+									touchedTile = tile
+									touchedTileX = x
+									touchedTileY = y
+								end
 							end
 						end
 					end
@@ -952,7 +1320,7 @@ function Object:move(dx,dy)
 			and (not objsTested or not table.find(objsTested, obj))
 			then
 				local newSide
-				newSide, dt = testBoxBox(self, obj.pos[1]+obj.bbox.min[1], obj.pos[2]+obj.bbox.min[2], obj.pos[1]+obj.bbox.max[1], obj.pos[2]+obj.bbox.max[2], dt, dx, dy)
+				dt, newSide = testBoxBox(self, obj.pos[1]+obj.bbox.min[1], obj.pos[2]+obj.bbox.min[2], obj.pos[1]+obj.bbox.max[1], obj.pos[2]+obj.bbox.max[2], dt, dx, dy)
 				if newSide then
 					side = newSide
 					normal = dirs[oppositeSide[side:lower()]]

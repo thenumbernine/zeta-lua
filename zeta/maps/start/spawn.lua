@@ -274,8 +274,6 @@
 	{pos={59.5,149},spawn="zeta.script.obj.barrier",timeOff=3,timeOn=1},
 	{pos={58.5,149},spawn="zeta.script.obj.barrier",timeOff=3,timeOn=1},
 	{pos={79.5,119},spawn="zeta.script.obj.terminal",use="toggleDefenses()"},
-	{pos={172.5,236},spawn="zeta.script.obj.heart"},
-	{pos={173.5,236},spawn="zeta.script.obj.heart"},
 	{pos={93.5,196},spawn="zeta.script.obj.turret"},
 	{color={0,1,0,1},pos={48.5,214},spawn="zeta.script.obj.door"},
 	{color={0,1,0,1},pos={48.5,150},spawn="zeta.script.obj.door"},
@@ -469,4 +467,6 @@
 	{create="removeGeemersIfBossNotKilled()",name="remove all geemers before the boss is killed",pos={82.5,255},spawn="zeta.script.obj.trigger"},
 	{create="removeGeemersIfBossNotKilled()",name="remove all geemers before the boss is killed",pos={98.5,159},spawn="zeta.script.obj.trigger"},
 	{pos={250.5,37},spawn="zeta.script.obj.terminal",text="Now leaving the caves\nThat's all, folks!"},
+	{pos={172.5,243},spawn="zeta.script.obj.heart"},
+	{pos={173.5,243},spawn="zeta.script.obj.heart"},
 }
