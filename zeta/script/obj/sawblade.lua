@@ -43,6 +43,8 @@ Sawblade.touchPriority = 9	-- above shots, below hero
 Sawblade.touch_v2 = Sawblade.pretouch
 
 Sawblade.powerChangeRate = 3	-- how long does it take to start/stop?
+Sawblade.playSoundDuration = 1
+Sawblade.nextSoundTime = math.random() * Sawblade.playSoundDuration
 function Sawblade:update(dt)
 	Sawblade.super.update(self, dt)
 
@@ -60,6 +62,11 @@ function Sawblade:update(dt)
 	
 	self.pos[1] = self.startPos[1] + self.travel[1] * f
 	self.pos[2] = self.startPos[2] + self.travel[2] * f
+
+	if not self.nextSoundTime or game.time > self.nextSoundTime then
+		self.nextSoundTime = game.time + self.playSoundDuration
+		self:playSound('skillsaw', .1)
+	end
 end
 
 function Sawblade:draw(R, viewBBox)
