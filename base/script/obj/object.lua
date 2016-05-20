@@ -644,7 +644,7 @@ Object.blockFlags = Object.SOLID_WORLD + Object.SOLID_YES
 
 local collisionEpsilon = 1e-4
 
-local function testBox(self, bxmin, bymin, bxmax, bymax, dt, dx, dy)
+local function testBoxBox(self, bxmin, bymin, bxmax, bymax, dt, dx, dy)
 	local side
 
 --print('  ====================')
@@ -768,6 +768,78 @@ local function testBox(self, bxmin, bymin, bxmax, bymax, dt, dx, dy)
 	return side, dt
 end
 
+--[[
+self has pos and bbox
+obj is a bbox clipped by a plane
+--]]
+function testBoxPoly(self, bxmin, bymin, bxmax, bymax, dt, dx, dy, plane)
+	-- 1) find separating plane greatest depth (positive means we're separating) (plane depth is min of depths of all vtxs, intersection depth is max plane depth)
+	
+		-- test self bbox to obj vtxs
+			-- right
+	local bestPlaneDepth = -math.huge
+	local bestNormal	-- pointing towards self, so when self tests obj, bestNormal is negative of the plane normal
+	local planeDepth = math.huge
+	for _,vtx in ipairs(obj.vtxs) do
+		planeDepth = math.min(planeDepth, vtx[1] - (self.pos[1] + self.bbox.max[1]))
+	end
+	if planeDepth > bestPlaneDepth then
+		bestPlaneDepth = planeDepth
+		bestNormal = {-1, 0}
+	end
+		-- left	
+	local planeDepth = math.huge
+	for _,vtx in ipairs(obj.vtxs) do
+		planeDepth = math.min(planeDepth, (self.pos[1] + self.bbox.min[1]) - vtx[1])
+	end
+	if planeDepth > bestPlaneDepth then
+		bestPlaneDepth = planeDepth
+		bestNormal = {1, 0}
+	end
+		-- up
+	local planeDepth = math.huge
+	for _,vtx in ipairs(obj.vtxs) do
+		planeDepth = math.min(planeDepth, vtx[2] - (self.pos[2] + self.bbox.max[2]))
+	end
+	if planeDepth > bestPlaneDepth then
+		bestPlaneDepth = planeDepth
+		bestNormal = {0, -1}
+	end	
+		-- down
+	local planeDepth = math.huge
+	for _,vtx in ipairs(obj.vtxs) do
+		planeDepth = math.min(planeDepth, (self.pos[2] + self.bbox.min[2]) - vtx[2])
+	end
+	if planeDepth > bestPlaneDepth then
+		bestPlaneDepth = planeDepth
+		bestNormal = {0, 1}
+	end
+
+		-- test obj planes to self bbox corners
+	for _,plane in ipairs(obj.planes) do
+		local planeDepth = math.huge
+		for xminmax=1,2 do
+			for yminmax=1,2 do
+				local x = self.pos[1] + (xminmax == 1 and self.bbox.min[1] or self.bbox.max[1])
+				local y = self.pos[2] + (yminmax == 1 and self.bbox.min[2] or self.bbox.max[2])
+				local planeDepth = math.min(planeDepth, plane[1] * x + plane[2] * y + plane[3])
+			end
+		end
+		if planeDepth > bestPlaneDepth then
+			bestPlaneDepth = planeDepth
+			bestNormal = plane
+		end
+	end
+
+	if bestNormal <= 0 then
+		-- stuck
+	end
+
+	-- 2) find intersection of movement along dx,dy
+	-- trace all 'self' vtxs forward on dx,dy, test with intersection against obj.planes within vtxs
+	-- then do the same with obj.vtxs backward on dx,dy, test with self sides.
+
+end
 
 function Object:move(dx,dy)
 	
@@ -804,6 +876,7 @@ function Object:move(dx,dy)
 --print('obj pos',self.pos,'box',self.bbox+self.pos,'moving',vec2(dx,dy))
 		
 		local side
+		local normal
 		local touchedObj
 		local touchedTile
 		local touchedTileX, touchedTileY
@@ -845,9 +918,10 @@ function Object:move(dx,dy)
 						and (not tilesTested or not table.find(tilesTested, vec2(x,y)))
 						then
 							local newSide
-							newSide, dt = testBox(self, x,y,x+1,y+1, dt, dx, dy)
+							newSide, dt = testBoxBox(self, x,y,x+1,y+1, dt, dx, dy)
 							if newSide then
 								side = newSide
+								normal = dirs[oppositeSide[side:lower()]]
 								touchedObj = obj
 								touchedTile = tile
 								touchedTileX = x
@@ -878,9 +952,10 @@ function Object:move(dx,dy)
 			and (not objsTested or not table.find(objsTested, obj))
 			then
 				local newSide
-				newSide, dt = testBox(self, obj.pos[1]+obj.bbox.min[1], obj.pos[2]+obj.bbox.min[2], obj.pos[1]+obj.bbox.max[1], obj.pos[2]+obj.bbox.max[2], dt, dx, dy)
+				newSide, dt = testBoxBox(self, obj.pos[1]+obj.bbox.min[1], obj.pos[2]+obj.bbox.min[2], obj.pos[1]+obj.bbox.max[1], obj.pos[2]+obj.bbox.max[2], dt, dx, dy)
 				if newSide then
 					side = newSide
+					normal = dirs[oppositeSide[side:lower()]]
 					touchedObj = obj
 					touchedTile = nil
 					touchedTileX = nil
@@ -914,7 +989,6 @@ function Object:move(dx,dy)
 --print('collided on side',side)
 		if side then
 			local lside = side:lower()
-			local normal = dirs[oppositeSide[lside]]
 			assert(normal, "got side set without normal")
 
 			-- don't check this object again

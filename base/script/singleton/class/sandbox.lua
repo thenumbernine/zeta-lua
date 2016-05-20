@@ -13,17 +13,33 @@ local session = game.session
 local player = game.players[1]
 -- find object named ...
 local function findObjNamed(name)
-	return select(2, game.objs:find(nil, function(obj)
-		return obj.name == name
-	end))
+	for _,obj in ipairs(game.objs) do
+		if obj.name == name then
+			return obj
+		end
+	end
 end
 -- find spawn info named ...
 local function findSpawnInfoNamed(name)
-	return select(2,level.spawnInfos:find(nil, function(spawnInfo)
-		return spawnInfo.name == name
-	end))
+	for _,spawnInfo in ipairs(level.spawnInfos) do
+		if spawnInfo.name == name then
+			return spawnInfo
+		end
+	end
 end
--- respawn an object.  removes it if it exists
+-- remove a named object
+local function remove(...)
+	local n = select('#', ...)
+	for i=1,n do
+		local name = select(i, ...)
+		for _,obj in ipairs(game.objs) do
+			if obj.name == name then
+				obj.remove = true
+			end
+		end
+	end
+end
+-- respawn a named object.  removes it if it exists
 local function respawn(name, ...)
 	local spawnInfo = findSpawnInfoNamed(name)
 	if not spawnInfo then return end
