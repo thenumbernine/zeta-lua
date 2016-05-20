@@ -17,10 +17,7 @@ next: add next cave section
 	- show vec2 fields as offsets ...? or absolute positions if the meta editor info says so.
 	- object classes use 'spawnfields' for editor fields, types, and tooltips
 - environmental effects ... foreground warping (underwater, heat), blowing wind, falling snow/rain/leaves, etc
-- savepoint loading won't restore threads or function upvalues correctly
-	i fixed this with player = game.players by filling in the game.player object rather than overwriting it ... 
-	but still can't save upvalues like local game = require '...' within serialized functions
-	fix would be to tinker with upvalues
+- save files don't save threads 
 - missile launcher missile ammo
 - arbitrary room sizes (no fixed grid) - in fact, double as spawnInfo and bbox
 - separate lua env for level/init.lua and for sandboxes

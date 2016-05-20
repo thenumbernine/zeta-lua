@@ -37,7 +37,7 @@ function SavePoint:playerUse(player)
 				return "error('can\\'t serialize "..classname.." outside of the "..arrayname.."')"
 			end
 			--return arrayname..'['..i..']'
-			return tolua{src=arrayname, index=i}
+			return 'arrayRef{src='..('%q'):format(arrayname)..',index='..i..'}'
 		end
 
 		local function serialize(obj, tab)

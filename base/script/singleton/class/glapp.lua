@@ -172,15 +172,21 @@ function GLApp:initGL(gl, glname)
 	end				
 
 	local savefile = 'zeta/save/save.txt'
+	local arrayRef = class()
+	function arrayRef:init(args)
+		self.index = assert(args.index)
+		self.src = assert(args.src)
+	end
 	local save
 	if io.fileexists(savefile) then
 		local code = [[
+local arrayRef = ...
 local table = require 'ext.table'
 local vec2 = require 'vec.vec2'
 local vec4 = require 'vec.vec4'
 local box2 = require 'vec.box2'
 return ]]..file[savefile]
-		save = assert(load(code))()
+		save = assert(load(code))(arrayRef)
 	end
 
 	-- set load level info
@@ -310,6 +316,19 @@ return ]]..file[savefile]
 							obj[k] = setmetatable(deserialize(v, keystack), m)
 							assert(k == keystack:remove())
 						end
+					elseif type(v) == 'function' then
+						-- update upvalues within functions
+						local j = 1
+						while true do
+							local n = debug.getupvalue(v, j)
+							if not n then break end
+							if n == 'game' then
+								print('replacing upvalue game!')
+								debug.setupvalue(v, j, game)
+							end
+							j = j + 1
+						end
+						obj[k] = v
 					else
 						obj[k] = v
 					end
@@ -323,7 +342,9 @@ return ]]..file[savefile]
 		end
 	
 		-- use original player objs (for upvalues in anything sandboxed)
+print('playerObjIndex',playerObjIndex)
 		local srcPlayer = game.objs[playerObjIndex]
+print('srcPlayer',srcPlayer)
 		local player = game.players[1]
 		for k in pairs(player) do
 			player[k] = nil
