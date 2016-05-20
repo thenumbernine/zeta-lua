@@ -30,13 +30,12 @@ collision v2:
 	- as doors close on you, they still ask for keycards
 	- get slopes working
 	- player can still duck and jump on the top of a ladder with solid above and get halfway stuck in the ceiling
-	- duck then stand up with a monster on your head.  you get stuck in the monster.
 	- jump near a wall and shoot. your jump will stop midair. 
-	- movement still needs pushing (making use of pushPriority) implementation 
+	- movement still needs pushing (making use of pushPriority) implementation ... maybe ...
 	- jumping on >100 solid_no objects and the player will float in the air...
 	- make sure there aren't any more physics slowdowns
-	- sometimes grenades will hit a turret and ... not explode
-
+	- fix tryToStand
+	
 monsters:
 	- fix geemer chunks 
 	- add moar mining base monsters:

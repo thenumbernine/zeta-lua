@@ -328,6 +328,7 @@ return ]]..file[savefile]
 						while true do
 							local n = debug.getupvalue(v, j)
 							if not n then break end
+							print('warning: found upvalue',n,'in key',k,'in object',i)
 							if n == 'game' then
 								print('replacing upvalue game!')
 								debug.setupvalue(v, j, game)

@@ -197,6 +197,10 @@ function Hero:hasKicked(other)
 end
 
 function Hero:tryToStand()
+	-- TODO in collision v2, because we can go right up to walls, if you're next to one, then the ul tile gets tested for solid and you can't stand
+	-- in v2 we have touch and stuck detection working
+	-- so fix this in that by standing, doing a single move test, and going back to ducking if we hit anything 
+
 	local level = game.level
 	local cantStand = false
 	local y = math.floor(self.pos[2] + self.bbox.max[2] + .5 - level.pos[2])

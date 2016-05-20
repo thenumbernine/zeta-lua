@@ -14,7 +14,7 @@ Door.bbox = {min={-.5,0}, max={.5,2}}
 
 Door.timeOpening = .5
 Door.timeOpen = 3
-Door.blockTime = 0	-- last time it was blocked
+Door.blockTime = -1	-- last time the door was no longer blocked
 
 function Door:init(...)
 	Door.super.init(self, ...)
@@ -71,7 +71,7 @@ function Door:touch(other, side)
 end
 
 Door.solidFlags = Door.SOLID_WORLD
-Door.touchFlags = 0
+Door.touchFlags = Door.SOLID_YES	-- player, specifically
 Door.blockFlags = 0
 function Door:touch_v2(other, side)
 	if not other:isa(Hero) then return end
