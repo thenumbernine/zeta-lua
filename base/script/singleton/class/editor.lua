@@ -931,17 +931,17 @@ function Editor:updateGUI()
 				then
 					self.selectedTileTypeIndex[0] = i
 				end
-				-- it would be nice if wrapping controls was automatic
-				local tileOptionsWide = 5
-				if (i+1) % tileOptionsWide > 0 and i < #self.tileOptions then 
-					ig.igSameLine()
-				end
-				
 				if ig.igIsItemHovered() then
 					ig.igBeginTooltip()
 					ig.igText(tileOption.tileType.name)
 					ig.igEndTooltip()
 				end
+			
+				-- it would be nice if wrapping controls was automatic
+				local tileOptionsWide = 5
+				if (i+1) % tileOptionsWide > 0 and i < #self.tileOptions then 
+					ig.igSameLine()
+				end				
 			end
 		end
 	
@@ -976,21 +976,31 @@ function Editor:updateGUI()
 				local background = self.backgroundOptions[i].background
 				
 				local tex = background.tex
-				if tex then
-					local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
-					if ig.igImageButton(
-						texIDPtr,
-						ig.ImVec2(32, 32)) --size
-					then
-						self.selectedBackgroundIndex[0] = i
-					end
-					ig.igSameLine()
+				local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex and tex.id or 0))
+				if ig.igImageButton(
+					texIDPtr,
+					ig.ImVec2(32, 32), --size
+					ig.ImVec2(0,0),	--uv0
+					ig.ImVec2(1,1),	--uv1
+					-1,	-- frame_padding
+					i == self.selectedBackgroundIndex and ig.ImVec4(1,1,0,.25) or ig.ImVec4(0,0,0,0))	-- bg_col
+				then
+					self.selectedBackgroundIndex[0] = i
+				end
+				if ig.igIsItemHovered() then
+					ig.igBeginTooltip()
+					ig.igText(background.name)
+					ig.igEndTooltip()
 				end
 				
-				ig.igRadioButton(background.name, self.selectedBackgroundIndex, i)
-	
+				ig.igSameLine()
+				ig.igPushIdStr('radio')
+				ig.igRadioButton('', self.selectedBackgroundIndex, i)
+				ig.igPopId()
+
 				if i > 0 then
 					ig.igSameLine()
+					ig.igPushIdStr('tree')
 					if ig.igTreeNode('') then
 						local float = ffi.new('float[1]')
 						for _,field in ipairs{'scaleX', 'scaleY', 'scrollX', 'scrollY'} do
@@ -1000,6 +1010,7 @@ function Editor:updateGUI()
 						end
 						ig.igTreePop()
 					end
+					ig.igPopId()
 				end
 				ig.igPopId()
 			end
