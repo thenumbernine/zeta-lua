@@ -42,7 +42,7 @@ function Turret:update(dt)
 	if self.health == 0 then return end
 	
 	local targetAngle
-	if game.session['defensesDeactivated_'..self.circuit] then
+	if not game.session['defensesActive_'..self.circuit] then
 		self.seq = 'idle'
 		if self.angle ~= targetAngle then
 			targetAngle = (self.stuckAngle + 90) % 360

@@ -1,16 +1,16 @@
-session['defensesDeactivated_Main'] = false
-session['defensesDeactivated_Mine Exit Corridor'] = true
-session['defensesDeactivated_Mineral Processing'] = false
+session['defensesActive_Main'] = true
+session['defensesActive_Mine Exit Corridor'] = false
+session['defensesActive_Mineral Processing'] = true
 
 function toggleDefenses(circuit, value)
 	circuit = circuit or 'Main'
 	if value == nil then
-		value = not session['defensesDeactivated_'..circuit]
+		value = not session['defensesActive_'..circuit]
 	end
-	session['defensesDeactivated_'..circuit] = value
+	session['defensesActive_'..circuit] = value
 	
 	popup(circuit..' circuit:\n'..
-		(session['defensesDeactivated_'..circuit]
+		(session['defensesActive_'..circuit]
 		and [[
 Emergency alarm deactivated.
 Defense systems disabled.]]

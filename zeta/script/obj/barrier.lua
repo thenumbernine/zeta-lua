@@ -39,7 +39,7 @@ Barrier.touchPriority = 9	-- above shots, below hero
 Barrier.touch_v2 = Barrier.pretouch
 
 function Barrier:update(dt)
-	if not game.session['defensesDeactivated_'..self.circuit] then
+	if game.session['defensesActive_'..self.circuit] then
 		local t = (game.time + self.timeOffset) % (self.timeOn + self.timeOff)
 		if t < self.timeOn then
 			self.shockEndTime = game.time + .5 + .5 * math.random()

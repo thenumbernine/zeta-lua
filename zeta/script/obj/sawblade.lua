@@ -23,7 +23,7 @@ function Sawblade:init(...)
 	self.t = math.random() * self.travelTime
 	if self.timeOffset then self.t = tonumber(self.timeOffset) end
 	-- do we have power?
-	self.power = game.session['defensesDeactivated_'..self.circuit] and 0 or 1
+	self.power = game.session['defensesActive_'..self.circuit] and 1 or 0
 end
 
 function Sawblade:pretouch(other, side)
@@ -49,10 +49,10 @@ Sawblade.nextSoundTime = math.random() * Sawblade.playSoundDuration
 function Sawblade:update(dt)
 	Sawblade.super.update(self, dt)
 
-	if game.session['defensesDeactivated_'..self.circuit] then
-		self.power = math.max(0, self.power - dt / self.powerChangeRate)
-	else
+	if game.session['defensesActive_'..self.circuit] then
 		self.power = math.min(1, self.power + dt / self.powerChangeRate)
+	else
+		self.power = math.max(0, self.power - dt / self.powerChangeRate)
 	end
 
 	-- only keep spinning as much sa we have power to spin
