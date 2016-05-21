@@ -470,5 +470,5 @@
 	{pos={173.5,236},spawn="zeta.script.obj.heart"},
 	{pos={170.5,236},spawn="base.script.obj.start"},
 	{pos={157.5,131},spawn="zeta.script.obj.terminal",use="toggleDefenses 'Mine Exit Corridor'"},
-	{circuit="BossGeemerBlade",pos={159.5,121},spawn="zeta.script.obj.sawblade",travel={-64,0}},
+	{circuit="Mine Exit Corridor",pos={159.5,121},spawn="zeta.script.obj.sawblade",travel={-64,0}},
 }
