@@ -466,7 +466,7 @@
 	{create="removeGeemersIfBossNotKilled()",name="remove all geemers before the boss is killed",pos={82.5,255},spawn="zeta.script.obj.trigger"},
 	{create="removeGeemersIfBossNotKilled()",name="remove all geemers before the boss is killed",pos={98.5,159},spawn="zeta.script.obj.trigger"},
 	{pos={250.5,37},spawn="zeta.script.obj.terminal",text="Now leaving the caves\nThat's all, folks!"},
-	{pos={168.5,236},spawn="base.script.obj.start"},
-	{pos={172.5,243},spawn="zeta.script.obj.heart"},
-	{pos={173.5,243},spawn="zeta.script.obj.heart"},
+	{pos={172.5,236},spawn="zeta.script.obj.heart"},
+	{pos={173.5,236},spawn="zeta.script.obj.heart"},
+	{pos={170.5,236},spawn="base.script.obj.start"},
 }

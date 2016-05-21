@@ -63,9 +63,11 @@ function Sawblade:update(dt)
 	self.pos[1] = self.startPos[1] + self.travel[1] * f
 	self.pos[2] = self.startPos[2] + self.travel[2] * f
 
-	if not self.nextSoundTime or game.time > self.nextSoundTime then
+	if self.power > .5 and (not self.nextSoundTime or game.time > self.nextSoundTime) then
 		self.nextSoundTime = game.time + self.playSoundDuration
-		self:playSound('skillsaw', .1)
+		if math.random(5) == 1 then
+			self:playSound('skillsaw', .1)
+		end
 	end
 end
 
