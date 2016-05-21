@@ -305,9 +305,9 @@ return ]]..file[savefile]
 			-- copy
 			-- remape spawnInfos (hope they haven't changed)
 			local keystack = table{i}
-			local function deserialize(saveObj, keystack)
+			local function deserialize(srcObj, keystack)
 				local obj = {}
-				for k,v in pairs(saveObj) do
+				for k,v in pairs(srcObj) do
 					if type(v) == 'table' then
 						local m = getmetatable(v)
 						if v.src and v.index then
@@ -340,9 +340,9 @@ return ]]..file[savefile]
 						while true do
 							local n = debug.getupvalue(v, j)
 							if not n then break end
-							print('warning: found upvalue',n,'in key',k,'in object',i)
+							print('warning: found upvalue',n,'in key',k,'in object',i,'of type',saveObj.spawn)
 							if n == 'game' then
-								print('replacing upvalue game!')
+								print('replacing "game" upvalue!')
 								debug.setupvalue(v, j, game)
 							end
 							j = j + 1
