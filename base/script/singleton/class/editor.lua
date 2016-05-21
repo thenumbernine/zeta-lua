@@ -1255,6 +1255,21 @@ function Editor:updateGUI()
 		end
 	elseif self.editMode[0] == editModeRooms then
 		ig.igInputInt('Room Value', self.selectedRoomIndex)
+		if ig.igButton('New Room Number') then
+			local roomsUsed = table()
+			for ry = 1,level.sizeInMapTiles[2] do
+				for rx = 1,level.sizeInMapTiles[1] do
+					local roomIndex = level.roomMap[rx-1 + level.sizeInMapTiles[1]*(ry-1)]
+					roomsUsed[roomIndex] = true
+				end
+			end
+			for i=0,#roomsUsed:keys() do
+		 		if not roomsUsed[i] then
+					self.selectedRoomIndex[0] = i
+					break
+				end
+			end
+		end
 	end
 end
 
@@ -1395,7 +1410,7 @@ function Editor:update()
 				if self.shiftDown then
 					self.selectedRoomIndex[0] = level.roomMap[rx-1 + level.sizeInMapTiles[1]*(ry-1)]
 				else
-					 level.roomMap[rx-1 + level.sizeInMapTiles[1]*(ry-1)] = self.selectedRoomIndex[0]
+					level.roomMap[rx-1 + level.sizeInMapTiles[1]*(ry-1)] = self.selectedRoomIndex[0]
 				end
 			end
 		elseif self.editMode[0] == editModeMove then
