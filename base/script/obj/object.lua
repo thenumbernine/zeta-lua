@@ -772,13 +772,231 @@ local function testBoxBox(self, testStuck, bxmin, bymin, bxmax, bymax, dt, dx, d
 	return dt, side
 end
 
+local function buildTileTypePoly(tileType)
+
+	local clipPlane = assert(tileType.plane)
+
+	-- build poly based on clip plane orientation	
+	-- TODO cache poly based on planes
+	-- or pass the tiletype itself, and cache the poly based on / within the tile type
+	local vtxs = table()
+	local planes = table()
+		
+	-- find what bbox vtxs are inside the plane
+	local bll = clipPlane[3] <= 0
+	local blr = clipPlane[1] + clipPlane[3] <= 0
+	local bul = clipPlane[2] + clipPlane[3] <= 0
+	local bur = clipPlane[1] + clipPlane[2] + clipPlane[3] <= 0
+	local boxVtxsInPlane = (bll and 1 or 0) + (blr and 1 or 0) + (bul and 1 or 0) + (bur and 1 or 0)
+	if boxVtxsInPlane == 4 then
+		error("this isn't a poly, it's a box!")
+	end
+
+	-- intersections of each edge of the box	
+	-- plane a x + b y + c = 0
+	-- y = -(ax+c)/b
+	-- for x=0: y=-c/b
+	-- for x=1: y=-(a+c)/b
+	-- x = -(by+c)/a
+	-- for y=0: x=-c/a
+	-- for y=1: x=-(b+c)/a
+	
+	local fracleft = -clipPlane[3] / clipPlane[2]	-- x=0
+	local fracright = -(clipPlane[1] + clipPlane[3]) / clipPlane[2]	-- x=1
+	local fracdown = -clipPlane[3] / clipPlane[1]	-- y=0
+	local fracup = -(clipPlane[2] + clipPlane[3]) / clipPlane[1]	-- y=1
+
+	if boxVtxsInPlane == 3 then
+		if not bll then
+			-- 1---2
+			-- |   |
+			-- b   |
+			--  \  |
+			--   a-3
+			vtxs:insert{0,1}	--1
+			planes:insert{0,1,-1}
+			vtxs:insert{1,1}	--2
+			planes:insert{1,0,-1}
+			vtxs:insert{1,0}	--3
+			assert(fracdown > 0)	-- or that vtx would be there
+			if fracdown < 1 then	-- a is needed
+				planes:insert{0,-1,0}
+				vtxs:insert{fracdown,0}
+			end
+			planes:insert{clipPlane[1],clipPlane[2],clipPlane[3]}
+			assert(fracleft > 0)	-- or that vtx would be there
+			if fracleft < 1 then	-- b is needed
+				vtxs:insert{0,fracleft}
+				planes:insert{-1,0,0}
+			end
+		elseif not blr then
+			-- 2---3
+			-- |   |
+			-- |   a
+			-- |  /
+			-- 1-b
+			vtxs:insert{0,0}	--1
+			planes:insert{-1,0,0}
+			vtxs:insert{0,1}	--2
+			planes:insert{0,1,-1}
+			vtxs:insert{1,1}
+			assert(fracright > 0)
+			if fracright < 1 then
+				planes:insert{1,0,-1}
+				vtxs:insert{1,fracright} --a
+			end
+			planes:insert{clipPlane[1],clipPlane[2],clipPlane[3]}
+			assert(fracleft < 1)
+			if fracleft > 0 then
+				vtxs:insert{fracleft,0}	-- b
+				planes:insert{0,-1,0}
+			end
+		elseif not bul then
+			--   b-1
+			--  /  |
+			-- a   |
+			-- |   |
+			-- 3---2
+			vtxs:insert{1,1}
+			planes:insert{1,0,-1}
+			vtxs:insert{1,0}
+			planes:insert{0,-1,0}
+			vtxs:insert{0,0}
+			assert(fracleft < 1)
+			if fracleft > 0 then
+				planes:insert{-1,0,0}
+				vtxs:insert{0,fracleft}
+			end
+			planes:insert{clipPlane[1],clipPlane[2],clipPlane[3]}
+			assert(fracup > 0)
+			if fracup < 1 then
+				vtxs:insert{fracleft,1}
+				planes:insert{0,1,-1}
+			end
+		elseif not bur then
+			-- 3-a
+			-- |  \
+			-- |   b
+			-- |   |
+			-- 2---1
+			vtxs:insert{1,0}
+			planes:insert{0,-1,0}
+			vtxs:insert{0,0}
+			planes:insert{-1,0,0}
+			vtxs:insert{0,1}
+			assert(fracup < 1)
+			if fracup > 0 then
+				planes:insert{0,1,-1}
+				vtxs:insert{fracup,1}
+			end
+			planes:insert{clipPlane[1],clipPlane[2],clipPlane[3]}
+			assert(fracright < 1)
+			if fracright > 0 then
+				vtxs:insert{1,fracright}
+				planes:insert{1,0,-1}
+			end
+		end
+	elseif boxVtxsInPlane == 2 then
+		if not bll and not blr then
+			-- 1---2
+			-- |   |
+			-- b_  |
+			--   \_a
+			--
+			vtxs:insert{1,0}
+			planes:insert{0,1,-1}
+			vtxs:insert{1,1}
+			assert(fracright > 0)
+			if fracright < 1 then
+				planes:insert{1,0,-1}
+				vtxs:insert{1,fracright}
+			end
+			planes:insert{clipPlane[1],clipPlane[2],clipPlane[3]}
+			assert(fracleft > 0)
+			if fracleft < 1 then
+				vtxs:insert{0,fracleft}
+				planes:insert{-1,0,0}
+			end
+		elseif not bul and not bur then
+			--
+			--   __b
+			-- a/  |
+			-- |   |
+			-- 2---1
+			vtxs:insert{1,0}
+			planes:insert{0,-1,0}
+			vtxs:insert{0,0}
+			assert(fracleft < 1)
+			if fracleft > 0 then
+				planes:insert{-1,0,0}
+				vtxs:insert{0,fracleft}
+			end
+			planes:insert{clipPlane[1],clipPlane[2],clipPlane[3]}
+			assert(fracright < 1)
+			if fracright > 0 then
+				vtxs:insert{1,fracright}
+				planes:insert{1,0,-1}
+			end
+		elseif not bll and not bul then
+			--  b--1
+			--  |  |
+			--  |  |
+			--  \  |
+			--   a-2
+			vtxs:insert{1,1}
+			planes:insert{1,0,-1}
+			vtxs:insert{1,0}
+			assert(fracdown > 0)
+			if fracdown < 1 then
+				planes:insert{0,-1,0}
+				vtxs:insert{fracdown,0}
+			end
+			planes:insert{clipPlane[1],clipPlane[2],clipPlane[3]}
+			assert(fracup > 0)
+			if fracup < 1 then
+				vtxs:insert{fracup,1}
+				planes:insert{0,1,-1}
+			end
+		elseif not blr and not bur then
+			-- 2--a
+			-- |  |
+			-- |  |
+			-- |  /
+			-- 1-b 
+			vtxs:insert{0,0}
+			planes:insert{-1,0,0}
+			vtxs:insert{0,1}
+			assert(fracup < 1)
+			if fracup > 0 then
+				planes:insert{0,1,-1}
+				vtxs:insert{fracup,1}
+			end
+			planes:insert{clipPlane[1],clipPlane[2],clipPlane[3]}
+			assert(fracdown < 1)
+			if fracdown > 0 then
+				vtxs:insert{fracdown,0}
+				planes:insert{0,-1,0}
+			end
+		else
+			error("how did one plane chop out diagonal vertices?")
+		end
+	else
+		error("no support for only one vertex in bbox polys")
+	end
+	assert(#vtxs == #planes)
+
+	return {vtxs=vtxs, planes=planes}
+end
+
 --[[
 self has pos and bbox
 x is the 1x1 bbox lower left coordinate
 plane is the plane that chops the box
 	assumes the plane normal is unit
 --]]
-local function testBoxSlope(self, testStuck, x, y, clipPlane, dt, dx, dy)
+local function testBoxSlope(self, testStuck, x, y, tileType, dt, dx, dy)
+	-- we only handle dt==0 collisions if we're testing interpenetration, i.e. non-blocking touch callbacks 
+	-- and at the moment there are no non-blocking tiles, nor tile touch callbacks
 	if dt == 0 then return dt end
 
 --local print = self:isa(require 'zeta.script.obj.hero') and print or function() end
@@ -787,218 +1005,14 @@ local function testBoxSlope(self, testStuck, x, y, clipPlane, dt, dx, dy)
 --print('  == BEGIN BOX/SLOPE TEST ==')
 --print('  ==========================')
 --print('testing sloped box at',x,y,'with plane',table.concat(clipPlane,','),'dt',dt,'dx',dx,'dy',dy)
-	
-	-- build poly based on clip plane orientation	
-	-- TODO cache poly based on planes
-	-- or pass the tiletype itself, and cache the poly based on / within the tile type
-	local vtxs = table()
-	local planes = table()
-	do
-		-- find what bbox vtxs are inside the plane
-		local bll = clipPlane[3] <= 0
-		local blr = clipPlane[1] + clipPlane[3] <= 0
-		local bul = clipPlane[2] + clipPlane[3] <= 0
-		local bur = clipPlane[1] + clipPlane[2] + clipPlane[3] <= 0
-	--print(tolua{bll=bll,blr=blr,bul=bul,bur=bur})
-		local boxVtxsInPlane = (bll and 1 or 0) + (blr and 1 or 0) + (bul and 1 or 0) + (bur and 1 or 0)
-	--print('boxVtxsInPlane',boxVtxsInPlane)
-		if boxVtxsInPlane == 4 then
-			error("this isn't a poly, it's a box!")
-		end
 
-		-- intersections of each edge of the box	
-		-- plane a x + b y + c = 0
-		-- y = -(ax+c)/b
-		-- for x=0: y=-c/b
-		-- for x=1: y=-(a+c)/b
-		-- x = -(by+c)/a
-		-- for y=0: x=-c/a
-		-- for y=1: x=-(b+c)/a
-		
-		local fracleft = -clipPlane[3] / clipPlane[2]	-- x=0
-		local fracright = -(clipPlane[1] + clipPlane[3]) / clipPlane[2]	-- x=1
-		local fracdown = -clipPlane[3] / clipPlane[1]	-- y=0
-		local fracup = -(clipPlane[2] + clipPlane[3]) / clipPlane[1]	-- y=1
-
-		if boxVtxsInPlane == 3 then
-			if not bll then
-				-- 1---2
-				-- |   |
-				-- b   |
-				--  \  |
-				--   a-3
-				vtxs:insert{0,1}	--1
-				planes:insert{0,1,-1}
-				vtxs:insert{1,1}	--2
-				planes:insert{1,0,-1}
-				vtxs:insert{1,0}	--3
-				assert(fracdown > 0)	-- or that vtx would be there
-				if fracdown < 1 then	-- a is needed
-					planes:insert{0,-1,0}
-					vtxs:insert{fracdown,0}
-				end
-				planes:insert{clipPlane[1],clipPlane[2],clipPlane[3]}
-				assert(fracleft > 0)	-- or that vtx would be there
-				if fracleft < 1 then	-- b is needed
-					vtxs:insert{0,fracleft}
-					planes:insert{-1,0,0}
-				end
-			elseif not blr then
-				-- 2---3
-				-- |   |
-				-- |   a
-				-- |  /
-				-- 1-b
-				vtxs:insert{0,0}	--1
-				planes:insert{-1,0,0}
-				vtxs:insert{0,1}	--2
-				planes:insert{0,1,-1}
-				vtxs:insert{1,1}
-				assert(fracright > 0)
-				if fracright < 1 then
-					planes:insert{1,0,-1}
-					vtxs:insert{1,fracright} --a
-				end
-				planes:insert{clipPlane[1],clipPlane[2],clipPlane[3]}
-				assert(fracleft < 1)
-				if fracleft > 0 then
-					vtxs:insert{fracleft,0}	-- b
-					planes:insert{0,-1,0}
-				end
-			elseif not bul then
-				--   b-1
-				--  /  |
-				-- a   |
-				-- |   |
-				-- 3---2
-				vtxs:insert{1,1}
-				planes:insert{1,0,-1}
-				vtxs:insert{1,0}
-				planes:insert{0,-1,0}
-				vtxs:insert{0,0}
-				assert(fracleft < 1)
-				if fracleft > 0 then
-					planes:insert{-1,0,0}
-					vtxs:insert{0,fracleft}
-				end
-				planes:insert{clipPlane[1],clipPlane[2],clipPlane[3]}
-				assert(fracup > 0)
-				if fracup < 1 then
-					vtxs:insert{fracleft,1}
-					planes:insert{0,1,-1}
-				end
-			elseif not bur then
-				-- 3-a
-				-- |  \
-				-- |   b
-				-- |   |
-				-- 2---1
-				vtxs:insert{1,0}
-				planes:insert{0,-1,0}
-				vtxs:insert{0,0}
-				planes:insert{-1,0,0}
-				vtxs:insert{0,1}
-				assert(fracup < 1)
-				if fracup > 0 then
-					planes:insert{0,1,-1}
-					vtxs:insert{fracup,1}
-				end
-				planes:insert{clipPlane[1],clipPlane[2],clipPlane[3]}
-				assert(fracright < 1)
-				if fracright > 0 then
-					vtxs:insert{1,fracright}
-					planes:insert{1,0,-1}
-				end
-			end
-		elseif boxVtxsInPlane == 2 then
-			if not bll and not blr then
-				-- 1---2
-				-- |   |
-				-- b_  |
-				--   \_a
-				--
-				vtxs:insert{1,0}
-				planes:insert{0,1,-1}
-				vtxs:insert{1,1}
-				assert(fracright > 0)
-				if fracright < 1 then
-					planes:insert{1,0,-1}
-					vtxs:insert{1,fracright}
-				end
-				planes:insert{clipPlane[1],clipPlane[2],clipPlane[3]}
-				assert(fracleft > 0)
-				if fracleft < 1 then
-					vtxs:insert{0,fracleft}
-					planes:insert{-1,0,0}
-				end
-			elseif not bul and not bur then
-				--
-				--   __b
-				-- a/  |
-				-- |   |
-				-- 2---1
-				vtxs:insert{1,0}
-				planes:insert{0,-1,0}
-				vtxs:insert{0,0}
-				assert(fracleft < 1)
-				if fracleft > 0 then
-					planes:insert{-1,0,0}
-					vtxs:insert{0,fracleft}
-				end
-				planes:insert{clipPlane[1],clipPlane[2],clipPlane[3]}
-				assert(fracright < 1)
-				if fracright > 0 then
-					vtxs:insert{1,fracright}
-					planes:insert{1,0,-1}
-				end
-			elseif not bll and not bul then
-				--  b--1
-				--  |  |
-				--  |  |
-				--  \  |
-				--   a-2
-				vtxs:insert{1,1}
-				planes:insert{1,0,-1}
-				vtxs:insert{1,0}
-				assert(fracdown > 0)
-				if fracdown < 1 then
-					planes:insert{0,-1,0}
-					vtxs:insert{fracdown,0}
-				end
-				planes:insert{clipPlane[1],clipPlane[2],clipPlane[3]}
-				assert(fracup > 0)
-				if fracup < 1 then
-					vtxs:insert{fracup,1}
-					planes:insert{0,1,-1}
-				end
-			elseif not blr and not bur then
-				-- 2--a
-				-- |  |
-				-- |  |
-				-- |  /
-				-- 1-b 
-				vtxs:insert{0,0}
-				planes:insert{-1,0,0}
-				vtxs:insert{0,1}
-				assert(fracup < 1)
-				if fracup > 0 then
-					planes:insert{0,1,-1}
-					vtxs:insert{fracup,1}
-				end
-				planes:insert{clipPlane[1],clipPlane[2],clipPlane[3]}
-				assert(fracdown < 1)
-				if fracdown > 0 then
-					vtxs:insert{fracdown,0}
-					planes:insert{0,-1,0}
-				end
-			else
-				error("how did one plane chop out diagonal vertices?")
-			end
-		else
-			error("no support for only one vertex in bbox polys")
-		end
-		assert(#vtxs == #planes)
+	if not tileType.poly then
+		tileType.poly = buildTileTypePoly(tileType)
 	end
+
+	local vtxs = tileType.poly.vtxs
+	local planes = tileType.poly.planes
+
 --print('vtxs:',table.map(vtxs,function(vtx) return '['..table.concat(vtx,',')..']' end):concat(' '))
 --print('planes:',table.map(planes,function(vtx) return '['..table.concat(vtx,',')..']' end):concat(' '))
 
@@ -1247,7 +1261,7 @@ function Object:move(dx,dy)
 		local side
 		local normal
 		local touchedObj
-		local touchedTile
+		local touchedTileType
 		local touchedTileX, touchedTileY
 		
 		-- get combined bbox of current bbox and destination bbox
@@ -1281,22 +1295,22 @@ function Object:move(dx,dy)
 --print('clamped tile bounds to',box2(xmin,ymin,xmax,ymax))			
 				for y=ymin,ymax do
 					for x=xmin,xmax do
-						local tile = level:getTile(x,y)
-						if tile and tile.solid then
-							if not tile.plane then
+						local tileType = level:getTile(x,y)
+						if tileType and tileType.solid then
+							if not tileType.plane then
 								local newSide
 								dt, newSide = testBoxBox(self, false, x,y,x+1,y+1, dt, dx, dy)
 								if newSide then
 									side = newSide
 									normal = dirs[oppositeSide[side:lower()]]
 									touchedObj = nil
-									touchedTile = tile
+									touchedTileType = tileType
 									touchedTileX = x
 									touchedTileY = y
 								end
 							else
 								local newNormal
-								dt, newNormal = testBoxSlope(self, false, x, y, tile.plane, dt, dx, dy)
+								dt, newNormal = testBoxSlope(self, false, x, y, tileType, dt, dx, dy)
 								if newNormal then
 									normal = newNormal
 									local adx = math.abs(normal[1])
@@ -1307,7 +1321,7 @@ function Object:move(dx,dy)
 										side = normal[2] < 0 and 'Up' or 'Down'
 									end
 									touchedObj = nil
-									touchedTile = tile
+									touchedTileType = tileType
 									touchedTileX = x
 									touchedTileY = y
 								end
@@ -1351,7 +1365,7 @@ function Object:move(dx,dy)
 					side = newSide
 					normal = dirs[oppositeSide[side:lower()]]
 					touchedObj = obj
-					touchedTile = nil
+					touchedTileType = nil
 					touchedTileX = nil
 					touchedTileY = nil
 				end
@@ -1388,9 +1402,9 @@ function Object:move(dx,dy)
 			-- run 'touch' after velocity clipping
 			-- pass collision velocity as a separate parameter?
 			local dontblock
-			if touchedTile then
---print('calling self.touchTile_v2',self.touchTile_v2,touchedTile,lside,normal)
-				if self.touchTile_v2 then dontblock = self:touchTile_v2(touchedTile, lside, normal) or dontblock end
+			if touchedTileType then
+--print('calling self.touchTile_v2',self.touchTile_v2,touchedTileType,lside,normal)
+				if self.touchTile_v2 then dontblock = self:touchTile_v2(touchedTileType, lside, normal) or dontblock end
 			end
 			
 --print('touchedObj is',touchedObj)			
