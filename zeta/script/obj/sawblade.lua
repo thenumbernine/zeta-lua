@@ -14,6 +14,7 @@ Sawblade.travelTime = 4
 Sawblade.damage = 3
 Sawblade.rotation = 3000
 Sawblade.pushForce = 7
+Sawblade.circuit = 'Main'
 
 function Sawblade:init(...)
 	Sawblade.super.init(self, ...)
@@ -22,7 +23,7 @@ function Sawblade:init(...)
 	self.t = math.random() * self.travelTime
 	if self.timeOffset then self.t = tonumber(self.timeOffset) end
 	-- do we have power?
-	self.power = game.session.defensesDeactivated and 0 or 1
+	self.power = game.session['defensesDeactivated_'..self.circuit] and 0 or 1
 end
 
 function Sawblade:pretouch(other, side)
@@ -48,7 +49,7 @@ Sawblade.nextSoundTime = math.random() * Sawblade.playSoundDuration
 function Sawblade:update(dt)
 	Sawblade.super.update(self, dt)
 
-	if game.session.defensesDeactivated then
+	if game.session['defensesDeactivated_'..self.circuit] then
 		self.power = math.max(0, self.power - dt / self.powerChangeRate)
 	else
 		self.power = math.min(1, self.power + dt / self.powerChangeRate)

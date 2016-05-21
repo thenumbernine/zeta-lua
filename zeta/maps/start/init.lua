@@ -1,14 +1,22 @@
-session.defensesDeactivated = false
+session.defensesDeactivated_Main = false
+session.defensesDeactivated_BossGeemerBlade = false
+session.defensesDeactivated_MineralProcessing = false
 
-function toggleDefenses()
-	session.defensesDeactivated = not session.defensesDeactivated
-	popup(session.defensesDeactivated
-	and [[
+function toggleDefenses(circuit, value)
+	circuit = circuit or 'Main'
+	if value == nil then
+		value = not session['defensesDeactivated_'..circuit]
+	end
+	session['defensesDeactivated_'..circuit] = value
+	
+	popup(circuit..' circuit:\n'..
+		(session['defensesDeactivated_'..circuit]
+		and [[
 Emergency alarm deactivated.
 Defense systems disabled.]]
-	or [[
+		or [[
 Emergency alarm activated.
-Defense systems enabled.]])
+Defense systems enabled.]]))
 end
 
 -- if the geemer boss isn't killed then remove all geemers (and subclasses) from the objects
