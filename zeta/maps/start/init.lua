@@ -2,21 +2,25 @@ session['defensesActive_Main'] = true
 session['defensesActive_Mine Exit Corridor'] = false
 session['defensesActive_Mineral Processing'] = true
 
-function toggleDefenses(circuit, value)
-	circuit = circuit or 'Main'
+function toggleDefenses(args)
+	if type(args) == 'string' then args = {circuit=args} end
+	local circuit = args.circuit or 'Main'
+	
+	local value = args.value
 	if value == nil then
 		value = not session['defensesActive_'..circuit]
 	end
 	session['defensesActive_'..circuit] = value
-	
-	popup(circuit..' circuit:\n'..
-		(session['defensesActive_'..circuit]
-		and [[
+
+	if not args.silent then
+		popup(circuit..' circuit:\n'.. (value
+			and [[
 Emergency alarm deactivated.
 Defense systems disabled.]]
-		or [[
+			or [[
 Emergency alarm activated.
 Defense systems enabled.]]))
+	end
 end
 
 -- if the geemer boss isn't killed then remove all geemers (and subclasses) from the objects
