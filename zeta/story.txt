@@ -34,13 +34,11 @@ computer terminals tell you that colony #1's team had just left in an escape roc
 - and that the weapons cache is unlocked, and gives you a blaster
 (secret: find one team member that died when activating you, get his keycard)
 you go down, underground the mining operation
-learn from terminal that monsters invaded 
+learn from terminal that monsters invaded, that defenses went haywire, and that some crew went to hide in the caves
 find first monsters
 keep going to find first boss in the edge of the base - big evil alien monster
 get the green key door so you can go back through the locked doors in the mining base. 
-(from then on if go back to the mining base, you find it repopulated by monsters ...
-	... maybe only if the defense system is off? 
-	... or maybe have the defense system shoot at monsters too?)
+(from then on if go back to the mining base, you find it repopulated by monsters)
 [section 1 first leads to section 2]
 [section 1 can see the door to secret weapon , access from next section plot point]
 	[this secret has access with first secret keycard to a escape rocket booster]

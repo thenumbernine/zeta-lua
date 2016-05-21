@@ -470,9 +470,11 @@
 	{pos={173.5,236},spawn="zeta.script.obj.heart"},
 	{pos={170.5,236},spawn="base.script.obj.start"},
 	{pos={157.5,131},spawn="zeta.script.obj.terminal",use="toggleDefenses 'Mine Exit Corridor'"},
-	{circuit="Mine Exit Corridor",pos={159.5,119},spawn="zeta.script.obj.sawblade",timeOffset=3,travel={-64,0}},
-	{circuit="Mine Exit Corridor",pos={159.5,123},spawn="zeta.script.obj.sawblade",timeOffset=3.0999999046326,travel={-64,0}},
+	{circuit="Mine Exit Corridor",pos={159.5,119},spawn="zeta.script.obj.sawblade",timeOffset=3,travel={-67,0}},
+	{circuit="Mine Exit Corridor",pos={159.5,123},spawn="zeta.script.obj.sawblade",timeOffset=3.0999999046326,travel={-67,0}},
 	{pos={177.5,104},spawn="zeta.script.obj.breakblock",tileIndex=579},
 	{pos={175.5,104},spawn="zeta.script.obj.breakblock",tileIndex=577},
 	{create="toggleDefenses{\n\9circuit='Mineral Processing',\n\9value=true,\n\9silent=true\n}",pos={47.5,82},spawn="zeta.script.obj.trigger"},
+	{pos={42.5,148},spawn="zeta.script.obj.terminal",text="The creatures have invaded the base.\nThe escape rocket has left without us.\nWe can't make a stand here.\nSome of the crew are thinking there might be safety somewhere in the caves..."},
+	{color={1,0,0,1},pos={248.5,37},spawn="zeta.script.obj.keycard"},
 }

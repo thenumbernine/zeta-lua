@@ -2,7 +2,15 @@ session['defensesActive_Main'] = true
 session['defensesActive_Mine Exit Corridor'] = false
 session['defensesActive_Mineral Processing'] = true
 
+--[[
+args:
+	circuit = what circuit to toggle on/off.  nil means Main circuit.
+	value = set the circuit directly to a value.  nil means toggle on/off.
+	silent = don't announce it.  default: false.
+use a single string for toggling a circuit
+--]]
 function toggleDefenses(args)
+	if not args then args = {} end
 	if type(args) == 'string' then args = {circuit=args} end
 	local circuit = args.circuit or 'Main'
 	
