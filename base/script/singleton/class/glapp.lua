@@ -208,6 +208,18 @@ return ]]..file[savefile]
 			spawnTypes:append(require(mod..'.script.spawntypes'))
 		end
 	end
+	-- now normalize all planes
+	-- either here or in Game:setLevel()
+	-- notice this currently modifies the original tileType objects ...
+	for _,tileType in ipairs(tileTypes) do
+		local p = tileType.plane
+		if p then
+			local len = math.sqrt(p[1]*p[1] + p[2]*p[2] + p[3]*p[3])
+			p[1] = p[1] / len
+			p[2] = p[2] / len
+			p[3] = p[3] / len
+		end
+	end
 	levelcfg.tileTypes = tileTypes
 	levelcfg.spawnTypes = spawnTypes
 

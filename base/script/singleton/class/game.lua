@@ -8,8 +8,6 @@ math.randomseed(os.time())
 
 local Game = class()
 
-Game.paused = true
-
 Game.respawnTime = 15
 Game.maxAudioDist = 30
 Game.gravity = -100

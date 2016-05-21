@@ -43,7 +43,7 @@ Sawblade.touchPriority = 9	-- above shots, below hero
 Sawblade.touch_v2 = Sawblade.pretouch
 
 Sawblade.powerChangeRate = 3	-- how long does it take to start/stop?
-Sawblade.playSoundDuration = 1
+Sawblade.playSoundDuration = 3
 Sawblade.nextSoundTime = math.random() * Sawblade.playSoundDuration
 function Sawblade:update(dt)
 	Sawblade.super.update(self, dt)
