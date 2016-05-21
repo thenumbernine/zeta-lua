@@ -1,6 +1,6 @@
-session.defensesDeactivated_Main = false
-session.defensesDeactivated_BossGeemerBlade = false
-session.defensesDeactivated_MineralProcessing = false
+session['defensesDeactivated_Main'] = false
+session['defensesDeactivated_Mine Exit Corridor'] = true
+session['defensesDeactivated_Mineral Processing'] = false
 
 function toggleDefenses(circuit, value)
 	circuit = circuit or 'Main'
