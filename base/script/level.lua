@@ -210,9 +210,9 @@ function Level:init(args)
 	
 	-- hold all textures in one place
 	do
-		local texpackFile = modio:find('texpack.png')
-		assert(texpackFile, "better put your textures in a texpack")
-		self.texpackImage = Image(texpackFile)
+		self.texpackFilename = modio:find('texpack.png')
+		assert(self.texpackFilename, "better put your textures in a texpack")
+		self.texpackImage = Image(self.texpackFilename)
 		self.texpackTex = Tex2D{
 			image = self.texpackImage,
 			minFilter = gl.GL_NEAREST,

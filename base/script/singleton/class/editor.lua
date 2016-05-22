@@ -624,6 +624,69 @@ function Editor:setTileKeys()
 	end)
 end
 
+local function tileButton(tileIndex)
+	local level = game.level
+	local tex = level.texpackTex
+	local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
+	local tilesWide = tex.width / 16
+	local tilesHigh = tex.height / 16
+	local ti = (tileIndex - 1) % tilesWide
+	local tj = (tileIndex - 1 - ti) / tilesWide
+	return ig.igImageButton(
+		texIDPtr,
+		ig.ImVec2(32,32),	-- size
+		ig.ImVec2(ti/tilesWide, tj/tilesHigh),	-- uv0
+		ig.ImVec2((ti+1)/tilesWide, (tj+1)/tilesHigh))	-- uv1
+end
+
+local function guiPickTileWindow(self)
+	local level = game.level
+	self.tileWindowOpenedPtr = self.tileWindowOpenedPtr or ffi.new('bool[1]',false)
+	if self.tileWindowOpenedPtr[0] then
+		ig.igBegin(
+			'Tile Window',
+			self.tileWindowOpenedPtr,
+			ig.ImGuiWindowFlags_NoTitleBar)
+	
+		local tex = level.texpackTex
+		local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
+		local tilesWide = tex.width / 16
+		local tilesHigh = tex.height / 16
+
+		local texScreenPos = ig.igGetCursorScreenPos()
+		local mousePos = ig.igGetMousePos()
+		local cursorX = mousePos.x - texScreenPos.x - 4
+		local cursorY = mousePos.y - texScreenPos.y - 4
+		local x = math.clamp(math.floor(cursorX / tex.width * tilesWide), 0, tilesWide-1)
+		local y = math.clamp(math.floor(cursorY / tex.height * tilesHigh), 0, tilesHigh-1)
+
+		if ig.igImageButton(
+			texIDPtr,
+			ig.ImVec2(tex.width, tex.height))	-- size
+		then
+			self.tileWindowCallback(1+x+tilesWide*y)
+			self.tileWindowOpenedPtr[0] = false
+		end
+		if ig.igIsItemHovered() then
+			ig.igBeginTooltip()
+			ig.igImage(
+				texIDPtr, -- tex
+				ig.ImVec2(64, 64), -- size
+				ig.ImVec2(x/tilesWide, y/tilesHigh), -- uv0
+				ig.ImVec2((x+1)/tilesWide, (y+1)/tilesHigh)) -- uv1
+			ig.igEndTooltip()
+		end
+		
+		ig.igEnd()
+	end
+end
+
+-- don't call openPickTileWindow until this is called (so the ptr exists)
+local function openPickTileWindow(self,callback)
+	self.tileWindowOpenedPtr[0] = true
+	self.tileWindowCallback = callback
+end
+
 --[[
 move all tiles and spawnobjs in the world
 and objs while we're at it
@@ -664,109 +727,7 @@ local function doMoveWorld(dx, dy)
 	end
 end
 
-function Editor:updateGUI()
-	ig.igText('EDITOR')
-	local level = game.level
-
-	local function alert(str)
-		-- [[
-		print(str)
-		--]]
-		--[[
-		ig.igOpenPopup('Error!')
-		if ig.igBeginPopupModal('Error!', nil, ig.ImGuiWindowFlags_AlwaysAutoResize) then
-			ig.igText(str)
-			if ig.igButton('OK') then
-				ig.igCloseCurrentPopup()
-			end
-			ig.igEndPopup()
-		end
-		--]]
-	end
-
-	self.tileWindowOpenedPtr = self.tileWindowOpenedPtr or ffi.new('bool[1]',false)
-	local function openPickTileWindow(callback)
-		self.tileWindowOpenedPtr[0] = true
-		self.tileWindowCallback = callback
-	end
-	if self.tileWindowOpenedPtr[0] then
-		ig.igBegin(
-			'Tile Window',
-			self.tileWindowOpenedPtr,
-			ig.ImGuiWindowFlags_NoTitleBar)
-	
-		local tex = level.texpackTex
-		local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
-		local tilesWide = tex.width / 16
-		local tilesHigh = tex.height / 16
-
-		local texScreenPos = ig.igGetCursorScreenPos()
-		local mousePos = ig.igGetMousePos()
-		local cursorX = mousePos.x - texScreenPos.x - 4
-		local cursorY = mousePos.y - texScreenPos.y - 4
-		local x = math.clamp(math.floor(cursorX / tex.width * tilesWide), 0, tilesWide-1)
-		local y = math.clamp(math.floor(cursorY / tex.height * tilesHigh), 0, tilesHigh-1)
-
-		if ig.igImageButton(
-			texIDPtr,
-			ig.ImVec2(tex.width, tex.height))	-- size
-		then
-			self.tileWindowCallback(1+x+tilesWide*y)
-			self.tileWindowOpenedPtr[0] = false
-		end
-		if ig.igIsItemHovered() then
-			ig.igBeginTooltip()
-			ig.igImage(
-				texIDPtr, -- tex
-				ig.ImVec2(64, 64), -- size
-				ig.ImVec2(x/tilesWide, y/tilesHigh), -- uv0
-				ig.ImVec2((x+1)/tilesWide, (y+1)/tilesHigh)) -- uv1
-			ig.igEndTooltip()
-		end
-		
-		ig.igEnd()
-	end
-
-	local function tileButton(tileIndex)
-		local tex = level.texpackTex
-		local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
-		local tilesWide = tex.width / 16
-		local tilesHigh = tex.height / 16
-		local ti = (tileIndex - 1) % tilesWide
-		local tj = (tileIndex - 1 - ti) / tilesWide
-		return ig.igImageButton(
-			texIDPtr,
-			ig.ImVec2(32,32),	-- size
-			ig.ImVec2(ti/tilesWide, tj/tilesHigh),	-- uv0
-			ig.ImVec2((ti+1)/tilesWide, (tj+1)/tilesHigh))	-- uv1
-	end
-
-	if ig.igCollapsingHeader('Display...') then
-		self.viewSizePtr = self.viewSizePtr or ffi.new('float[1]')
-		self.viewSizePtr[0] = game.viewSize
-		ig.igSliderFloat('zoom', self.viewSizePtr, 1, math.max(level.size:unpack()), '%.3f', 3)
-		game.viewSize = tonumber(self.viewSizePtr[0])
-		
-		ig.igCheckbox('no clipping', self.noClipping)
-
-		ig.igCheckbox('Show Tile Types', self.showTileTypes)
-		ig.igCheckbox('Show Spawn Infos', self.showSpawnInfos)
-		ig.igCheckbox('Show Objects', self.showObjects)
-		ig.igCheckbox('Show Rooms', self.showRooms)
-		ig.igSeparator()
-	end
-	if ig.igButton('remove all objs') then
-		for _,spawnInfo in ipairs(level.spawnInfos) do
-			spawnInfo:removeObj()
-		end
-	end
-	if ig.igButton('spawn all objs') then
-		for _,spawnInfo in ipairs(level.spawnInfos) do
-			spawnInfo:removeObj()
-			spawnInfo:respawn()
-		end
-	end
-
+local function guiMoveWorld(self)
 	self.showMoveWorldWindow = self.showMoveWorldWindow or ffi.new('bool[1]',false)
 	self.moveWorldWindowXPtr = self.moveWorldWindowXPtr or ffi.new('int[1]',0)
 	self.moveWorldWindowYPtr = self.moveWorldWindowYPtr or ffi.new('int[1]',0)
@@ -790,83 +751,17 @@ function Editor:updateGUI()
 
 		ig.igEnd()
 	end
+end
 
-	self.consoleWindowOpenedPtr = self.consoleWindowOpenedPtr or ffi.new('bool[1]', false)
-	if ig.igButton('Console') then
-		self.consoleWindowOpenedPtr[0] = true
-	end
-	if self.consoleWindowOpenedPtr[0] then
-		ig.igBegin('Console', self.consoleWindowOpenedPtr)
-		local bufferSize = 2048
-		self.execBuffer = self.execBuffer or ffi.new('char[?]', bufferSize)
-		local size = ig.igGetWindowSize()
-		if ig.igInputTextMultiline('code', self.execBuffer, bufferSize,
-			ig.ImVec2(size.x,size.y - 56),
-			ig.ImGuiInputTextFlags_EnterReturnsTrue
-			+ ig.ImGuiInputTextFlags_AllowTabInput)
-		or ig.igButton('run code')
-		then
-			self.execBuffer[bufferSize-1] = 0
-			local code = ffi.string(self.execBuffer)
-			local sandbox = require 'base.script.singleton.sandbox'
-			print('executing...\n'..code)
-			sandbox(code)
-		end
-		ig.igSameLine()
-		if ig.igButton('clear code') then
-			ffi.fill(self.execBuffer, bufferSize)
-		end
-		ig.igEnd()
-	end
-
-	self.showInitFileWindow = self.showInitFileWindow or ffi.new('bool[1]',false)
-	local initFileBufferSize = 65536 
-	self.initFileBuffer = self.initFileBuffer or ffi.new('char[?]', initFileBufferSize)	-- hmm ... init files have a max size ...
-	if ig.igCollapsingHeader('File...') then
-		if ig.igButton('Save Map') then
-			self:saveMap()
-		end
-		if ig.igButton('Save Backgrounds') then
-			self:saveBackgrounds()
-		end
-		if ig.igButton('Save Texpack') then
-			self:saveTexPack()
-		end
-
-		if ig.igButton('Edit Level Init Code') then
-			self.showInitFileWindow[0] = true
-			local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
-			local initFileData = file[dir..'/init.lua'] or ''
-			ffi.copy(self.initFileBuffer, initFileData, math.min(#initFileData, initFileBufferSize-1))
-			self.initFileBuffer[initFileBufferSize-1] = 0
-		end
-		ig.igSeparator()
-	end
-	if self.showInitFileWindow[0] then
-		ig.igBegin('Level Init Code', self.showInitFileWindow)
-		local size = ig.igGetWindowSize()
-		ig.igInputTextMultiline('code', self.initFileBuffer, initFileBufferSize,
-			ig.ImVec2(size.x, size.y - 56),	-- minus titlebar height and button height
-			ig.ImGuiInputTextFlags_AllowTabInput)
-		if ig.igButton('Save') then
-			self.initFileBuffer[initFileBufferSize-1] = 0
-			local code = ffi.string(self.initFileBuffer)
-			local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
-			file[dir..'/init.lua'] = code
-			self.showInitFileWindow[0] = false
-		end
-		ig.igSameLine()
-		if ig.igButton('Cancel') then
-			self.showInitFileWindow[0] = false
-		end
-		ig.igEnd()
-	end
+local function guiMoveTexpackTiles(self)
+	local level = game.level
 
 	self.moveTexpackTileFrom = self.moveTexpackTileFrom or 0
 	self.moveTexpackTileTo = self.moveTexpackTileTo or 0
 	self.moveTexpackTileWidth = self.moveTexpackTileWidth or ffi.new('int[1]',1)
 	self.moveTexpackTileHeight = self.moveTexpackTileHeight or ffi.new('int[1]',1)
 	self.moveTexpackTilesWindowPtr = self.moveTexpackTilesWindowPtr or ffi.new('bool[1]', false)
+	self.moveTexpackPreserveTilesPtr = self.moveTexpackPreserveTilesPtr or ffi.new('bool[1]', true)
 	if ig.igButton('Move Texpack Tiles') then
 		self.moveTexpackTilesWindowPtr[0] = true
 	end
@@ -875,7 +770,7 @@ function Editor:updateGUI()
 		ig.igBegin('Move Texpack Tiles', self.moveTexpackTilesWindowPtr)
 		ig.igPushIdStr('Move Texpack Tiles Button From')
 		if tileButton(self.moveTexpackTileFrom) then
-			openPickTileWindow(function(i)
+			openPickTileWindow(self,function(i)
 				self.moveTexpackTileFrom = i
 			end)
 		end
@@ -886,7 +781,7 @@ function Editor:updateGUI()
 		
 		ig.igPushIdStr('Move Texpack Tiles Button To')
 		if tileButton(self.moveTexpackTileTo) then
-			openPickTileWindow(function(i)
+			openPickTileWindow(self,function(i)
 				self.moveTexpackTileTo = i
 			end)	
 		end
@@ -896,7 +791,15 @@ function Editor:updateGUI()
 		
 		ig.igSliderInt('Tiles Wide', self.moveTexpackTileWidth, 1, 64)
 		ig.igSliderInt('Tiles High', self.moveTexpackTileHeight, 1, 64)
-		
+	
+		ig.igCheckbox('Preserve Tiles', self.moveTexpackPreserveTilesPtr)
+		if ig.igIsItemHovered() then
+			ig.igBeginTooltip()
+			ig.igText('Check this to update the map tiles so that no textures in the map change.\n'
+					..'Leave this unchecked to swap the map tiles as well as the texpack tiles.')
+			ig.igEndTooltip()
+		end
+
 		if ig.igButton('Swap')
 		and self.moveTexpackTileFrom > 0
 		and self.moveTexpackTileTo > 0
@@ -910,12 +813,12 @@ function Editor:updateGUI()
 			local width, height, channels, format = texpackImage.width, texpackImage.height, texpackImage.channels, texpackImage.format
 			local tilesWide = width / 16
 			local tilesHigh = height / 16
-			local moveFromXMin = (self.moveTexpackTileFrom > 0) and ((self.moveTexpackTileFrom-1) % tilesWide)
-			local moveFromYMin = (self.moveTexpackTileFrom > 0) and ((self.moveTexpackTileFrom-moveFromXMin-1) / tilesWide)
+			local moveFromXMin = (self.moveTexpackTileFrom-1) % tilesWide
+			local moveFromYMin = (self.moveTexpackTileFrom-moveFromXMin-1) / tilesWide
 			local moveFromXMax = moveFromXMin + self.moveTexpackTileWidth[0] - 1
 			local moveFromYMax = moveFromYMin + self.moveTexpackTileHeight[0] - 1
-			local moveToXMin = (self.moveTexpackTileTo > 0) and ((self.moveTexpackTileTo-1) % tilesWide)
-			local moveToYMin = (self.moveTexpackTileTo > 0) and ((self.moveTexpackTileTo-moveToXMin-1) / tilesWide)
+			local moveToXMin = (self.moveTexpackTileTo-1) % tilesWide
+			local moveToYMin = (self.moveTexpackTileTo-moveToXMin-1) / tilesWide
 			local moveToXMax = moveToXMin + self.moveTexpackTileWidth[0] - 1
 			local moveToYMax = moveToYMin + self.moveTexpackTileHeight[0] - 1
 			local newTexpackImage = Image(width, height, channels, format)
@@ -954,11 +857,174 @@ function Editor:updateGUI()
 				internalFormat = gl.GL_RGBA,
 				format = gl.GL_RGBA,
 			}
+		
+			if self.moveTexpackPreserveTilesPtr[0] then
+				for _,map in ipairs{level.fgTileMap, level.bgTileMap} do
+					for y=0,level.size[2]-1 do
+						for x=0,level.size[1]-1 do
+							local tile = map[x+level.size[1]*y]
+							if tile > 0 then
+								local tx = (tile-1) % tilesWide
+								local ty = (tile-tx-1) / tilesWide
+								local update
+								if tx >= moveFromXMin and tx <= moveFromXMax
+								and ty >= moveFromYMin and ty <= moveFromYMax
+								then
+									tx = tx - moveFromXMin + moveToXMin
+									ty = ty - moveFromYMin + moveToYMin
+									update = true
+								elseif tx >= moveToXMin and tx <= moveToXMax
+								and ty >= moveToYMin and ty <= moveToYMax
+								then
+									tx = tx - moveToXMin + moveFromXMin
+									ty = ty - moveToYMin + moveFromYMin
+									update = true
+								end
+								if update then
+									print('moving tile at',x,y,'from',tile,'to',1+tx+tilesWide*ty)
+									map[x+level.size[1]*y] = 1 + tx + tilesWide * ty
+								end
+							end
+						end
+					end
+				end
+			end
 		end
 		ig.igEnd()
 		ig.igPopId()
 	end
+end
 
+local function guiConsole(self)
+	self.consoleWindowOpenedPtr = self.consoleWindowOpenedPtr or ffi.new('bool[1]', false)
+	if ig.igButton('Console') then
+		self.consoleWindowOpenedPtr[0] = true
+	end
+	if self.consoleWindowOpenedPtr[0] then
+		ig.igBegin('Console', self.consoleWindowOpenedPtr)
+		local bufferSize = 2048
+		self.execBuffer = self.execBuffer or ffi.new('char[?]', bufferSize)
+		local size = ig.igGetWindowSize()
+		if ig.igInputTextMultiline('code', self.execBuffer, bufferSize,
+			ig.ImVec2(size.x,size.y - 56),
+			ig.ImGuiInputTextFlags_EnterReturnsTrue
+			+ ig.ImGuiInputTextFlags_AllowTabInput)
+		or ig.igButton('run code')
+		then
+			self.execBuffer[bufferSize-1] = 0
+			local code = ffi.string(self.execBuffer)
+			local sandbox = require 'base.script.singleton.sandbox'
+			print('executing...\n'..code)
+			sandbox(code)
+		end
+		ig.igSameLine()
+		if ig.igButton('clear code') then
+			ffi.fill(self.execBuffer, bufferSize)
+		end
+		ig.igEnd()
+	end
+end
+
+local function guiInitFile(self)
+	self.showInitFileWindow = self.showInitFileWindow or ffi.new('bool[1]',false)
+	local initFileBufferSize = 65536 
+	self.initFileBuffer = self.initFileBuffer or ffi.new('char[?]', initFileBufferSize)	-- hmm ... init files have a max size ...
+	if ig.igCollapsingHeader('File...') then
+		if ig.igButton('Save Map') then
+			self:saveMap()
+		end
+		if ig.igButton('Save Backgrounds') then
+			self:saveBackgrounds()
+		end
+		if ig.igButton('Save Texpack') then
+			self:saveTexpack()
+		end
+
+		if ig.igButton('Edit Level Init Code') then
+			self.showInitFileWindow[0] = true
+			local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
+			local initFileData = file[dir..'/init.lua'] or ''
+			ffi.copy(self.initFileBuffer, initFileData, math.min(#initFileData, initFileBufferSize-1))
+			self.initFileBuffer[initFileBufferSize-1] = 0
+		end
+		ig.igSeparator()
+	end
+	if self.showInitFileWindow[0] then
+		ig.igBegin('Level Init Code', self.showInitFileWindow)
+		local size = ig.igGetWindowSize()
+		ig.igInputTextMultiline('code', self.initFileBuffer, initFileBufferSize,
+			ig.ImVec2(size.x, size.y - 56),	-- minus titlebar height and button height
+			ig.ImGuiInputTextFlags_AllowTabInput)
+		if ig.igButton('Save') then
+			self.initFileBuffer[initFileBufferSize-1] = 0
+			local code = ffi.string(self.initFileBuffer)
+			local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
+			file[dir..'/init.lua'] = code
+			self.showInitFileWindow[0] = false
+		end
+		ig.igSameLine()
+		if ig.igButton('Cancel') then
+			self.showInitFileWindow[0] = false
+		end
+		ig.igEnd()
+	end
+end
+
+function Editor:updateGUI()
+	ig.igText('EDITOR')
+	local level = game.level
+
+	local function alert(str)
+		-- [[
+		print(str)
+		--]]
+		--[[
+		ig.igOpenPopup('Error!')
+		if ig.igBeginPopupModal('Error!', nil, ig.ImGuiWindowFlags_AlwaysAutoResize) then
+			ig.igText(str)
+			if ig.igButton('OK') then
+				ig.igCloseCurrentPopup()
+			end
+			ig.igEndPopup()
+		end
+		--]]
+	end
+
+	guiPickTileWindow(self)
+
+	if ig.igCollapsingHeader('Display...') then
+		self.viewSizePtr = self.viewSizePtr or ffi.new('float[1]')
+		self.viewSizePtr[0] = game.viewSize
+		ig.igSliderFloat('zoom', self.viewSizePtr, 1, math.max(level.size:unpack()), '%.3f', 3)
+		game.viewSize = tonumber(self.viewSizePtr[0])
+		
+		ig.igCheckbox('no clipping', self.noClipping)
+
+		ig.igCheckbox('Show Tile Types', self.showTileTypes)
+		ig.igCheckbox('Show Spawn Infos', self.showSpawnInfos)
+		ig.igCheckbox('Show Objects', self.showObjects)
+		ig.igCheckbox('Show Rooms', self.showRooms)
+	end
+	
+	if ig.igCollapsingHeader('Misc...') then
+		if ig.igButton('remove all objs') then
+			for _,spawnInfo in ipairs(level.spawnInfos) do
+				spawnInfo:removeObj()
+			end
+		end
+		if ig.igButton('spawn all objs') then
+			for _,spawnInfo in ipairs(level.spawnInfos) do
+				spawnInfo:removeObj()
+				spawnInfo:respawn()
+			end
+		end
+
+		guiMoveWorld(self)
+		guiMoveTexpackTiles(self)
+		guiConsole(self)
+		guiInitFile(self)
+		ig.igSeparator()
+	end
 
 	ig.igRadioButton('Edit Tiles', self.editMode, editModeTiles)
 	ig.igRadioButton('Edit Objects', self.editMode, editModeObjects)
@@ -1048,7 +1114,7 @@ function Editor:updateGUI()
 				ig.igPushIdStr(side)
 				local lc = side:lower()	
 				if tileButton(self['selected'..side..'TileIndex']) then
-					openPickTileWindow(function(i)
+					openPickTileWindow(self,function(i)
 						self['selected'..side..'TileIndex'] = i
 					end)
 				end
@@ -1288,7 +1354,7 @@ function Editor:updateGUI()
 						self.selectedSpawnInfo[prop.k].max[2] = prop.vptr[3]
 					elseif prop.fieldType[0] == fieldTypeEnum.tile then
 						if tileButton(prop.vptr[0]) then
-							openPickTileWindow(function(tileIndex)
+							openPickTileWindow(self,function(tileIndex)
 								prop.vptr[0] = tileIndex
 								self.selectedSpawnInfo[prop.k] = prop.vptr[0]
 							end)
@@ -1958,7 +2024,8 @@ function Editor:saveBackgrounds()
 		..'\n}'
 end
 
-function Editor:saveTexPack()
+function Editor:saveTexpack()
+	game.level.texpackImage:save(game.level.texpackFilename)
 end
 
 return Editor
