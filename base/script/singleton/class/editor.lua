@@ -270,17 +270,17 @@ local patchNeighbors = table{
 }
 -- note: (1) we're missing three-way tiles, (i.e. ulr dlr uld urd) and (2) some are doubled: l2r and r2l and (3) we don't have 27 degree upward slopes
 local patchTemplate = {
-	{'ul',	'u',	'ur',	'd2r',	'l2r',	'l2d',	'',		'u3',	'',		'ul-diag45',	'ur-diag45',	'ul2-diag27', 'ul1-diag27',	'ur1-diag27',	'ur2-diag27',	},
-	{'l',	'c',	'r',	'u2d',''--[[c8--]],'u2d','l3',	'c4',	'r3',	'uli-diag45',	'uri-diag45',	'ul3-diag27', 'dri',		'dli',			'ur3-diag27',	},
-	{'dl',	'd',	'dr',	'u2r',	'l2r',	'l2u',	'',		'd3',	'',		'dli-diag45',	'dri-diag45',	'dl3-diag27', 'uri',		'uli',			'dr3-diag27',	},
-	{'',	'',		'',		'',		'',		'',		'',		'',		'',		'dl-diag45',	'dr-diag45',	'dl2-diag27', 'dl1-diag27',	'dr1-diag27',	'dr2-diag27',	},
+	{'ul',	'u',	'u',	'ur',	'd2r',	'l2d',	'u3',	'',		'ul-diag45',	'ur-diag45',	'ul2-diag27', 'ul1-diag27',	'ur1-diag27',	'ur2-diag27',	},
+	{'l',	'c',	'c',	'r',	'u2r',	'l2u',	'u2d',	'u2d',	'uli-diag45',	'uri-diag45',	'ul3-diag27', 'dri',		'dli',			'ur3-diag27',	},
+	{'l',	'c',	'c',	'r',	'l3',	'l2r',	'c4',	'r3',	'dli-diag45',	'dri-diag45',	'dl3-diag27', 'uri',		'uli',			'dr3-diag27',	},
+	{'dl',	'd',	'd',	'dr',	'',		'l2r',	'd3',	'',		'dl-diag45',	'dr-diag45',	'dl2-diag27', 'dl1-diag27',	'dr1-diag27',	'dr2-diag27',	},
 }
 local patchTilesWide = #patchTemplate[1]
 local patchTilesHigh = #patchTemplate
 -- map of upper-left coordinates of where valid patches are in the texpack
 -- stored [x][y] where x and y are tile coordinates, i.e. pixel coordinates / 16
 local validTexPackTemplateLoc = {
-	[0] = { [1] = true, [2] = true, [3] = true, }
+	[0] = { [2] = true, [4] = true, [6] = true, }
 }
 
 do
@@ -881,7 +881,6 @@ local function guiMoveTexpackTiles(self)
 									update = true
 								end
 								if update then
-									print('moving tile at',x,y,'from',tile,'to',1+tx+tilesWide*ty)
 									map[x+level.size[1]*y] = 1 + tx + tilesWide * ty
 								end
 							end
@@ -927,29 +926,9 @@ end
 
 local function guiInitFile(self)
 	self.showInitFileWindow = self.showInitFileWindow or ffi.new('bool[1]',false)
-	local initFileBufferSize = 65536 
-	self.initFileBuffer = self.initFileBuffer or ffi.new('char[?]', initFileBufferSize)	-- hmm ... init files have a max size ...
-	if ig.igCollapsingHeader('File...') then
-		if ig.igButton('Save Map') then
-			self:saveMap()
-		end
-		if ig.igButton('Save Backgrounds') then
-			self:saveBackgrounds()
-		end
-		if ig.igButton('Save Texpack') then
-			self:saveTexpack()
-		end
-
-		if ig.igButton('Edit Level Init Code') then
-			self.showInitFileWindow[0] = true
-			local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
-			local initFileData = file[dir..'/init.lua'] or ''
-			ffi.copy(self.initFileBuffer, initFileData, math.min(#initFileData, initFileBufferSize-1))
-			self.initFileBuffer[initFileBufferSize-1] = 0
-		end
-		ig.igSeparator()
-	end
+	self.initFileBuffer = self.initFileBuffer or ffi.new('char[?]', 65536)	-- hmm ... init files have a max size ...
 	if self.showInitFileWindow[0] then
+		local initFileBufferSize = ffi.sizeof(self.initFileBuffer)
 		ig.igBegin('Level Init Code', self.showInitFileWindow)
 		local size = ig.igGetWindowSize()
 		ig.igInputTextMultiline('code', self.initFileBuffer, initFileBufferSize,
@@ -1022,7 +1001,30 @@ function Editor:updateGUI()
 		guiMoveWorld(self)
 		guiMoveTexpackTiles(self)
 		guiConsole(self)
-		guiInitFile(self)
+		ig.igSeparator()
+	end
+
+	-- call this before the Edit Level Init Code button so the pointer exists
+	guiInitFile(self)
+	if ig.igCollapsingHeader('File...') then
+		if ig.igButton('Save Map') then
+			self:saveMap()
+		end
+		if ig.igButton('Save Backgrounds') then
+			self:saveBackgrounds()
+		end
+		if ig.igButton('Save Texpack') then
+			self:saveTexpack()
+		end
+
+		if ig.igButton('Edit Level Init Code') then
+			self.showInitFileWindow[0] = true
+			local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
+			local initFileData = file[dir..'/init.lua'] or ''
+			local initFileBufferSize = ffi.sizeof(self.initFileBuffer)
+			ffi.copy(self.initFileBuffer, initFileData, math.min(#initFileData, initFileBufferSize-1))
+			self.initFileBuffer[initFileBufferSize-1] = 0
+		end
 		ig.igSeparator()
 	end
 

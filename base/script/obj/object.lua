@@ -851,7 +851,7 @@ function Object:move(dx,dy)
 		local stepHeight = .3
 		self:move_sub(0,stepHeight)
 		self:move_sub(dx,dy)
-		self:move_sub(0,-2*stepHeight)
+		self:move_sub(0,-1.5*stepHeight)
 	else
 		self:move_sub(dx,dy)
 	end
