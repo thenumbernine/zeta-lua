@@ -349,7 +349,6 @@
 	{pos={62.5,247},spawn="zeta.script.obj.geemer"},
 	{pos={53.5,249},spawn="zeta.script.obj.geemer"},
 	{pos={76.5,243},spawn="zeta.script.obj.redgeemer"},
-	{pos={77.5,248},spawn="zeta.script.obj.redgeemer"},
 	{pos={69.5,246},spawn="zeta.script.obj.redgeemer"},
 	{pos={67.5,249},spawn="zeta.script.obj.redgeemer"},
 	{pos={61.5,198},spawn="zeta.script.obj.geemer"},
@@ -477,4 +476,5 @@
 	{create="toggleDefenses{\n\9circuit='Mineral Processing',\n\9value=true,\n\9silent=true\n}",pos={47.5,82},spawn="zeta.script.obj.trigger"},
 	{pos={42.5,148},spawn="zeta.script.obj.terminal",text="The creatures have invaded the base.\nThe escape rocket has left without us.\nWe can't make a stand here.\nSome of the crew are thinking there might be safety somewhere in the caves..."},
 	{color={1,0,0,1},pos={248.5,37},spawn="zeta.script.obj.keycard"},
+	{pos={77.5,249},spawn="zeta.script.obj.redgeemer"},
 }

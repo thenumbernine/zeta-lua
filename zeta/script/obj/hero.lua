@@ -71,9 +71,9 @@ end
 
 function Hero:refreshSize()
 	if not self.ducking then
-		self.bbox = box2(-.4, 0, .4, 1.8)
+		self.bbox = box2(-.4, 0, .4, 1.7)
 	else
-		self.bbox = box2(-.4, 0, .4, .8)
+		self.bbox = box2(-.4, 0, .4, .7)
 	end
 end
 
@@ -753,7 +753,6 @@ function Hero:update(dt)
 	self.inputJumpAuxLast = self.inputJumpAux
 	self.inputPageUpLast = self.inputPageUp
 	self.inputPageDownLast = self.inputPageDown
-	self.ongroundLast = self.onground
 end
 
 Hero.removeOnDie = false

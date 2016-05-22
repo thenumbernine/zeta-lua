@@ -536,7 +536,7 @@ local lastTime = os.time()
 function GLApp:update(...)
 	R:report('update begin')
 
-	--[[ show fps
+	-- [[ show fps
 	do
 		frames = frames + 1
 		local thisTime = os.time() 

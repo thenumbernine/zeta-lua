@@ -129,7 +129,8 @@ function Object:update(dt)
 		moveX = moveX + self.touchEntDown.pos[1] - self.touchEntDown.lastpos[1]
 		moveY = moveY + self.touchEntDown.pos[2] - self.touchEntDown.lastpos[2]
 	end
-	
+
+	self.ongroundLast = self.onground
 	self.collidedUp = false
 	self.collidedDown = false
 	self.collidedLeft = false
@@ -551,11 +552,11 @@ function Object:move(moveX, moveY)
 								--]]
 									local donttouch
 									if self.preTouchPriority >= obj.preTouchPriority then
-										donttouch = self:pretouch(obj, side) or donttouch
-										donttouch = obj:pretouch(self, oppositeSide) or donttouch
+										if self.pretouch then donttouch = self:pretouch(obj, side) or donttouch end
+										if obj.pretouch then donttouch = obj:pretouch(self, oppositeSide) or donttouch end
 									else
-										donttouch = obj:pretouch(self, oppositeSide) or donttouch
-										donttouch = self:pretouch(obj, side) or donttouch
+										if obj.pretouch then donttouch = obj:pretouch(self, oppositeSide) or donttouch end
+										if self.pretouch then donttouch = self:pretouch(obj, side) or donttouch end
 									end
 
 									if not donttouch then
@@ -1222,7 +1223,7 @@ local function testBoxSlope(self, testStuck, x, y, tileType, dt, dx, dy)
 	return dt, bestNormal
 end
 
-function Object:move(dx,dy)
+function Object:move_v2_sub(dx,dy)
 
 --local print = self:isa(require 'zeta.script.obj.hero') and print or function() end
 	
@@ -1230,6 +1231,7 @@ function Object:move(dx,dy)
 	-- needed for movements that start inside non-solid objects
 	-- TODO less allocations here
 	local objsTested
+	local tilesTested
 
 --print()
 --print('================')
@@ -1296,7 +1298,10 @@ function Object:move(dx,dy)
 				for y=ymin,ymax do
 					for x=xmin,xmax do
 						local tileType = level:getTile(x,y)
-						if tileType and tileType.solid then
+						if tileType
+						and tileType.solid
+						and (not tilesTested or not table.find(tilesTested, vec2(x,y)))
+						then
 							if not tileType.plane then
 								local newSide
 								dt, newSide = testBoxBox(self, false, x,y,x+1,y+1, dt, dx, dy)
@@ -1309,6 +1314,7 @@ function Object:move(dx,dy)
 									touchedTileY = y
 								end
 							else
+--[[ real-deal poly intersection								
 								local newNormal
 								dt, newNormal = testBoxSlope(self, false, x, y, tileType, dt, dx, dy)
 								if newNormal then
@@ -1325,6 +1331,29 @@ function Object:move(dx,dy)
 									touchedTileX = x
 									touchedTileY = y
 								end
+--]]
+-- [[ poor-man's chop it up into tiny pieces
+								local udivs = 16
+								local vdivs = 16
+								local plane = tileType.plane
+								for v=0,vdivs-1 do
+									for u=0,udivs-1 do
+										local inside = plane[1] * (u+.5)/udivs + plane[2] * (v+.5)/vdivs + plane[3] <= 0
+										if inside then
+											local newSide
+											dt, newSide = testBoxBox(self, false, x + u/udivs, y + v/vdivs, x + (u+1)/udivs,y + (v+1)/vdivs, dt, dx, dy)
+											if newSide then
+												side = newSide
+												normal = dirs[oppositeSide[side:lower()]]	-- plane 
+												touchedObj = nil
+												touchedTileType = tileType
+												touchedTileX = x
+												touchedTileY = y
+											end
+										end
+									end
+								end
+--]]
 							end
 						end
 					end
@@ -1462,7 +1491,7 @@ function Object:move(dx,dy)
 					dy = dy - normal[2] * deltaDotN
 --print('delta is now',dx,dy)				
 				end
-			else
+			end do--else
 				-- for non-solids
 				-- don't check this object again
 				-- that way if it can be passed through
@@ -1471,6 +1500,10 @@ function Object:move(dx,dy)
 --print('adding obj',touchedObj,'to the already-checked list')				
 					if not objsTested then objsTested = {} end
 					table.insert(objsTested, touchedObj)
+				end
+				if touchedTileType and not touchedTileType.plane then
+					if not tilesTested then tilesTested = {} end
+					table.insert(tilesTested, vec2(touchedTileX, touchedTileY))
 				end
 			end
 		end
@@ -1498,7 +1531,19 @@ function Object:move(dx,dy)
 --print('==============')
 end
 
-
+function Object:move(dx,dy)
+	-- if moving left/right then try stepping up as well
+	if self.ongroundLast
+	and dx ~= 0
+	then
+		local stepHeight = .3
+		self:move_v2_sub(0,stepHeight)
+		self:move_v2_sub(dx,dy)
+		self:move_v2_sub(0,-stepHeight)
+	else
+		self:move_v2_sub(dx,dy)
+	end
+end
 
 -- default pretouch routine: player precedence
 Object.pretouch = nil -- function(other, side)

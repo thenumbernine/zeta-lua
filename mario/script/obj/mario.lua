@@ -590,7 +590,6 @@ function Mario:update(dt)
 	self.inputShootAuxLast = self.inputShootAux
 	self.inputJumpLast = self.inputJump
 	self.inputJumpAuxLast = self.inputJumpAux
-	self.ongroundLast = self.onground
 end
 
 function Mario:hit()
