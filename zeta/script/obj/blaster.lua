@@ -25,37 +25,6 @@ local BlasterShot = (function()
 		setTimeout(.2, function() self.remove = true end)
 	end
 
-	function BlasterShot:touchTile(tile, side)
-		-- generalize this for all projectiles
-		-- TODO onHit?
-		if tile.onHit then
-			tile:onHit(self, side)
-		end
-		
-		self.vel[1] = 0
-		self.vel[2] = 0
-		self.collidesWithWorld = false
-		self.collidesWithObjects = false
-		self.remove = true
-	end
-
-	function BlasterShot:pretouch(other, side)
-		if self.remove then return end	-- only hit one object
-		local Item = require 'zeta.script.obj.item'
-		if other:isa(Item) then return end
-		if other == self.shooter then return true end
-		if other.takeDamage then
-			other:takeDamage(self.damage, self.shooter, self, side)
-		end
-		if other.takeDamage or other.solid then
-			--self.collidesWithWorld = false
-			--self.collidesWithObjects = false
-			self.remove = true
-			return
-		end
-		return true
-	end
-
 	BlasterShot.solidFlags = BlasterShot.SOLID_SHOT	
 	BlasterShot.touchFlags = BlasterShot.SOLID_WORLD + BlasterShot.SOLID_YES + BlasterShot.SOLID_NO
 	BlasterShot.blockFlags = BlasterShot.SOLID_WORLD + BlasterShot.SOLID_YES

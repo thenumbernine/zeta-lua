@@ -30,37 +30,14 @@ local PlasmaShot = (function()
 		PlasmaShot.super.update(self, dt, ...)
 	end
 
-	function PlasmaShot:touchTile(tile, side)
-		-- generalize this for all projectiles
-		-- TODO onHit?
-		if tile.onHit then
-			tile:onHit(self, side)
-		end
-		
-		self:blast()
-	end
-
-	function PlasmaShot:pretouch(other, side)
-		if self.remove then return end	-- only hit one object
-		if other == self.shooter then return true end
-		local Item = require 'zeta.script.obj.item'
-		if other:isa(Item) then return end
-		if other.takeDamage then
-			other:takeDamage(self.damage, self.shooter, self, side)
-		end
-		if other.takeDamage or other.solid then
-			self:blast()
-			return
-		end
-		return true
-	end
-
 	PlasmaShot.solidFlags = PlasmaShot.SOLID_SHOT
 	PlasmaShot.touchFlags = PlasmaShot.SOLID_WORLD + PlasmaShot.SOLID_YES + PlasmaShot.SOLID_NO
 	PlasmaShot.blockFlags = PlasmaShot.SOLID_WORLD + PlasmaShot.SOLID_YES
+	
 	function PlasmaShot:touchTile_v2(tile, side)
 		self:blast()
 	end
+	
 	function PlasmaShot:touch_v2(other, side)
 		if self.remove then return true end
 		if other == self.shooter then return true end

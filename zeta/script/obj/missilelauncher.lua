@@ -31,40 +31,18 @@ local Missile = (function()
 		end
 	end
 
-	function Missile:pretouch(other, side)
-		if self.remove then return end
-		local Item = require 'zeta.script.obj.item'
-		if other:isa(Item) then return end
-		if other == self.shooter then return true end
-		local hit
-		if other.takeDamage then
-			other:takeDamage(self.damage, self.shooter, self, side)
-			hit = true
-		end
-		if hit or other.solid then
-			self:blast(other)
-			return
-		end
-		return true
-	end
-
-	function Missile:touchTile(tile, side)
-		if tile and tile.onHit then
-			tile:onHit(self, side)
-		end
-		self:blast()
-	end
-
 	Missile.solidFlags = Missile.SOLID_GRENADE
 	Missile.touchFlags = Missile.SOLID_WORLD 
 						+ Missile.SOLID_YES 
 						+ Missile.SOLID_NO 
 						+ Missile.SOLID_GRENADE
 	Missile.blockFlags = Missile.SOLID_WORLD
+	
 	function Missile:touchTile_v2(tile, solid)
 		if self.remove then return true end
 		self:blast()
 	end
+	
 	function Missile:touch_v2(other, side)
 		if self.remove then return true end
 		if other == self.shooter then return true end

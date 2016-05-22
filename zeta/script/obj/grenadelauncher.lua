@@ -38,43 +38,6 @@ local Grenade = (function()
 		end
 	end
 	
-	-- TODO pass normals to touch functions?
-	function Grenade:touchTile(tile, side, plane)
-		if tile and tile.solid then
-			if tile.onHit then
-				tile:onHit(self, side)
-			end
-			if self:bounceOff(plane or dirs[oppositeSide[side]]) then
-				self.pos[1] = self.lastpos[1]
-				self.pos[2] = self.lastpos[2]
-			end
-		end
-	end
-
-	function Grenade:pretouch(other, side)
-		if not self.collidesWithWorld then return end
-		if self.remove then return end
-		local Item = require 'zeta.script.obj.item'
-		if other:isa(Item) then return end
-		if self.kickedBy == other and self.kickHandicapTime >= game.time then
-			return true
-		end
--- [[ detonate on impact?
-		if other.takeDamage then
-			other:takeDamage(self.damage, self.shooter, self, side)
-			self:blast(other)
-			return
-		end
---]]
-		if other.solid then
-			if self:bounceOff(dirs[oppositeSide[side]]) then
-				self.pos[1] = self.lastpos[1]
-				self.pos[2] = self.lastpos[2]
-			end
-		end
-		return true
-	end
-
 	Grenade.solidFlags = Grenade.SOLID_GRENADE
 	Grenade.touchFlags = Grenade.SOLID_WORLD 
 						+ Grenade.SOLID_YES 

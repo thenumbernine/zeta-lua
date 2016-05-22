@@ -19,7 +19,13 @@ function Barrier:init(...)
 	self.sprite = false
 end
 
-function Barrier:pretouch(other, side)
+Barrier.solidFlags = 0
+Barrier.touchFlags = Barrier.SOLID_YES -- for player
+					+ Barrier.SOLID_NO -- for geemer
+					+ Barrier.SOLID_GRENADE -- for grenades
+Barrier.blockFlags = 0 
+Barrier.touchPriority = 9	-- above shots, below hero
+function Barrier:touch_v2(other, side)
 	if self.shockEndTime > game.time then
 		if other.takeDamage then
 			other:takeDamage(self.damage, self, self, side)
@@ -30,13 +36,6 @@ function Barrier:pretouch(other, side)
 	return true
 end
 
-Barrier.solidFlags = 0
-Barrier.touchFlags = Barrier.SOLID_YES -- for player
-					+ Barrier.SOLID_NO -- for geemer
-					+ Barrier.SOLID_GRENADE -- for grenades
-Barrier.blockFlags = 0 
-Barrier.touchPriority = 9	-- above shots, below hero
-Barrier.touch_v2 = Barrier.pretouch
 
 function Barrier:update(dt)
 	if game.session['defensesActive_'..self.circuit] then

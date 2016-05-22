@@ -4,6 +4,9 @@ local vec2 = require 'vec.vec2'
 local box2 = require 'vec.box2'
 local animsys = require 'base.script.singleton.animsys'
 local game = require 'base.script.singleton.game'
+local sounds = require 'base.script.singleton.sounds'
+local threads = require 'base.script.singleton.threads'
+local sandbox = require 'base.script.singleton.sandbox'
 
 local Object = class()
 
@@ -75,8 +78,6 @@ function Object:init(args)
 	game:addObject(self)	-- only do this once per object.  don't reuse, or change the uid system
 
 	if args.create then
-		local threads = require 'base.script.singleton.threads'
-		local sandbox = require 'base.script.singleton.sandbox'
 		threads:add(function()
 			-- wait for ctor to resolve
 			coroutine.yield()
@@ -163,7 +164,6 @@ function Object:update(dt)
 			self:setSeq(self.seqNext)	-- or maybe a stack?
 		end
 	end
-	
 end
 
 function Object:setSeq(seq, seqNext)
@@ -180,440 +180,6 @@ end
 function Object:moveToPos(x,y)
 	self:move(x - self.pos[1], y - self.pos[2])
 end
-
-local debugDraw = table()
-
-function Object:move(moveX, moveY)
-	local level = game.level
-	local epsilon = .001
-
-	-- when doing line trace, and dividing by moveX or moveY, make sure we don't get near-infinite values
-	if math.abs(moveX) < epsilon then moveX = 0 end
-	if math.abs(moveY) < epsilon then moveY = 0 end
-
---print('move start at',self.pos,'bbox',self.bbox + self.pos)
-	self.pos[2] = self.pos[2] + moveY
---print('up/down move to',self.pos,'bbox',self.bbox + self.pos)
-
-	if moveY ~= 0 then
-		local y
-		-- the side of obj that will be impacting:
-		local side, oppositeSide
-		if moveY < 0 then
-			side = 'down'
-			oppositeSide = 'up'
-			y = math.floor(self.pos[2] + self.bbox.min[2] - level.pos[2])
-		else
-			side = 'up'
-			oppositeSide = 'down'
-			y = math.floor(self.pos[2] + self.bbox.max[2] - level.pos[2])
-		end
-
-		-- need to search x in the correct order or else player skips n the air when running downhill at 27 degrees to the right
-		local xmin = math.floor(self.pos[1] + self.bbox.min[1] - level.pos[1])
-		local xmax = math.floor(self.pos[1] + self.bbox.max[1] - level.pos[1])
-		local x1, x2 = xmin, xmax
-		local xstep = 1
-		if moveX > 0 then
-			x1,x2 = x2,x1
-			xstep = -1
-		end
-		for x = x1,x2,xstep do
-			local tile = level:getTile(x,y)
-			if tile then
-				local plane
-				if self.collidesWithWorld and tile.solid then
-					local collides
-					local testPlane
-
-					if tile.plane then
-						plane = tile.plane
-						if moveY < 0 then
-							testPlane = plane[2] > 0
-						else
-							testPlane = plane[2] < 0
-						end
-						if testPlane then
-							local cx
-							if plane[1] > 0 then
-								cx = self.pos[1] + self.bbox.min[1] - (x + level.pos[1])
-							else
-								cx = self.pos[1] + self.bbox.max[1] - (x + level.pos[1])
-							end
-							cx = math.clamp(cx, 0, 1)
-							do --if cx >= -epsilon and cx <= 1+epsilon then
-								local cy = -(cx * plane[1] + plane[3]) / plane[2]
-								local edge
-								if moveY < 0 then
-									edge = self.bbox.min[2] - epsilon
-								else
-									edge = self.bbox.max[2] + epsilon
-								end
-								local destY = (cy + y + level.pos[2]) - edge
-								self.pos[2] = destY --(moveY > 0 and math.min or math.max)(self.pos[2], destY)
---print('up/down plane push to',self.pos,'bbox',self.bbox + self.pos)
-								collides = true
-							end
-						end
-					end
-					if not testPlane then
-						-- TODO push precedence
-						local destY
-						if moveY < 0 then
-							local oymax = y + 1 + level.pos[2]
-							destY = oymax - self.bbox.min[2] + epsilon
-						else
-							local oymin = y + level.pos[2]
-							destY = oymin - self.bbox.max[2] - epsilon
-						end
-						self.pos[2] = (moveY > 0 and math.min or math.max)(self.pos[2], destY)
---print('up/down block push to',self.pos,'bbox',self.bbox + self.pos)
-						collides = true
-					end
-					if collides then
-						self.vel[2] = 0
-						if moveY < 0 then
-							self.collidedDown = true
-							self.onground = true
-						else
-							self.collidedUp = true
-						end
---debugDraw:insert{tile=tile, pos={x,y}, color={0,0,1}}
-						if self.touchTile then self:touchTile(tile, side, plane) end
-						if tile.touch then tile:touch(self) end
-					end
-				end
---[[ tile-bound entities
-				if self.collidesWithObjects then
-					if tile.objs then
-						for _,obj in ipairs(tile.objs) do
---]]
--- [[ world-bound entities
-			end
-		end
-		if self.collidesWithObjects then
-			for _,obj in ipairs(game.objs) do
-				if obj ~= self then
-					local t
-					if moveY > 0 then	-- going up, test top of self with bottom of obj
-						--self.pos[2] + self.bbox.max[2] + moveY * t = obj.pos[2] + obj.bbox.min[2]
-						 t = (obj.pos[2] + obj.bbox.min[2] - self.pos[2] - self.bbox.max[2]) / moveY
-					elseif moveY < 0 then
-						--self.pos[2] + self.bbox.min[2] + moveY * t = obj.pos[2] + obj.bbox.max[2]
-						 t = (obj.pos[2] + obj.bbox.max[2] - self.pos[2] - self.bbox.min[2]) / moveY
-					else
-						error("moveY = 0")
-					end
-					if t >= 0 and t <= 1
-					and self.pos[1] + self.bbox.min[1] + moveX * t <= obj.pos[1] + obj.bbox.max[1]
-					and self.pos[1] + self.bbox.max[1] + moveX * t >= obj.pos[1] + obj.bbox.min[1]
-					then
-						do
-				
-				-- this looks like a relic from the tile-linked obj lists
-				-- whatever it does...
-				-- with it, objects don't get hit by larger-than-1x1 objects if they're standing still
-				-- without it, as soon as the player hits a non-solid object, the both of them skate across the world
-				--[=[
-				and xmin <= obj.pos[1]+1 and obj.pos[1]-1 <= xmax and math.abs(y-obj.pos[2]) < 1
-				--]=]
-				--[=[
-				and math.floor(self.pos[1] + self.bbox.min[1]) <= math.floor(obj.pos[1] + obj.bbox.max[1])
-				and math.floor(self.pos[1] + self.bbox.max[1]) >= math.floor(obj.pos[1] + obj.bbox.min[1])
-				and math.floor(self.pos[2] + self.bbox.min[2]) <= math.floor(obj.pos[2] + obj.bbox.max[2])
-				and math.floor(self.pos[2] + self.bbox.max[2]) >= math.floor(obj.pos[2] + obj.bbox.min[2])
-				--]=]
---]]
-							if obj.collidesWithObjects then
-								do --[[
-								if self.pos[1] + self.bbox.min[1] <= obj.pos[1] + obj.bbox.max[1]
-								and self.pos[1] + self.bbox.max[1] >= obj.pos[1] + obj.bbox.min[1]
-								and self.pos[2] + self.bbox.min[2] <= obj.pos[2] + obj.bbox.max[2]
-								and self.pos[2] + self.bbox.max[2] >= obj.pos[2] + obj.bbox.min[2]
-								then
-								--]]
-									-- run a pretouch routine that has the option to prevent further collision
-									local donttouch
-									if self.preTouchPriority >= obj.preTouchPriority then
-										donttouch = self:pretouch(obj, side) or donttouch
-										donttouch = obj:pretouch(self, oppositeSide) or donttouch
-									else
-										donttouch = obj:pretouch(self, oppositeSide) or donttouch
-										donttouch = self:pretouch(obj, side) or donttouch
-									end
-
-									if not donttouch then
-										if self.solid and obj.solid then
-											
-											if self.pushPriority >= obj.pushPriority then
-												if moveY < 0 then
-													obj:move(
-														0,
-														self.pos[2] + self.bbox.min[2] - obj.bbox.max[2] - epsilon - obj.pos[2]
-													)
-												else
-													obj:move(
-														0,
-														self.pos[2] + self.bbox.max[2] - obj.bbox.min[2] + epsilon - obj.pos[2]
-													)
-												end
-											end
-
-											self.vel[2] = obj.vel[2]
-											if moveY < 0 then
-												self.pos[2] = obj.pos[2] + obj.bbox.max[2] - self.bbox.min[2] + epsilon
-												self.onground = true	-- 'onground' is different from 'collidedDown' in that 'onground' means we're on something solid
-											else
-												self.pos[2] = obj.pos[2] + obj.bbox.min[2] - self.bbox.max[2] - epsilon
-											end
---print('up/down object push to',self.pos,'bbox',self.bbox + self.pos)
-										end
-										if moveY < 0 then
-											self.collidedDown = true
-											self.touchEntDown = obj
-										else
-											self.collidedUp = true
-											self.touchEntUp = obj
-										end
-										
-										-- run post touch after any possible push
-										if self.touchPriority >= obj.touchPriority then
-											if self.touch then self:touch(obj, side) end
-											if obj.touch then obj:touch(self, oppositeSide) end
-										else
-											if obj.touch then obj:touch(self, oppositeSide) end
-											if self.touch then self:touch(obj, side) end
-										end
-									end
-								end
-							end
-						end
-					end
-				end
-			end
-		end
-	end
-	
-	self.pos[1] = self.pos[1] + moveX
---print('left/right move to',self.pos,'bbox',self.bbox + self.pos)
-
-	-- left/right
-	if moveX ~= 0 then
-		local x
-		-- the side of obj that will be impacting:
-		local side, oppositeSide
-		if moveX < 0 then
-			side = 'left'
-			oppositeSide = 'right'
-			x = math.floor(self.pos[1] + self.bbox.min[1] - level.pos[1])
-		else
-			side = 'right'
-			oppositeSide = 'left'
-			x = math.floor(self.pos[1] + self.bbox.max[1] - level.pos[1])
-		end
-	
-		local ymin = math.floor(self.pos[2] + self.bbox.min[2] - level.pos[2])
-		local ymax = math.floor(self.pos[2] + self.bbox.max[2] - level.pos[2])
-		for y = ymin,ymax do
-			local tile = level:getTile(x,y)
-			if tile then
-				if self.collidesWithWorld and tile.solid then
-					local collides
-					if tile.plane then
-						local plane = tile.plane
---print('found planes, first plane is',table.unpack(plane))
-						if plane[2] > 0 then
-							local cx
-							if plane[1] > 0 then	-- plane normal facing right / slope up&left
-								cx = self.pos[1] + self.bbox.min[1] - (x + level.pos[1])
-							else	-- plane normal facing left / slope up&right
-								cx = self.pos[1] + self.bbox.max[1] - (x + level.pos[1])
-							end
---print('tile slope collision cx=',cx)							
-							cx = math.clamp(cx, 0, 1)
-							do --if cx >= -epsilon and cx <= 1+epsilon then
-								local cy = -(cx * plane[1] + plane[3]) / plane[2]
-								local destY = (cy + y + level.pos[2]) - self.bbox.min[2]
-								self.pos[2] = math.max(self.pos[2], destY)
---print('left/right plane push up/down to',self.pos,'bbox',self.bbox + self.pos)
-								self.vel[2] = 0
-								self.collidedDown = true
-								self.onground = true
-								if self.touchTile then self:touchTile(tile, 'down', plane) end
-								if tile.touch then tile:touch(self) end
---debugDraw:insert{tile=tile, pos={x,y}, color={0,1,0}}
-							end
-						end
-					--[[
-						if plane[1] > 0 then
-							local cy
-							if plane[2] > 0 then
-								cy = self.pos[2] + self.bbox.min[2] - (y + level.pos[2])
-							else
-								cy = self.pos[2] + self.bbox.max[2] - (y + level.pos[2])
-							end
-							if cy >= 0 and cy <= 1 then
-								local cx = -(cy * plane[2] + plane[3]) / plane[1]
-								self.pos[1] = (cx + x + level.pos[1]) - self.bbox.min[2] + epsilon
-								collides = true
-							end
-						end
-					--]]
-					else
-						-- if there's a tile on the side of this tile that is solid, then don't test
-						-- this will keep blocks in the floor from snagging collisions when walking up diagonals
-						-- (only collide exposed planes)
-						local nextTile
-						local sideCantBeHit
-						if moveX < 0 then
-							-- if we're moving left, and the tile to this tile's right is solid on its left side, then ignore this tile
-							nextTile = level:getTile(x+1,y)
-							local plane = nextTile and nextTile.plane
-							if not plane then
-								sideCantBeHit = nextTile and nextTile.solid
-							else
-								sideCantBeHit = plane[1] > 0 and plane[2] > 0
-							end
-						else
-							-- moving right, check tile to the left for solid on its right side
-							nextTile = level:getTile(x-1,y)
-							local plane = nextTile and nextTile.plane
-							if not plane then
-								sideCantBeHit = nextTile and nextTile.solid
-							else
-								sideCantBeHit = plane[1] < 0 and plane[2] > 0 
-							end
-						end
-						if not sideCantBeHit then
-							if moveX < 0 then
-								local oxmax = x + 1 + level.pos[1]
-								self.pos[1] = oxmax - self.bbox.min[1] + epsilon
-								self.collidedLeft = true
-							else
-								local oxmin = x + level.pos[1]
-								self.pos[1] = oxmin - self.bbox.max[1] - epsilon
-								self.collidedRight = true
-							end
---print('left/right block push to',self.pos,'bbox',self.bbox + self.pos)
-							self.vel[1] = 0
-							if self.touchTile then self:touchTile(tile, side) end
-							if tile.touch then tile:touch(self) end
---debugDraw:insert{tile=tile, pos={x,y}, color={1,0,0}}
-						end
-					end
-				end
-
---[[ tile-bound entities
-				if self.collidesWithObjects then
-					if tile.objs then
-						for _,obj in ipairs(tile.objs) do
---]]
--- [[ world-bound entities
-			end
-		end
-
-		if self.collidesWithObjects then
-			for _,obj in ipairs(game.objs) do
-				if obj ~= self then
-					local t
-					if moveX > 0 then	-- going up, test top of self with bottom of obj
-						--self.pos[1] + self.bbox.max[1] + moveX * t = obj.pos[1] + obj.bbox.min[1]
-						 t = (obj.pos[1] + obj.bbox.min[1] - self.pos[1] - self.bbox.max[1]) / moveX
-					elseif moveX < 0 then
-						--self.pos[1] + self.bbox.min[1] + moveX * t = obj.pos[1] + obj.bbox.max[1]
-						 t = (obj.pos[1] + obj.bbox.max[1] - self.pos[1] - self.bbox.min[1]) / moveX
-					else
-						error("moveX = 0")
-					end
-					if t >= 0 and t <= 1
-					and self.pos[2] + self.bbox.min[2] + moveY * t <= obj.pos[2] + obj.bbox.max[2]
-					and self.pos[2] + self.bbox.max[2] + moveY * t >= obj.pos[2] + obj.bbox.min[2]
-					then
-						do
-
-				
-				--[=[
-				and math.abs(x-obj.pos[1]) < 1 and ymin <= obj.pos[2]+1 and obj.pos[2]-1 <= ymax
-				--]=]
-				--[=[
-				and math.floor(self.pos[1] + self.bbox.min[1]) <= math.floor(obj.pos[1] + obj.bbox.max[1])
-				and math.floor(self.pos[1] + self.bbox.max[1]) >= math.floor(obj.pos[1] + obj.bbox.min[1])
-				and math.floor(self.pos[2] + self.bbox.min[2]) <= math.floor(obj.pos[2] + obj.bbox.max[2])
-				and math.floor(self.pos[2] + self.bbox.max[2]) >= math.floor(obj.pos[2] + obj.bbox.min[2])
-				--]=]
---]]
-							if obj.collidesWithObjects then
-								do --[[
-								if self.pos[1] + self.bbox.min[1] <= obj.pos[1] + obj.bbox.max[1]
-								and self.pos[1] + self.bbox.max[1] >= obj.pos[1] + obj.bbox.min[1]
-								and self.pos[2] + self.bbox.min[2] <= obj.pos[2] + obj.bbox.max[2]
-								and self.pos[2] + self.bbox.max[2] >= obj.pos[2] + obj.bbox.min[2]
-								then
-								--]]
-									local donttouch
-									if self.preTouchPriority >= obj.preTouchPriority then
-										if self.pretouch then donttouch = self:pretouch(obj, side) or donttouch end
-										if obj.pretouch then donttouch = obj:pretouch(self, oppositeSide) or donttouch end
-									else
-										if obj.pretouch then donttouch = obj:pretouch(self, oppositeSide) or donttouch end
-										if self.pretouch then donttouch = self:pretouch(obj, side) or donttouch end
-									end
-
-									if not donttouch then
-										if self.solid and obj.solid then
-
-											if self.pushPriority >= obj.pushPriority then
-												if moveX < 0 then
-													obj:move(
-														self.pos[1] + self.bbox.min[1] - obj.bbox.max[1] - epsilon - obj.pos[1],
-														0
-													)
-												else
-													obj:move(
-														self.pos[1] + self.bbox.max[1] - obj.bbox.min[1] + epsilon - obj.pos[1],
-														0
-													)
-												end
-											end
-
-											self.vel[1] = obj.vel[1]
-											if moveX < 0 then
-												self.pos[1] = obj.pos[1] + obj.bbox.max[1] - self.bbox.min[1] + epsilon
-											else
-												self.pos[1] = obj.pos[1] + obj.bbox.min[1] - self.bbox.max[1] - epsilon
-											end
---print('left/right object push to',self.pos,'bbox',self.bbox + self.pos)
-										end
-										if moveX < 0 then
-											self.collidedLeft = true
-											self.touchEntLeft = obj
-										else
-											self.collidedRight = true
-											self.touchEntRight = obj
-										end
-										if self.touchPriority >= obj.touchPriority then
-											if self.touch then self:touch(obj, side) end
-											if obj.touch then obj:touch(self, oppositeSide) end
-										else
-											if obj.touch then obj:touch(self, oppositeSide) end
-											if self.touch then self:touch(obj, side) end
-										end
-									end
-								end
-							end
-						end
-					end
-				end
-			end
-		end
-	end
---print('move finished at',self.pos,'bbox',self.bbox + self.pos)
-end
-
-
---[[ =========================
-  second attempt at movement
-========================= --]]
 
 --[[
 move is always run by all objects on update, even if dx,dy == 0,0
@@ -989,241 +555,7 @@ local function buildTileTypePoly(tileType)
 	return {vtxs=vtxs, planes=planes}
 end
 
---[[
-self has pos and bbox
-x is the 1x1 bbox lower left coordinate
-plane is the plane that chops the box
-	assumes the plane normal is unit
---]]
-local function testBoxSlope(self, testStuck, x, y, tileType, dt, dx, dy)
-	-- we only handle dt==0 collisions if we're testing interpenetration, i.e. non-blocking touch callbacks 
-	-- and at the moment there are no non-blocking tiles, nor tile touch callbacks
-	if dt == 0 then return dt end
-
---local print = self:isa(require 'zeta.script.obj.hero') and print or function() end
-
---print('  ==========================')
---print('  == BEGIN BOX/SLOPE TEST ==')
---print('  ==========================')
---print('testing sloped box at',x,y,'with plane',table.concat(clipPlane,','),'dt',dt,'dx',dx,'dy',dy)
-
-	if not tileType.poly then
-		tileType.poly = buildTileTypePoly(tileType)
-	end
-
-	local vtxs = tileType.poly.vtxs
-	local planes = tileType.poly.planes
-
---print('vtxs:',table.map(vtxs,function(vtx) return '['..table.concat(vtx,',')..']' end):concat(' '))
---print('planes:',table.map(planes,function(vtx) return '['..table.concat(vtx,',')..']' end):concat(' '))
-
-	local bestNormal	-- pointing towards self, so when self tests obj, bestNormal is negative of the plane normal
-
-	-- 1) find separating plane greatest depth (positive means we're separating) (plane depth is min of depths of all vtxs, intersection depth is max plane depth)
-	if testStuck then
-		-- test self bbox to obj vtxs
-			-- right
-		local bestPlaneDepth = -math.huge
-		local planeDepth = math.huge
-		for _,vtx in ipairs(vtxs) do
-			planeDepth = math.min(planeDepth, (x + vtx[1]) - (self.pos[1] + self.bbox.max[1]))
-		end
-		if planeDepth > bestPlaneDepth then
-			bestPlaneDepth = planeDepth
-			bestNormal = {-1, 0}
-		end
-				-- left	
-		local planeDepth = math.huge
-		for _,vtx in ipairs(vtxs) do
-			planeDepth = math.min(planeDepth, (self.pos[1] + self.bbox.min[1]) - (x + vtx[1]))
-		end
-		if planeDepth > bestPlaneDepth then
-			bestPlaneDepth = planeDepth
-			bestNormal = {1, 0}
-		end
-				-- up
-		local planeDepth = math.huge
-		for _,vtx in ipairs(vtxs) do
-			planeDepth = math.min(planeDepth, (y + vtx[2]) - (self.pos[2] + self.bbox.max[2]))
-		end
-		if planeDepth > bestPlaneDepth then
-			bestPlaneDepth = planeDepth
-			bestNormal = {0, -1}
-		end	
-				-- down
-		local planeDepth = math.huge
-		for _,vtx in ipairs(vtxs) do
-			planeDepth = math.min(planeDepth, (self.pos[2] + self.bbox.min[2]) - (y + vtx[2]))
-		end
-		if planeDepth > bestPlaneDepth then
-			bestPlaneDepth = planeDepth
-			bestNormal = {0, 1}
-		end
-
-			-- test obj planes to self bbox corners
-		for _,plane in ipairs(planes) do
-			local planeDepth = math.huge
-			for xminmax=1,2 do
-				for yminmax=1,2 do
-					local vx = self.pos[1] + (xminmax == 1 and self.bbox.min[1] or self.bbox.max[1])
-					local vy = self.pos[2] + (yminmax == 1 and self.bbox.min[2] or self.bbox.max[2])
-					planeDepth = math.min(planeDepth, plane[1] * (vx - x) + plane[2] * (vy - y) + plane[3])
-				end
-			end
-			if planeDepth > bestPlaneDepth then
-				bestPlaneDepth = planeDepth
-				bestNormal = plane
-			end
-		end
---print('bestPlaneDepth',bestPlaneDepth,'bestNormal',table.unpack(bestNormal))
-		if bestPlaneDepth < 0 then
---print("bestPlaneDepth < 0 means we're stuck")		
-			dt = 0		-- stuck
-		end
-	end
-		
-	-- if dt == 0 then -- all our dtv tests are dtv < dt -- so we can't hit anything else
-	if dt > 0 then
-		-- not moving?
-		bestNormal = nil	-- will this cause problems?
-		if dx ~= 0 or dy ~= 0 then
-
-			-- 2) find intersection of movement along dx,dy
-			-- trace all 'self' vtxs forward on dx,dy, test with intersection against normals within vtxs
-			-- then do the same with vtxs backward on dx,dy, test with self sides.
-
-			-- move 4 vtxs of self.pos+self.bbox
-
---print('testing self vtxs against slopebox planes') 
-			-- normal[i] is the normal of the edge between vtxs[i] and vtxs[i+1]
-			-- but really just use -y,x and normalize it ...
-			for i=1,#vtxs do
-				local va = vtxs[i]
-				local vb = vtxs[i%#vtxs+1]
-				local plane = planes[i]
-
-				-- current problem:
-				-- moving diagonal right up
-				-- hitting lower right corner on the bottom plane
-				-- plane dot delta says it should be hitting
-				-- but the corner ... technically can't hti that
-			
-				-- testing plane normal to move delta is a good idea
-				local planeDotDelta = plane[1] * dx + plane[2] * dy
-
---print('plane dot delta',planeDotDelta)				
-				if planeDotDelta < 0 then	-- moving into the plane?
---print('testing slopebox edge ['..va[1]..','..va[2]..'] -> ['..vb[1]..','..vb[2]..']')
-					for xminmax=1,2 do
-						for yminmax=1,2 do
-							-- also test plane normal to both planes that the vertex lies on
-							-- if it is within 90 of both then use this vertex
-							local planeDotVtxPlane1 = plane[1] * (xminmax == 1 and -1 or 1)
-							local planeDotVtxPlane2 = plane[2] * (yminmax == 1 and -1 or 1)
-							if planeDotVtxPlane1 < 0 or planeDotVtxPlane2 < 0 then
-								local vx = self.pos[1] + (xminmax == 1 and self.bbox.min[1] or self.bbox.max[1])
-								local vy = self.pos[2] + (yminmax == 1 and self.bbox.min[2] or self.bbox.max[2])
---print('testing self vtx ['..vx..','..vy..']')
-						
-								local vabx = vb[1] - va[1]
-								local vaby = vb[2] - va[2]
-								-- vx + dtv * dx = va[1] + s * vabx
-								-- vy + dtv * dy = va[2] + s * vaby
-								--
-								-- [dx -vabx][dtv] = x + va[1] - vx = v_va_x
-								-- [dy -vaby][ s ] = y + va[2] - vy = v_va_y
-								-- [dtv] = [-vaby vabx] v_va_x
-								-- [ s ] = [ -dy   dx ] v_va_y
-								local v_va_x = (x + va[1]) - vx
-								local v_va_y = (y + va[2]) - vy
-
-								local det = -dx * vaby + dy * vabx
-								if det ~= 0 then	-- 0 means perpendicular
-									local s = (-dy * v_va_x + dx * v_va_y) / det
-									-- use >= <= to hit corners 
-									if s >= 0 and s <= 1 then
-										local dtv = (-vaby * v_va_x + vabx * v_va_y) / det
-										-- getting toe-stumping midway up slopes ...
-										-- either restrict timestep or push back from normal or both
-										dtv = dtv / (1 + collisionEpsilon)
-										if math.abs(dtv) < collisionEpsilon then dtv = 0 end
-										if dtv >= 0 and dtv < dt then
-											dt = dtv
-											bestNormal = planes[i]
---print('found collision at dt',dt,'normal',table.unpack(bestNormal))
-										end
-									end
-								end
-							end
-						end
-					end
-				end
-			end
-
---print('testing slopebox vtxs against self planes') 
-			-- move poly by -dx, -dy against bbox
-			for _,vtx in ipairs(vtxs) do
---print('testing vtx',table.unpack(vtx))				
-
-				local dtx
-				if dx < 0 then
-					-- left of self
-					-- (x + vtx[1]) - dx * dtu = self.pos[1] + self.bbox.max[1]
-					dtx = ((self.pos[1] + self.bbox.min[1]) - (x + vtx[1])) / -dx
-				elseif dx > 0 then
-					-- right of self
-					-- (x + vtx[1]) - dx * dtx = self.pos[1] + self.bbox.max[1]
-					dtx = ((self.pos[1] + self.bbox.max[1]) - (x + vtx[1])) / -dx
-				end
-				if dtx then
-					if math.abs(dtx) < collisionEpsilon then dtx = 0 end
-					-- make sure our collision time 
-					if 0 <= dtx and dtx < dt 
-					-- make sure we're colliding on the self at that point
-					and self.pos[2] + self.bbox.min[2] < y + vtx[2] - dtx * dy
-					and self.pos[2] + self.bbox.max[2] > y + vtx[2] - dtx * dy
-					then
-						dt = dtx
-						bestNormal = dx < 0 and {1,0} or {-1,0}
---print('found x collision at dt',dt,'normal',table.unpack(bestNormal))									
-					end
-				end
-				
-				local dty
-				if dy < 0 then
-					-- bottom of self 
-					-- (y + vtx[2]) - dy * dtu = self.pos[2] + self.bbox.max[2]
-					dty = ((self.pos[2] + self.bbox.min[2]) - (y + vtx[2])) / -dy
-				elseif dy > 0 then
-					-- top of self 
-					-- (y + vtx[2]) - dy * dty = self.pos[2] + self.bbox.max[2]
-					dty = ((self.pos[2] + self.bbox.max[2]) - (y + vtx[2])) / -dy
-				end
-				if dty then
-					if math.abs(dty) < collisionEpsilon then dty = 0 end
-					if 0 <= dty and dty < dt 
-					-- make sure we're colliding on the self at that point
-					and self.pos[1] + self.bbox.min[1] < x + vtx[1] - dty * dx
-					and self.pos[1] + self.bbox.max[1] > x + vtx[1] - dty * dx
-					then
-						dt = dty
-						bestNormal = dy < 0 and {0,1} or {0,-1}
---print('found y collision at dt',dt,'normal',table.unpack(bestNormal))									
-					end
-				end		
-			end
-		end
-	end
-
---print('returning dt',dt,'bestNormal',table.concat(bestNormal or {}, ','))
---print('  ========================')
---print('  == END BOX/SLOPE TEST ==')
---print('  ========================')
-
-	return dt, bestNormal
-end
-
-function Object:move_v2_sub(dx,dy)
+function Object:move_sub(dx,dy)
 
 --local print = self:isa(require 'zeta.script.obj.hero') and print or function() end
 	
@@ -1277,7 +609,7 @@ function Object:move_v2_sub(dx,dy)
 		-- I'm not checking touchFlags because allowing touching non-blocking tiles 
 		--  would mean rechecking tiles with certain tiles (previously checked, touched, and non-blocked) excluded
 		-- which I don't have support for, nor see a use for
-		-- I'm thinking of getting rid of touchTile and tile.touch anyways.
+		-- I'm thinking of getting rid of tile.touch anyways.
 		if bit.band(self.blockFlags, Object.SOLID_WORLD) ~= 0 then
 			-- test world
 			local xmin = math.floor(cxmin)-1
@@ -1314,25 +646,6 @@ function Object:move_v2_sub(dx,dy)
 									touchedTileY = y
 								end
 							else
---[[ real-deal poly intersection								
-								local newNormal
-								dt, newNormal = testBoxSlope(self, false, x, y, tileType, dt, dx, dy)
-								if newNormal then
-									normal = newNormal
-									local adx = math.abs(normal[1])
-									local ady = math.abs(normal[2])
-									if adx > ady then
-										side = normal[1] < 0 and 'Right' or 'Left'
-									else
-										side = normal[2] < 0 and 'Up' or 'Down'
-									end
-									touchedObj = nil
-									touchedTileType = tileType
-									touchedTileX = x
-									touchedTileY = y
-								end
---]]
--- [[ poor-man's chop it up into tiny pieces
 								local udivs = 16
 								local vdivs = 16
 								local plane = tileType.plane
@@ -1353,7 +666,6 @@ function Object:move_v2_sub(dx,dy)
 										end
 									end
 								end
---]]
 							end
 						end
 					end
@@ -1491,20 +803,19 @@ function Object:move_v2_sub(dx,dy)
 					dy = dy - normal[2] * deltaDotN
 --print('delta is now',dx,dy)				
 				end
-			end do--else
-				-- for non-solids
-				-- don't check this object again
-				-- that way if it can be passed through
-				-- then the next traceline won't check it
-				if touchedObj then
+			end
+			
+			-- don't check this object/tile again
+			-- that way if it can be passed through
+			-- then the next traceline won't check it
+			if touchedObj then
 --print('adding obj',touchedObj,'to the already-checked list')				
-					if not objsTested then objsTested = {} end
-					table.insert(objsTested, touchedObj)
-				end
-				if touchedTileType and not touchedTileType.plane then
-					if not tilesTested then tilesTested = {} end
-					table.insert(tilesTested, vec2(touchedTileX, touchedTileY))
-				end
+				if not objsTested then objsTested = {} end
+				table.insert(objsTested, touchedObj)
+			end
+			if touchedTileType and not touchedTileType.plane then
+				if not tilesTested then tilesTested = {} end
+				table.insert(tilesTested, vec2(touchedTileX, touchedTileY))
 			end
 		end
 
@@ -1537,16 +848,13 @@ function Object:move(dx,dy)
 	and dx ~= 0
 	then
 		local stepHeight = .3
-		self:move_v2_sub(0,stepHeight)
-		self:move_v2_sub(dx,dy)
-		self:move_v2_sub(0,-stepHeight)
+		self:move_sub(0,stepHeight)
+		self:move_sub(dx,dy)
+		self:move_sub(0,-2*stepHeight)
 	else
-		self:move_v2_sub(dx,dy)
+		self:move_sub(dx,dy)
 	end
 end
-
--- default pretouch routine: player precedence
-Object.pretouch = nil -- function(other, side)
 
 -- new system
 Object.touch_v2 = nil -- function(other, side) 
@@ -1617,28 +925,6 @@ function Object:draw(R, viewBBox, holdOverride)
 		self.uniforms,
 		rcx, rcy)
 end
-
---[[
-function Object:drawHUD(R, viewBBox)
-if #debugDraw > 0 then
-	local gl = R.gl
-	gl.glDisable(gl.GL_TEXTURE_2D)
-	gl.glBegin(gl.GL_QUADS)
-	for _,info in ipairs(debugDraw) do
-		gl.glColor3f(table.unpack(info.color))
-		gl.glVertex2f(info.pos[1], info.pos[2])
-		gl.glVertex2f(info.pos[1]+1, info.pos[2])
-		gl.glVertex2f(info.pos[1]+1, info.pos[2]+1)
-		gl.glVertex2f(info.pos[1], info.pos[2]+1)
-	end
-	gl.glEnd()
-	gl.glEnable(gl.GL_TEXTURE_2D)
-	debugDraw = table()
-end
-end
---]]
-
-local sounds = require 'base.script.singleton.sounds'
 
 function Object:playSound(name, volume, pitch)
 	-- openal supports only one listener

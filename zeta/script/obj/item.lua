@@ -21,15 +21,6 @@ function Item:init(args, ...)
 	end
 end
 
--- I want breakblocks to block items
--- but I don't want items to block shots ...
---Item.solid = false
-local BreakBlock = require 'zeta.script.obj.breakblock'
-function Item:pretouch(other, side)
-	if other:isa(BreakBlock) then return end
-	return true	-- don't touch anything else
-end
-
 -- new touch system
 Item.solidFlags = 0
 Item.touchFlags = Item.SOLID_WORLD + Item.SOLID_YES

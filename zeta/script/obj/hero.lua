@@ -168,7 +168,7 @@ end
 Hero.extraBounceVel = 40
 Hero.idleBounceVel = 10
 
-function Hero:pretouch(other, side)
+function Hero:touch_v2(other, side)
 	-- kick ignore 
 	if other.kickedBy == self
 	and other.kickHandicapTime >= game.time
@@ -185,8 +185,6 @@ function Hero:pretouch(other, side)
 	if other == self.holding then return true end
 	if other == self.weapon then return true end
 end
-
-Hero.touch_v2 = Hero.pretouch
 
 --[[
 give the kicker a temp non-collide window

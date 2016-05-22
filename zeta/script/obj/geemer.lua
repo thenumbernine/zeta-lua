@@ -155,19 +155,6 @@ function Geemer:calcVelForJump(delta)
 	self.vel[2] = jumpVel
 end
 
-function Geemer:pretouch(other, side)
-	if other:isa(Geemer) then
-		self.avoiding = other
-		return true
-	end
-end
-
-function Geemer:touch(other, side)
-	if other:isa(Hero) then
-		other:takeDamage(1, self, self, side)
-	end
-end
-
 Geemer.solidFlags = Geemer.SOLID_NO
 Geemer.touchFlags = Geemer.SOLID_YES
 Geemer.blockFlags = Geemer.SOLID_WORLD + Geemer.SOLID_YES
@@ -180,7 +167,9 @@ function Geemer:touch_v2(other, side)
 		return true
 	end
 	
-	self:touch(other, side)
+	if other:isa(Hero) then
+		other:takeDamage(1, self, self, side)
+	end
 end
 
 function Geemer:draw(R, viewBBox, ...)

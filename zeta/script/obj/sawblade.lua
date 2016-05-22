@@ -26,7 +26,13 @@ function Sawblade:init(...)
 	self.power = game.session['defensesActive_'..self.circuit] and 1 or 0
 end
 
-function Sawblade:pretouch(other, side)
+Sawblade.solidFlags = 0
+Sawblade.touchFlags = Sawblade.SOLID_YES -- player
+					+ Sawblade.SOLID_NO -- geemer
+					+ Sawblade.SOLID_GRENADE -- grenades
+Sawblade.blockFlags = 0
+Sawblade.touchPriority = 9	-- above shots, below hero
+function Sawblade:touch_v2(other, side)
 	if self.power < .5 then return true end
 	if other.takeDamage then
 		other:takeDamage(self.damage, self, self, side)
@@ -35,13 +41,6 @@ function Sawblade:pretouch(other, side)
 		other.vel[2] = other.vel[2] + delta[2] * self.pushForce
 	end
 end
-Sawblade.solidFlags = 0
-Sawblade.touchFlags = Sawblade.SOLID_YES -- player
-					+ Sawblade.SOLID_NO -- geemer
-					+ Sawblade.SOLID_GRENADE -- grenades
-Sawblade.blockFlags = 0
-Sawblade.touchPriority = 9	-- above shots, below hero
-Sawblade.touch_v2 = Sawblade.pretouch
 
 Sawblade.powerChangeRate = 3	-- how long does it take to start/stop?
 Sawblade.playSoundDuration = 3

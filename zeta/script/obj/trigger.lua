@@ -11,8 +11,10 @@ Trigger.wait = math.huge	-- wait forever, so default trigger only once
 
 local Player = require 'base.script.obj.player'
 
--- use pretouch so we don't block
-function Trigger:pretouch(other, side)
+Trigger.solidFlags = Trigger.SOLID_NO
+Trigger.touchFlags = Trigger.SOLID_YES + Trigger.SOLID_NO
+Trigger.blockFlags = 0
+function Trigger:touch_v2(other, side)
 	-- by default, triggers only operate when players touch them
 	-- maybe later I'll have a flag for enemies too
 	if not other:isa(Player) then return true end
@@ -26,11 +28,6 @@ function Trigger:pretouch(other, side)
 		sandbox(self.trigger, 'self, other, side', self, other, side)
 	end
 end
-
-Trigger.solidFlags = Trigger.SOLID_NO
-Trigger.touchFlags = Trigger.SOLID_YES + Trigger.SOLID_NO
-Trigger.blockFlags = 0
-Trigger.touch_v2 = Trigger.pretouch
 
 function Trigger:draw(R, viewBBox)
 end
