@@ -271,9 +271,9 @@ local patchNeighbors = table{
 -- note: (1) we're missing three-way tiles, (i.e. ulr dlr uld urd) and (2) some are doubled: l2r and r2l and (3) we don't have 27 degree upward slopes
 local patchTemplate = {
 	{'ul',	'u',	'u',	'ur',	'd2r',	'l2d',	'u3',	'',		'ul-diag45',	'ur-diag45',	'ul2-diag27', 'ul1-diag27',	'ur1-diag27',	'ur2-diag27',	},
-	{'l',	'c',	'c',	'r',	'u2r',	'l2u',	'u2d',	'u2d',	'uli-diag45',	'uri-diag45',	'ul3-diag27', 'dri',		'dli',			'ur3-diag27',	},
+	{'l',	'c',	'c',	'r',	'u2r',	'l2u',	'u2d',	'',		'uli-diag45',	'uri-diag45',	'ul3-diag27', 'dri',		'dli',			'ur3-diag27',	},
 	{'l',	'c',	'c',	'r',	'l3',	'l2r',	'c4',	'r3',	'dli-diag45',	'dri-diag45',	'dl3-diag27', 'uri',		'uli',			'dr3-diag27',	},
-	{'dl',	'd',	'd',	'dr',	'',		'l2r',	'd3',	'',		'dl-diag45',	'dr-diag45',	'dl2-diag27', 'dl1-diag27',	'dr1-diag27',	'dr2-diag27',	},
+	{'dl',	'd',	'd',	'dr',	'',		'',		'd3',	'',		'dl-diag45',	'dr-diag45',	'dl2-diag27', 'dl1-diag27',	'dr1-diag27',	'dr2-diag27',	},
 }
 local patchTilesWide = #patchTemplate[1]
 local patchTilesHigh = #patchTemplate
