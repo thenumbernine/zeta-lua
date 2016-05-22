@@ -25,7 +25,7 @@ Barrier.touchFlags = Barrier.SOLID_YES -- for player
 					+ Barrier.SOLID_GRENADE -- for grenades
 Barrier.blockFlags = 0 
 Barrier.touchPriority = 9	-- above shots, below hero
-function Barrier:touch_v2(other, side)
+function Barrier:touch(other, side)
 	if self.shockEndTime > game.time then
 		if other.takeDamage then
 			other:takeDamage(self.damage, self, self, side)

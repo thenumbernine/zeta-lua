@@ -32,7 +32,7 @@ Sawblade.touchFlags = Sawblade.SOLID_YES -- player
 					+ Sawblade.SOLID_GRENADE -- grenades
 Sawblade.blockFlags = 0
 Sawblade.touchPriority = 9	-- above shots, below hero
-function Sawblade:touch_v2(other, side)
+function Sawblade:touch(other, side)
 	if self.power < .5 then return true end
 	if other.takeDamage then
 		other:takeDamage(self.damage, self, self, side)

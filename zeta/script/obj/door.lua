@@ -38,7 +38,7 @@ end
 Door.solidFlags = Door.SOLID_WORLD
 Door.touchFlags = Door.SOLID_YES	-- player, specifically
 Door.blockFlags = 0
-function Door:touch_v2(other, side)
+function Door:touch(other, side)
 	if not other:isa(Hero) then return end
 	self.blockTime = game.time + 1
 	

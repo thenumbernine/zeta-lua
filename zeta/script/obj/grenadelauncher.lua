@@ -45,12 +45,12 @@ local Grenade = (function()
 						+ Grenade.SOLID_GRENADE
 	Grenade.blockFlags = Grenade.SOLID_WORLD
 	
-	function Grenade:touchTile_v2(tile, side, normal)
+	function Grenade:touchTile(tile, side, normal)
 		if tile and tile.solid then
 			self:bounceOff(normal)
 		end
 	end
-	function Grenade:touch_v2(other, side)
+	function Grenade:touch(other, side)
 		if self.remove then return true end
 		if self.kickedBy == other and self.kickHandicapTime >= game.time then
 			return true

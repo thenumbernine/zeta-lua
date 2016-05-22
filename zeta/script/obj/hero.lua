@@ -168,7 +168,7 @@ end
 Hero.extraBounceVel = 40
 Hero.idleBounceVel = 10
 
-function Hero:touch_v2(other, side)
+function Hero:touch(other, side)
 	-- kick ignore 
 	if other.kickedBy == self
 	and other.kickHandicapTime >= game.time

@@ -25,7 +25,7 @@ end
 Item.solidFlags = 0
 Item.touchFlags = Item.SOLID_WORLD + Item.SOLID_YES
 Item.blockFlags = Item.SOLID_WORLD
-function Item:touch_v2(other, side)
+function Item:touch(other, side)
 	if other == self.heldby then return true end
 end
 

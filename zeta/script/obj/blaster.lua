@@ -28,10 +28,10 @@ local BlasterShot = (function()
 	BlasterShot.solidFlags = BlasterShot.SOLID_SHOT	
 	BlasterShot.touchFlags = BlasterShot.SOLID_WORLD + BlasterShot.SOLID_YES + BlasterShot.SOLID_NO
 	BlasterShot.blockFlags = BlasterShot.SOLID_WORLD + BlasterShot.SOLID_YES
-	function BlasterShot:touchTile_v2(tile, side)
+	function BlasterShot:touchTile(tile, side)
 		self.remove = true
 	end
-	function BlasterShot:touch_v2(other, side)
+	function BlasterShot:touch(other, side)
 		if self.remove then return true end
 		if other == self.shooter then return true end	-- don't hit shooter
 		if other.takeDamage then

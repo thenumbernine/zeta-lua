@@ -34,11 +34,11 @@ local PlasmaShot = (function()
 	PlasmaShot.touchFlags = PlasmaShot.SOLID_WORLD + PlasmaShot.SOLID_YES + PlasmaShot.SOLID_NO
 	PlasmaShot.blockFlags = PlasmaShot.SOLID_WORLD + PlasmaShot.SOLID_YES
 	
-	function PlasmaShot:touchTile_v2(tile, side)
+	function PlasmaShot:touchTile(tile, side)
 		self:blast()
 	end
 	
-	function PlasmaShot:touch_v2(other, side)
+	function PlasmaShot:touch(other, side)
 		if self.remove then return true end
 		if other == self.shooter then return true end
 		if other.takeDamage then

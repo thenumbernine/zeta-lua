@@ -744,8 +744,8 @@ function Object:move_sub(dx,dy)
 			-- pass collision velocity as a separate parameter?
 			local dontblock
 			if touchedTileType then
---print('calling self.touchTile_v2',self.touchTile_v2,touchedTileType,lside,normal)
-				if self.touchTile_v2 then dontblock = self:touchTile_v2(touchedTileType, lside, normal) or dontblock end
+--print('calling self.touchTile',self.touchTile,touchedTileType,lside,normal)
+				if self.touchTile then dontblock = self:touchTile(touchedTileType, lside, normal) or dontblock end
 			end
 			
 --print('touchedObj is',touchedObj)			
@@ -757,11 +757,11 @@ function Object:move_sub(dx,dy)
 --print('running touches based on priority. self.touchPriority=',self.touchPriority,'touchedObj.touchPriority=',touchedObj.touchPriority)					
 					local opposite = oppositeSide[lside] or error("can't find opposite side for side "..tostring(side))
 					if self.touchPriority >= touchedObj.touchPriority then
-						if self.touch_v2 then dontblock = self:touch_v2(touchedObj, lside) or dontblock end
-						if touchedObj.touch_v2 then dontblock = touchedObj:touch_v2(self, opposite) or dontblock end
+						if self.touch then dontblock = self:touch(touchedObj, lside) or dontblock end
+						if touchedObj.touch then dontblock = touchedObj:touch(self, opposite) or dontblock end
 					else
-						if touchedObj.touch_v2 then dontblock = touchedObj:touch_v2(self, opposite) or dontblock end
-						if self.touch_v2 then dontblock = self:touch_v2(touchedObj, lside) or dontblock end
+						if touchedObj.touch then dontblock = touchedObj:touch(self, opposite) or dontblock end
+						if self.touch then dontblock = self:touch(touchedObj, lside) or dontblock end
 					end
 --print('after calling touch, dontblock=',dontblock)				
 				end
@@ -857,7 +857,7 @@ function Object:move(dx,dy)
 end
 
 -- new system
-Object.touch_v2 = nil -- function(other, side) 
+Object.touch = nil -- function(other, side) 
 
 function Object:draw(R, viewBBox, holdOverride)
 	if not self.sprite then return end

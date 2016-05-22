@@ -38,12 +38,12 @@ local Missile = (function()
 						+ Missile.SOLID_GRENADE
 	Missile.blockFlags = Missile.SOLID_WORLD
 	
-	function Missile:touchTile_v2(tile, solid)
+	function Missile:touchTile(tile, solid)
 		if self.remove then return true end
 		self:blast()
 	end
 	
-	function Missile:touch_v2(other, side)
+	function Missile:touch(other, side)
 		if self.remove then return true end
 		if other == self.shooter then return true end
 		if other.takeDamage then
