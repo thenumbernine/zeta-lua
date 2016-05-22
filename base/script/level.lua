@@ -9,12 +9,14 @@ level is going to contain ...
 --]]
 
 local ffi = require 'ffi'
+local gl = require 'ffi.OpenGL'
 local bit = require 'bit'
 local class = require 'ext.class'
 local vec2 = require 'vec.vec2'
 local vec3 = require 'vec.vec3'
 local vec4 = require 'vec.vec4'
 local box2 = require 'vec.box2'
+local Tex2D = require 'gl.tex2d'
 local modio = require 'base.script.singleton.modio'
 local texsys = require 'base.script.singleton.texsys'
 local game = require 'base.script.singleton.game'	-- this should exist by now, right?
@@ -210,7 +212,14 @@ function Level:init(args)
 	do
 		local texpackFile = modio:find('texpack.png')
 		assert(texpackFile, "better put your textures in a texpack")
-		self.texpackTex = texsys:load(texpackFile)
+		self.texpackImage = Image(texpackFile)
+		self.texpackTex = Tex2D{
+			image = self.texpackImage,
+			minFilter = gl.GL_NEAREST,
+			magFilter = gl.GL_NEAREST,
+			internalFormat = gl.GL_RGBA,
+			format = gl.GL_RGBA,
+		}
 	end
 
 	-- chop world up into 32x32 map tiles, for the sake of linking and spawning

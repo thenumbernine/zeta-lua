@@ -17,23 +17,14 @@ next: add next cave section
 	- show vec2 fields as offsets ...? or absolute positions if the meta editor info says so.
 	- object classes use 'spawnfields' for editor fields, types, and tooltips
 - environmental effects ... foreground warping (underwater, heat), blowing wind, falling snow/rain/leaves, etc
+
+LOW PRIORITY:
 - save files don't save threads 
-- missile launcher missile ammo
-- arbitrary room sizes (no fixed grid) - in fact, double as spawnInfo and bbox
 - separate lua env for level/init.lua and for sandboxes
-collision v1:
-	- fix collisions with sloped tiles.  determine ymin and ymax on the x side of sloped tiles and test that against object bbox. 
-	- barriers only hit players if player is moving
-	- sawblades only hit geemers if geemers are moving
-	- geemers and doors don’t mix.  one pushes the other and the geemer teleports.
-collision v2:
-	- get slopes working
-	- jump near a wall and shoot. your jump will stop midair. 
-	- movement still needs pushing (making use of pushPriority) implementation ... maybe ...
-	- jumping on >100 solid_no objects and the player will float in the air...
-	- make sure there aren't any more physics slowdowns
-	- fix tryToStand to use the new collision system
-	
+- hit 100 objects and you'll stop in midair
+- movement still needs pushing (making use of pushPriority) implementation ... maybe ...
+- arbitrary room sizes (no fixed grid) - in fact, double as spawnInfo and bbox
+
 monsters:
 	- fix geemer chunks ... to be new sprites?  and let you pick them up and craft health with them? 
 	- add moar mining base monsters:
@@ -44,42 +35,6 @@ monsters:
 		- close-range guy
 		- things that fly back and forth maybe
 		- maybe some kind of shooter
-
-
-VETOED list:
-- screen base spawning
-	- first i tried spawn and remove based on spawninfo.  enemies would disappear if they walked too far from their start.
-	- then i did spawn by spawninfo, remove by object.  if you lure an enemy too far from their home to kill them, they reappear.  this is frustrating. 
-	- finally i'm going back to metroid/castlevania/cavestory-styled rooms 
-- don't use 'spawnclass' as a class shortcut to register classes that are spawned.
-	to execute the spawn code, all the class will have to be require()'d somewhere in one spot anyways
-	it's better to list the names in 'spawnTypes' than have everything being required
-- don't separating playerLook vs canCarry.  set an item down by a terminal, and try to pick it up again.
-	item system options:
-		- carrying items (spelunky / current system)
-			pros:
-			- most flexible
-			cons:
-			- using 'a' for run and use item means ... you can't run / always run when using an item 
-			- need terminal/savepoint button *and* object button, or else objects can get stuck if you put them down by terminals
-				- for the record, spelunky was like this too.  one button for items, up for doors
-			- item order is never the same (can be fixed)
-			- have to have your hands empty to pick something up
-			- when you pick something up, it switches your inventory
-		- touch to get (metroid)
-			pros:
-			- most simple
-			cons:
-			- no easy way to switch between and use individual items
-			- need a distinct weapon for throwing objects
-		- push 'interact' button to to pick up (cave story)
-			- just like metroid style, but with an extra button to get things
-	item overhaul:
-		- touch/interaact to pick everything up -- no carrying
-		- left/right switches weapons only.  one weapon is 'throw grenades' -- only if you have grenades.
-		- canCarry only operates with a powerup: carry gloves, used for story stuff
-		- separate inventory screen for using non-weapon objects
-			(this means no more 'take the keycard out to open the door')
 
 buttons:
 	- up/down to aim, left/right to move

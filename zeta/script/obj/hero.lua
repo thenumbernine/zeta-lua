@@ -201,9 +201,9 @@ function Hero:tryToStand()
 
 	local level = game.level
 	local cantStand = false
-	local y = math.floor(self.pos[2] + self.bbox.max[2] + .5 - level.pos[2])
-	for x=math.floor(self.pos[1] + self.bbox.min[1] - level.pos[1]),
-		math.floor(self.pos[1] + self.bbox.max[1] - level.pos[1])
+	local y = math.floor(self.pos[2] + self.bbox.max[2] + .5 - level.pos[2] - self.collisionEpsilon)
+	for x=math.floor(self.pos[1] + self.bbox.min[1] - level.pos[1] + self.collisionEpsilon),
+		math.floor(self.pos[1] + self.bbox.max[1] - level.pos[1] - self.collisionEpsilon)
 	do
 		local tile = level:getTile(x,y)
 		if tile and tile.solid then

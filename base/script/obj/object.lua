@@ -210,6 +210,7 @@ Object.touchFlags = -1					-- call touch for everything
 Object.blockFlags = Object.SOLID_WORLD + Object.SOLID_YES
 
 local collisionEpsilon = 1e-4
+Object.collisionEpsilon = collisionEpsilon 
 
 local function testBoxBox(self, testStuck, bxmin, bymin, bxmax, bymax, dt, dx, dy)
 	if dt == 0 then return dt end
