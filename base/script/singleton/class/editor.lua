@@ -240,10 +240,14 @@ local patchNeighbors = table{
 	{name='dl', differOffsets={{0,-1}, {-1,0}}},		 -- lower left
 	{name='dr', differOffsets={{0,-1}, {1,0}}},		  -- lower right
 	
-	{name='u', differOffsets={{0,1}}},							  -- up
-	{name='r', differOffsets={{1,0}}},							  -- right
-	{name='l', differOffsets={{-1,0}}},							 -- left
-	{name='d', differOffsets={{0,-1}}},							 -- down
+	{name='u0', differOffsets={{0,1}}, modCoord={{2,0}, {1,0}}},	-- up
+	{name='u1', differOffsets={{0,1}}, modCoord={{2,1}, {1,0}}},	-- up
+	{name='r0', differOffsets={{1,0}}, modCoord={{1,0}, {2,0}}},	-- right
+	{name='r1', differOffsets={{1,0}}, modCoord={{1,0}, {2,1}}},	-- right
+	{name='l0', differOffsets={{-1,0}}, modCoord={{1,0}, {2,0}}},	-- left
+	{name='l1', differOffsets={{-1,0}}, modCoord={{1,0}, {2,1}}},	-- left
+	{name='d0', differOffsets={{0,-1}}, modCoord={{2,0}, {1,0}}},	-- down
+	{name='d1', differOffsets={{0,-1}}, modCoord={{2,1}, {1,0}}},	-- down
 	
 	--[[ breaks fence
 	{name='l-notsolid', differOffsets={{-1,0}}, notsolid=true},	 -- left, not solid
@@ -266,17 +270,17 @@ local patchNeighbors = table{
 	{name='dli', differOffsets={{-1,-1}}},							   -- lower left inverse
 	{name='dri', differOffsets={{1,-1}}},								-- lower right inverse
 	
-	{name='c00', differOffsets={}, modCoord={{[2]=0},{[2]=0}}},
-	{name='c01', differOffsets={}, modCoord={{[2]=0},{[2]=1}}},
-	{name='c10', differOffsets={}, modCoord={{[2]=1},{[2]=0}}},
-	{name='c11', differOffsets={}, modCoord={{[2]=1},{[2]=1}}},
+	{name='c00', differOffsets={}, modCoord={{2,0},{2,0}}},
+	{name='c01', differOffsets={}, modCoord={{2,0},{2,1}}},
+	{name='c10', differOffsets={}, modCoord={{2,1},{2,0}}},
+	{name='c11', differOffsets={}, modCoord={{2,1},{2,1}}},
 }
 -- note: (1) we're missing three-way tiles, (i.e. ulr dlr uld urd) and (2) some are doubled: l2r and r2l and (3) we don't have 27 degree upward slopes
 local patchTemplate = {
-	{'ul',	'u',	'u',	'ur',	'd2r',	'l2d',	'u3',	'',		'ul-diag45',	'ur-diag45',	'ul2-diag27', 'ul1-diag27',	'ur1-diag27',	'ur2-diag27',	},
-	{'l',	'c00',	'c10',	'r',	'u2r',	'l2u',	'u2d',	'',		'uli-diag45',	'uri-diag45',	'ul3-diag27', 'dri',		'dli',			'ur3-diag27',	},
-	{'l',	'c01',	'c11',	'r',	'l3',	'l2r',	'c4',	'r3',	'dli-diag45',	'dri-diag45',	'dl3-diag27', 'uri',		'uli',			'dr3-diag27',	},
-	{'dl',	'd',	'd',	'dr',	'',		'',		'd3',	'',		'dl-diag45',	'dr-diag45',	'dl2-diag27', 'dl1-diag27',	'dr1-diag27',	'dr2-diag27',	},
+	{'ul',	'u0',	'u1',	'ur',	'd2r',	'l2d',	'u3',	'',		'ul-diag45',	'ur-diag45',	'ul2-diag27', 'ul1-diag27',	'ur1-diag27',	'ur2-diag27',	},
+	{'l0',	'c00',	'c10',	'r0',	'u2r',	'l2u',	'u2d',	'',		'uli-diag45',	'uri-diag45',	'ul3-diag27', 'dri',		'dli',			'ur3-diag27',	},
+	{'l1',	'c01',	'c11',	'r1',	'l3',	'l2r',	'c4',	'r3',	'dli-diag45',	'dri-diag45',	'dl3-diag27', 'uri',		'uli',			'dr3-diag27',	},
+	{'dl',	'd0',	'd1',	'dr',	'',		'',		'd3',	'',		'dl-diag45',	'dr-diag45',	'dl2-diag27', 'dl1-diag27',	'dr1-diag27',	'dr2-diag27',	},
 }
 local patchTilesWide = #patchTemplate[1]
 local patchTilesHigh = #patchTemplate
@@ -452,7 +456,12 @@ do
 											else
 												for j,row in ipairs(patchTemplate) do
 													for i,name in ipairs(row) do
-														if name == neighbor.name then
+														if neighbor.name == name
+														and (not neighbor.modCoord or (
+															x % neighbor.modCoord[1][1] == neighbor.modCoord[1][2]
+															and y % neighbor.modCoord[2][1] == neighbor.modCoord[2][2]
+														))
+														then
 															--  use the patch that the current tile belongs to
 															local tx = seltx + i-1
 															local ty = selty + j-1
