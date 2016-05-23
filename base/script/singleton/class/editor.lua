@@ -714,11 +714,14 @@ local function guiMoveTexpackTiles(self)
 		
 		ig.igSliderInt('Wide', self.moveTexpackTileWidth, 1, 64)
 		ig.igSliderInt('High', self.moveTexpackTileHeight, 1, 64)
-
+		
 		self.transferTilesFromToPtr = self.transferTilesFromToPtr or ffi.new('bool[1]', true)
 		self.transferTilesToFromPtr = self.transferTilesToFromPtr or ffi.new('bool[1]', true)
 		ig.igCheckbox('from->to', self.transferTilesFromToPtr)
 		ig.igCheckbox('to->from', self.transferTilesToFromPtr)
+
+		ig.igCheckbox('Fg Tile', self.paintingFgTile)
+		ig.igCheckbox('Bg Tile', self.paintingBgTile)
 
 		if self.moveTexpackTileFrom > 0
 		and self.moveTexpackTileTo > 0	-- TODO handle clear for 'move to' to support selective erases
@@ -787,7 +790,10 @@ local function guiMoveTexpackTiles(self)
 			end
 			
 			if ig.igButton('Swap in Level') then
-				for _,map in ipairs{level.fgTileMap, level.bgTileMap} do
+				local maps = table()
+				if self.paintingFgTile[0] then maps:insert(level.fgTileMap) end
+				if self.paintingBgTile[0] then maps:insert(level.bgTileMap) end
+				for _,map in ipairs(maps) do
 					for y=0,level.size[2]-1 do
 						for x=0,level.size[1]-1 do
 							local tile = map[x+level.size[1]*y]
@@ -1174,15 +1180,26 @@ function Editor:updateGUI()
 					if not fieldType then
 						-- deduce from value
 						fieldType = fieldTypeEnum.string
-						if type(v) == 'boolean' then fieldType = fieldTypeEnum.boolean end
-						if type(v) == 'table' and #v == 2 then fieldType = fieldTypeEnum.vec2 end
-						if type(v) == 'table' and #v == 4 then fieldType = fieldTypeEnum.vec4 end
-						if type(v) == 'table' and v.min and v.max then fieldType = fieldTypeEnum.box2 end
+						if type(v) == 'boolean' then
+							fieldType = fieldTypeEnum.boolean
+						elseif type(v) == 'table' then
+							if #v == 2 then
+								fieldType = fieldTypeEnum.vec2
+							elseif #v == 4 then
+								fieldType = fieldTypeEnum.vec4
+							elseif v.min and v.max then
+								fieldType = fieldTypeEnum.box2
+							end
 						-- fieldTypeEnum.tile is used for only specific fields
 						--  so auto-detect will be difficult 
 						-- for now it's predefined, based on k: fieldTypeEnum.tile
-						if type(v) == 'number' and k == 'tileIndex' then fieldType = fieldTypeEnum.tile end
-						if type(v) == 'number' then fieldType = fieldTypeEnum.number end
+						elseif type(v) == 'number' then
+							if k == 'tileIndex' then
+								fieldType = fieldTypeEnum.tile
+							else
+								fieldType = fieldTypeEnum.number
+							end
+						end
 					end
 					prop.fieldType = ffi.new('int[1]',fieldType)
 					

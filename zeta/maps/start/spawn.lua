@@ -459,7 +459,7 @@
 	{pos={192.5,22},spawn="zeta.script.obj.cells"},
 	{color={1,0,1,1},pos={176.5,182},spawn="zeta.script.obj.door"},
 	{color={1,0,1,1},pos={177.5,182},spawn="zeta.script.obj.door"},
-	{pos={96.5,153},spawn="zeta.script.obj.breakblock",tileIndex=1089},
+	{pos={96.5,153},spawn="zeta.script.obj.breakblock",tileIndex=2625},
 	{create="removeGeemersIfBossNotKilled()",name="remove all geemers before the boss is killed",pos={50.5,207},spawn="zeta.script.obj.trigger"},
 	{create="removeGeemersIfBossNotKilled()",name="remove all geemers before the boss is killed",pos={50.5,210},spawn="zeta.script.obj.trigger"},
 	{create="removeGeemersIfBossNotKilled()",name="remove all geemers before the boss is killed",pos={82.5,255},spawn="zeta.script.obj.trigger"},
