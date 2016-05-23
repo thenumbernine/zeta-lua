@@ -364,12 +364,7 @@ do
 											else
 												for j,row in ipairs(patch.template) do
 													for i,name in ipairs(row) do
-														if neighbor.name == name
-														and (not neighbor.modCoord or (
-															x % neighbor.modCoord[1][1] == neighbor.modCoord[1][2]
-															and y % neighbor.modCoord[2][1] == neighbor.modCoord[2][2]
-														))
-														then
+														if neighbor.name == name then
 															--  use the patch that the current tile belongs to
 															local tx = seltx + i-1
 															local ty = selty + j-1
