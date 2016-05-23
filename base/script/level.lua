@@ -359,6 +359,7 @@ function Level:update(dt)
 	self.pos[2] = self.pos[2] + self.vel[2] * dt
 end
 
+local patch = require 'base.script.patch'
 function Level:draw(R, viewBBox)
 
 	-- clone & offset
@@ -428,7 +429,28 @@ function Level:draw(R, viewBBox)
 				bgtileindex = bgtileindex - 1
 				local ti = bgtileindex % tilesWide
 				local tj = (bgtileindex - ti) / tilesWide
-				
+			
+				-- [[ begin ugliness
+				local px = math.floor(ti / patch.width)
+				local locCol = patch.locs[px]
+				if locCol then
+					local py = math.floor(tj / patch.height)
+					if locCol[py] then
+						local ox = ti - px * patch.width
+						local stampCol = patch.stamps[ox]
+						if stampCol then
+							local oy = tj - py * patch.height
+							local stampRow = stampCol[oy]
+							if stampRow then
+								local sw, sh = stampRow[1], stampRow[2]
+								ti = ti + x % sw
+								tj = tj + y % sh
+							end
+						end
+					end
+				end
+				--]]
+
 				R:quad(
 					x, y,
 					1, 1,
@@ -458,7 +480,28 @@ function Level:draw(R, viewBBox)
 				fgtileindex = fgtileindex - 1
 				local ti = fgtileindex % tilesWide
 				local tj = (fgtileindex - ti) / tilesWide
-				
+
+				-- [[ begin ugliness
+				local px = math.floor(ti / patch.width)
+				local locCol = patch.locs[px]
+				if locCol then
+					local py = math.floor(tj / patch.height)
+					if locCol[py] then
+						local ox = ti - px * patch.width
+						local stampCol = patch.stamps[ox]
+						if stampCol then
+							local oy = tj - py * patch.height
+							local stampRow = stampCol[oy]
+							if stampRow then
+								local sw, sh = stampRow[1], stampRow[2]
+								ti = ti + x % sw
+								tj = tj + y % sh
+							end
+						end
+					end
+				end
+				--]]
+
 				R:quad(
 					x, y,
 					1, 1,
