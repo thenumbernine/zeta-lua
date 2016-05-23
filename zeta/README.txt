@@ -18,6 +18,12 @@ next: add next cave section
 	- object classes use 'spawnfields' for editor fields, types, and tooltips
 - environmental effects ... foreground warping (underwater, heat), blowing wind, falling snow/rain/leaves, etc
 
+- texpack tile swapping doesn't replace tiles in breakblocks.
+- also, tile field type turns into numbers as soon as the object is unselected and reselected.
+a few fixes to both:
+	- keep things the way they are, have certain auto fields detected as tile type (rename 'tileIndex' to 'tile' too?) 
+	- add a shootable block tile type, store a separate level for 'original' and 'current' for reloading between rooms
+
 LOW PRIORITY:
 - save files don't save threads 
 - separate lua env for level/init.lua and for sandboxes
