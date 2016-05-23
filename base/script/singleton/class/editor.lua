@@ -685,54 +685,45 @@ local function guiMoveTexpackTiles(self)
 	self.moveTexpackTileWidth = self.moveTexpackTileWidth or ffi.new('int[1]',1)
 	self.moveTexpackTileHeight = self.moveTexpackTileHeight or ffi.new('int[1]',1)
 	self.moveTexpackTilesWindowPtr = self.moveTexpackTilesWindowPtr or ffi.new('bool[1]', false)
-	self.moveTexpackPreserveTilesPtr = self.moveTexpackPreserveTilesPtr or ffi.new('bool[1]', true)
-	if ig.igButton('Move Texpack Tiles') then
+	if ig.igButton('Tile Exchange') then
 		self.moveTexpackTilesWindowPtr[0] = true
 	end
 	if self.moveTexpackTilesWindowPtr[0] then
-		ig.igPushIdStr('Move Texpack Tiles Window')
-		ig.igBegin('Move Texpack Tiles', self.moveTexpackTilesWindowPtr)
-		ig.igPushIdStr('Move Texpack Tiles Button From')
+		ig.igPushIdStr('Tile Exchange Window')
+		ig.igBegin('Tile Exchange', self.moveTexpackTilesWindowPtr)
+		ig.igPushIdStr('From')
 		if tileButton(self.moveTexpackTileFrom) then
 			openPickTileWindow(self,function(i)
 				self.moveTexpackTileFrom = i
 			end)
 		end
-		ig.igPopId()
 		ig.igSameLine()
 		ig.igText('From')	
+		ig.igPopId()
 		ig.igSameLine()
 		
-		ig.igPushIdStr('Move Texpack Tiles Button To')
+		ig.igPushIdStr('To')
 		if tileButton(self.moveTexpackTileTo) then
 			openPickTileWindow(self,function(i)
 				self.moveTexpackTileTo = i
 			end)	
 		end
-		ig.igPopId()
 		ig.igSameLine()
 		ig.igText('To')
+		ig.igPopId()
 		
-		ig.igSliderInt('Tiles Wide', self.moveTexpackTileWidth, 1, 64)
-		ig.igSliderInt('Tiles High', self.moveTexpackTileHeight, 1, 64)
-	
-		ig.igCheckbox('Preserve Tiles', self.moveTexpackPreserveTilesPtr)
-		if ig.igIsItemHovered() then
-			ig.igBeginTooltip()
-			ig.igText('Check this to update the map tiles so that no textures in the map change.\n'
-					..'Leave this unchecked to swap the map tiles as well as the texpack tiles.')
-			ig.igEndTooltip()
-		end
+		ig.igSliderInt('Wide', self.moveTexpackTileWidth, 1, 64)
+		ig.igSliderInt('High', self.moveTexpackTileHeight, 1, 64)
 
-		if ig.igButton('Swap')
-		and self.moveTexpackTileFrom > 0
-		and self.moveTexpackTileTo > 0
-		then
-			print('swapping', self.moveTexpackTileFrom, 
-				'with', self.moveTexpackTileTo,
-				'size', self.moveTexpackTileWidth[0],
-				'by',self.moveTexpackTileHeight[0])
+		self.transferTilesFromToPtr = self.transferTilesFromToPtr or ffi.new('bool[1]', true)
+		self.transferTilesToFromPtr = self.transferTilesToFromPtr or ffi.new('bool[1]', true)
+		ig.igCheckbox('from->to', self.transferTilesFromToPtr)
+		ig.igCheckbox('to->from', self.transferTilesToFromPtr)
 
+		if self.moveTexpackTileFrom > 0
+		and self.moveTexpackTileTo > 0	-- TODO handle clear for 'move to' to support selective erases
+		and (self.transferTilesFromToPtr[0] or self.transferTilesToFromPtr[0])
+		then 
 			local texpackImage = level.texpackImage
 			local width, height, channels, format = texpackImage.width, texpackImage.height, texpackImage.channels, texpackImage.format
 			local tilesWide = width / 16
@@ -745,44 +736,57 @@ local function guiMoveTexpackTiles(self)
 			local moveToYMin = (self.moveTexpackTileTo-moveToXMin-1) / tilesWide
 			local moveToXMax = moveToXMin + self.moveTexpackTileWidth[0] - 1
 			local moveToYMax = moveToYMin + self.moveTexpackTileHeight[0] - 1
-			local newTexpackImage = Image(width, height, channels, format)
-			for j=0,tilesHigh-1 do
-				for i=0,tilesWide-1 do
-					for u=0,15 do
-						for v=0,15 do
-							local dx = u + 16 * i
-							local dy = v + 16 * j
-							local sx, sy = dx, dy
-							if i >= moveFromXMin and i <= moveFromXMax
-							and j >= moveFromYMin and j <= moveFromYMax
-							then
-								sx = u + 16 * (i - moveFromXMin + moveToXMin)
-								sy = v + 16 * (j - moveFromYMin + moveToYMin)
-							elseif i >= moveToXMin and i <= moveToXMax
-							and j >= moveToYMin and j <= moveToYMax
-							then
-								sx = u + 16 * (i - moveToXMin + moveFromXMin)
-								sy = v + 16 * (j - moveToYMin + moveFromYMin)
-							end
-							for k = 0,channels-1 do
-								newTexpackImage.buffer[k+channels*(dx+width*dy)] = 
-									texpackImage.buffer[k+channels*(sx+width*sy)]
+
+			if ig.igButton('Swap In Texpack')
+			then
+				local newTexpackImage = Image(width, height, channels, format)
+				for j=0,tilesHigh-1 do
+					for i=0,tilesWide-1 do
+						for u=0,15 do
+							for v=0,15 do
+								local dx = u + 16 * i
+								local dy = v + 16 * j
+								local sx, sy = dx, dy
+								if self.transferTilesFromToPtr[0] 
+								and i >= moveFromXMin and i <= moveFromXMax
+								and j >= moveFromYMin and j <= moveFromYMax
+								then
+									sx = u + 16 * (i - moveFromXMin + moveToXMin)
+									sy = v + 16 * (j - moveFromYMin + moveToYMin)
+								elseif self.transferTilesToFromPtr[0]
+								and i >= moveToXMin and i <= moveToXMax
+								and j >= moveToYMin and j <= moveToYMax
+								then
+									sx = u + 16 * (i - moveToXMin + moveFromXMin)
+									sy = v + 16 * (j - moveToYMin + moveFromYMin)
+								end
+								for k = 0,channels-1 do
+									newTexpackImage.buffer[k+channels*(dx+width*dy)] = 
+										texpackImage.buffer[k+channels*(sx+width*sy)]
+								end
 							end
 						end
 					end
 				end
+				level.texpackImage = newTexpackImage
+				level.texpackTex:delete()
+				level.texpackTex = Tex2D{
+					image = level.texpackImage,
+					minFilter = gl.GL_NEAREST,
+					magFilter = gl.GL_NEAREST,
+					internalFormat = gl.GL_RGBA,
+					format = gl.GL_RGBA,
+				}
 			end
-			level.texpackImage = newTexpackImage
-			level.texpackTex:delete()
-			level.texpackTex = Tex2D{
-				image = level.texpackImage,
-				minFilter = gl.GL_NEAREST,
-				magFilter = gl.GL_NEAREST,
-				internalFormat = gl.GL_RGBA,
-				format = gl.GL_RGBA,
-			}
-		
-			if self.moveTexpackPreserveTilesPtr[0] then
+			if ig.igIsItemHovered() then
+				ig.igBeginTooltip()
+				ig.igText('Exchange two tile ranges within the texpack.\n'
+						..'The map will retain its tile indexes, so\n'
+						..'textures will appear exchanged in the map as well.')
+				ig.igEndTooltip()
+			end
+			
+			if ig.igButton('Swap in Level') then
 				for _,map in ipairs{level.fgTileMap, level.bgTileMap} do
 					for y=0,level.size[2]-1 do
 						for x=0,level.size[1]-1 do
@@ -791,13 +795,15 @@ local function guiMoveTexpackTiles(self)
 								local tx = (tile-1) % tilesWide
 								local ty = (tile-tx-1) / tilesWide
 								local update
-								if tx >= moveFromXMin and tx <= moveFromXMax
+								if self.transferTilesFromToPtr[0]
+								and tx >= moveFromXMin and tx <= moveFromXMax
 								and ty >= moveFromYMin and ty <= moveFromYMax
 								then
 									tx = tx - moveFromXMin + moveToXMin
 									ty = ty - moveFromYMin + moveToYMin
 									update = true
-								elseif tx >= moveToXMin and tx <= moveToXMax
+								elseif self.transferTilesToFromPtr[0]
+								and tx >= moveToXMin and tx <= moveToXMax
 								and ty >= moveToYMin and ty <= moveToYMax
 								then
 									tx = tx - moveToXMin + moveFromXMin
@@ -812,7 +818,14 @@ local function guiMoveTexpackTiles(self)
 					end
 				end
 			end
+			
+			if ig.igIsItemHovered() then
+				ig.igBeginTooltip()
+				ig.igText('Exchange two tile ranges of indexes within the map.')
+				ig.igEndTooltip()
+			end
 		end
+
 		ig.igEnd()
 		ig.igPopId()
 	end
