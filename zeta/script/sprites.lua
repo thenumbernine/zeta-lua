@@ -4,6 +4,8 @@ return {
 		dir='hero',
 		seqs={
 			walk={'stand','step','step2', freq=8},
+			['walk-carry']={'stand-carry','step1-carry','step2-carry', freq=8},
+			['run-carry']={'stand-carry','step1-carry','step2-carry', freq=12},
 			run={'stand','step','step2', freq=16},
 			maxrun={'stand-arms','step1-arms','step2-arms', freq=16},
 			climb={'climb1', 'climb2', freq=4},

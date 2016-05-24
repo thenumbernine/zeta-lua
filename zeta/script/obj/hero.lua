@@ -829,22 +829,31 @@ function Hero:draw(R, viewBBox, holdOveride)
 			elseif self.lookingUp then
 				self.seq = 'lookup'
 			else
-				if self.onground then
+				if true then --self.onground then
 					if not self.warping and self.inputLeftRight ~= 0 then
 						if self.inputRun then
-							if vx ~= self.maxRunVel and vx ~= -self.maxRunVel then
-								self.seq = 'run'
-							else
-								self.seq = 'maxrun'
+							do --if vx ~= self.maxRunVel and vx ~= -self.maxRunVel then
+								if self.weapon then
+									self.seq = 'run-carry'
+								else
+									self.seq = 'run'
+								end
+							--else
+							--	self.seq = 'maxrun'
 							end
 						else
-							self.seq = 'walk'
+							if self.weapon then
+								self.seq = 'walk-carry'
+							else
+								self.seq = 'walk'
+							end
 						end
 					else
 						if self.warping then
 							self.seq = 'lookup'
 						else
-							if self.holding then
+							-- TODO separate animation for holding weapon, holding item, or both
+							if self.weapon then
 								self.seq = 'stand-carry'
 							else
 								self.seq = 'stand'

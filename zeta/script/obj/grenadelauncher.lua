@@ -81,21 +81,24 @@ local Grenade = (function()
 
 	Grenade.restitution = .5
 	function Grenade:bounceOff(normal)
-		normal = vec2(table.unpack(normal)):normalize()
-		local vel = vec2(self.lastvel:unpack())
-		if vel[1] == 0 and vel[2] == 0 then
+		if self.vel[1] == 0 and self.vel[2] == 0 then
 			self.rotation = 0
 			return
 		end
-		local vDotN = vel:dot(normal)
+		normal = vec2(table.unpack(normal)):normalize()
+		local vx, vy = self.vel:unpack()
+		local vDotN = vx * normal[1] + vy * normal[2]
+		if vDotN >= 0 then return end	-- don't bounce if we're leaving the wall
 		local r = vDotN * (1 + self.restitution)
-		vel[1] = vel[1] - normal[1] * r 
-		vel[2] = vel[2] - normal[2] * r 
+		vx = vx - normal[1] * r 
+		vy = vy - normal[2] * r 
 		self.rotation = (math.random()*2-1) * 360
-		self.vel = vel
+		self.vel[1] = vx
+		self.vel[2] = vy
 		-- TODO transfer force into the object we hit?
-		-- esp if it's a grenade?
-		return true
+		-- esp if it's another grenade?
+		self.pos[1] = self.lastpos[1]
+		self.pos[2] = self.lastpos[2]
 	end
 
 	function Grenade:blast(alreadyHit)
