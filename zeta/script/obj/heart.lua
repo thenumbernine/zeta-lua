@@ -5,17 +5,34 @@ local Heart = class(Item)
 Heart.sprite = 'heart'
 Heart.invSeq = 'stand1'	-- stop flashing!
 
---[[ for drop items ...
 function Heart:init(...)
 	Heart.super.init(self, ...)
 	setTimeout(60, function() self.remove = true end)
 end
+
+-- [[ for regular touch-based items
+function Heart:touch(other)
+	if not other:isa(require 'zeta.script.obj.hero') then return true end
+	other.health = math.min(other.health + 1, other.maxHealth)
+	self:playSound('powerup')
+	self.remove = true
+end
 --]]
 
+--[[ for player to have to pick them up -- like bonus items
+function Heart:playerGrab(player)
+	player.health = math.min(player.health + 1, player.maxHealth)
+	self:playSound('powerup')
+	self.remove = true
+end
+--]]
+
+--[[ for inventory items:
 function Heart:onUse(player)
 	player.health = math.min(player.health + 1, player.maxHealth)
 	self:playSound('powerup')
 	self.remove = true
 end
+--]]
 
 return Heart

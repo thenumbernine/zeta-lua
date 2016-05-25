@@ -826,24 +826,26 @@ function Hero:draw(R, viewBBox, holdOveride)
 		else
 			if self.ducking then
 				self.seq = 'duck'
-			elseif self.lookingUp then
-				self.seq = 'lookup'
+			elseif self.lookingUp and self.inputLeftRight == 0 then
+				if self.weapon then
+					self.seq = 'lookup_carry'
+				else
+					self.seq = 'lookup'
+				end
 			else
-				if true then --self.onground then
+				if self.onground then
 					if not self.warping and self.inputLeftRight ~= 0 then
 						if self.inputRun then
 							do --if vx ~= self.maxRunVel and vx ~= -self.maxRunVel then
 								if self.weapon then
-									self.seq = 'run-carry'
+									self.seq = 'run_carry'
 								else
 									self.seq = 'run'
 								end
-							--else
-							--	self.seq = 'maxrun'
 							end
 						else
 							if self.weapon then
-								self.seq = 'walk-carry'
+								self.seq = 'walk_carry'
 							else
 								self.seq = 'walk'
 							end
@@ -854,7 +856,7 @@ function Hero:draw(R, viewBBox, holdOveride)
 						else
 							-- TODO separate animation for holding weapon, holding item, or both
 							if self.weapon then
-								self.seq = 'stand-carry'
+								self.seq = 'stand_carry'
 							else
 								self.seq = 'stand'
 							end
@@ -864,9 +866,9 @@ function Hero:draw(R, viewBBox, holdOveride)
 					if self.swimming then
 						self.seq = 'jump-arms'
 					else
-						if self.inputMaxSpeedTime >= self.timeToMaxSpeed and not self.holding then
-							self.seq = 'jump-arms'
-						else
+						--if self.inputMaxSpeedTime >= self.timeToMaxSpeed and not self.holding then
+						--	self.seq = 'jump-arms'
+						do --else
 							if self.vel[2] > 0 then
 								self.seq = 'jump'
 							else

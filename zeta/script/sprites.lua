@@ -1,14 +1,30 @@
+-- args:
+-- name, n, freq
+local function seq(args)
+	local res = {}
+	for i=0,args.n-1 do
+		table.insert(res, args.name..'_'..i)
+	end
+	res.freq = args.freq
+	return res
+end
+
 return {
 	{
 		name='hero',
 		dir='hero',
 		seqs={
-			walk={'stand','step','step2', freq=8},
-			['walk-carry']={'stand-carry','step1-carry','step2-carry', freq=8},
-			['run-carry']={'stand-carry','step1-carry','step2-carry', freq=12},
-			run={'stand','step','step2', freq=16},
-			maxrun={'stand-arms','step1-arms','step2-arms', freq=16},
+			walk=seq{name='run', n=16, freq=25},
+			walk_carry=seq{name='run_carry', n=16, freq=25},
+			run=seq{name='run', n=16, freq=50},
+			run_carry=seq{name='run_carry', n=16, freq=50},
 			climb={'climb1', 'climb2', freq=4},
+			stand={'stand_0'},
+			stand_carry={'stand_carry_0'},
+			lookup={'lookup_0'},
+			lookup_carry={'lookup_carry_0'},
+			jump={'jump_0'},
+			fall={'fall_0'},
 		},
 	},
 
