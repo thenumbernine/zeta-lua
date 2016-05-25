@@ -12,6 +12,7 @@ end
 
 -- [[ for regular touch-based items
 function Heart:touch(other)
+	if self.remove then return end
 	if not other:isa(require 'zeta.script.obj.hero') then return true end
 	other.health = math.min(other.health + 1, other.maxHealth)
 	self:playSound('powerup')
