@@ -124,4 +124,12 @@ return {
 			stand={'stand1', 'stand2', 'stand3', 'stand4', 'stand5', freq=30},
 		},
 	},
+
+	{
+		name='bat',
+		dir='bat',
+		seqs={
+			stand=seq{name='stand', n=16, freq=50},
+		},
+	},
 }

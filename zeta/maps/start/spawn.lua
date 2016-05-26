@@ -469,4 +469,12 @@
 	{color={1,0,0,1},pos={248.5,37},spawn="zeta.script.obj.keycard"},
 	{pos={77.5,249},spawn="zeta.script.obj.redgeemer"},
 	{pos={173.5,182},spawn="zeta.script.obj.terminal",text="Weapon Storage Locker"},
+	{pos={26.5,249},spawn="zeta.script.obj.bat"},
+	{pos={32.5,249},spawn="zeta.script.obj.bat"},
+	{pos={38.5,249},spawn="zeta.script.obj.bat"},
+	{pos={42.5,249},spawn="zeta.script.obj.bat"},
+	{pos={159.5,159},spawn="zeta.script.obj.bat"},
+	{pos={164.5,158},spawn="zeta.script.obj.bat"},
+	{pos={163.5,160},spawn="zeta.script.obj.bat"},
+	{pos={167.5,159},spawn="zeta.script.obj.bat"},
 }

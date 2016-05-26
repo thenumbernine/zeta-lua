@@ -9,8 +9,13 @@ local Bat = class(stateMachineBehavior(Enemy))
 Bat.sprite = 'bat'
 Bat.useGravity = false
 Bat.solidFlags = Bat.SOLID_NO
-Bat.blockFlags = Bat.SOLID_SHOT	-- not even the world?
+--Bat.blockFlags = Bat.SOLID_SHOT	-- not even the world?
 Bat.maxHealth = 5
+
+function Bat:init(...)
+	Bat.super.init(self, ...)
+	self.time = math.random() * 3
+end
 
 Bat.speed = 5
 Bat.initialState = 'searching'
@@ -18,8 +23,9 @@ Bat.searchDist = 5
 Bat.states = {
 	searching = {
 		update = function(self, dt)
-			self.vel[1] = -3 * math.sin(game.time * 1.5)
-			self.vel[2] = 3 * math.cos(game.time * 1.5)
+			self.time = self.time + dt
+			self.vel[1] = -3 * math.sin(self.time * 3)
+			self.vel[2] = 3 * math.cos(self.time * 3)
 			for _,player in ipairs(game.players) do
 				local delta = player.pos - self.pos
 				if delta:lenSq() < self.searchDist * self.searchDist then

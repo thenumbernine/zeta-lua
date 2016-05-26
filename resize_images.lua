@@ -6,8 +6,11 @@ require 'ext'
 local box2 = require 'vec.box2'
 local Image = require 'image'
 
-local dir = assert(..., "expected dir")
-print(dir)
+local dir = assert(arg[1], "expected dir")
+print('dir:',dir)
+
+local targetSize = tostring(arg[2]) or 32
+print('target size:',targetSize)
 
 local files = table()
 for f in file[dir]() do
@@ -41,7 +44,7 @@ print('copying')
 	image = image:copy{x=b.min[1], y=b.min[2], width=b.max[1]-b.min[1]+1, height=b.max[2]-b.min[2]+1}
 print('resizing')
 	local w,h = image:size()
-	image = image:resize(w/h*32,32)
+	image = image:resize(w/h*targetSize,targetSize)
 print('saving')	
 	image:save('resized/'..file)
 end
