@@ -522,7 +522,7 @@ function PickTileWindow:open(callback)
 	self.callback = callback
 end
 
-function PickTileWindow:button(tileIndex, callback)
+function PickTileWindow:openButton(hoverText, tileIndex, callback)
 	local level = game.level
 	local tex = level.texpackTex
 	local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
@@ -537,6 +537,11 @@ function PickTileWindow:button(tileIndex, callback)
 		ig.ImVec2((ti+1)/tilesWide, (tj+1)/tilesHigh))	-- uv1
 	then
 		self:open(callback)
+	end
+	if hoverText and ig.igIsItemHovered() then
+		ig.igBeginTooltip()
+		ig.igText(hoverText..': '..tileIndex)
+		ig.igEndTooltip()
 	end
 end
 
@@ -657,25 +662,21 @@ function TileExchangeWindow:update()
 		--]]
 
 		ig.igPushIdStr('Tile From')
-		editor.pickTileWindow:button(self.tileFrom, function(i)
+		editor.pickTileWindow:openButton('from', self.tileFrom, function(i)
 			self.tileFrom = i
 		end)
 		
-		ig.igSameLine()
-		ig.igText('From')
 		ig.igPopId()
 		ig.igSameLine()
 		
 		ig.igPushIdStr('Tile To')
-		editor.pickTileWindow:button(self.tileTo, function(i)
+		editor.pickTileWindow:openButton('to', self.tileTo, function(i)
 			self.tileTo = i
 		end)
-		ig.igSameLine()
-		ig.igText('To')
 		ig.igPopId()
 		
-		ig.igSliderInt('Wide', self.widthPtr, 1, 64)
-		ig.igSliderInt('High', self.heightPtr, 1, 64)
+		ig.igSliderInt('width', self.widthPtr, 1, 64)
+		ig.igSliderInt('height', self.heightPtr, 1, 64)
 		
 		ig.igCheckbox('from->to', self.transferTilesFromToPtr)
 		ig.igCheckbox('to->from', self.transferTilesToFromPtr)
@@ -1143,26 +1144,35 @@ function Editor:updateGUI()
 				self.selectedTileTypeIndex[0] = i
 			end)
 		end
-
+		
 		if (self.paintingFgTile[0] or self.paintingBgTile[0])
-		and ig.igCollapsingHeader('Tile Texture:')
+		--and ig.igCollapsingHeader('Tile Texture:')
 		then
+			ig.igSameLine()	
+			ig.igBeginChild('fg and bg tiles')
 			for _,side in ipairs{'Fg', 'Bg'} do
+				if _ > 1 then ig.igSameLine() end
+				-- why do I have to explicitly specify this child's size?
+				ig.igBeginChild('side '..side, ig.ImVec2(40, 64))
+				
 				ig.igPushIdStr(side)
 				local lc = side:lower()	
-				self.pickTileWindow:button(self['selected'..side..'TileIndex'], function(i)
+				self.pickTileWindow:openButton(side:lower()..' tile', self['selected'..side..'TileIndex'], function(i)
 					self['selected'..side..'TileIndex'] = i
 				end)
-				ig.igSameLine()
+				--ig.igSameLine()
 				if ig.igButton('Clear') then
 					self['selected'..side..'TileIndex'] = 0
 				end
 				ig.igPopId()
+			
+				ig.igEndChild()
 			end
 			if ig.igButton('Swap Fg & Bg') then
 				self.selectedFgTileIndex, self.selectedBgTileIndex =
 					self.selectedBgTileIndex, self.selectedFgTileIndex
 			end
+			ig.igEndChild()
 		end
 		
 		if self.paintingBackground[0]
@@ -1399,7 +1409,7 @@ function Editor:updateGUI()
 						self.selectedSpawnInfo[prop.k].max[1] = prop.vptr[2]
 						self.selectedSpawnInfo[prop.k].max[2] = prop.vptr[3]
 					elseif prop.fieldType[0] == fieldTypeEnum.tile then
-						self.pickTileWindow:button(prop.vptr[0], function(tileIndex)
+						self.pickTileWindow:openButton(nil, prop.vptr[0], function(tileIndex)
 							prop.vptr[0] = tileIndex
 							self.selectedSpawnInfo[prop.k] = prop.vptr[0]
 						end)
