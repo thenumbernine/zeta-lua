@@ -795,8 +795,81 @@ function TileExchangeWindow:update()
 	end
 end
 
+local ConsoleWindow = class()
 
+function ConsoleWindow:init()
+	self.opened = ffi.new('bool[1]', false)
+	self.buffer = ffi.new('char[?]', 2048)
+end
 
+function ConsoleWindow:update()
+	if ig.igButton('Console') then
+		self.opened[0] = true
+	end
+
+	if not self.opened[0] then return end
+	local bufferSize = ffi.sizeof(self.buffer)
+
+	ig.igBegin('Console', self.opened)
+	local size = ig.igGetWindowSize()
+	if ig.igInputTextMultiline('code', self.buffer, bufferSize,
+		ig.ImVec2(size.x,size.y - 56),
+		ig.ImGuiInputTextFlags_EnterReturnsTrue
+		+ ig.ImGuiInputTextFlags_AllowTabInput)
+	or ig.igButton('run code')
+	then
+		self.buffer[bufferSize-1] = 0
+		local code = ffi.string(self.buffer)
+		local sandbox = require 'base.script.singleton.sandbox'
+		print('executing...\n'..code)
+		sandbox(code)
+	end
+	ig.igSameLine()
+	if ig.igButton('clear code') then
+		ffi.fill(self.buffer, bufferSize)
+	end
+	ig.igEnd()
+end
+
+local InitFileWindow = class()
+
+function InitFileWindow:init()
+	self.opened = ffi.new('bool[1]',false)
+	-- hmm ... init files have a max size ...
+	self.buffer = ffi.new('char[?]', 65536)
+end
+
+function InitFileWindow:update()
+	if self.opened[0] then
+		local bufferSize = ffi.sizeof(self.buffer)
+		ig.igBegin('Level Init Code', self.opened)
+		local size = ig.igGetWindowSize()
+		ig.igInputTextMultiline('code', self.buffer, bufferSize,
+			ig.ImVec2(size.x, size.y - 56),	-- minus titlebar height and button height
+			ig.ImGuiInputTextFlags_AllowTabInput)
+		if ig.igButton('Save') then
+			self.buffer[bufferSize-1] = 0
+			local code = ffi.string(self.buffer)
+			local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
+			file[dir..'/init.lua'] = code
+			self.opened[0] = false
+		end
+		ig.igSameLine()
+		if ig.igButton('Cancel') then
+			self.opened[0] = false
+		end
+		ig.igEnd()
+	end
+end
+
+function InitFileWindow:open()
+	self.opened[0] = true
+	local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
+	local initFileData = file[dir..'/init.lua'] or ''
+	local bufferSize = ffi.sizeof(self.buffer)
+	ffi.copy(self.buffer, initFileData, math.min(#initFileData, bufferSize-1))
+	self.buffer[bufferSize-1] = 0
+end
 
 
 local editModeTiles = 0
@@ -847,6 +920,8 @@ function Editor:init()
 	self.pickTileWindow = PickTileWindow()
 	self.moveWorldWindow = MoveWorldWindow()
 	self.tileExchangeWindow = TileExchangeWindow(self)
+	self.consoleWindow = ConsoleWindow()
+	self.initFileWindow = InitFileWindow()
 end
 
 local colorForTypeTable = table()
@@ -953,61 +1028,6 @@ function Editor:setTileKeys()
 	end)
 end
 
-local function guiConsole(self)
-	self.consoleWindowOpenedPtr = self.consoleWindowOpenedPtr or ffi.new('bool[1]', false)
-	if ig.igButton('Console') then
-		self.consoleWindowOpenedPtr[0] = true
-	end
-	if self.consoleWindowOpenedPtr[0] then
-		ig.igBegin('Console', self.consoleWindowOpenedPtr)
-		local bufferSize = 2048
-		self.execBuffer = self.execBuffer or ffi.new('char[?]', bufferSize)
-		local size = ig.igGetWindowSize()
-		if ig.igInputTextMultiline('code', self.execBuffer, bufferSize,
-			ig.ImVec2(size.x,size.y - 56),
-			ig.ImGuiInputTextFlags_EnterReturnsTrue
-			+ ig.ImGuiInputTextFlags_AllowTabInput)
-		or ig.igButton('run code')
-		then
-			self.execBuffer[bufferSize-1] = 0
-			local code = ffi.string(self.execBuffer)
-			local sandbox = require 'base.script.singleton.sandbox'
-			print('executing...\n'..code)
-			sandbox(code)
-		end
-		ig.igSameLine()
-		if ig.igButton('clear code') then
-			ffi.fill(self.execBuffer, bufferSize)
-		end
-		ig.igEnd()
-	end
-end
-
-local function guiInitFile(self)
-	self.showInitFileWindow = self.showInitFileWindow or ffi.new('bool[1]',false)
-	self.initFileBuffer = self.initFileBuffer or ffi.new('char[?]', 65536)	-- hmm ... init files have a max size ...
-	if self.showInitFileWindow[0] then
-		local initFileBufferSize = ffi.sizeof(self.initFileBuffer)
-		ig.igBegin('Level Init Code', self.showInitFileWindow)
-		local size = ig.igGetWindowSize()
-		ig.igInputTextMultiline('code', self.initFileBuffer, initFileBufferSize,
-			ig.ImVec2(size.x, size.y - 56),	-- minus titlebar height and button height
-			ig.ImGuiInputTextFlags_AllowTabInput)
-		if ig.igButton('Save') then
-			self.initFileBuffer[initFileBufferSize-1] = 0
-			local code = ffi.string(self.initFileBuffer)
-			local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
-			file[dir..'/init.lua'] = code
-			self.showInitFileWindow[0] = false
-		end
-		ig.igSameLine()
-		if ig.igButton('Cancel') then
-			self.showInitFileWindow[0] = false
-		end
-		ig.igEnd()
-	end
-end
-
 function Editor:updateGUI()
 	ig.igText('EDITOR')
 	local level = game.level
@@ -1060,12 +1080,12 @@ function Editor:updateGUI()
 
 		self.moveWorldWindow:update()
 		self.tileExchangeWindow:update()
-		guiConsole(self)
+		self.consoleWindow:update()
 		ig.igSeparator()
 	end
 
 	-- call this before the Edit Level Init Code button so the pointer exists
-	guiInitFile(self)
+	self.initFileWindow:update()
 	if ig.igCollapsingHeader('File...') then
 		if ig.igButton('Save Map') then
 			self:saveMap()
@@ -1076,14 +1096,8 @@ function Editor:updateGUI()
 		if ig.igButton('Save Texpack') then
 			self:saveTexpack()
 		end
-
 		if ig.igButton('Edit Level Init Code') then
-			self.showInitFileWindow[0] = true
-			local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
-			local initFileData = file[dir..'/init.lua'] or ''
-			local initFileBufferSize = ffi.sizeof(self.initFileBuffer)
-			ffi.copy(self.initFileBuffer, initFileData, math.min(#initFileData, initFileBufferSize-1))
-			self.initFileBuffer[initFileBufferSize-1] = 0
+			self.initFileWindow:open()
 		end
 		ig.igSeparator()
 	end
