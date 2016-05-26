@@ -28,8 +28,10 @@ local BlasterShot = (function()
 	BlasterShot.solidFlags = BlasterShot.SOLID_SHOT	
 	BlasterShot.touchFlags = BlasterShot.SOLID_WORLD + BlasterShot.SOLID_YES + BlasterShot.SOLID_NO
 	BlasterShot.blockFlags = BlasterShot.SOLID_WORLD + BlasterShot.SOLID_YES
-	function BlasterShot:touchTile(tile, side, plane, x, y)
-		if tile and tile.name == 'beam-break' then
+	function BlasterShot:touchTile(tileType, side, plane, x, y)
+		if tileType and tileType.name == 'blaster-break' then
+			-- TODO level setter for current tile
+			-- and maybe built-in smoothing?
 			local game = require 'base.script.singleton.game'
 			local level = game.level
 			level.tileMap[(x-1)+level.size[1]*(y-1)] = 0
