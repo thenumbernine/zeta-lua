@@ -207,7 +207,17 @@ function Level:init(args)
 			end
 		end
 	end
-	
+
+	-- backup 
+	for _,field in ipairs{'tileMap', 'fgTileMap', 'bgTileMap', 'backgroundMap'} do
+		local src = self[field]
+		local srctype = tostring(ffi.typeof(src))
+		local ctype = assert(srctype:match('^ctype<(.*)>$'), "failed to deduce ctype from "..srctype)
+		local dst = ffi.new(ctype, self.size[1] * self.size[2])
+		ffi.copy(dst, src, ffi.sizeof(src))
+		self[field..'Original'] = dst 
+	end
+
 	-- hold all textures in one place
 	do
 		self.texpackFilename = modio:find('texpack.png')
@@ -282,6 +292,12 @@ function Level:init(args)
 	if mappath then initFile = mappath..'/init.lua' end
 	if args.initFile then initFile = args.initFile end
 	self.initFile = initFile
+end
+
+function Level:refreshTiles()
+	for _,field in ipairs{'tileMap', 'fgTileMap', 'bgTileMap', 'backgroundMap'} do
+		ffi.copy(self[field], self[field..'Original'], ffi.sizeof(self[field]))
+	end
 end
 
 -- return mapTile x,y for tile x,y

@@ -60,10 +60,12 @@ paintBrush = {
 				local offset = x-1 + level.size[1] * (y-1)
 				if self.paintingTileType[0] then
 					level.tileMap[offset] = self.selectedTileTypeIndex[0]
+					level.tileMapOriginal[offset] = self.selectedTileTypeIndex[0]
 				end
 				if self.paintingFgTile[0] then
 					if self.selectedFgTileIndex == 0 then
 						level.fgTileMap[offset] = 0
+						level.fgTileMapOriginal[offset] = 0
 					else
 						level.fgTileMap[offset] = 
 							1
@@ -71,6 +73,7 @@ paintBrush = {
 							+ tilesWide * (
 								((fgty+((ymax-y)%self.brushStampHeight[0]))%tilesHigh)
 							)
+						level.fgTileMapOriginal[offset] = level.fgTileMap[offset]
 					end
 				end
 				if self.paintingBgTile[0] then
@@ -80,9 +83,11 @@ paintBrush = {
 							((bgty+(ymax-y)%self.brushStampHeight[0])%tilesHigh)
 						)
 					)
+					level.bgTileMapOriginal[offset] = level.bgTileMap[offset]
 				end
 				if self.paintingBackground[0] then
 					level.backgroundMap[offset] = self.selectedBackgroundIndex[0]
+					level.backgroundMapOriginal[offset] = self.selectedBackgroundIndex[0]
 				end
 			end
 		end
@@ -109,41 +114,27 @@ Editor.brushOptions:insert{
 			alreadyHit[x..','..y] = true
 			local check = table{vec2(x,y)}
 			local offset = x-1 + level.size[1] * (y-1)
-			local maps = {
-				level.tileMap,
-				level.fgTileMap,
-				level.bgTileMap,
-				level.backgroundMap,
-			}		
-			local mask = {
-				self.paintingTileType[0],
-				self.paintingFgTile[0],
-				self.paintingBgTile[0],
-				self.paintingBackground[0],
+			local infos = {
+				{map='tileMap', mask=self.paintingTileType[0], value=self.selectedTileTypeIndex[0]},
+				{map='fgTileMap', mask=self.paintingFgTile[0], value=self.selectedFgTileIndex},
+				{map='bgTileMap', mask=self.paintingBgTile[0], value=self.selectedBgTileIndex},
+				{map='backgroundMap', mask=self.paintingBackground[0], value=self.selectedBackgroundIndex[0]},
 			}
-			local values = {
-				self.selectedTileTypeIndex[0],
-				self.selectedFgTileIndex,
-				self.selectedBgTileIndex,
-				self.selectedBackgroundIndex[0],
-			}
-			
-			local srcValues = {}
-			for i=1,#maps do
-				srcValues[i] = maps[i][offset] 
+			for _,info in ipairs(infos) do
+				info.srcValue = level[info.map][offset]
 			end
-			
+
 			local paintingAny = false
-			for i=1,#maps do
-				paintingAny = paintingAny or mask[i]
+			for _,info in ipairs(infos) do
+				paintingAny = paintingAny or info.mask 
 			end
 			if not paintingAny then return end
 			
 			local different = false
-			for i=1,#maps do
+			for _,info in ipairs(infos) do
 				-- enable/disable this test to only check maps of fill for congruency 
-				do--if mask[i] then
-					if values[i] ~= srcValues[i] then
+				do--if info.mask then
+					if info.value ~= info.srcValue then
 						different = true
 						break
 					end
@@ -157,9 +148,10 @@ Editor.brushOptions:insert{
 				if iter%100 == 0 then coroutine.yield() end
 				local pt = check:remove(1)
 				local offset = (pt[1]-1) + level.size[1] * (pt[2]-1)
-				for i=1,#maps do
-					if mask[i] then
-						maps[i][offset] = values[i]
+				for _,info in ipairs(infos) do
+					if info.mask then
+						level[info.map][offset] = info.value
+						level[info.map..'Original'][offset] = info.value
 					end
 				end
 				for side,dir in pairs(dirs) do
@@ -173,10 +165,10 @@ Editor.brushOptions:insert{
 							alreadyHit[nbhd[1]..','..nbhd[2]] = true
 							local offset = (nbhd[1]-1) + level.size[1] * (nbhd[2]-1)
 							local same = true
-							for i=1,#maps do
+							for _,info in ipairs(infos) do
 								-- enable/disable this test to only check maps of fill for congruency 
-								do--if mask[i] then
-									if srcValues[i] ~= maps[i][offset] then
+								do--if info.mask then
+									if info.srcValue ~= level[info.map][offset] then
 										same = false
 										break
 									end
@@ -208,7 +200,7 @@ do
 		
 		-- read the tile
 		local offset = x-1 + level.size[1] * (y-1)
-		local index = map[offset]
+		local index = level[map][offset]
 		if index > 0 then
 			-- see if this is a member of the current patch
 			-- ... check if it exists at the 2d offset from the selected fg tile index (check 'patchObj.patch' above)
@@ -244,7 +236,7 @@ do
 			return
 		end
 		local offset = x-1 + level.size[1] * (y-1)
-		local index = map[offset]
+		local index = level[map][offset]
 		if index == 0 then return end
 		-- what should we smooth?  diagonals for sure
 		-- and ... only the first solid?  or *any* solid?
@@ -257,7 +249,7 @@ do
 		if x < 1 or y < 1 or x > level.size[1] or y > level.size[2] then return end
 		if not self.alignPatchToAnything[0] then return isSelectedTemplate(map,x,y) end
 		local offset = x-1 + level.size[1] * (y-1)
-		local index = map[offset]
+		local index = level[map][offset]
 		return index > 0
 	end
 
@@ -286,9 +278,9 @@ do
 			if ymax > level.size[2] then ymax = level.size[2] end
 
 			for _,info in ipairs{
-				{map=level.fgTileMap, painting=self.paintingFgTile[0], selected=self.selectedFgTileIndex},
-				{map=level.bgTileMap, painting=self.paintingBgTile[0], selected=self.selectedBgTileIndex},
-				{map=level.tileMap, painting=self.paintingTileType[0], selected=self.selectedTileTypeIndex[0], drawingTileType=true},
+				{map='fgTileMap', painting=self.paintingFgTile[0], selected=self.selectedFgTileIndex},
+				{map='bgTileMap', painting=self.paintingBgTile[0], selected=self.selectedBgTileIndex},
+				{map='tileMap', painting=self.paintingTileType[0], selected=self.selectedTileTypeIndex[0], drawingTileType=true},
 			} do
 				local map = info.map
 				local painting = info.painting
@@ -302,7 +294,7 @@ do
 							if not drawingTileType then
 								if x >= 1 and y >= 1 and x <= level.size[1] and y <= level.size[2] then 
 									local offset = x-1 + level.size[1] * (y-1)
-									local index = map[offset]
+									local index = level[map][offset]
 									if index > 0 then
 										seltx = (index-1)%tilesWide
 										selty = (index-seltx-1)/tilesWide
@@ -359,7 +351,8 @@ do
 													end
 													return tileType.name == 'solid'
 												end)
-												map[x-1+level.size[1]*(y-1)] = tileTypeIndex or 0
+												level[map][x-1+level.size[1]*(y-1)] = tileTypeIndex or 0
+												level[map..'Original'][x-1+level.size[1]*(y-1)] = tileTypeIndex or 0
 												if tileTypeIndex then done = true end
 											else
 												for j,row in ipairs(patch.template) do
@@ -369,7 +362,8 @@ do
 															local tx = seltx + i-1
 															local ty = selty + j-1
 															-- ... and paint it on the foreground
-															map[x-1+level.size[1]*(y-1)] = 1+tx+tilesWide*ty
+															level[map][x-1+level.size[1]*(y-1)] = 1+tx+tilesWide*ty
+															level[map..'Original'][x-1+level.size[1]*(y-1)] = 1+tx+tilesWide*ty
 															done = true
 															break
 														end
@@ -555,8 +549,9 @@ clips tiles at borders
 local function doMoveWorld(dx, dy)
 	-- move tile stuff
 	local level = game.level
+	-- move original buffers
 	for _,key in ipairs{'tileMap', 'fgTileMap', 'bgTileMap', 'backgroundMap'} do
-		local map = level[key]
+		local map = level[key..'Original']
 		-- format will be "type[?]" for type the c type
 		local ctype = assert(tostring(ffi.typeof(map)):match('^ctype<(.*)%[%?%]>$'))
 		local newMap = ffi.new(ctype..'[?]', level.size[1] * level.size[2])
@@ -575,6 +570,7 @@ local function doMoveWorld(dx, dy)
 			end
 		end
 	end
+	level:refreshTiles()	-- copy original into current buffer
 	-- move spawninfos
 	for _,spawnInfo in ipairs(level.spawnInfos) do
 		spawnInfo.pos[1] = spawnInfo.pos[1] + dx
@@ -749,8 +745,8 @@ function TileExchangeWindow:update()
 			
 			if ig.igButton('Swap in Level') then
 				local maps = table()
-				if editor.paintingFgTile[0] then maps:insert(level.fgTileMap) end
-				if editor.paintingBgTile[0] then maps:insert(level.bgTileMap) end
+				if editor.paintingFgTile[0] then maps:insert(level.fgTileMapOriginal) end
+				if editor.paintingBgTile[0] then maps:insert(level.bgTileMapOriginal) end
 				for _,map in ipairs(maps) do
 					for y=0,level.size[2]-1 do
 						for x=0,level.size[1]-1 do
@@ -781,6 +777,7 @@ function TileExchangeWindow:update()
 						end
 					end
 				end
+				level:refreshTiles()
 			end
 			
 			if ig.igIsItemHovered() then
@@ -1583,16 +1580,16 @@ function Editor:update()
 			if self.shiftDown then
 				if x >= 1 and y >= 1 and x <= level.size[1] and y <= level.size[2] then
 					if self.paintingTileType[0] then
-						self.selectedTileTypeIndex[0] = level.tileMap[x-1+level.size[1]*(y-1)]
+						self.selectedTileTypeIndex[0] = level.tileMapOriginal[x-1+level.size[1]*(y-1)]
 					end
 					if self.paintingFgTile[0] then
-						self.selectedFgTileIndex = level.fgTileMap[x-1+level.size[1]*(y-1)]
+						self.selectedFgTileIndex = level.fgTileMapOriginal[x-1+level.size[1]*(y-1)]
 					end
 					if self.paintingBgTile[0] then
-						self.selectedBgTileIndex = level.bgTileMap[x-1+level.size[1]*(y-1)]
+						self.selectedBgTileIndex = level.bgTileMapOriginal[x-1+level.size[1]*(y-1)]
 					end
 					if self.paintingBackground[0] then
-						self.selectedBackgroundIndex[0] = level.backgroundMap[x-1+level.size[1]*(y-1)]
+						self.selectedBackgroundIndex[0] = level.backgroundMapOriginal[x-1+level.size[1]*(y-1)]
 					end
 				end
 			else
@@ -1680,10 +1677,10 @@ function Editor:update()
 						end
 						
 						for _,info in ipairs{
-							{map=level.tileMap, flag=self.paintingTileType[0]},
-							{map=level.fgTileMap, flag=self.paintingFgTile[0]},
-							{map=level.bgTileMap, flag=self.paintingBgTile[0]},
-							{map=level.backgroundMap, flag=self.paintingBackground[0]},
+							{map='tileMap', flag=self.paintingTileType[0]},
+							{map='fgTileMap', flag=self.paintingFgTile[0]},
+							{map='bgTileMap', flag=self.paintingBgTile[0]},
+							{map='backgroundMap', flag=self.paintingBackground[0]},
 						} do
 							if info.flag then
 								for y0=y1,y2,y3 do
@@ -1691,8 +1688,10 @@ function Editor:update()
 										if math.min(x0,x0+dx) >= 1 and math.max(x0,x0+dx) <= level.size[1]
 										and math.min(y0,y0+dy) >= 1 and math.max(y0,y0+dy) <= level.size[2]
 										then
-											info.map[x0+dx-1+level.size[1]*(y0+dy-1)]
-												= info.map[x0-1+level.size[1]*(y0-1)] 
+											level[info.map][x0+dx-1+level.size[1]*(y0+dy-1)]
+												= level[info.map][x0-1+level.size[1]*(y0-1)] 
+											level[info.map..'Original'][x0+dx-1+level.size[1]*(y0+dy-1)]
+												= level[info.map..'Original'][x0-1+level.size[1]*(y0-1)] 
 										end
 									end
 								end
@@ -1949,7 +1948,7 @@ function Editor:draw(R, viewBBox)
 	if self.showTileTypes[0] then
 		for y=ymin,ymax do
 			for x=xmin,xmax do
-				local tiletype = game.level.tileMap[(x-1)+game.level.size[1]*(y-1)]
+				local tiletype = game.level.tileMapOriginal[(x-1)+game.level.size[1]*(y-1)]
 				if tiletype ~= 0 then
 					local option = self.tileOptions[tiletype]
 					local tex = option and option.tex
@@ -2043,10 +2042,10 @@ function Editor:saveMap()
 	
 	-- save tile files
 	for _,info in ipairs{
-		{src=level.tileMap, dst='tile.png', size=level.size},
-		{src=level.fgTileMap, dst='tile-fg.png', size=level.size},
-		{src=level.bgTileMap, dst='tile-bg.png', size=level.size},
-		{src=level.backgroundMap, dst='background.png', size=level.size},
+		{src=level.tileMapOriginal, dst='tile.png', size=level.size},
+		{src=level.fgTileMapOriginal, dst='tile-fg.png', size=level.size},
+		{src=level.bgTileMapOriginal, dst='tile-bg.png', size=level.size},
+		{src=level.backgroundMapOriginal, dst='background.png', size=level.size},
 		{src=level.roomMap, dst='room.png', size=level.sizeInMapTiles},
 	} do
 		local w, h = info.size:unpack()
