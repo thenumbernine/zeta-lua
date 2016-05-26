@@ -746,7 +746,9 @@ function Object:move_sub(dx,dy)
 			local dontblock
 			if touchedTileType then
 --print('calling self.touchTile',self.touchTile,touchedTileType,lside,normal)
-				if self.touchTile then dontblock = self:touchTile(touchedTileType, lside, normal) or dontblock end
+				if self.touchTile then 
+					dontblock = self:touchTile(touchedTileType, lside, normal, touchedTileX, touchedTileY) or dontblock
+				end
 			end
 			
 --print('touchedObj is',touchedObj)			
