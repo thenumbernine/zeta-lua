@@ -3,6 +3,7 @@
 local BlasterShot = (function()
 	local class = require 'ext.class'
 	local Object = require 'base.script.obj.object'
+	local game = require 'base.script.singleton.game'
 	local box2 = require 'vec.box2'
 
 	local BlasterShot = class(Object)
@@ -22,7 +23,7 @@ local BlasterShot = (function()
 		self.drawMirror = self.vel[1] < 0
 		if self.drawMirror then self.angle = -self.angle end
 
-		setTimeout(.2, function() self.remove = true end)
+		self.removeTime = game.time + .2
 	end
 
 	BlasterShot.solidFlags = BlasterShot.SOLID_SHOT	
@@ -32,7 +33,6 @@ local BlasterShot = (function()
 		if tileType and tileType.name == 'blaster-break' then
 			-- TODO level setter for current tile
 			-- and maybe built-in smoothing?
-			local game = require 'base.script.singleton.game'
 			local level = game.level
 			level.tileMap[(x-1)+level.size[1]*(y-1)] = 0
 			level.fgTileMap[(x-1)+level.size[1]*(y-1)] = 0
