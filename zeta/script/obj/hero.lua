@@ -264,7 +264,6 @@ function Hero:update(dt)
 	end
 
 	-- slowly track player
-	local editor = require 'base.script.singleton.editor'
 	if self.fixedViewPos and not (editor and editor.active) then
 		self.viewPos[1] = self.fixedViewPos[1]
 		self.viewPos[2] = self.fixedViewPos[2]
@@ -366,26 +365,17 @@ function Hero:update(dt)
 	
 	-- if we pushed the pickup-item button 
 	if self.inputShootAux and not self.inputShootAuxLast then
-	
-		-- if we're already holding something -- set it down
-
-		-- pretouch is called upon movement into an object
-		-- i want this to run any time
 		for _,other in ipairs(game.objs) do
 			if other ~= self
 			and not other.remove
+			and other.playerGrab
 			and not other.heldby
-			and other.canCarry
-			and (not other.canBeHeldBy or other:canBeHeldBy(self))	-- ... refined "can carry" test
 			and self.pos[1] + self.bbox.min[1] <= other.pos[1] + other.bbox.max[1]
 			and self.pos[1] + self.bbox.max[1] >= other.pos[1] + other.bbox.min[1]
 			and self.pos[2] + self.bbox.min[2] <= other.pos[2] + other.bbox.max[2]
 			and self.pos[2] + self.bbox.max[2] >= other.pos[2] + other.bbox.min[2]
 			then
-				--self.holdCandidate = other
-				--self.holdCandidatePos = vec2(self.pos:unpack())
-				if other.playerGrab then other:playerGrab(self) end
-				--self:setHeld(other)
+				other:playerGrab(self)
 				break
 			end
 		end
@@ -635,36 +625,35 @@ function Hero:update(dt)
 	local pageUpPress = self.inputPageUp and not self.inputPageUpLast
 	local pageDownPress = self.inputPageDown and not self.inputPageDownLast
 	if pageUpPress or pageDownPress then
-		if not self.weapon or self.weapon.canStoreInv then
-			local itemIndex = self.items:find(nil, function(items)
-				return items:find(self.weapon)
-			end)
-			itemIndex = itemIndex or 0 
-		
-			local dir
-			if pageUpPress then
-				dir = 1
-			elseif pageDownPress then
-				dir = -1
-			end
+		local itemIndex = self.items:find(nil, function(items)
+			return items:find(self.weapon)
+		end)
+		itemIndex = itemIndex or 0 
 	
-			local newWeapon
-			while true do
-				itemIndex = (itemIndex + dir) % (#self.items + 1)
-		
-				-- TODO onHoldHide/onHoldShow ?
-				if itemIndex == 0 then
+		local dir
+		if pageUpPress then
+			dir = 1
+		elseif pageDownPress then
+			dir = -1
+		end
+
+		local Weapon = require 'zeta.script.obj.weapon'
+		local newWeapon
+		while true do
+			itemIndex = (itemIndex + dir) % (#self.items + 1)
+	
+			-- TODO onHoldHide/onHoldShow ?
+			if itemIndex == 0 then
+				break
+			else
+				local item = self.items[itemIndex][1]
+				if item:isa(Weapon) then
+					newWeapon = item
 					break
-				else
-					local item = self.items[itemIndex][1]
-					if item:isa(require 'zeta.script.obj.weapon') then
-						newWeapon = item
-						break
-					end
 				end
 			end
-			self.weapon = newWeapon
 		end
+		self.weapon = newWeapon
 	end
 
 	-- clean out the removed items
@@ -996,6 +985,8 @@ function Hero:findItemNamed(name)
 end
 
 -- remove an item from the inventory with matching class, or callback
+-- doesn't remove it from the game
+-- returns it
 function Hero:removeItem(removeItem, callback)
 	for i=#self.items,1,-1 do
 		local items = self.items[i]
@@ -1009,8 +1000,8 @@ function Hero:removeItem(removeItem, callback)
 			if found then
 				items:remove(j)
 				if #items == 0 then self.items:remove(i) end
-				if self.holding == item then self.holding = nil end
 				if self.weapon == item then self.weapon = nil end
+				if item.heldby == self then item.heldby = nil end
 				return item
 			end
 		end

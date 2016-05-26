@@ -98,7 +98,12 @@ local MissileLauncher = (function()
 	function MissileLauncher:canShoot(player)
 		if not MissileLauncher.super.canShoot(self, player) then return end
 		local MissileItem = require 'zeta.script.obj.missileitem'
-		return not not player:removeItem(nil, MissileItem.is)
+		local missile = player:removeItem(nil, MissileItem.is)
+		if missile then
+			missile.remove = true
+			return true
+		end
+		return false 
 	end
 
 	return MissileLauncher

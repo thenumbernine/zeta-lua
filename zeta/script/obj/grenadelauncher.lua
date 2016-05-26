@@ -168,7 +168,10 @@ local GrenadeLauncher = (function()
 		local grenade = player:removeItem(nil, GrenadeItem.is)
 		
 		-- TODO return the grenade ... and shoot it ... the same object
-		if grenade then return true end
+		if grenade then 
+			grenade.remove = true
+			return true
+		end
 		
 		-- didn't find it
 		-- TODO play out of ammo sound?

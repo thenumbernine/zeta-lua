@@ -4,8 +4,6 @@ local Hero = require 'zeta.script.obj.hero'
 local game = require 'base.script.singleton.game'
 
 local Item = class(Object)
-Item.canCarry = true
-Item.canStoreInv = true
 Item.playerHoldOffsetStanding = {.625, .125}
 Item.playerHoldOffsetDucking = {.625, -.25}
 
