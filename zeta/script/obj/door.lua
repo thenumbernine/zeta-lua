@@ -45,14 +45,24 @@ function Door:touch(other, side)
 	if not self.solid then return end
 	if not other:isa(Hero) then return end
 
+	local canOpen
 	if not self.color then
 		canOpen = true
 	else	-- door needs a color keycard...
 		local KeyCard = require 'zeta.script.obj.keycard'
-		canOpen = other.holding
-			and other.holding:isa(KeyCard)
-			and other.holding.color
-			and vec4.__eq(other.holding.color, self.color)
+		if other.items then
+			for _,items in ipairs(other.items) do
+				for _,item in ipairs(items) do
+					if item:isa(KeyCard)
+					and item.color
+					and vec4.__eq(item.color, self.color)
+					then
+						canOpen = true
+						break
+					end
+				end
+			end
+		end
 	end
 
 	if not canOpen then 

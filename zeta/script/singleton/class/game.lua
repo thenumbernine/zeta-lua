@@ -7,6 +7,21 @@ ZetaGame.gravity = -40
 --ZetaGame.maxFallVel = 16	-- slows shots as well ... hmm ... only apply this to non-shot objects?
 --ZetaGame.viewSize = 16
 
+function ZetaGame:resetObjects(...)
+	ZetaGame.super.resetObjects(self, ...)
+	self.bosses = table()
+end
+
+function ZetaGame:update(...)
+	ZetaGame.super.update(self, ...)
+
+	for i=#self.bosses,1,-1 do
+		if self.bosses[i].remove then
+			self.bosses:remove(i)
+		end
+	end
+end
+
 -- override respawn, don't respawn
 function ZetaGame:respawn(spawnInfo) end
 

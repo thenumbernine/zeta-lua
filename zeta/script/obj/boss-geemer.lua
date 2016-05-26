@@ -5,7 +5,7 @@ local game = require 'base.script.singleton.game'
 local GeemerChunk = require 'zeta.script.obj.geemerchunk'
 
 local BossGeemer = class(Geemer)
-BossGeemer.maxHealth = 20
+BossGeemer.maxHealth = 100
 BossGeemer.bbox = box2(-.9, 0, .9, 1.8)
 BossGeemer.drawScale = {2,2}
 -- todo - some parabola math to make sure they jump right on the player
@@ -13,6 +13,11 @@ BossGeemer.jumpVel = 20
 BossGeemer.runVel = 10
 BossGeemer.attackDist = 10
 BossGeemer.spawnAtFirst = true		-- dont' remove the boss before the boss is dead
+
+function BossGeemer:init(...)
+	BossGeemer.super.init(self, ...)
+	game.bosses:insert(self)
+end
 
 BossGeemer.itemDrops = nil
 function BossGeemer:calcVelForJump(delta)

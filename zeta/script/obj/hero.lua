@@ -115,7 +115,6 @@ self.holding.pos[2] = self.pos[2]
 			other.heldby:setHeld(nil)	-- out of their hands!	... without the kick too
 		end
 	
-		if other.playerGrab then other:playerGrab(self) end
 		self.holding = other
 		self.holding.heldby = self
 		self.holding.collidesWithObjects = false
@@ -368,87 +367,25 @@ function Hero:update(dt)
 	
 		-- if we're already holding something -- set it down
 
-		if self.holding then
-			
-			if game.time > self.nextHoldTime then
-				self:setHeld(nil)
-			end
-
-		-- try to pick up a tile ...
-		else
-			-- pretouch is called upon movement into an object
-			-- i want this to run any time
-			for _,other in ipairs(game.objs) do
-				if other ~= self
-				and not other.remove
-				and not other.heldby
-				and other.canCarry
-				and (not other.canBeHeldBy or other:canBeHeldBy(self))	-- ... refined "can carry" test
-				and self.pos[1] + self.bbox.min[1] <= other.pos[1] + other.bbox.max[1]
-				and self.pos[1] + self.bbox.max[1] >= other.pos[1] + other.bbox.min[1]
-				and self.pos[2] + self.bbox.min[2] <= other.pos[2] + other.bbox.max[2]
-				and self.pos[2] + self.bbox.max[2] >= other.pos[2] + other.bbox.min[2]
-				then
-					--self.holdCandidate = other
-					--self.holdCandidatePos = vec2(self.pos:unpack())
-					self:setHeld(other)
-					break
-				end
-			end
-			
-			--[[ if we're standing on something we can pick up ...
-			if self.holdCandidate 
-			and self.holdCandidatePos == self.pos
+		-- pretouch is called upon movement into an object
+		-- i want this to run any time
+		for _,other in ipairs(game.objs) do
+			if other ~= self
+			and not other.remove
+			and not other.heldby
+			and other.canCarry
+			and (not other.canBeHeldBy or other:canBeHeldBy(self))	-- ... refined "can carry" test
+			and self.pos[1] + self.bbox.min[1] <= other.pos[1] + other.bbox.max[1]
+			and self.pos[1] + self.bbox.max[1] >= other.pos[1] + other.bbox.min[1]
+			and self.pos[2] + self.bbox.min[2] <= other.pos[2] + other.bbox.max[2]
+			and self.pos[2] + self.bbox.max[2] >= other.pos[2] + other.bbox.min[2]
 			then
-				self.holdCandidate = nil
-				self.holdCandidatePos = nil
-				self:setHeld(self.holdCandidate)
+				--self.holdCandidate = other
+				--self.holdCandidatePos = vec2(self.pos:unpack())
+				if other.playerGrab then other:playerGrab(self) end
+				--self:setHeld(other)
+				break
 			end
-			--]]
-			
-			--[[
-			if self.collidedLeft and not self.touchEntLeft then
-				local x = self.pos[1] + self.bbox.min[1] - .5 - level.pos[1]
-				for y=math.floor(self.pos[2] + self.bbox.min[2] - level.pos[2]),math.floor(self.pos[2] + self.bbox.max[2] - level.pos[2]) do
-					local tile = level:getTile(x,y)
-					if tile and tile.onCarry then
-						tile:onCarry(self)
-						if self.holding then break end
-					end
-				end
-			end
-			if self.collidedRight and not self.touchEntRight then
-				local x = self.pos[1] + self.bbox.max[1] + .5 - level.pos[1]
-				for y=math.floor(self.pos[2] + self.bbox.min[2] - level.pos[2]),math.floor(self.pos[2] + self.bbox.max[2] - level.pos[2]) do
-					local tile = level:getTile(x,y)
-					if tile and tile.onCarry then
-						tile:onCarry(self)
-						if self.holding then break end
-					end
-				end
-			end
-			-- TODO evaluate from center outwards? rather than left to right
-			if self.collidedDown and not self.touchEntDown then
-				local y = self.pos[2] + self.bbox.min[1] - .5 - level.pos[1]
-				for x=math.floor(self.pos[1] + self.bbox.min[1] - level.pos[2]),math.floor(self.pos[1] + self.bbox.max[1] - level.pos[2]) do
-					local tile = level:getTile(x,y)
-					if tile and tile.onCarry then
-						tile:onCarry(self)
-						if self.holding then break end
-					end
-				end
-			end
-			if self.collidedUp and not self.touchEntUp then
-				local y = self.pos[2] + self.bbox.max[1] + .5 - level.pos[2]
-				for x=math.floor(self.pos[1] + self.bbox.min[1] - level.pos[1]),math.floor(self.pos[1] + self.bbox.max[1] - level.pos[1]) do
-					local tile = level:getTile(x,y)
-					if tile and tile.onCarry then
-						tile:onCarry(self)
-						if self.holding then break end
-					end
-				end
-			end	
-			--]]
 		end
 	end
 
@@ -692,40 +629,39 @@ function Hero:update(dt)
 
 	self:refreshSize()
 
+	-- cycle weapons
 	local pageUpPress = self.inputPageUp and not self.inputPageUpLast
 	local pageDownPress = self.inputPageDown and not self.inputPageDownLast
 	if pageUpPress or pageDownPress then
-		-- if we're holding an object that can't be stored, don't bother
-		if not self.holding or self.holding.canStoreInv then
+		if not self.weapon or self.weapon.canStoreInv then
 			local itemIndex = self.items:find(nil, function(items)
-				return items:find(self.holding)
+				return items:find(self.weapon)
 			end)
 			itemIndex = itemIndex or 0 
+		
+			local dir
 			if pageUpPress then
-				itemIndex = (itemIndex + 1) % (#self.items + 1)
+				dir = 1
 			elseif pageDownPress then
-				itemIndex = (itemIndex - 1) % (#self.items + 1)
+				dir = -1
 			end
+	
+			local newWeapon
+			while true do
+				itemIndex = (itemIndex + dir) % (#self.items + 1)
 		
-			if self.holding then
-				if self.holding.canStoreInv and self.holding.onStoreInv then
-					self.holding:onStoreInv()
+				-- TODO onHoldHide/onHoldShow ?
+				if itemIndex == 0 then
+					break
+				else
+					local item = self.items[itemIndex][1]
+					if item:isa(require 'zeta.script.obj.weapon') then
+						newWeapon = item
+						break
+					end
 				end
-				self.holding = nil
 			end
-
-			-- TODO onHoldHide/onHoldShow ?
-			local newHeld
-			if itemIndex > 0 then
-				newHeld = self.items[itemIndex][1]
-			end
-			if newHeld and newHeld.canStoreInv and newHeld.onRestoreInv then
-				newHeld:onRestoreEnv()
-			end
-
-			--self:setHeld(newHeld)
-			self.holding = newHeld
-		
+			self.weapon = newWeapon
 		end
 	end
 
@@ -742,7 +678,7 @@ function Hero:update(dt)
 		end
 	end
 
-
+	-- speaking of inventory...
 	self.inputUpDownLast = self.inputUpDown
 	self.inputRunLast = self.inputRun
 	self.inputShootLast = self.inputShoot
@@ -883,7 +819,7 @@ function Hero:draw(R, viewBBox, holdOveride)
 
 	Hero.super.draw(self, R, viewBBox, holdOverride)
 	
-	if self.weapon and self.weapon ~= self.holding then
+	if self.weapon then
 		self.weapon:updateHeldPosition(R, viewBBox, true)
 		self.weapon:draw(R, viewBBox, true)	
 	end
@@ -925,37 +861,55 @@ function Hero:drawHUD(R, viewBBox)
 	-- draw gui
 	-- health:
 	y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'HP: '..self.health .. '/' .. self.maxHealth)
-	y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'Cells: ' .. ('%.1f'):format(self.ammoCells)..'/'..self.maxAmmoCells)
-	y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'ATK +' .. self.attackStat)
-	y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'DEF +' .. self.defenseStat)
+	--y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'Cells: ' .. ('%.1f'):format(self.ammoCells)..'/'..self.maxAmmoCells)
+	--y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'ATK +' .. self.attackStat)
+	--y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'DEF +' .. self.defenseStat)
+	
 	local gl = R.gl
 
-	-- items:
-	for _,items in ipairs(self.items) do
-		y=y+1
-		local item = items[1]
+	local x = viewBBox.min[1]
+	local function drawInv(item, x, y)
 		Object.draw({
 			sprite = item.sprite,
 			seq = item.invSeq,
-			pos = {viewBBox.min[1] + 1, y-1},
+			pos = {x + 1, y - 1},
 			angle = 0,
 			color = item.color,
 			drawScale = item.drawScale,
 		}, R, viewBBox)
-		if items:find(self.holding) then
-			gui.font:drawUnpacked(viewBBox.min[1]+1.5, y, 1, -1, '<')
-		end
-		if items:find(self.weapon) then
-			gui.font:drawUnpacked(viewBBox.min[1]+2, y, 1, -1, 'W')
-		end
-		if #items > 1 then
-			gui.font:drawUnpacked(viewBBox.min[1]+2.5, y, 1, -1, 'x'..#items)
-		end
-		if item.name then
-			gui.font:drawUnpacked(viewBBox.min[1]+3.5, y, 1, -1, item.name)
+	end
+
+	y=y+1 
+	if self.weapon then
+		drawInv(self.weapon, x, y)
+	end
+
+	if game.paused and not self.popupMessageText then
+
+		gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
+		R:quad(
+			viewBBox.min[1]+.7, viewBBox.min[2]+.7,	-- pos
+			viewBBox.max[1]-viewBBox.min[1]-1.6,
+			viewBBox.max[2]-viewBBox.min[2]-1.6, -- size
+			0,0,0,0,0,
+			0,0,0,.5)
+
+		x = viewBBox.min[1] + 2
+		y = viewBBox.max[2] - 2
+		-- items:
+		for _,items in ipairs(self.items) do
+			y=y-1
+			local item = items[1]
+			drawInv(item,x,y)
+			if #items > 1 then
+				gui.font:drawUnpacked(x+2.5, y, 1, -1, 'x'..#items)
+			end
+			if item.name then
+				gui.font:drawUnpacked(x+3.5, y, 1, -1, item.name)
+			end
 		end
 	end
-	
+
 	-- popup messages from terminals, talking, etc
 	if self.popupMessageText then
 		-- TODO use something other than game.paused?
@@ -991,6 +945,24 @@ function Hero:drawHUD(R, viewBBox)
 			end
 			--end)
 		end
+	end
+
+	if #game.bosses > 0 then
+		local boss = game.bosses[1]
+		local x = .5*(viewBBox.min[1]+viewBBox.max[1])
+		local y = viewBBox.min[2]+.7
+		local w = .5*(viewBBox.max[1]-viewBBox.min[1])-.7
+		local h = 1
+		gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
+		R:quad(
+			x,y,w,h,
+			0,0,0,0,0,
+			0,0,0,.5)
+		local f = boss.health / boss.maxHealth
+		R:quad(
+			x,y,w*f,h,
+			0,0,0,0,0,
+			1,0,0,.5)
 	end
 
 	gl.glEnable(gl.GL_TEXTURE_2D)

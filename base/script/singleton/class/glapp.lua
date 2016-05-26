@@ -504,10 +504,10 @@ function GLApp:event(event, ...)
 				player.inputPageUp = press
 			elseif event.key.keysym.sym == sdl.SDLK_z then	-- inventory down
 				player.inputPageDown = press
-			elseif event.key.keysym.sym == sdl.SDLK_p then
+			elseif event.key.keysym.sym == sdl.SDLK_RETURN then
 				player.inputPause = press
-				-- i'm lazy so I'm putting this here.  
-				-- I don't know if I want to keep it here ...
+		
+				-- has to be done here, because game.pause keeps the player loop from updating
 				if player.inputPause and not player.inputPauseLast then
 					game.paused = not game.paused
 				end

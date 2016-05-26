@@ -5,12 +5,16 @@ local Heart = class(Item)
 Heart.sprite = 'heart'
 Heart.invSeq = 'stand1'	-- stop flashing!
 
+-- [[ go away after a few seconds 
 function Heart:init(...)
 	Heart.super.init(self, ...)
-	setTimeout(60, function() self.remove = true end)
+	local game = require 'base.script.singleton.game'
+	self.removeTime = game.time + 10
 end
+--]]
 
 -- [[ for regular touch-based items
+Heart.useGravity = false
 function Heart:touch(other)
 	if self.remove then return end
 	if not other:isa(require 'zeta.script.obj.hero') then return true end

@@ -19,6 +19,7 @@ function Skillsaw:playShotSound(player)
 	Skillsaw.super.playShotSound(self, player)
 end
 
+local USES_CELLS = false
 Skillsaw.powerDuration = 3	-- how long the attack lasts
 Skillsaw.rechargeDelay = 2	-- extra delay
 function Skillsaw:canShoot(player)
@@ -32,15 +33,17 @@ function Skillsaw:canShoot(player)
 	end
 
 	if not Skillsaw.super.canShoot(self, player) then return end
+if USES_CELLS then	
 	if player.ammoCells < 5 then return end
 	player.ammoCells = player.ammoCells - 5
-
+end
 	-- it takes 10 seconds to recharge 5 of 5 cells
 	-- it takes 5 seconds to recharge 5 of 10 cells
 	self.attackEndTime = game.time + self.powerDuration
 	self.nextAttackTime = game.time + self.powerDuration + self.rechargeDelay
+if USES_CELLS then
 	player.nextRechargeCellsTime = self.nextAttackTime
-	
+end	
 	return true
 end
 

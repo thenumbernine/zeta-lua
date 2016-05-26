@@ -52,11 +52,12 @@ local Blaster = (function()
 	
 	local Blaster = class(Weapon)
 	Blaster.sprite = 'blaster'
-	Blaster.shotDelay = .05
+	Blaster.shotDelay = .1
 	Blaster.shotSpeed = 35
 	Blaster.shotClass = BlasterShot
 	Blaster.shotSound = 'shoot'
 
+	--[[ if you want the blaster to use cells 
 	function Blaster:canShoot(player)
 		if not Blaster.super.canShoot(self, player) then return end
 		if player.ammoCells < 1 then return end
@@ -64,6 +65,7 @@ local Blaster = (function()
 		player.nextRechargeCellsTime = game.time + .5 
 		return true
 	end
+	--]]
 
 	return Blaster
 end)()

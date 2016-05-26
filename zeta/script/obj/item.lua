@@ -64,6 +64,7 @@ function Item:playerGrab(player, side)
 	if self.isWeapon then
 		player.weapon = self
 	end
+	self.heldby = player
 end
 
 return Item
