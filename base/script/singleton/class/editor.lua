@@ -392,6 +392,412 @@ do
 end
 Editor.brushOptions:insert(smoothBrush)
 
+
+local PickTileTypeWindow = class()
+
+function PickTileTypeWindow:init(editor)
+	self.editor = editor
+	self.opened = ffi.new('bool[1]',false)
+	self.index = 0
+end
+
+-- 'self' is only used to get the tileOptions.  otherwise this works like a checkbox
+function PickTileTypeWindow:radioButton(selected, index, callback)
+	local editor = self.editor
+	local tileTypeOption = editor.tileOptions[index]
+	local tex = tileTypeOption.tex
+	-- no-texture renders solid white.  TODO replace with a completely blank textures.
+	local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex and tex.id or 0))
+	if ig.igImageButton(
+		texIDPtr,
+		ig.ImVec2(32, 32), --size
+		ig.ImVec2(0, 1), --uv0
+		ig.ImVec2(1, 0), --uv1
+		-1,	-- frame_padding
+		index == selected and ig.ImVec4(1,1,0,.25) or ig.ImVec4(0,0,0,0))	-- bg_col
+	then
+		callback(index)
+	end
+	if ig.igIsItemHovered() then
+		ig.igBeginTooltip()
+		ig.igText('tile type: '..tileTypeOption.tileType.name)
+		ig.igEndTooltip()
+	end
+end
+
+function PickTileTypeWindow:update()
+	local editor = self.editor
+	if not self.opened[0] then return end
+	ig.igBegin('Choose Tile Type...', self.opened)
+	
+	for i=0,#editor.tileOptions do
+		ig.igPushIdStr('PickTileTypeWindow:update '..i)
+		self:radioButton(self.index, i, function(i)
+			self.callback(i)
+			self.opened[0] = false
+		end)
+		
+		-- it would be nice if wrapping controls was automatic
+		local tileOptionsWide = 5
+		if (i+1) % tileOptionsWide > 0 and i < #editor.tileOptions then 
+			ig.igSameLine()
+		end
+		ig.igPopId()
+	end
+
+	ig.igEnd()
+end
+
+function PickTileTypeWindow:open(index, callback)
+	self.opened[0] = true
+	self.index = index
+	self.callback = callback
+end
+
+function PickTileTypeWindow:openButton(index, callback)
+	local editor = self.editor
+	ig.igPushIdStr('PickTileTypeWindow:openButton')
+	self:radioButton(-1, index, function()
+		self:open(index, callback)
+	end)
+	ig.igPopId()
+end
+
+
+local PickTileWindow = class()
+
+function PickTileWindow:init()
+	self.opened = ffi.new('bool[1]',false)
+end
+
+function PickTileWindow:update()
+	if not self.opened[0] then return end
+
+	ig.igBegin('Choose Tile...', self.opened)
+
+	local tex = game.level.texpackTex
+	local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
+	local tilesWide = tex.width / 16
+	local tilesHigh = tex.height / 16
+
+	local size = ig.igGetWindowSize()
+	--ig.igPushStyleVar(ig.ImGuiStyleVar_ChildWindowRounding, 5)
+	ig.igBeginChild('choose a texture...',
+		ig.ImVec2(size.x - 30, size.y - 40),	-- size
+		false,
+		ig.ImGuiWindowFlags_HorizontalScrollbar)	--true?
+
+	local texScreenPos = ig.igGetCursorScreenPos()
+	local mousePos = ig.igGetMousePos()
+	local cursorX = mousePos.x - texScreenPos.x - 4
+	local cursorY = mousePos.y - texScreenPos.y - 4
+	local x = math.clamp(math.floor(cursorX / tex.width * tilesWide), 0, tilesWide-1)
+	local y = math.clamp(math.floor(cursorY / tex.height * tilesHigh), 0, tilesHigh-1)
+
+	if ig.igImageButton(
+		texIDPtr,
+		ig.ImVec2(tex.width, tex.height))	-- size
+	then
+		self.callback(1+x+tilesWide*y)
+		self.opened[0] = false
+	end
+	if ig.igIsItemHovered() then
+		ig.igBeginTooltip()
+		ig.igImage(
+			texIDPtr, -- tex
+			ig.ImVec2(64, 64), -- size
+			ig.ImVec2(x/tilesWide, y/tilesHigh), -- uv0
+			ig.ImVec2((x+1)/tilesWide, (y+1)/tilesHigh)) -- uv1
+		ig.igEndTooltip()
+	end
+
+	ig.igEndChild()
+	
+	ig.igEnd()
+end
+
+-- don't call open until this is called (so the ptr exists)
+function PickTileWindow:open(callback)
+	self.opened[0] = true
+	self.callback = callback
+end
+
+function PickTileWindow:button(tileIndex, callback)
+	local level = game.level
+	local tex = level.texpackTex
+	local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
+	local tilesWide = tex.width / 16
+	local tilesHigh = tex.height / 16
+	local ti = (tileIndex - 1) % tilesWide
+	local tj = (tileIndex - 1 - ti) / tilesWide
+	if ig.igImageButton(
+		texIDPtr,
+		ig.ImVec2(32,32),	-- size
+		ig.ImVec2(ti/tilesWide, tj/tilesHigh),	-- uv0
+		ig.ImVec2((ti+1)/tilesWide, (tj+1)/tilesHigh))	-- uv1
+	then
+		self:open(callback)
+	end
+end
+
+
+--[[
+move all tiles and spawnobjs in the world
+and objs while we're at it
+clips tiles at borders
+--]]
+
+local function doMoveWorld(dx, dy)
+	-- move tile stuff
+	local level = game.level
+	for _,key in ipairs{'tileMap', 'fgTileMap', 'bgTileMap', 'backgroundMap'} do
+		local map = level[key]
+		-- format will be "type[?]" for type the c type
+		local ctype = assert(tostring(ffi.typeof(map)):match('^ctype<(.*)%[%?%]>$'))
+		local newMap = ffi.new(ctype..'[?]', level.size[1] * level.size[2])
+		for j=0,level.size[2]-1 do
+			for i=0,level.size[1]-1 do
+				local x = i - dx
+				local y = j - dy
+				if x >= 0 and y >= 0 and x < level.size[1] and y < level.size[2] then
+					newMap[i+level.size[1]*j] = map[x+level.size[1]*y]
+				end
+			end
+		end
+		for j=0,level.size[2]-1 do
+			for i=0,level.size[1]-1 do
+				map[i+level.size[1]*j] = newMap[i+level.size[1]*j]
+			end
+		end
+	end
+	-- move spawninfos
+	for _,spawnInfo in ipairs(level.spawnInfos) do
+		spawnInfo.pos[1] = spawnInfo.pos[1] + dx
+		spawnInfo.pos[2] = spawnInfo.pos[2] + dy
+	end
+	-- move objects
+	for _,obj in ipairs(game.objs) do
+		obj.pos[1] = obj.pos[1] + dx
+		obj.pos[2] = obj.pos[2] + dy
+	end
+end
+
+local MoveWorldWindow = class()
+
+function MoveWorldWindow:init()
+	self.opened = ffi.new('bool[1]',false)
+	self.xPtr = ffi.new('int[1]',0)
+	self.yPtr = ffi.new('int[1]',0)
+end
+
+-- draws the button
+-- shows the popup if it's opened
+function MoveWorldWindow:update()
+	if ig.igButton('Move Whole World') then
+		self.opened[0] = true
+		self.xPtr[0] = 0
+		self.yPtr[0] = 0
+	end
+	if self.opened[0] then
+		ig.igBegin('Move World', self.opened)
+		ig.igInputInt('Move X', self.xPtr)
+		ig.igInputInt('Move Y', self.yPtr)
+		if ig.igButton('OK') then
+			doMoveWorld(self.xPtr[0], self.yPtr[0])
+			self.opened[0] = false
+		end
+		ig.igSameLine()
+		if ig.igButton('Cancel') then
+			self.opened[0] = false
+		end
+		ig.igEnd()
+	end
+end
+
+local TileExchangeWindow = class()
+
+-- needs editor for the painting flags and buttons
+function TileExchangeWindow:init(editor)
+	self.editor = editor
+	self.tileTypeFrom = 0
+	self.tileTypeTo = 0
+	self.tileFrom = 0
+	self.tileTo = 0
+	self.widthPtr = ffi.new('int[1]',1)
+	self.heightPtr = ffi.new('int[1]',1)
+	self.opened = ffi.new('bool[1]', false)
+	self.transferTilesFromToPtr = ffi.new('bool[1]', true)
+	self.transferTilesToFromPtr = ffi.new('bool[1]', true)
+end
+
+function TileExchangeWindow:update()
+	local level = game.level
+	local editor = self.editor
+	
+	if ig.igButton('Tile Exchange') then
+		self.opened[0] = true
+	end
+	
+	if self.opened[0] then
+		ig.igPushIdStr('Tile Exchange Window')
+		ig.igBegin('Tile Exchange', self.opened)
+		
+		ig.igCheckbox('Tile Type', editor.paintingTileType)
+		ig.igCheckbox('Fg Tile', editor.paintingFgTile)
+		ig.igCheckbox('Bg Tile', editor.paintingBgTile)
+
+		ig.igSeparator()
+
+		--[[ here we're going to need a button that shows a popup that lets you choose
+		ig.igPushIdStr('Tile Type From')
+		editor:tileTypeButton(self.tileTypeFrom
+		ig.igPopId()
+		ig.igPushIdStr('Tile Type To')
+		ig.igPopId()
+		--]]
+
+		ig.igPushIdStr('Tile From')
+		editor.pickTileWindow:button(self.tileFrom, function(i)
+			self.tileFrom = i
+		end)
+		
+		ig.igSameLine()
+		ig.igText('From')
+		ig.igPopId()
+		ig.igSameLine()
+		
+		ig.igPushIdStr('Tile To')
+		editor.pickTileWindow:button(self.tileTo, function(i)
+			self.tileTo = i
+		end)
+		ig.igSameLine()
+		ig.igText('To')
+		ig.igPopId()
+		
+		ig.igSliderInt('Wide', self.widthPtr, 1, 64)
+		ig.igSliderInt('High', self.heightPtr, 1, 64)
+		
+		ig.igCheckbox('from->to', self.transferTilesFromToPtr)
+		ig.igCheckbox('to->from', self.transferTilesToFromPtr)
+
+		if self.tileFrom > 0
+		and self.tileTo > 0	-- TODO handle clear for 'move to' to support selective erases
+		and (self.transferTilesFromToPtr[0] or self.transferTilesToFromPtr[0])
+		then 
+			local texpackImage = level.texpackImage
+			local width, height, channels, format = texpackImage.width, texpackImage.height, texpackImage.channels, texpackImage.format
+			local tilesWide = width / 16
+			local tilesHigh = height / 16
+			local moveFromXMin = (self.tileFrom-1) % tilesWide
+			local moveFromYMin = (self.tileFrom-moveFromXMin-1) / tilesWide
+			local moveFromXMax = moveFromXMin + self.widthPtr[0] - 1
+			local moveFromYMax = moveFromYMin + self.heightPtr[0] - 1
+			local moveToXMin = (self.tileTo-1) % tilesWide
+			local moveToYMin = (self.tileTo-moveToXMin-1) / tilesWide
+			local moveToXMax = moveToXMin + self.widthPtr[0] - 1
+			local moveToYMax = moveToYMin + self.heightPtr[0] - 1
+
+			if ig.igButton('Swap In Texpack')
+			then
+				local newTexpackImage = Image(width, height, channels, format)
+				for j=0,tilesHigh-1 do
+					for i=0,tilesWide-1 do
+						for u=0,15 do
+							for v=0,15 do
+								local dx = u + 16 * i
+								local dy = v + 16 * j
+								local sx, sy = dx, dy
+								if self.transferTilesFromToPtr[0] 
+								and i >= moveFromXMin and i <= moveFromXMax
+								and j >= moveFromYMin and j <= moveFromYMax
+								then
+									sx = u + 16 * (i - moveFromXMin + moveToXMin)
+									sy = v + 16 * (j - moveFromYMin + moveToYMin)
+								elseif self.transferTilesToFromPtr[0]
+								and i >= moveToXMin and i <= moveToXMax
+								and j >= moveToYMin and j <= moveToYMax
+								then
+									sx = u + 16 * (i - moveToXMin + moveFromXMin)
+									sy = v + 16 * (j - moveToYMin + moveFromYMin)
+								end
+								for k = 0,channels-1 do
+									newTexpackImage.buffer[k+channels*(dx+width*dy)] = 
+										texpackImage.buffer[k+channels*(sx+width*sy)]
+								end
+							end
+						end
+					end
+				end
+				level.texpackImage = newTexpackImage
+				level.texpackTex:delete()
+				level.texpackTex = Tex2D{
+					image = level.texpackImage,
+					minFilter = gl.GL_NEAREST,
+					magFilter = gl.GL_NEAREST,
+					internalFormat = gl.GL_RGBA,
+					format = gl.GL_RGBA,
+				}
+			end
+			if ig.igIsItemHovered() then
+				ig.igBeginTooltip()
+				ig.igText('Exchange two tile ranges within the texpack.\n'
+						..'The map will retain its tile indexes, so\n'
+						..'textures will appear exchanged in the map as well.')
+				ig.igEndTooltip()
+			end
+			
+			if ig.igButton('Swap in Level') then
+				local maps = table()
+				if editor.paintingFgTile[0] then maps:insert(level.fgTileMap) end
+				if editor.paintingBgTile[0] then maps:insert(level.bgTileMap) end
+				for _,map in ipairs(maps) do
+					for y=0,level.size[2]-1 do
+						for x=0,level.size[1]-1 do
+							local tile = map[x+level.size[1]*y]
+							if tile > 0 then
+								local tx = (tile-1) % tilesWide
+								local ty = (tile-tx-1) / tilesWide
+								local update
+								if self.transferTilesFromToPtr[0]
+								and tx >= moveFromXMin and tx <= moveFromXMax
+								and ty >= moveFromYMin and ty <= moveFromYMax
+								then
+									tx = tx - moveFromXMin + moveToXMin
+									ty = ty - moveFromYMin + moveToYMin
+									update = true
+								elseif self.transferTilesToFromPtr[0]
+								and tx >= moveToXMin and tx <= moveToXMax
+								and ty >= moveToYMin and ty <= moveToYMax
+								then
+									tx = tx - moveToXMin + moveFromXMin
+									ty = ty - moveToYMin + moveFromYMin
+									update = true
+								end
+								if update then
+									map[x+level.size[1]*y] = 1 + tx + tilesWide * ty
+								end
+							end
+						end
+					end
+				end
+			end
+			
+			if ig.igIsItemHovered() then
+				ig.igBeginTooltip()
+				ig.igText('Exchange two tile ranges of indexes within the map.')
+				ig.igEndTooltip()
+			end
+		end
+
+		ig.igEnd()
+		ig.igPopId()
+	end
+end
+
+
+
+
+
 local editModeTiles = 0
 local editModeObjects = 1
 local editModeRooms = 2
@@ -435,6 +841,11 @@ function Editor:init()
 	
 	self.noClipping = ffi.new('bool[1]',true)
 	self.unsmooth = ffi.new('bool[1]',false)
+
+	self.pickTileTypeWindow = PickTileTypeWindow(self)
+	self.pickTileWindow = PickTileWindow()
+	self.moveWorldWindow = MoveWorldWindow()
+	self.tileExchangeWindow = TileExchangeWindow(self)
 end
 
 local colorForTypeTable = table()
@@ -476,7 +887,9 @@ function Editor:setTileKeys()
 				local y=(j+.5)/16
 				local y = x * plane[1] + y * plane[2] + plane[3]
 				if y < 0 then return 255,255,255,255 end
-			elseif tileType.solid then
+			elseif tileType.solid
+			and tileTypeIndex == 1 -- only do solid white for the default solid tile	
+			then
 				return 255,255,255,255
 			else
 				misc = true
@@ -537,304 +950,6 @@ function Editor:setTileKeys()
 			spawnType = spawnType,
 		}
 	end)
-end
-
-local function tileButton(tileIndex)
-	local level = game.level
-	local tex = level.texpackTex
-	local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
-	local tilesWide = tex.width / 16
-	local tilesHigh = tex.height / 16
-	local ti = (tileIndex - 1) % tilesWide
-	local tj = (tileIndex - 1 - ti) / tilesWide
-	return ig.igImageButton(
-		texIDPtr,
-		ig.ImVec2(32,32),	-- size
-		ig.ImVec2(ti/tilesWide, tj/tilesHigh),	-- uv0
-		ig.ImVec2((ti+1)/tilesWide, (tj+1)/tilesHigh))	-- uv1
-end
-
-local function guiPickTileWindow(self)
-	local level = game.level
-	self.tileWindowOpenedPtr = self.tileWindowOpenedPtr or ffi.new('bool[1]',false)
-	if self.tileWindowOpenedPtr[0] then
-		ig.igBegin(
-			'Choose Tile...',
-			self.tileWindowOpenedPtr)
-			--ig.ImGuiWindowFlags_NoTitleBar)
-	
-		local tex = level.texpackTex
-		local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
-		local tilesWide = tex.width / 16
-		local tilesHigh = tex.height / 16
-
-		local size = ig.igGetWindowSize()
-		--ig.igPushStyleVar(ig.ImGuiStyleVar_ChildWindowRounding, 5)
-		ig.igBeginChild('choose a texture...',
-			ig.ImVec2(size.x - 30, size.y - 40),	-- size
-			false,
-			ig.ImGuiWindowFlags_HorizontalScrollbar)	--true?
-
-		local texScreenPos = ig.igGetCursorScreenPos()
-		local mousePos = ig.igGetMousePos()
-		local cursorX = mousePos.x - texScreenPos.x - 4
-		local cursorY = mousePos.y - texScreenPos.y - 4
-		local x = math.clamp(math.floor(cursorX / tex.width * tilesWide), 0, tilesWide-1)
-		local y = math.clamp(math.floor(cursorY / tex.height * tilesHigh), 0, tilesHigh-1)
-
-		if ig.igImageButton(
-			texIDPtr,
-			ig.ImVec2(tex.width, tex.height))	-- size
-		then
-			self.tileWindowCallback(1+x+tilesWide*y)
-			self.tileWindowOpenedPtr[0] = false
-		end
-		if ig.igIsItemHovered() then
-			ig.igBeginTooltip()
-			ig.igImage(
-				texIDPtr, -- tex
-				ig.ImVec2(64, 64), -- size
-				ig.ImVec2(x/tilesWide, y/tilesHigh), -- uv0
-				ig.ImVec2((x+1)/tilesWide, (y+1)/tilesHigh)) -- uv1
-			ig.igEndTooltip()
-		end
-
-		ig.igEndChild()
-		
-		ig.igEnd()
-	end
-end
-
--- don't call openPickTileWindow until this is called (so the ptr exists)
-local function openPickTileWindow(self,callback)
-	self.tileWindowOpenedPtr[0] = true
-	self.tileWindowCallback = callback
-end
-
---[[
-move all tiles and spawnobjs in the world
-and objs while we're at it
-clips tiles at borders
---]]
-local function doMoveWorld(dx, dy)
-	-- move tile stuff
-	local level = game.level
-	for _,key in ipairs{'tileMap', 'fgTileMap', 'bgTileMap', 'backgroundMap'} do
-		local map = level[key]
-		-- format will be "type[?]" for type the c type
-		local ctype = assert(tostring(ffi.typeof(map)):match('^ctype<(.*)%[%?%]>$'))
-		local newMap = ffi.new(ctype..'[?]', level.size[1] * level.size[2])
-		for j=0,level.size[2]-1 do
-			for i=0,level.size[1]-1 do
-				local x = i - dx
-				local y = j - dy
-				if x >= 0 and y >= 0 and x < level.size[1] and y < level.size[2] then
-					newMap[i+level.size[1]*j] = map[x+level.size[1]*y]
-				end
-			end
-		end
-		for j=0,level.size[2]-1 do
-			for i=0,level.size[1]-1 do
-				map[i+level.size[1]*j] = newMap[i+level.size[1]*j]
-			end
-		end
-	end
-	-- move spawninfos
-	for _,spawnInfo in ipairs(level.spawnInfos) do
-		spawnInfo.pos[1] = spawnInfo.pos[1] + dx
-		spawnInfo.pos[2] = spawnInfo.pos[2] + dy
-	end
-	-- move objects
-	for _,obj in ipairs(game.objs) do
-		obj.pos[1] = obj.pos[1] + dx
-		obj.pos[2] = obj.pos[2] + dy
-	end
-end
-
-local function guiMoveWorld(self)
-	self.showMoveWorldWindow = self.showMoveWorldWindow or ffi.new('bool[1]',false)
-	self.moveWorldWindowXPtr = self.moveWorldWindowXPtr or ffi.new('int[1]',0)
-	self.moveWorldWindowYPtr = self.moveWorldWindowYPtr or ffi.new('int[1]',0)
-	if ig.igButton('Move Whole World') then
-		self.showMoveWorldWindow[0] = true
-		self.moveWorldWindowXPtr[0] = 0
-		self.moveWorldWindowYPtr[0] = 0
-	end
-	if self.showMoveWorldWindow[0] then
-		ig.igBegin('Move World', self.showMoveWorldWindow)
-		ig.igInputInt('Move X', self.moveWorldWindowXPtr)
-		ig.igInputInt('Move Y', self.moveWorldWindowYPtr)
-		if ig.igButton('OK') then
-			doMoveWorld(self.moveWorldWindowXPtr[0], self.moveWorldWindowYPtr[0])
-			self.showMoveWorldWindow[0] = false
-		end
-		ig.igSameLine()
-		if ig.igButton('Cancel') then
-			self.showMoveWorldWindow[0] = false
-		end
-
-		ig.igEnd()
-	end
-end
-
-local function guiMoveTexpackTiles(self)
-	local level = game.level
-
-	self.moveTexpackTileFrom = self.moveTexpackTileFrom or 0
-	self.moveTexpackTileTo = self.moveTexpackTileTo or 0
-	self.moveTexpackTileWidth = self.moveTexpackTileWidth or ffi.new('int[1]',1)
-	self.moveTexpackTileHeight = self.moveTexpackTileHeight or ffi.new('int[1]',1)
-	self.moveTexpackTilesWindowPtr = self.moveTexpackTilesWindowPtr or ffi.new('bool[1]', false)
-	if ig.igButton('Tile Exchange') then
-		self.moveTexpackTilesWindowPtr[0] = true
-	end
-	if self.moveTexpackTilesWindowPtr[0] then
-		ig.igPushIdStr('Tile Exchange Window')
-		ig.igBegin('Tile Exchange', self.moveTexpackTilesWindowPtr)
-		ig.igPushIdStr('From')
-		if tileButton(self.moveTexpackTileFrom) then
-			openPickTileWindow(self,function(i)
-				self.moveTexpackTileFrom = i
-			end)
-		end
-		ig.igSameLine()
-		ig.igText('From')	
-		ig.igPopId()
-		ig.igSameLine()
-		
-		ig.igPushIdStr('To')
-		if tileButton(self.moveTexpackTileTo) then
-			openPickTileWindow(self,function(i)
-				self.moveTexpackTileTo = i
-			end)	
-		end
-		ig.igSameLine()
-		ig.igText('To')
-		ig.igPopId()
-		
-		ig.igSliderInt('Wide', self.moveTexpackTileWidth, 1, 64)
-		ig.igSliderInt('High', self.moveTexpackTileHeight, 1, 64)
-		
-		self.transferTilesFromToPtr = self.transferTilesFromToPtr or ffi.new('bool[1]', true)
-		self.transferTilesToFromPtr = self.transferTilesToFromPtr or ffi.new('bool[1]', true)
-		ig.igCheckbox('from->to', self.transferTilesFromToPtr)
-		ig.igCheckbox('to->from', self.transferTilesToFromPtr)
-
-		ig.igCheckbox('Fg Tile', self.paintingFgTile)
-		ig.igCheckbox('Bg Tile', self.paintingBgTile)
-
-		if self.moveTexpackTileFrom > 0
-		and self.moveTexpackTileTo > 0	-- TODO handle clear for 'move to' to support selective erases
-		and (self.transferTilesFromToPtr[0] or self.transferTilesToFromPtr[0])
-		then 
-			local texpackImage = level.texpackImage
-			local width, height, channels, format = texpackImage.width, texpackImage.height, texpackImage.channels, texpackImage.format
-			local tilesWide = width / 16
-			local tilesHigh = height / 16
-			local moveFromXMin = (self.moveTexpackTileFrom-1) % tilesWide
-			local moveFromYMin = (self.moveTexpackTileFrom-moveFromXMin-1) / tilesWide
-			local moveFromXMax = moveFromXMin + self.moveTexpackTileWidth[0] - 1
-			local moveFromYMax = moveFromYMin + self.moveTexpackTileHeight[0] - 1
-			local moveToXMin = (self.moveTexpackTileTo-1) % tilesWide
-			local moveToYMin = (self.moveTexpackTileTo-moveToXMin-1) / tilesWide
-			local moveToXMax = moveToXMin + self.moveTexpackTileWidth[0] - 1
-			local moveToYMax = moveToYMin + self.moveTexpackTileHeight[0] - 1
-
-			if ig.igButton('Swap In Texpack')
-			then
-				local newTexpackImage = Image(width, height, channels, format)
-				for j=0,tilesHigh-1 do
-					for i=0,tilesWide-1 do
-						for u=0,15 do
-							for v=0,15 do
-								local dx = u + 16 * i
-								local dy = v + 16 * j
-								local sx, sy = dx, dy
-								if self.transferTilesFromToPtr[0] 
-								and i >= moveFromXMin and i <= moveFromXMax
-								and j >= moveFromYMin and j <= moveFromYMax
-								then
-									sx = u + 16 * (i - moveFromXMin + moveToXMin)
-									sy = v + 16 * (j - moveFromYMin + moveToYMin)
-								elseif self.transferTilesToFromPtr[0]
-								and i >= moveToXMin and i <= moveToXMax
-								and j >= moveToYMin and j <= moveToYMax
-								then
-									sx = u + 16 * (i - moveToXMin + moveFromXMin)
-									sy = v + 16 * (j - moveToYMin + moveFromYMin)
-								end
-								for k = 0,channels-1 do
-									newTexpackImage.buffer[k+channels*(dx+width*dy)] = 
-										texpackImage.buffer[k+channels*(sx+width*sy)]
-								end
-							end
-						end
-					end
-				end
-				level.texpackImage = newTexpackImage
-				level.texpackTex:delete()
-				level.texpackTex = Tex2D{
-					image = level.texpackImage,
-					minFilter = gl.GL_NEAREST,
-					magFilter = gl.GL_NEAREST,
-					internalFormat = gl.GL_RGBA,
-					format = gl.GL_RGBA,
-				}
-			end
-			if ig.igIsItemHovered() then
-				ig.igBeginTooltip()
-				ig.igText('Exchange two tile ranges within the texpack.\n'
-						..'The map will retain its tile indexes, so\n'
-						..'textures will appear exchanged in the map as well.')
-				ig.igEndTooltip()
-			end
-			
-			if ig.igButton('Swap in Level') then
-				local maps = table()
-				if self.paintingFgTile[0] then maps:insert(level.fgTileMap) end
-				if self.paintingBgTile[0] then maps:insert(level.bgTileMap) end
-				for _,map in ipairs(maps) do
-					for y=0,level.size[2]-1 do
-						for x=0,level.size[1]-1 do
-							local tile = map[x+level.size[1]*y]
-							if tile > 0 then
-								local tx = (tile-1) % tilesWide
-								local ty = (tile-tx-1) / tilesWide
-								local update
-								if self.transferTilesFromToPtr[0]
-								and tx >= moveFromXMin and tx <= moveFromXMax
-								and ty >= moveFromYMin and ty <= moveFromYMax
-								then
-									tx = tx - moveFromXMin + moveToXMin
-									ty = ty - moveFromYMin + moveToYMin
-									update = true
-								elseif self.transferTilesToFromPtr[0]
-								and tx >= moveToXMin and tx <= moveToXMax
-								and ty >= moveToYMin and ty <= moveToYMax
-								then
-									tx = tx - moveToXMin + moveFromXMin
-									ty = ty - moveToYMin + moveFromYMin
-									update = true
-								end
-								if update then
-									map[x+level.size[1]*y] = 1 + tx + tilesWide * ty
-								end
-							end
-						end
-					end
-				end
-			end
-			
-			if ig.igIsItemHovered() then
-				ig.igBeginTooltip()
-				ig.igText('Exchange two tile ranges of indexes within the map.')
-				ig.igEndTooltip()
-			end
-		end
-
-		ig.igEnd()
-		ig.igPopId()
-	end
 end
 
 local function guiConsole(self)
@@ -912,7 +1027,8 @@ function Editor:updateGUI()
 		--]]
 	end
 
-	guiPickTileWindow(self)
+	self.pickTileTypeWindow:update()
+	self.pickTileWindow:update()
 
 	if ig.igCollapsingHeader('Display...') then
 		self.viewSizePtr = self.viewSizePtr or ffi.new('float[1]')
@@ -941,8 +1057,8 @@ function Editor:updateGUI()
 			end
 		end
 
-		guiMoveWorld(self)
-		guiMoveTexpackTiles(self)
+		self.moveWorldWindow:update()
+		self.tileExchangeWindow:update()
 		guiConsole(self)
 		ig.igSeparator()
 	end
@@ -1021,50 +1137,24 @@ function Editor:updateGUI()
 			end
 		end
 		if self.paintingTileType[0]
-		and ig.igCollapsingHeader('Tile Type Options:',0)
+		--and ig.igCollapsingHeader('Tile Type Options:',0)
 		then
-			for i=0,#self.tileOptions do
-				local tileOption = self.tileOptions[i]	
-				local tex = tileOption.tex
-				-- no-texture renders solid white.  TODO replace with a completely blank textures.
-				local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex and tex.id or 0))
-				if ig.igImageButton(
-					texIDPtr,
-					ig.ImVec2(32, 32), --size
-					ig.ImVec2(0, 1), --uv0
-					ig.ImVec2(1, 0), --uv1
-					-1,	-- frame_padding
-					i == self.selectedTileTypeIndex[0] and ig.ImVec4(1,1,0,.25) or ig.ImVec4(0,0,0,0))	-- bg_col
-				then
-					self.selectedTileTypeIndex[0] = i
-				end
-				if ig.igIsItemHovered() then
-					ig.igBeginTooltip()
-					ig.igText(tileOption.tileType.name)
-					ig.igEndTooltip()
-				end
-			
-				-- it would be nice if wrapping controls was automatic
-				local tileOptionsWide = 5
-				if (i+1) % tileOptionsWide > 0 and i < #self.tileOptions then 
-					ig.igSameLine()
-				end				
-			end
+			self.pickTileTypeWindow:openButton(self.selectedTileTypeIndex[0], function(i)
+				self.selectedTileTypeIndex[0] = i
+			end)
 		end
-	
+
 		if (self.paintingFgTile[0] or self.paintingBgTile[0])
 		and ig.igCollapsingHeader('Tile Texture:')
 		then
 			for _,side in ipairs{'Fg', 'Bg'} do
 				ig.igPushIdStr(side)
 				local lc = side:lower()	
-				if tileButton(self['selected'..side..'TileIndex']) then
-					openPickTileWindow(self,function(i)
-						self['selected'..side..'TileIndex'] = i
-					end)
-				end
+				self.pickTileWindow:button(self['selected'..side..'TileIndex'], function(i)
+					self['selected'..side..'TileIndex'] = i
+				end)
 				ig.igSameLine()
-				if ig.igButton('Clear '..side..' Tile') then
+				if ig.igButton('Clear') then
 					self['selected'..side..'TileIndex'] = 0
 				end
 				ig.igPopId()
@@ -1309,12 +1399,10 @@ function Editor:updateGUI()
 						self.selectedSpawnInfo[prop.k].max[1] = prop.vptr[2]
 						self.selectedSpawnInfo[prop.k].max[2] = prop.vptr[3]
 					elseif prop.fieldType[0] == fieldTypeEnum.tile then
-						if tileButton(prop.vptr[0]) then
-							openPickTileWindow(self,function(tileIndex)
-								prop.vptr[0] = tileIndex
-								self.selectedSpawnInfo[prop.k] = prop.vptr[0]
-							end)
-						end
+						self.pickTileWindow:button(prop.vptr[0], function(tileIndex)
+							prop.vptr[0] = tileIndex
+							self.selectedSpawnInfo[prop.k] = prop.vptr[0]
+						end)
 						ig.igSameLine()
 						ig.igText(prop.vptr[0]..' -- '..propTitle)
 					end

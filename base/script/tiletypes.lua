@@ -24,9 +24,4 @@ return {
 	
 	-- ladder
 	{name='ladder', canClimb = true},
-
-	-- TODO tile types for modified UV
-	-- especially for tiling stamps across a large area
-	-- placing a stamp is one thing, but prevents fillbrush from ever painting over the region again
-	-- modified UV tiles would fix that
 }
