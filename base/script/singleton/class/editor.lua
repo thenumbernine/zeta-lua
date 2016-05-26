@@ -1102,41 +1102,14 @@ function Editor:updateGUI()
 		ig.igCheckbox('Fg Tile', self.paintingFgTile)
 		ig.igCheckbox('Bg Tile', self.paintingBgTile)
 		ig.igCheckbox('Background', self.paintingBackground)
-	end
-	if self.editMode[0] == editModeMove then
-		ig.igCheckbox('Objects', self.paintingObjects)
+		if self.editMode[0] == editModeMove then
+			ig.igCheckbox('Objects', self.paintingObjects)
+		end
+		ig.igSeparator()
 	end
 
 	if self.editMode[0] == editModeTiles then
-		if ig.igCollapsingHeader('Brush Options:') then
-			for i,brushOption in ipairs(self.brushOptions) do
-				ig.igRadioButton(brushOption.name..' brush', self.selectedBrushIndex, i)
-			end
-			local brushOption = self.brushOptions[self.selectedBrushIndex[0]]
-			-- TODO fill-smoothing?  hmm, sounds dangerously contradictive
-			if brushOption == paintBrush or brushOption == smoothBrush then
-				-- TODO separate sizes for paint and smooth brushes?
-				ig.igSliderInt('Brush Width', self.brushTileWidth, 1, 20)
-				ig.igSliderInt('Brush Height', self.brushTileHeight, 1, 20)
-				if brushOption == paintBrush then
-					ig.igSliderInt('Stamp Width', self.brushStampWidth, 1, 20)
-					ig.igSliderInt('Stamp Height', self.brushStampHeight, 1, 20)
-					ig.igCheckbox('Smooth While Painting', self.smoothWhilePainting)
-					if self.smoothWhilePainting[0] then
-						ig.igSliderInt('Smooth Border', self.smoothBorder, 0, 10)
-					end
-				end
-				if brushOption == smoothBrush
-				or (brushOption == paintBrush and self.smoothWhilePainting[0])
-				then
-					ig.igCheckbox('Unsmooth', self.unsmooth)
-					ig.igCheckbox('Smooth Aligns Patch to Anything', self.alignPatchToAnything)
-					ig.igRadioButton("Smooth Tiles to 90'", self.smoothDiagLevel, 0)
-					ig.igRadioButton("Smooth Tiles to 45'", self.smoothDiagLevel, 1)
-					ig.igRadioButton("Smooth Tiles to 27'", self.smoothDiagLevel, 2)
-				end
-			end
-		end
+		
 		if self.paintingTileType[0]
 		--and ig.igCollapsingHeader('Tile Type Options:',0)
 		then
@@ -1149,7 +1122,7 @@ function Editor:updateGUI()
 		--and ig.igCollapsingHeader('Tile Texture:')
 		then
 			ig.igSameLine()	
-			ig.igBeginChild('fg and bg tiles')
+			ig.igBeginChild('fg and bg tiles', ig.ImVec2(100, 88))
 			for _,side in ipairs{'Fg', 'Bg'} do
 				if _ > 1 then ig.igSameLine() end
 				-- why do I have to explicitly specify this child's size?
@@ -1160,7 +1133,7 @@ function Editor:updateGUI()
 				self.pickTileWindow:openButton(side:lower()..' tile', self['selected'..side..'TileIndex'], function(i)
 					self['selected'..side..'TileIndex'] = i
 				end)
-				--ig.igSameLine()
+				
 				if ig.igButton('Clear') then
 					self['selected'..side..'TileIndex'] = 0
 				end
@@ -1222,6 +1195,38 @@ function Editor:updateGUI()
 				ig.igPopId()
 			end
 		end
+	
+		
+		if ig.igCollapsingHeader('Brush Options:') then
+			for i,brushOption in ipairs(self.brushOptions) do
+				ig.igRadioButton(brushOption.name..' brush', self.selectedBrushIndex, i)
+			end
+			local brushOption = self.brushOptions[self.selectedBrushIndex[0]]
+			-- TODO fill-smoothing?  hmm, sounds dangerously contradictive
+			if brushOption == paintBrush or brushOption == smoothBrush then
+				-- TODO separate sizes for paint and smooth brushes?
+				ig.igSliderInt('Brush Width', self.brushTileWidth, 1, 20)
+				ig.igSliderInt('Brush Height', self.brushTileHeight, 1, 20)
+				if brushOption == paintBrush then
+					ig.igSliderInt('Stamp Width', self.brushStampWidth, 1, 20)
+					ig.igSliderInt('Stamp Height', self.brushStampHeight, 1, 20)
+					ig.igCheckbox('Smooth While Painting', self.smoothWhilePainting)
+					if self.smoothWhilePainting[0] then
+						ig.igSliderInt('Smooth Border', self.smoothBorder, 0, 10)
+					end
+				end
+				if brushOption == smoothBrush
+				or (brushOption == paintBrush and self.smoothWhilePainting[0])
+				then
+					ig.igCheckbox('Unsmooth', self.unsmooth)
+					ig.igCheckbox('Smooth Aligns Patch to Anything', self.alignPatchToAnything)
+					ig.igRadioButton("Smooth Tiles to 90'", self.smoothDiagLevel, 0)
+					ig.igRadioButton("Smooth Tiles to 45'", self.smoothDiagLevel, 1)
+					ig.igRadioButton("Smooth Tiles to 27'", self.smoothDiagLevel, 2)
+				end
+			end
+		end
+		
 	elseif self.editMode[0] == editModeObjects then
 		if ig.igCollapsingHeader('Object Type:', ig.ImGuiTreeNodeFlags_DefaultOpen) then
 			for i,spawnOption in ipairs(self.spawnOptions) do
