@@ -468,4 +468,5 @@
 	{pos={43.5,148},spawn="zeta.script.obj.terminal",text="The creatures have invaded the base.\nThe escape rocket has left without us.\nWe can't make a stand here.\nSome of the crew are thinking there might be safety somewhere in the caves..."},
 	{color={1,0,0,1},pos={248.5,37},spawn="zeta.script.obj.keycard"},
 	{pos={77.5,249},spawn="zeta.script.obj.redgeemer"},
+	{pos={173.5,182},spawn="zeta.script.obj.terminal",text="Weapon Storage Locker"},
 }

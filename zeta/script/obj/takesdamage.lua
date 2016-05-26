@@ -1,6 +1,4 @@
 local class = require 'ext.class'
-local math = require 'ext.math'
-local Object = require 'base.script.obj.object'
 local game = require 'base.script.singleton.game'
 
 local function takesDamageBehavior(parentClass)
@@ -66,6 +64,11 @@ local function takesDamageBehavior(parentClass)
 		end
 		
 		if self.remove then self:showDamage() end
+	end
+
+	TakesDamageTemplate.painSound = 'explode1'
+	function TakesDamageTemplate:hit(damage, attacker, inflicter, side)
+		if self.painSound then self:playSound(self.painSound) end
 	end
 
 	TakesDamageTemplate.deathSound = 'explode2'

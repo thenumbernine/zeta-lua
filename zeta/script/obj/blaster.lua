@@ -29,6 +29,7 @@ local BlasterShot = (function()
 	BlasterShot.solidFlags = BlasterShot.SOLID_SHOT	
 	BlasterShot.touchFlags = BlasterShot.SOLID_WORLD + BlasterShot.SOLID_YES + BlasterShot.SOLID_NO
 	BlasterShot.blockFlags = BlasterShot.SOLID_WORLD + BlasterShot.SOLID_YES
+	
 	function BlasterShot:touchTile(tileType, side, plane, x, y)
 		if tileType and tileType.name == 'blaster-break' then
 			-- TODO level setter for current tile
@@ -36,9 +37,14 @@ local BlasterShot = (function()
 			local level = game.level
 			level.tileMap[(x-1)+level.size[1]*(y-1)] = 0
 			level.fgTileMap[(x-1)+level.size[1]*(y-1)] = 0
+		
+			self:playSound'explode1'
+			local Puff = require 'zeta.script.obj.puff'
+			Puff.puffAt(x+.5, y-.5)
 		end
 		self.remove = true
 	end
+	
 	function BlasterShot:touch(other, side)
 		if self.remove then return true end
 		if other == self.shooter then return true end	-- don't hit shooter

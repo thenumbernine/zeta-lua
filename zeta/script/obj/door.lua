@@ -1,25 +1,27 @@
 local class = require 'ext.class'
-local Object = require 'base.script.obj.object'
-local threads = require 'base.script.singleton.threads'
-local game = require 'base.script.singleton.game'
-local Hero = require 'zeta.script.obj.hero'
 local vec2 = require 'vec.vec2'
 local vec4 = require 'vec.vec4'
+local Object = require 'base.script.obj.object'
+local Hero = require 'zeta.script.obj.hero'
+local KeyCard = require 'zeta.script.obj.keycard'
+local stateMachineBehavior = require 'zeta.script.obj.statemachine'
+local threads = require 'base.script.singleton.threads'
+local game = require 'base.script.singleton.game'
+local animsys = require 'base.script.singleton.animsys'
 
-local Door = class(Object)
+local Door = class(stateMachineBehavior(Object))
 Door.sprite = 'door'
 Door.useGravity = false
 Door.pushPriority = math.huge
 Door.bbox = {min={-.5,0}, max={.5,2}}
-
 Door.timeOpening = .5
 Door.timeOpen = 3
 Door.blockTime = -1	-- last time the door was no longer blocked
+Door.initialState = 'closed'
 
 function Door:init(...)
 	Door.super.init(self, ...)
 	self.startPos = vec2(self.pos:unpack())
-	self:setState'closed'
 
 	-- room system ...
 	-- if there's a door next to this, and it's open, then open this door too
@@ -41,15 +43,12 @@ Door.blockFlags = 0
 function Door:touch(other, side)
 	if not other:isa(Hero) then return end
 	self.blockTime = game.time + 1
-	
 	if not self.solid then return end
-	if not other:isa(Hero) then return end
 
 	local canOpen
 	if not self.color then
 		canOpen = true
 	else	-- door needs a color keycard...
-		local KeyCard = require 'zeta.script.obj.keycard'
 		if other.items then
 			for _,items in ipairs(other.items) do
 				for _,item in ipairs(items) do
@@ -141,19 +140,6 @@ Door.states = {
 	},
 }
 
-function Door:setState(stateName)
-	local state = self.states[stateName] or error("failed to find state named "..tostring(stateName))
-	if self.state and self.state.exit then self.state.exit(self) end
-	self.state = state
-	if self.state and self.state.enter then self.state.enter(self) end
-end
-
-function Door:update(dt)
-	Door.super.update(self, dt)
-	if self.state and self.state.update then self.state.update(self,dt) end
-end
-
-local animsys = require 'base.script.singleton.animsys'
 function Door:draw(R, viewBBox)
 	local color = self.color
 	self.color = nil

@@ -859,7 +859,7 @@ function Hero:drawHUD(R, viewBBox)
 	local gl = R.gl
 
 	local x = viewBBox.min[1]
-	local function drawInv(item, x, y)
+	local function drawInv(item, x, y, items)
 		Object.draw({
 			sprite = item.sprite,
 			seq = item.invSeq,
@@ -868,11 +868,16 @@ function Hero:drawHUD(R, viewBBox)
 			color = item.color,
 			drawScale = item.drawScale,
 		}, R, viewBBox)
+		if items and #items > 1 then
+			gui.font:drawUnpacked(x+1.5, y, 1, -1, 'x'..#items)
+		end
 	end
 
 	y=y+1 
 	if self.weapon then
-		drawInv(self.weapon, x, y)
+		drawInv(self.weapon, x, y, select(2, self.items:find(nil, function(items)
+			return items:find(self.weapon)
+		end)))
 	end
 
 	if game.paused and not self.popupMessageText then
@@ -891,10 +896,7 @@ function Hero:drawHUD(R, viewBBox)
 		for _,items in ipairs(self.items) do
 			y=y-1
 			local item = items[1]
-			drawInv(item,x,y)
-			if #items > 1 then
-				gui.font:drawUnpacked(x+2.5, y, 1, -1, 'x'..#items)
-			end
+			drawInv(item,x,y,items)
 			if item.name then
 				gui.font:drawUnpacked(x+3.5, y, 1, -1, item.name)
 			end
