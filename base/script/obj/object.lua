@@ -917,7 +917,7 @@ function Object:draw(R, viewBBox, holdOverride)
 		rcy = rcy * sy
 	end
 
-	local cx,cy = -.5, 0
+	local cx,cy = .5, 0
 	if self.drawCenter then
 		cx, cy = table.unpack(self.drawCenter)
 	end
