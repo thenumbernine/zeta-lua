@@ -62,7 +62,7 @@ local Level = class()
 
 -- how many pixels wide and high a tile is
 -- used for sprites and for texpack tiles
-Level.tileSize = 16
+Level.tileSize = 32
 
 local function rgbAt(image, x, y)
 	local r = image.buffer[0 + image.channels * (x + image.width * y)]
