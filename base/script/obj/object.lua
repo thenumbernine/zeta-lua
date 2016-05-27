@@ -898,8 +898,9 @@ function Object:draw(R, viewBBox, holdOverride)
 
 	local sx, sy = 1, 1
 	if tex then
-		sx = tex.width/16
-		sy = tex.height/16
+		local level = game.level
+		sx = tex.width/level.tileSize
+		sy = tex.height/level.tileSize
 	end
 	if self.drawScale then
 		sx, sy = table.unpack(self.drawScale)

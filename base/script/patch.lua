@@ -93,7 +93,7 @@ local template = {
 	{'dl',	'd0',	'd1',	'dr',	'',		'',		'd3',	'',		'dl-diag45',	'dr-diag45',	'dl2-diag27', 'dl1-diag27',	'dr1-diag27',	'dr2-diag27',	},
 }
 -- map of upper-left coordinates of where valid patches are in the texpack
--- stored [x][y] where x and y are tile coordinates, i.e. pixel coordinates / 16
+-- stored [x][y] where x and y are tile coordinates, i.e. pixel coordinates / level.tileSize
 local locs = {
 	[0] = {
 		[2] = true,

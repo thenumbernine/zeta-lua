@@ -37,8 +37,8 @@ paintBrush = {
 		local level = game.level
 
 		local texpack = level.texpackTex
-		local tilesWide = texpack.width / 16
-		local tilesHigh = texpack.height / 16
+		local tilesWide = texpack.width / level.tileSize
+		local tilesHigh = texpack.height / level.tileSize
 		local fgtx = (self.selectedFgTileIndex > 0) and ((self.selectedFgTileIndex-1) % tilesWide)
 		local fgty = (self.selectedFgTileIndex > 0) and ((self.selectedFgTileIndex-fgtx-1) / tilesWide)
 		local bgtx = (self.selectedBgTileIndex > 0) and ((self.selectedBgTileIndex-1) % tilesWide)
@@ -194,7 +194,7 @@ do
 	local function isSelectedTemplate(map,x,y)
 		local level = game.level
 		local texpack = level.texpackTex
-		local tilesWide = texpack.width / 16
+		local tilesWide = texpack.width / level.tileSize
 		
 		if x < 1 or y < 1 or x > level.size[1] or y > level.size[2] then return end
 		
@@ -261,8 +261,8 @@ do
 			local level = game.level
 
 			local texpack = level.texpackTex
-			local tilesWide = texpack.width / 16
-			local tilesHigh = texpack.height / 16
+			local tilesWide = texpack.width / level.tileSize
+			local tilesHigh = texpack.height / level.tileSize
 
 			local xmin = math.floor(cx - tonumber(self.brushTileWidth[0]-1)/2) - extraBorder
 			local ymin = math.floor(cy - tonumber(self.brushTileHeight[0]-1)/2) - extraBorder
@@ -471,8 +471,8 @@ function PickTileWindow:update()
 
 	local tex = game.level.texpackTex
 	local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
-	local tilesWide = tex.width / 16
-	local tilesHigh = tex.height / 16
+	local tilesWide = tex.width / level.tileSize
+	local tilesHigh = tex.height / level.tileSize
 
 	local size = ig.igGetWindowSize()
 	--ig.igPushStyleVar(ig.ImGuiStyleVar_ChildWindowRounding, 5)
@@ -520,8 +520,8 @@ function PickTileWindow:openButton(hoverText, tileIndex, callback)
 	local level = game.level
 	local tex = level.texpackTex
 	local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
-	local tilesWide = tex.width / 16
-	local tilesHigh = tex.height / 16
+	local tilesWide = tex.width / level.tileSize
+	local tilesHigh = tex.height / level.tileSize
 	local ti = (tileIndex - 1) % tilesWide
 	local tj = (tileIndex - 1 - ti) / tilesWide
 	if ig.igImageButton(
@@ -683,8 +683,8 @@ function TileExchangeWindow:update()
 		then 
 			local texpackImage = level.texpackImage
 			local width, height, channels, format = texpackImage.width, texpackImage.height, texpackImage.channels, texpackImage.format
-			local tilesWide = width / 16
-			local tilesHigh = height / 16
+			local tilesWide = width / level.tileSize
+			local tilesHigh = height / level.tileSize
 			local moveFromXMin = (self.tileFrom-1) % tilesWide
 			local moveFromYMin = (self.tileFrom-moveFromXMin-1) / tilesWide
 			local moveFromXMax = moveFromXMin + self.widthPtr[0] - 1
@@ -699,23 +699,23 @@ function TileExchangeWindow:update()
 				local newTexpackImage = Image(width, height, channels, format)
 				for j=0,tilesHigh-1 do
 					for i=0,tilesWide-1 do
-						for u=0,15 do
-							for v=0,15 do
-								local dx = u + 16 * i
-								local dy = v + 16 * j
+						for u=0,level.tileSize-1 do
+							for v=0,level.tileSize-1 do
+								local dx = u + level.tileSize * i
+								local dy = v + level.tileSize * j
 								local sx, sy = dx, dy
 								if self.transferTilesFromToPtr[0] 
 								and i >= moveFromXMin and i <= moveFromXMax
 								and j >= moveFromYMin and j <= moveFromYMax
 								then
-									sx = u + 16 * (i - moveFromXMin + moveToXMin)
-									sy = v + 16 * (j - moveFromYMin + moveToYMin)
+									sx = u + level.tileSize * (i - moveFromXMin + moveToXMin)
+									sy = v + level.tileSize * (j - moveFromYMin + moveToYMin)
 								elseif self.transferTilesToFromPtr[0]
 								and i >= moveToXMin and i <= moveToXMax
 								and j >= moveToYMin and j <= moveToYMax
 								then
-									sx = u + 16 * (i - moveToXMin + moveFromXMin)
-									sy = v + 16 * (j - moveToYMin + moveFromYMin)
+									sx = u + level.tileSize * (i - moveToXMin + moveFromXMin)
+									sy = v + level.tileSize * (j - moveToYMin + moveFromYMin)
 								end
 								for k = 0,channels-1 do
 									newTexpackImage.buffer[k+channels*(dx+width*dy)] = 
@@ -948,7 +948,8 @@ function Editor:setTileKeys()
 	local tileTypes = table(game.levelcfg.tileTypes)
 	tileTypes[0] = {name='empty'}
 	self.tileOptions = tileTypes:map(function(tileType,tileTypeIndex)
-		local width, height = 16, 16
+		local level = game.level
+		local width, height = level.tileSize, level.tileSize
 		local channels = 4
 		local border = 1
 		local misc
@@ -956,8 +957,8 @@ function Editor:setTileKeys()
 			if i < border or j < border or i >= width-border or j >= height-border then return 0,0,0,0 end
 			local plane = tileType.plane
 			if plane then
-				local x=(i+.5)/16
-				local y=(j+.5)/16
+				local x=(i+.5)/level.tileSize
+				local y=(j+.5)/level.tileSize
 				local y = x * plane[1] + y * plane[2] + plane[3]
 				if y < 0 then return 255,255,255,255 end
 			elseif tileType.solid
@@ -1841,8 +1842,8 @@ function Editor:draw(R, viewBBox)
 				
 				local sx, sy = 1, 1
 				if tex then
-					sx = tex.width/16
-					sy = tex.height/16
+					sx = tex.width/level.tileSize
+					sy = tex.height/level.tileSize
 				end
 				if spawnClass.drawScale then
 					sx, sy = table.unpack(spawnClass.drawScale)

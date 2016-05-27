@@ -60,6 +60,10 @@ alignTileTemplates(x1,y1,x2,y2)		used by editor, by mod-specific objects, and in
 --]]
 local Level = class()
 
+-- how many pixels wide and high a tile is
+-- used for sprites and for texpack tiles
+Level.tileSize = 16
+
 local function rgbAt(image, x, y)
 	local r = image.buffer[0 + image.channels * (x + image.width * y)]
 	local g = image.buffer[1 + image.channels * (x + image.width * y)]
@@ -119,7 +123,8 @@ function Level:init(args)
 	assert(tileFile, "couldn't find tile file")
 	local tileImage = Image(tileFile)
 	self.size = vec2(tileImage:size())
-	
+
+	-- how many tiles wide and high a maptile is (which rooms are comoposed of)
 	self.mapTileSize = vec2(16, 16)
 	self.sizeInMapTiles = vec2(
 		math.ceil(self.size[1]/self.mapTileSize[1]),
@@ -432,8 +437,8 @@ function Level:draw(R, viewBBox)
 		end
 	end
 	
-	local tilesWide = self.texpackTex.width/16
-	local tilesHigh = self.texpackTex.height/16
+	local tilesWide = self.texpackTex.width / self.tileSize
+	local tilesHigh = self.texpackTex.height / self.tileSize
 	
 	self.texpackTex:bind()
 	for y=ymin,ymax do
