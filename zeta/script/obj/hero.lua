@@ -46,9 +46,6 @@ Hero.inputJumpTime = -1
 Hero.inputMaxSpeedTime = 0
 Hero.canCarry = true
 
-Hero.maxRunVel = 10
-Hero.timeToMaxSpeed = 1
-
 Hero.preTouchPriority = 10
 Hero.touchPriority = 10
 Hero.pushPriority = 1
@@ -233,7 +230,16 @@ end
 
 Hero.inputSwimTime = -1
 Hero.swimDelay = .5
-
+Hero.accel = .5
+-- horz vels
+Hero.walkVel = 7
+Hero.crawlVel = 3
+Hero.runVel = 10
+Hero.maxRunVel = 15
+Hero.timeToMaxSpeed = 1
+-- climb vel
+Hero.climbVel = 5
+	
 function Hero:update(dt)
 	local level = game.level
 
@@ -318,13 +324,6 @@ function Hero:update(dt)
 		
 	if self.isClipping then return end
 
-	-- horz vels
-	local walkVel = 5
-	local crawlVel = 3
-	local runVel = 7
-	-- climb vel
-	local climbVel = 5
-	
 	if self.climbing then
 		self.useGravity = false
 		if self.ducking then self:tryToStand() end
@@ -459,8 +458,8 @@ function Hero:update(dt)
 	--]]
 
 	if self.climbing then
-		self.vel[1] = self.inputLeftRight * climbVel
-		self.vel[2] = self.inputUpDown * climbVel
+		self.vel[1] = self.inputLeftRight * self.climbVel
+		self.vel[2] = self.inputUpDown * self.climbVel
 		if self.inputLeftRight ~= 0 then
 			self.drawMirror = self.inputLeftRight < 0
 		end
@@ -478,11 +477,11 @@ function Hero:update(dt)
 		else
 			-- movement in air or when walking
 			if self.inputLeftRight ~= 0 then
-				local moveVel = walkVel
+				local moveVel = self.walkVel
 				if self.ducking then
-					moveVel = crawlVel
+					moveVel = self.crawlVel
 				elseif self.inputRun then
-					moveVel = runVel
+					moveVel = self.runVel
 					if self.onground then
 						self.inputMaxSpeedTime = self.inputMaxSpeedTime + dt
 					end
@@ -496,10 +495,10 @@ function Hero:update(dt)
 				end
 
 				if self.inputLeftRight < 0 then
-					self.vel[1] = self.vel[1] - (self.friction + .25)
+					self.vel[1] = self.vel[1] - (self.friction + self.accel)
 					if self.vel[1] < -moveVel then self.vel[1] = -moveVel end
 				elseif self.inputLeftRight > 0 then
-					self.vel[1] = self.vel[1] + (self.friction + .25)
+					self.vel[1] = self.vel[1] + (self.friction + self.accel)
 					if self.vel[1] > moveVel then self.vel[1] = moveVel end
 				end
 				
