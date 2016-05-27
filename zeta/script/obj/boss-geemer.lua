@@ -7,7 +7,7 @@ local GeemerChunk = require 'zeta.script.obj.geemerchunk'
 local BossGeemer = class(Geemer)
 BossGeemer.maxHealth = 100
 BossGeemer.bbox = box2(-.9, 0, .9, 1.8)
-BossGeemer.drawScale = {2,2}
+BossGeemer.sprite = 'boss-geemer'
 -- todo - some parabola math to make sure they jump right on the player
 BossGeemer.jumpVel = 20
 BossGeemer.runVel = 10
