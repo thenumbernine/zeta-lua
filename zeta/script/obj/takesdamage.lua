@@ -38,13 +38,13 @@ local function takesDamageBehavior(parentClass)
 	function TakesDamageTemplate:takeDamage(damage, attacker, inflicter, side)
 		if self.invincibleEndTime >= game.time then return end
 
-		if self.modifyDamageTaken then
-			damage = self:modifyDamageTaken(damage, attacker, inflicter, side) or damage
-		end
 		if attacker.modifyDamageGiven then
 			damage = attacker:modifyDamageGiven(damage, self, inflicter, side) or damage
 		end
-	
+		if self.modifyDamageTaken then
+			damage = self:modifyDamageTaken(damage, attacker, inflicter, side) or damage
+		end	
+		
 		-- accum damage before showing it
 		self.showDamageTime = game.time + self.showDamageDelay 
 		self.showDamageAmount = self.showDamageAmount + damage

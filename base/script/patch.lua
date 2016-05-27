@@ -99,8 +99,10 @@ local locs = {
 		[2] = true,
 		[4] = true,
 		[6] = true,
-		[8] = true,
-		[10] = true,
+	},
+	[1] = {
+		[2] = true,
+		[4] = true,
 	},
 }
 
