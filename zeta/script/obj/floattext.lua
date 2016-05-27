@@ -12,7 +12,7 @@ return function(args)
 	tick.touchFlags = 0
 	tick.blockFlags = 0
 	tick.removeTime = game.time + 1
-	tick.vel[2] = 1
+	--tick.vel[2] = 1
 	tick.useGravity = false
 	tick.draw = function(self, R)
 		gui.font:drawUnpacked(self.pos[1], self.pos[2]+2, 1, -1, args.text)
