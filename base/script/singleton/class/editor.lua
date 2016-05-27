@@ -471,6 +471,7 @@ function PickTileWindow:update()
 
 	local tex = game.level.texpackTex
 	local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
+	local level = game.level
 	local tilesWide = tex.width / level.tileSize
 	local tilesHigh = tex.height / level.tileSize
 
