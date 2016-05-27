@@ -917,9 +917,16 @@ function Object:draw(R, viewBBox, holdOverride)
 		rcy = rcy * sy
 	end
 
+	local cx,cy = -.5, 0
+	if self.drawCenter then
+		cx, cy = table.unpack(self.drawCenter)
+	end
+	cx = cx * sx
+	cy = cy * sy
+
 	R:quad(
-		self.pos[1]-sx*.5,
-		self.pos[2],
+		self.pos[1] - cx,
+		self.pos[2] - cy,
 		sx, sy,
 		uBias, vBias,
 		uScale, vScale,

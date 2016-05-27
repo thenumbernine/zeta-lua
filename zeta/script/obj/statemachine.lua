@@ -3,7 +3,9 @@ local class = require 'ext.class'
 local function stateMachineBehavior(parentClass)
 	local StateMachineTemplate = class(parentClass)
 
-	--StateMachineBehavior.initialState = nil
+	--StateMachineTemplate.initialState = nil
+	StateMachineTemplate.states = {}
+	
 	function StateMachineTemplate:init(args, ...)
 		StateMachineTemplate.super.init(self, args, ...)
 		self:setState(self.initialState)

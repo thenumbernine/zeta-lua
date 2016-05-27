@@ -9,7 +9,7 @@ local Image = require 'image'
 local dir = assert(arg[1], "expected dir")
 print('dir:',dir)
 
-local targetSize = tostring(arg[2]) or 32
+local targetSize = tonumber(arg[2]) or 32
 print('target size:',targetSize)
 
 local files = table()
@@ -26,7 +26,7 @@ for _,file in ipairs(files) do
 	local image = Image(dir..'/'..file)
 	assert(image.channels == 4)	
 	
-	-- trim whitespace
+--[[ trim whitespace
 	local b = box2{min={math.huge,math.huge},max={-math.huge,-math.huge}} 
 	for y=0,image.height-1 do
 		for x=0,image.width-1 do
@@ -42,9 +42,17 @@ for _,file in ipairs(files) do
 	print('bbox',b)
 print('copying')
 	image = image:copy{x=b.min[1], y=b.min[2], width=b.max[1]-b.min[1]+1, height=b.max[2]-b.min[2]+1}
-print('resizing')
+--]]
+
+
 	local w,h = image:size()
+print('resizing')
 	image = image:resize(w/h*targetSize,targetSize)
+
+print('canvas square')
+	local w,h = image:size()
+	image = image:copy{x=w/2-targetSize/2, y=h/2-targetSize/2, width=targetSize, height=targetSize}
+
 print('saving')	
 	image:save('resized/'..file)
 end

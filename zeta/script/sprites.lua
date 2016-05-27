@@ -132,4 +132,13 @@ return {
 			stand=seq{name='stand', n=16, freq=50},
 		},
 	},
+
+	{
+		name='teeth',
+		dir='teeth',
+		seqs={
+			stand=seq{name='stand',n=1},
+			chomp=seq{name='chomp',n=12,freq=25},
+		},
+	},
 }

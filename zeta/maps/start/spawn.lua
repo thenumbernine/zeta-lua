@@ -523,4 +523,9 @@
 	{pos={230.5,142},spawn="zeta.script.obj.redgeemer"},
 	{pos={229.5,130},spawn="zeta.script.obj.redgeemer"},
 	{pos={230.5,130},spawn="zeta.script.obj.redgeemer"},
+	{pos={104.5,61},spawn="zeta.script.obj.savepoint"},
+	{pos={185.5,98},spawn="zeta.script.obj.savepoint"},
+	{pos={111.5,37},spawn="zeta.script.obj.savepoint"},
+	{pos={249.5,37},spawn="zeta.script.obj.savepoint"},
+	{pos={193.5,121},spawn="zeta.script.obj.teeth"},
 }

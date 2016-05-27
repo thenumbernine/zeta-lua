@@ -32,6 +32,7 @@ return {
 	{spawn='zeta.script.obj.geemer'},
 	{spawn='zeta.script.obj.redgeemer'},
 	{spawn='zeta.script.obj.boss-geemer'},
-	{spawn='zeta.script.obj.zoomer'},
 	{spawn='zeta.script.obj.bat'},
+	{spawn='zeta.script.obj.zoomer'},
+	{spawn='zeta.script.obj.teeth'},
 }
