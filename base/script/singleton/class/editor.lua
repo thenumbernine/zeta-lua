@@ -386,6 +386,35 @@ do
 end
 Editor.brushOptions:insert(smoothBrush)
 
+local function hoverTooltip(name)
+	if ig.igIsItemHovered() then
+		ig.igBeginTooltip()
+		ig.igText(name)
+		ig.igEndTooltip()
+	end
+end
+
+local function checkboxTooltip(name, ptr)
+	ig.igPushIdStr(name)
+	ig.igCheckbox('', ptr)
+	hoverTooltip(name)
+	ig.igPopId()
+end
+
+local function radioTooltip(name, ptr, value)
+	ig.igPushIdStr(name)
+	ig.igRadioButton('', ptr, value)
+	hoverTooltip(name)
+	ig.igPopId()
+end
+
+local function buttonTooltip(name, ptr)
+	ig.igPushIdStr(name)
+	local result = ig.igButton('', ig.ImVec2(16,16))
+	hoverTooltip(name)
+	ig.igPopId()
+	return result
+end
 
 local PickTileTypeWindow = class()
 
@@ -572,6 +601,26 @@ local function doMoveWorld(dx, dy)
 		end
 	end
 	level:refreshTiles()	-- copy original into current buffer
+	-- move rooms?
+	do
+		local map = level.roomMap
+		local ctype = assert(tostring(ffi.typeof(map)):match('^ctype<(.*)%[%?%]>$'))
+		local newMap = ffi.new(ctype..'[?]', level.sizeInMapTiles[1] * level.sizeInMapTiles[2])
+		for j = 0,level.sizeInMapTiles[2]-1 do
+			for i = 0,level.sizeInMapTiles[1]-1 do
+				local x = math.floor(i - dx/level.mapTileSize[1])
+				local y = math.floor(j - dy/level.mapTileSize[2])
+				if x >= 0 and y >= 0 and x < level.sizeInMapTiles[1] and y < level.sizeInMapTiles[2] then
+					newMap[i+level.sizeInMapTiles[1]*j] = map[x+level.sizeInMapTiles[1]*y]
+				end
+			end
+		end
+		for j=0,level.sizeInMapTiles[2]-1 do
+			for i=0,level.sizeInMapTiles[1]-1 do
+				map[i+level.sizeInMapTiles[1]*j] = newMap[i+level.sizeInMapTiles[1]*j]
+			end
+		end
+	end
 	-- move spawninfos
 	for _,spawnInfo in ipairs(level.spawnInfos) do
 		spawnInfo.pos[1] = spawnInfo.pos[1] + dx
@@ -595,7 +644,7 @@ end
 -- draws the button
 -- shows the popup if it's opened
 function MoveWorldWindow:update()
-	if ig.igButton('Move Whole World') then
+	if buttonTooltip('Move Whole World') then
 		self.opened[0] = true
 		self.xPtr[0] = 0
 		self.yPtr[0] = 0
@@ -636,7 +685,7 @@ function TileExchangeWindow:update()
 	local level = game.level
 	local editor = self.editor
 	
-	if ig.igButton('Tile Exchange') then
+	if buttonTooltip('Tile Exchange') then
 		self.opened[0] = true
 	end
 	
@@ -644,9 +693,11 @@ function TileExchangeWindow:update()
 		ig.igPushIdStr('Tile Exchange Window')
 		ig.igBegin('Tile Exchange', self.opened)
 		
-		ig.igCheckbox('Tile Type', editor.paintingTileType)
-		ig.igCheckbox('Fg Tile', editor.paintingFgTile)
-		ig.igCheckbox('Bg Tile', editor.paintingBgTile)
+		checkboxTooltip('Tile Type', editor.paintingTileType)
+		ig.igSameLine()
+		checkboxTooltip('Fg Tile', editor.paintingFgTile)
+		ig.igSameLine()
+		checkboxTooltip('Bg Tile', editor.paintingBgTile)
 
 		ig.igSeparator()
 
@@ -675,8 +726,9 @@ function TileExchangeWindow:update()
 		ig.igSliderInt('width', self.widthPtr, 1, 64)
 		ig.igSliderInt('height', self.heightPtr, 1, 64)
 		
-		ig.igCheckbox('from->to', self.transferTilesFromToPtr)
-		ig.igCheckbox('to->from', self.transferTilesToFromPtr)
+		checkboxTooltip('from->to', self.transferTilesFromToPtr)
+		ig.igSameLine()
+		checkboxTooltip('to->from', self.transferTilesToFromPtr)
 
 		if self.tileFrom > 0
 		and self.tileTo > 0	-- TODO handle clear for 'move to' to support selective erases
@@ -801,7 +853,7 @@ function ConsoleWindow:init()
 end
 
 function ConsoleWindow:update()
-	if ig.igButton('Console') then
+	if buttonTooltip('Console') then
 		self.opened[0] = true
 	end
 
@@ -1050,73 +1102,92 @@ function Editor:updateGUI()
 	self.pickTileTypeWindow:update()
 	self.pickTileWindow:update()
 
-	if ig.igCollapsingHeader('Display...') then
+	do --if ig.igCollapsingHeader('Display...') then
 		self.viewSizePtr = self.viewSizePtr or ffi.new('float[1]')
 		self.viewSizePtr[0] = game.viewSize
 		ig.igSliderFloat('zoom', self.viewSizePtr, 1, math.max(level.size:unpack()), '%.3f', 3)
 		game.viewSize = tonumber(self.viewSizePtr[0])
-		
-		ig.igCheckbox('no clipping', self.noClipping)
-
-		ig.igCheckbox('Show Tile Types', self.showTileTypes)
-		ig.igCheckbox('Show Spawn Infos', self.showSpawnInfos)
-		ig.igCheckbox('Show Objects', self.showObjects)
-		ig.igCheckbox('Show Rooms', self.showRooms)
+	
+		checkboxTooltip('no clipping', self.noClipping)
+		ig.igSameLine()
+		checkboxTooltip('Show Tile Types', self.showTileTypes)
+		ig.igSameLine()
+		checkboxTooltip('Show Spawn Infos', self.showSpawnInfos)
+		ig.igSameLine()
+		checkboxTooltip('Show Objects', self.showObjects)
+		ig.igSameLine()
+		checkboxTooltip('Show Rooms', self.showRooms)
 	end
 	
-	if ig.igCollapsingHeader('Misc...') then
-		if ig.igButton('remove all objs') then
+	do --if ig.igCollapsingHeader('Misc...') then
+		self.removeAllObjsPtr = self.removeAllObjsPtr or ffi.new('bool[1]',false)
+		checkboxTooltip('remove all objs', self.removeAllObjsPtr)
+		if self.removeAllObjsPtr[0] then
 			for _,spawnInfo in ipairs(level.spawnInfos) do
 				spawnInfo:removeObj()
 			end
 		end
-		if ig.igButton('spawn all objs') then
+		ig.igSameLine()
+		if buttonTooltip('respawn all objs') then
 			for _,spawnInfo in ipairs(level.spawnInfos) do
 				spawnInfo:removeObj()
 				spawnInfo:respawn()
 			end
 		end
 
+		ig.igSameLine()
 		self.moveWorldWindow:update()
+		ig.igSameLine()
 		self.tileExchangeWindow:update()
+		ig.igSameLine()
 		self.consoleWindow:update()
 		ig.igSeparator()
 	end
 
 	-- call this before the Edit Level Init Code button so the pointer exists
 	self.initFileWindow:update()
-	if ig.igCollapsingHeader('File...') then
-		if ig.igButton('Save Map') then
+	do --if ig.igCollapsingHeader('File...') then
+		if buttonTooltip('Save Map') then
 			self:saveMap()
 		end
-		if ig.igButton('Save Backgrounds') then
+		ig.igSameLine()
+		if buttonTooltip('Save Backgrounds') then
 			self:saveBackgrounds()
 		end
-		if ig.igButton('Save Texpack') then
+		ig.igSameLine()
+		if buttonTooltip('Save Texpack') then
 			self:saveTexpack()
 		end
-		if ig.igButton('Edit Level Init Code') then
+		ig.igSameLine()
+		if buttonTooltip('Edit Level Init Code') then
 			self.initFileWindow:open()
 		end
 		ig.igSeparator()
 	end
 
-	ig.igRadioButton('Edit Tiles', self.editMode, editModeTiles)
-	ig.igRadioButton('Edit Objects', self.editMode, editModeObjects)
-	ig.igRadioButton('Edit Rooms', self.editMode, editModeRooms)
-	ig.igRadioButton('Move Tool', self.editMode, editModeMove)
+	radioTooltip('Edit Tiles', self.editMode, editModeTiles)
+	ig.igSameLine()
+	radioTooltip('Edit Objects', self.editMode, editModeObjects)
+	ig.igSameLine()
+	radioTooltip('Edit Rooms', self.editMode, editModeRooms)
+	ig.igSameLine()
+	radioTooltip('Move Tool', self.editMode, editModeMove)
 	ig.igSeparator()
 
 	if self.editMode[0] == editModeTiles 
 	or self.editMode[0] == editModeMove
 	then
 		-- not sure if I should use brushes for painting objects or not ...
-		ig.igCheckbox('Tile Type', self.paintingTileType)
-		ig.igCheckbox('Fg Tile', self.paintingFgTile)
-		ig.igCheckbox('Bg Tile', self.paintingBgTile)
-		ig.igCheckbox('Background', self.paintingBackground)
+		checkboxTooltip('Tile Type', self.paintingTileType)
+		ig.igSameLine()
+		checkboxTooltip('Fg Tile', self.paintingFgTile)
+		ig.igSameLine()
+		checkboxTooltip('Bg Tile', self.paintingBgTile)
+		ig.igSameLine()
+		checkboxTooltip('Background', self.paintingBackground)
 		if self.editMode[0] == editModeMove then
-			ig.igCheckbox('Objects', self.paintingObjects)
+			ig.igSameLine()
+			checkboxTooltip('Objects', self.paintingObjects)
 		end
 		ig.igSeparator()
 	end
@@ -1159,8 +1230,46 @@ function Editor:updateGUI()
 					self.selectedBgTileIndex, self.selectedFgTileIndex
 			end
 			ig.igEndChild()
+		end		
+	
+		if ig.igCollapsingHeader('Brush Options:') then
+			for i,brushOption in ipairs(self.brushOptions) do
+				if i > 1 then
+					ig.igSameLine()
+				end
+				radioTooltip(brushOption.name..' brush', self.selectedBrushIndex, i)
+			end
+			local brushOption = self.brushOptions[self.selectedBrushIndex[0]]
+			-- TODO fill-smoothing?  hmm, sounds dangerously contradictive
+			if brushOption == paintBrush or brushOption == smoothBrush then
+				-- TODO separate sizes for paint and smooth brushes?
+				ig.igSliderInt('Brush Width', self.brushTileWidth, 1, 20)
+				ig.igSliderInt('Brush Height', self.brushTileHeight, 1, 20)
+				if brushOption == paintBrush then
+					ig.igSliderInt('Stamp Width', self.brushStampWidth, 1, 20)
+					ig.igSliderInt('Stamp Height', self.brushStampHeight, 1, 20)
+					if self.smoothWhilePainting[0] then
+						ig.igSliderInt('Smooth Border', self.smoothBorder, 0, 10)
+					end
+					checkboxTooltip('Smooth While Painting', self.smoothWhilePainting)
+				end
+				if brushOption == smoothBrush
+				or (brushOption == paintBrush and self.smoothWhilePainting[0])
+				then
+					ig.igSameLine()
+					checkboxTooltip('Unsmooth', self.unsmooth)
+					ig.igSameLine()
+					checkboxTooltip('Smooth Aligns Patch to Anything', self.alignPatchToAnything)
+					ig.igSameLine()
+					radioTooltip("Smooth Tiles to 90'", self.smoothDiagLevel, 0)
+					ig.igSameLine()
+					radioTooltip("Smooth Tiles to 45'", self.smoothDiagLevel, 1)
+					ig.igSameLine()
+					radioTooltip("Smooth Tiles to 27'", self.smoothDiagLevel, 2)
+				end
+			end
 		end
-		
+	
 		if self.paintingBackground[0]
 		and ig.igCollapsingHeader('Background Options:')
 		then
@@ -1209,37 +1318,8 @@ function Editor:updateGUI()
 			end
 		end
 	
-		
-		if ig.igCollapsingHeader('Brush Options:') then
-			for i,brushOption in ipairs(self.brushOptions) do
-				ig.igRadioButton(brushOption.name..' brush', self.selectedBrushIndex, i)
-			end
-			local brushOption = self.brushOptions[self.selectedBrushIndex[0]]
-			-- TODO fill-smoothing?  hmm, sounds dangerously contradictive
-			if brushOption == paintBrush or brushOption == smoothBrush then
-				-- TODO separate sizes for paint and smooth brushes?
-				ig.igSliderInt('Brush Width', self.brushTileWidth, 1, 20)
-				ig.igSliderInt('Brush Height', self.brushTileHeight, 1, 20)
-				if brushOption == paintBrush then
-					ig.igSliderInt('Stamp Width', self.brushStampWidth, 1, 20)
-					ig.igSliderInt('Stamp Height', self.brushStampHeight, 1, 20)
-					ig.igCheckbox('Smooth While Painting', self.smoothWhilePainting)
-					if self.smoothWhilePainting[0] then
-						ig.igSliderInt('Smooth Border', self.smoothBorder, 0, 10)
-					end
-				end
-				if brushOption == smoothBrush
-				or (brushOption == paintBrush and self.smoothWhilePainting[0])
-				then
-					ig.igCheckbox('Unsmooth', self.unsmooth)
-					ig.igCheckbox('Smooth Aligns Patch to Anything', self.alignPatchToAnything)
-					ig.igRadioButton("Smooth Tiles to 90'", self.smoothDiagLevel, 0)
-					ig.igRadioButton("Smooth Tiles to 45'", self.smoothDiagLevel, 1)
-					ig.igRadioButton("Smooth Tiles to 27'", self.smoothDiagLevel, 2)
-				end
-			end
-		end
-		
+	
+
 	elseif self.editMode[0] == editModeObjects then
 		if ig.igCollapsingHeader('Object Type:', ig.ImGuiTreeNodeFlags_DefaultOpen) then
 			for i,spawnOption in ipairs(self.spawnOptions) do
@@ -1388,14 +1468,14 @@ function Editor:updateGUI()
 					
 						ig.igSameLine()
 						local bool = ffi.new('bool[1]', prop.multiLineVisible or false)
-						ig.igCheckbox('...', bool)
+						checkboxTooltip('...', bool)
 						prop.multiLineVisible = bool[0]
 			
 					elseif prop.fieldType[0] == fieldTypeEnum.number then
 						ig.igInputFloat(propTitle, prop.vptr) 
 						self.selectedSpawnInfo[prop.k] = prop.vptr[0]
 					elseif prop.fieldType[0] == fieldTypeEnum.boolean then
-						ig.igCheckbox(propTitle, prop.vptr)
+						checkboxTooltip(propTitle, prop.vptr)
 						self.selectedSpawnInfo[prop.k] = prop.vptr[0]
 					elseif prop.fieldType[0] == fieldTypeEnum.vec2 then
 						ig.igInputFloat2(propTitle, prop.vptr)
@@ -1411,7 +1491,7 @@ function Editor:updateGUI()
 						in the end ... just use spawninfos for positions whenever possible
 						ig.igSameLine()
 						local bool = ffi.new('bool[1]', prop.isAbsolute)
-						ig.igCheckbox('abs', bool)
+						checkboxTooltip('abs', bool)
 						prop.isAbsolute = bool
 						--]]
 					elseif prop.fieldType[0] == fieldTypeEnum.vec4 then

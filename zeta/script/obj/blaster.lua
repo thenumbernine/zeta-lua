@@ -66,7 +66,7 @@ local Blaster = (function()
 	
 	local Blaster = class(Weapon)
 	Blaster.sprite = 'blaster'
-	Blaster.shotDelay = .3
+	Blaster.shotDelay = .1
 	Blaster.shotSpeed = 35
 	Blaster.shotClass = BlasterShot
 	Blaster.shotSound = 'shoot'

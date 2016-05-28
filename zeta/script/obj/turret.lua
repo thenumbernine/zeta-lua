@@ -13,6 +13,7 @@ Turret.rotCenter = {.5, .5}
 Turret.angle = 90
 Turret.circuit = 'Main'
 
+Turret.stuckAngle = 0
 function Turret:init(...)
 	Turret.super.init(self, ...)
 

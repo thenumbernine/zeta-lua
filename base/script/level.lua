@@ -63,6 +63,7 @@ local Level = class()
 -- how many pixels wide and high a tile is
 -- used for sprites and for texpack tiles
 Level.tileSize = 32
+Level.mapTileSize = vec2(32, 32)
 
 local function rgbAt(image, x, y)
 	local r = image.buffer[0 + image.channels * (x + image.width * y)]
@@ -125,7 +126,6 @@ function Level:init(args)
 	self.size = vec2(tileImage:size())
 
 	-- how many tiles wide and high a maptile is (which rooms are comoposed of)
-	self.mapTileSize = vec2(16, 16)
 	self.sizeInMapTiles = vec2(
 		math.ceil(self.size[1]/self.mapTileSize[1]),
 		math.ceil(self.size[2]/self.mapTileSize[2]))

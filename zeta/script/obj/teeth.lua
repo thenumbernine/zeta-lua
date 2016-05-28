@@ -49,4 +49,11 @@ Teeth.states.mad = {
 	end,
 }
 
+Teeth.damage = 1
+function Teeth:touch(other,side)
+	if other == self.madAt then
+		other:takeDamage(self.damage, self, self, side)
+	end
+end
+
 return Teeth

@@ -291,12 +291,18 @@ function Hero:update(dt)
 			
 			local pushedRight, pushedLeft
 			if different.right then
-				targetPosX = math.min(targetPosX, roomPosX * level.mapTileSize[1] + 1 - viewSizeX)
-				pushedRight = true
+				local xmax = roomPosX * level.mapTileSize[1] + 1 - viewSizeX
+				if targetPosX > xmax then
+					targetPosX = xmax
+					pushedRight = true
+				end
 			end
 			if different.left then
-				targetPosX = math.max(targetPosX, (roomPosX-1) * level.mapTileSize[1] + 1 + viewSizeX)
-				pushedLeft = true
+				local xmin = (roomPosX-1) * level.mapTileSize[1] + 1 + viewSizeX
+				if targetPosX < xmin then
+					targetPosX = xmin
+					pushedLeft = true
+				end
 			end
 			if pushedRight and pushedLeft then
 				targetPosX = (roomPosX - .5) * level.mapTileSize[1] + 1
@@ -304,12 +310,18 @@ function Hero:update(dt)
 			
 			local pushedUp, pushedDown
 			if different.up then
-				targetPosY = math.min(targetPosY, roomPosY * level.mapTileSize[2] + 1 - viewSizeY)
-				pushedUp = true
+				local ymax = roomPosY * level.mapTileSize[2] + 1 - viewSizeY
+				if targetPosY > ymax then
+					targetPosY = ymax
+					pushedUp = true
+				end
 			end
 			if different.down then
-				targetPosY = math.max(targetPosY, (roomPosY-1) * level.mapTileSize[2] + 1 + viewSizeY)
-				pushedDown = true
+				local ymin = (roomPosY-1) * level.mapTileSize[2] + 1 + viewSizeY
+				if targetPosY < ymin then
+					targetPosY = ymin 
+					pushedDown = true
+				end
 			end
 			if pushedUp and pushedDown then
 				targetPosY = (roomPosY - .5) * level.mapTileSize[2] + 1

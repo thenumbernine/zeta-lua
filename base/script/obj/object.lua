@@ -778,7 +778,8 @@ function Object:move_sub(dx,dy)
 			if not dontblock
 			-- if we're supposed to be blocked by this entity
 			and (bit.band(self.blockFlags, touchedSolidFlags) ~= 0
-			or bit.band(touchedBlockFlags, self.solidFlags) ~= 0)
+				--or bit.band(touchedBlockFlags, self.solidFlags) ~= 0
+			)
 			then
 				-- TODO push objects out of the way
 --print('setting collision flags for side',side,'for obj',touchedObj)
