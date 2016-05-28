@@ -19,11 +19,12 @@ return {
 	{spawn='zeta.script.obj.heart'},
 	{spawn='zeta.script.obj.grenadeitem'},
 	{spawn='zeta.script.obj.missileitem'},
+	{spawn='zeta.script.obj.cells'},
 	{spawn='zeta.script.obj.attackbonus'},
 	{spawn='zeta.script.obj.defensebonus'},
 	{spawn='zeta.script.obj.energytank'},
 	{spawn='zeta.script.obj.speedbooster'},
-	{spawn='zeta.script.obj.cells'},
+	{spawn='zeta.script.obj.walljump'},
 	-- monsters
 		-- mining base
 	{spawn='zeta.script.obj.turret'},

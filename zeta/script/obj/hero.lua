@@ -240,7 +240,7 @@ Hero.timeToMaxSpeed = 1
 Hero.climbVel = 5
 
 Hero.maxRunVel = 15
-Hero.speedBoostMaxRunVel
+Hero.speedBoostMaxRunVel = 30
 function Hero:getMaxRunVel()
 	local SpeedBooster = require 'zeta.script.obj.speedbooster'
 	for _,items in ipairs(self.items) do
@@ -251,6 +251,7 @@ function Hero:getMaxRunVel()
 	return self.maxRunVel
 end
 
+Hero.jumpDuration = .15
 function Hero:update(dt)
 	local level = game.level
 
@@ -579,7 +580,33 @@ function Hero:update(dt)
 			end
 		end
 	end
-	
+
+	-- walljump?
+	self.wallJumpEndTime = self.wallJumpEndTime or -1
+	if not self.onground
+	and (self.collidedLeft or self.collidedRight)
+	then
+		self.vel[2] = self.vel[2] * .5
+		local WallJump = require 'zeta.script.obj.walljump'
+		if self:findItem(nil, WallJump.is) then
+			self.wallJumpEndTime = game.time + .15
+		end
+	end
+
+	-- then start the touch-n-go state
+	if not self.ongroundLast
+	and self.inputJump
+	and not self.inputJumpLast
+	and game.time < self.wallJumpEndTime
+	then
+		self.vel[2] = self.jumpVel
+		if self.collidedLeft then
+			self.vel[1] = 10
+		else
+			self.vel[1] = -10
+		end
+	end
+
 	if self.onground and self.inputLeftRight == 0 then
 		if self.inputUpDown < 0 and self.inputUpDownLast >= 0 then
 			if not self.ducking then
@@ -630,10 +657,9 @@ function Hero:update(dt)
 		--]]
 	end
 
-	local jumpDuration = .15
 	if self.inputJump or self.swimming then
 		--if self.vel[2] < 0 then self.inputJumpTime = nil end		-- doesn't work well with swimming
-		if self.inputJumpTime + jumpDuration >= game.time then
+		if self.inputJumpTime + self.jumpDuration >= game.time then
 			if self.inputJump then
 				self.vel[2] = self.jumpVel
 			end
@@ -831,7 +857,20 @@ function Hero:draw(R, viewBBox, holdOveride)
 	end
 
 	Hero.super.draw(self, R, viewBBox, holdOverride)
-	
+
+	local speed = math.abs(self.vel[1])
+	local frac = (speed - self.maxRunVel) / (self.speedBoostMaxRunVel - self.maxRunVel)
+	if frac > 0 then
+		local l = math.min(1, frac)
+		local color = rawget(self, 'color')
+		self.color = {0,.5*l,l,1}
+		local gl = R.gl
+		gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE)
+		Hero.super.draw(self, R, viewBBox, holdOverride)
+		gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+		self.color = color
+	end
+
 	if self.weapon then
 		self.weapon:updateHeldPosition(R, viewBBox, true)
 		self.weapon:draw(R, viewBBox, true)	
@@ -999,14 +1038,19 @@ function Hero:centerView(pos)
 	self.fixedViewPos = pos
 end
 
-function Hero:findItemNamed(name)
+function Hero:findItemNamed(name, callback)
 	for _,items in ipairs(self.items) do
 		for _,item in ipairs(items) do
-			if item.name == name then return item end
+			if callback then
+				if callback(item) then return item end
+			else
+				if item.name == name then return item end
+			end
 		end
 	end
 	return false
 end
+Hero.findItem = Hero.findItemNamed
 
 -- remove an item from the inventory with matching class, or callback
 -- doesn't remove it from the game

@@ -35,6 +35,17 @@ local PlasmaShot = (function()
 	PlasmaShot.blockFlags = PlasmaShot.SOLID_WORLD + PlasmaShot.SOLID_YES
 	
 	function PlasmaShot:touchTile(tile, side)
+		if tileType and tileType.name == 'blaster-break' then
+			-- TODO level setter for current tile
+			-- and maybe built-in smoothing?
+			local level = game.level
+			level.tileMap[(x-1)+level.size[1]*(y-1)] = 0
+			level.fgTileMap[(x-1)+level.size[1]*(y-1)] = 0
+		
+			self:playSound'explode1'
+			local Puff = require 'zeta.script.obj.puff'
+			Puff.puffAt(x+.5, y-.5)
+		end
 		self:blast()
 	end
 	

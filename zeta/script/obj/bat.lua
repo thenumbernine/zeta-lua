@@ -36,14 +36,11 @@ Bat.states = {
 		end,
 	},
 	angry = {
-		enter = function(self)
-			self.stopAngryTime = game.time + 2
-		end,
 		update = function(self, dt)
 			local delta = (self.madAt.pos - self.pos):normalize()
 			self.vel[1] = delta[1] * self.speed
 			self.vel[2] = delta[2] * self.speed
-			if game.time > self.stopAngryTime then
+			if game.time > self.stateStartTime + 2 then
 				self:setState'searching'
 			end
 		end,

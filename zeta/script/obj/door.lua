@@ -88,13 +88,11 @@ Door.states = {
 			self.seq = 'unlock'
 			self.solid = false
 			self.solidFlags = 0
-			self.openStartTime = game.time
-			self.openEndTime = self.openStartTime + self.timeOpening
 		end,
 		update = function(self,dt)
-			local y = math.clamp((game.time - self.openStartTime) / self.timeOpening, 0, 1)
+			local y = math.clamp((game.time - self.stateStartTime) / self.timeOpening, 0, 1)
 			self.pos[2] = self.startPos[2] + 2 * y
-			if game.time >= self.openEndTime then
+			if game.time >= self.stateStartTime + self.timeOpening then
 				self:setState'open'
 			end
 		end,
@@ -104,12 +102,11 @@ Door.states = {
 			self.seq = 'unlock'
 			self.solid = false
 			self.solidFlags = 0
-			self.closeStartTime = game.time + self.timeOpen
 		end,
 		update = function(self,dt)
 			-- keep open
 			self.pos[2] = self.startPos[2] + 2
-			if game.time >= self.closeStartTime then
+			if game.time >= self.stateStartTime + self.timeOpen then
 				self:setState'closing'
 			end
 		end,
@@ -119,12 +116,11 @@ Door.states = {
 			self.seq = 'unlock'
 			self.solid = false
 			self.solidFlags = 0
-			self.closeEndTime = game.time + self.timeOpening
 		end,
 		update = function(self,dt)
-			local y = math.clamp(1 - (game.time - self.closeStartTime) / self.timeOpening, 0, 1)
+			local y = math.clamp(1 - (game.time - self.stateStartTime) / self.timeOpening, 0, 1)
 			self.pos[2] = self.startPos[2] + 2 * y
-			if game.time >= self.closeEndTime then
+			if game.time >= game.time + self.timeOpening then
 				self:setState'closed'
 			end
 		end,

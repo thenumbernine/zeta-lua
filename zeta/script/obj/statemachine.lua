@@ -1,5 +1,6 @@
 local class = require 'ext.class'
-
+local game = require 'base.script.singleton.game'
+		
 local function stateMachineBehavior(parentClass)
 	local StateMachineTemplate = class(parentClass)
 
@@ -17,10 +18,14 @@ local function stateMachineBehavior(parentClass)
 		end
 		
 		local oldState = self.states[self.state]
-		if oldState and oldState.exit then oldState.exit(self) end
+		if oldState and oldState.leave then oldState.leave(self) end
 		self.state = state
 		local newState = self.states[state]
-		if newState and newState.enter then newState.enter(self) end
+		self.stateStartTime = game.time
+		if newState then
+			if newState.seq then self:setSeq(newState.seq, newState.nextSeq) end
+			if newState.enter then newState.enter(self) end
+		end
 	end
 
 	function StateMachineTemplate:update(...)
@@ -29,6 +34,9 @@ local function stateMachineBehavior(parentClass)
 			local state = self.states[self.state]
 			if state and state.update then
 				state.update(self, ...)
+			end
+			if state.nextState and self.seqHasFinished then
+				self:setState(state.nextState)
 			end
 		end
 	end

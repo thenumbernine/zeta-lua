@@ -504,4 +504,6 @@
 	{color={0,1,0,1},pos={481.5,909},spawn="zeta.script.obj.door"},
 	{pos={438.5,1006},spawn="zeta.script.obj.terminal",text="Mining Operation"},
 	{pos={556.5,1004},spawn="zeta.script.obj.speedbooster"},
+	{pos={557.5,1004},spawn="zeta.script.obj.walljump"},
+	{pos={565.5,898},spawn="zeta.script.obj.cells"},
 }
