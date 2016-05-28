@@ -395,6 +395,7 @@ local function hoverTooltip(name)
 end
 
 local function checkboxTooltip(name, ptr)
+	assert(ptr, "forgot to pass a ptr for "..name)
 	ig.igPushIdStr(name)
 	ig.igCheckbox('', ptr)
 	hoverTooltip(name)
@@ -925,7 +926,7 @@ end
 local editModeTiles = 0
 local editModeObjects = 1
 local editModeRooms = 2
-local editModeMove = 3
+local editModeMove = 3	-- drag to make rect, then click-and-drag rect to move it around
 
 function Editor:init()	
 	self.editMode = ffi.new('int[1]', editModeTiles)
@@ -1171,7 +1172,7 @@ function Editor:updateGUI()
 	ig.igSameLine()
 	radioTooltip('Edit Rooms', self.editMode, editModeRooms)
 	ig.igSameLine()
-	radioTooltip('Move Tool', self.editMode, editModeMove)
+	radioTooltip('Move', self.editMode, editModeMove)
 	ig.igSeparator()
 
 	if self.editMode[0] == editModeTiles 
@@ -1190,6 +1191,11 @@ function Editor:updateGUI()
 			checkboxTooltip('Objects', self.paintingObjects)
 		end
 		ig.igSeparator()
+	end
+
+	if self.editMode[0] == editModeMove then
+		self.moveToolStampPtr = self.moveToolStampPtr or ffi.new('bool[1]',false)
+		checkboxTooltip('Stamp Selection', self.moveToolStampPtr)
 	end
 
 	if self.editMode[0] == editModeTiles then
@@ -1232,7 +1238,7 @@ function Editor:updateGUI()
 			ig.igEndChild()
 		end		
 	
-		if ig.igCollapsingHeader('Brush Options:') then
+		do --if ig.igCollapsingHeader('Brush Options:') then
 			for i,brushOption in ipairs(self.brushOptions) do
 				if i > 1 then
 					ig.igSameLine()
@@ -1271,7 +1277,7 @@ function Editor:updateGUI()
 		end
 	
 		if self.paintingBackground[0]
-		and ig.igCollapsingHeader('Background Options:')
+		--and ig.igCollapsingHeader('Background Options:')
 		then
 			for i=0,#self.backgroundOptions do
 				ig.igPushIdStr('background '..i)
@@ -1318,10 +1324,8 @@ function Editor:updateGUI()
 			end
 		end
 	
-	
-
 	elseif self.editMode[0] == editModeObjects then
-		if ig.igCollapsingHeader('Object Type:', ig.ImGuiTreeNodeFlags_DefaultOpen) then
+		do --if ig.igCollapsingHeader('Object Type:', ig.ImGuiTreeNodeFlags_DefaultOpen) then
 			for i,spawnOption in ipairs(self.spawnOptions) do
 				ig.igPushIdStr('spawnOption #'..i)
 				local spawnType = spawnOption.spawnType
@@ -1353,7 +1357,7 @@ function Editor:updateGUI()
 			end
 		end
 		if self.selectedSpawnInfo then
-			if ig.igCollapsingHeader('Object Properties:') then
+			do --if ig.igCollapsingHeader('Object Properties:') then
 				local textBufferSize = 2048
 			
 				local fieldTypeNames = table{'string', 'number', 'boolean', 'vec2', 'vec4', 'box2', 'tile'}
@@ -1737,11 +1741,52 @@ function Editor:update()
 				then
 					self.isMoving = true
 				else
-					self.isMoving = false
-					self.moveBBox = box2()
+					
+					if self.moveToolStampPtr[0] 
+					and self.moveBBox 
+					then
+						-- stamp everything from the upper-left of the move tool to the upper-left of the mouse cursor
+						-- TODO (a) transparent overlay (like brush stamps) and (b) center it instead of upper-left
+						for _,info in ipairs{
+							{map='tileMap', flag=self.paintingTileType[0]},
+							{map='fgTileMap', flag=self.paintingFgTile[0]},
+							{map='bgTileMap', flag=self.paintingBgTile[0]},
+							{map='backgroundMap', flag=self.paintingBackground[0]},
+						} do
+							if info.flag then
+								for srcy=self.moveBBox.min[2],self.moveBBox.max[2] do
+									for srcx=self.moveBBox.min[1],self.moveBBox.max[1] do
+										if srcx >= 1
+										and srcx <= level.size[1]
+										and srcy >= 1
+										and srcy <= level.size[2]
+										then
+											local brushWidth = self.moveBBox.max[1] - self.moveBBox.min[1] + 1
+											local brushHeight = self.moveBBox.max[2] - self.moveBBox.min[2] + 1
+											local dstx = srcx - self.moveBBox.min[1] + math.floor(x - tonumber(brushWidth-1)/2)
+											local dsty = srcy - self.moveBBox.min[2] + math.floor(y - tonumber(brushHeight-1)/2)
+											if dstx >= 1
+											and dstx <= level.size[1]
+											and dsty >= 1
+											and dsty <= level.size[2]
+											then
+												level[info.map][(dstx-1)+level.size[1]*(dsty-1)]
+													= level[info.map][(srcx-1)+level.size[1]*(srcy-1)] 
+												level[info.map..'Original'][(dstx-1)+level.size[1]*(dsty-1)]
+													= level[info.map..'Original'][(srcx-1)+level.size[1]*(srcy-1)] 
+											end
+										end
+									end
+								end
+							end
+						end
+					else
+						self.isMoving = false
+						self.moveBBox = nil
+					end
 				end
 			-- mouse drag
-			else
+			elseif mouse.deltaPos[1] ~= 0 or mouse.deltaPos[2] ~= 0 then
 				if self.isMoving then
 					local dx = x - self.movePressPos[1]
 					local dy = y - self.movePressPos[2]
@@ -2063,6 +2108,9 @@ function Editor:draw(R, viewBBox)
 				brushWidth = self.brushTileWidth[0]
 				brushHeight = self.brushTileHeight[0]
 			end
+		elseif self.editMode[0] == editModeMove and self.moveBBox and self.moveToolStampPtr[0] then
+			brushWidth = self.moveBBox.max[1] - self.moveBBox.min[1] + 1
+			brushHeight = self.moveBBox.max[2] - self.moveBBox.min[2] + 1
 		end
 		local xmin = math.floor(cx - tonumber(brushWidth-1)/2)
 		local ymin = math.floor(cy - tonumber(brushHeight-1)/2)

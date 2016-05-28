@@ -72,9 +72,11 @@ function Door:touch(other, side)
 		else
 			other.pos[1] = other.pos[1] - .1
 		end
+		--[[
 		threads:add(function()
 			other:popupMessage('Security Access Level Required!')
 		end)
+		--]]
 	else
 		self:setState'opening'
 	end

@@ -558,7 +558,7 @@ function Hero:update(dt)
 				self.onground = false
 				self.climbing = nil
 				self.inputJumpTime = game.time
-				self.jumpVel = math.abs(self.vel[1]) * .625
+				self.jumpVel = 18	--math.abs(self.vel[1]) * .625
 			end
 		else
 			if self.collidedLeft or self.collidedRight then
@@ -622,7 +622,7 @@ function Hero:update(dt)
 		--if self.vel[2] < 0 then self.inputJumpTime = nil end		-- doesn't work well with swimming
 		if self.inputJumpTime + jumpDuration >= game.time then
 			if self.inputJump then
-				self.vel[2] = 15
+				self.vel[2] = self.jumpVel
 			end
 			if self.swimming then
 				self.vel[2] = self.vel[2] + self.jumpVel
