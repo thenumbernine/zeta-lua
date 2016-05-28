@@ -1,16 +1,20 @@
 local class = require 'ext.class'
 local vec2 = require 'vec.vec2'
 local Enemy = require 'zeta.script.obj.enemy'
-local Hero = require 'zeta.script.obj.hero'
 local stateMachineBehavior = require 'zeta.script.obj.statemachine'
+local hurtsToTouchBehavior = require 'zeta.script.obj.hurtstotouch'
 local game = require 'base.script.singleton.game'
 
-local Bat = class(stateMachineBehavior(Enemy))
+local Bat = class(hurtsToTouchBehavior(stateMachineBehavior(Enemy)))
 Bat.sprite = 'bat'
 Bat.useGravity = false
 Bat.solidFlags = Bat.SOLID_NO
 --Bat.blockFlags = Bat.SOLID_SHOT	-- not even the world?
 Bat.maxHealth = 5
+Bat.touchDamage = 3
+Bat.itemDrops = {
+	['zeta.script.obj.heart'] = .1,
+}
 
 function Bat:init(...)
 	Bat.super.init(self, ...)
@@ -46,12 +50,6 @@ Bat.states = {
 		end,
 	},
 }
-
-function Bat:touch(other, side)
-	if other:isa(Hero) then
-		other:takeDamage(3, self, self, self, side)
-	end
-end
 
 function Bat:hit(damage, attacker, inflicter, side)
 	Bat.super.hit(self, damage, attacker, inflicter, side)

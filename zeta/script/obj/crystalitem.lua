@@ -1,4 +1,4 @@
-return function(parentClass)
+local function crystalItemBehavior(parentClass)
 	local CrystalItemTemplate = class(parentClass)
 
 	function CrystalItemTemplate:draw(...)
@@ -11,3 +11,5 @@ return function(parentClass)
 
 	return CrystalItemTemplate
 end
+
+return crystalItemBehavior

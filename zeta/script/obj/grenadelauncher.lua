@@ -149,6 +149,7 @@ local GrenadeLauncher = (function()
 	GrenadeLauncher.drawOffsetStanding = {.5, .25}
 	GrenadeLauncher.shotClass = Grenade 
 	GrenadeLauncher.shotOffset = {.5, .5}
+	GrenadeLauncher.ammo = 'Grenades'
 
 	function GrenadeLauncher:getShotPosVel(player)
 		local pos, vel = GrenadeLauncher.super.getShotPosVel(self, player)
@@ -156,45 +157,6 @@ local GrenadeLauncher = (function()
 		return pos, vel
 	end
 
-	function GrenadeLauncher:canShoot(player)
-		if not GrenadeLauncher.super.canShoot(self, player) then return end	
-	
-		-- TODO instead of separate GrenadeItem and Grenade ...
-		-- combine the two?
-		-- then have ammo selection?
-		local GrenadeItem = require 'zeta.script.obj.grenadeitem'
-
-		-- TODO if player:takeItem(require'zeta.script.obj.grenadeitem') then ...
-		local grenade = player:removeItem(nil, GrenadeItem.is)
-		
-		-- TODO return the grenade ... and shoot it ... the same object
-		if grenade then 
-			grenade.remove = true
-			return true
-		end
-		
-		-- didn't find it
-		-- TODO play out of ammo sound?
-		return false
-	end
-
-	--[[ cluster grenades won't work so long as grenades are solid and takesDamage themselves
-	local game = require 'base.script.singleton.game'
-	function GrenadeLauncher:onShoot(player)
-		if player.inputShootLast and not self.rapidFire then return end
-		player.nextShootTime = game.time + self.shotDelay
-
-		for i=1,5 do
-			local pos, dir = self:getShotPosVel(player)
-			self.shotClass{
-				shooter = player,
-				pos = pos,
-				dir = dir,
-			}
-		end
-	end
-	--]]
-	
 	return GrenadeLauncher
 end)()
 

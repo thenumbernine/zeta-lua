@@ -2,10 +2,10 @@ local class = require 'ext.class'
 local Enemy = require 'zeta.script.obj.enemy'
 local game = require 'base.script.singleton.game'
 local GeemerChunk = require 'zeta.script.obj.geemerchunk'
-local Hero = require 'zeta.script.obj.hero'
 local stateMachineBehavior = require 'zeta.script.obj.statemachine'
+local hurtsToTouchBehavior = require 'zeta.script.obj.hurtstotouch'
 
-local Geemer = class(stateMachineBehavior(Enemy))
+local Geemer = class(hurtsToTouchBehavior(stateMachineBehavior(Enemy)))
 Geemer.sprite = 'geemer'
 Geemer.solid = true
 Geemer.maxHealth = 1
@@ -151,6 +151,8 @@ end
 Geemer.solidFlags = Geemer.SOLID_NO
 Geemer.touchFlags = Geemer.SOLID_YES
 Geemer.blockFlags = Geemer.SOLID_WORLD + Geemer.SOLID_YES
+Geemer.touchDamage = 1
+
 function Geemer:touch(other, side)
 	-- this makes collision run incredibly slow in crowds
 	-- give this its own flags?
@@ -159,10 +161,8 @@ function Geemer:touch(other, side)
 		self.avoiding = other
 		return true
 	end
-	
-	if other:isa(Hero) then
-		other:takeDamage(1, self, self, side)
-	end
+
+	return Geemer.super.touch(self, other, side)
 end
 
 function Geemer:draw(R, viewBBox, ...)

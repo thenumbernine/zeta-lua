@@ -54,10 +54,13 @@ Hero.nextShootTime = -1
 
 Hero.attackStat = 0
 Hero.defenseStat = 0
-Hero.maxAmmoCells = 0
-Hero.ammoCells = Hero.maxAmmoCells
 Hero.rechargeCellsDuration = 10	-- seconds
 Hero.nextRechargeCellsTime = -1
+
+for _,ammo in ipairs{'Cells', 'Grenades', 'Missiles'} do
+	Hero['ammo'..ammo] = 0
+	Hero['maxAmmo'..ammo] = 0
+end
 
 function Hero:init(...)
 	Hero.super.init(self, ...)
@@ -252,6 +255,8 @@ function Hero:getMaxRunVel()
 end
 
 Hero.jumpDuration = .15
+Hero.wallJumpEndTime = -1
+Hero.wallJumpHorzVel = 10
 function Hero:update(dt)
 	local level = game.level
 
@@ -389,6 +394,10 @@ function Hero:update(dt)
 --	end
 	
 	-- if we pushed the pickup-item button 
+	-- TODO's ...
+	-- 1) make all items touch-to-pickup
+	-- 2) keep 'pickup' and 'interact' separate
+	-- 3) merge the two
 	if self.inputShootAux and not self.inputShootAuxLast then
 		for _,other in ipairs(game.objs) do
 			if other ~= self
@@ -582,10 +591,12 @@ function Hero:update(dt)
 	end
 
 	-- walljump?
-	self.wallJumpEndTime = self.wallJumpEndTime or -1
 	if not self.onground
+	and not self.climbing
+	and not self.swimming
 	and (self.collidedLeft or self.collidedRight)
 	then
+		self.drawMirror = not self.collidedLeft
 		self.vel[2] = self.vel[2] * .5
 		local WallJump = require 'zeta.script.obj.walljump'
 		if self:findItem(nil, WallJump.is) then
@@ -601,9 +612,9 @@ function Hero:update(dt)
 	then
 		self.vel[2] = self.jumpVel
 		if self.collidedLeft then
-			self.vel[1] = 10
+			self.vel[1] = self.wallJumpHorzVel
 		else
-			self.vel[1] = -10
+			self.vel[1] = -self.wallJumpHorzVel
 		end
 	end
 
@@ -939,6 +950,11 @@ function Hero:drawHUD(R, viewBBox)
 		drawInv(self.weapon, x, y, select(2, self.items:find(nil, function(items)
 			return items:find(self.weapon)
 		end)))
+		if self.weapon.ammo then
+			local ammo = self['ammo'..self.weapon.ammo]
+			local max = self['maxAmmo'..self.weapon.ammo]
+			gui.font:drawUnpacked(x+3.5, y, 1, -1, ('%.3f'):format(ammo)..'/'..max)
+		end
 	end
 
 	if game.paused and not self.popupMessageText then

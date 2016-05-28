@@ -1,12 +1,13 @@
 local class = require 'ext.class'
 local Enemy = require 'zeta.script.obj.enemy'
-local Hero = require 'zeta.script.obj.hero'
+local hurtsToTouchBehavior = require 'zeta.script.obj.hurtstotouch'
 
-local Zoomer = class(Enemy)
+local Zoomer = class(hurtsToTouchBehavior(Enemy))
 Zoomer.sprite = 'zoomer'
 Zoomer.useGravity = false
 Zoomer.speed = 3
 Zoomer.maxHealth = 10
+Zoomer.touchDamage = 2
 
 Zoomer.solidFlags = Zoomer.SOLID_NO
 Zoomer.touchFlags = Zoomer.SOLID_YES
@@ -20,12 +21,6 @@ end
 function Zoomer:touchTile()
 	self.vel[1] = -self.vel[1]
 	self.drawMirror = self.vel[1] < 0
-end
-
-function Zoomer:touch(other, side)
-	if other:isa(Hero) then
-		other:takeDamage(2, self, self, side)
-	end
 end
 
 local Missile = require 'zeta.script.obj.missilelauncher'.shotClass

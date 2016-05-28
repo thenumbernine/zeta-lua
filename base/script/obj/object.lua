@@ -114,13 +114,13 @@ function Object:update(dt)
 		--self.vel[2] = self.vel[2] * .1
 	end
 	
-	-- special falling speed
-	if maxFallVel then
-		if self.vel[2] < -maxFallVel then self.vel[2] = -maxFallVel end
-	end
-		
 	if self.useGravity then
 		self.vel[2] = self.vel[2] + gravity * dt
+	
+		-- special falling speed
+		if maxFallVel then
+			if self.vel[2] < -maxFallVel then self.vel[2] = -maxFallVel end
+		end
 	end
 	
 	local moveX = self.vel[1] * dt

@@ -94,17 +94,7 @@ local MissileLauncher = (function()
 	MissileLauncher.shotSound = 'explode1'
 	MissileLauncher.rotCenter = {.25,.5}
 	MissileLauncher.shotClass = Missile 
-
-	function MissileLauncher:canShoot(player)
-		if not MissileLauncher.super.canShoot(self, player) then return end
-		local MissileItem = require 'zeta.script.obj.missileitem'
-		local missile = player:removeItem(nil, MissileItem.is)
-		if missile then
-			missile.remove = true
-			return true
-		end
-		return false 
-	end
+	MissileLauncher.ammo = 'Missiles'
 
 	return MissileLauncher
 end)()

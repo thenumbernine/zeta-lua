@@ -1,10 +1,11 @@
 local class = require 'ext.class'
 local Enemy = require 'zeta.script.obj.enemy'
 local stateMachineBehavior = require 'zeta.script.obj.statemachine'
+local hurtsToTouchBehavior = require 'zeta.script.obj.hurtstotouch'
 local box2 = require 'vec.box2'
 local game = require 'base.script.singleton.game'
 
-local Teeth = class(stateMachineBehavior(Enemy))
+local Teeth = class(hurtsToTouchBehavior(stateMachineBehavior(Enemy)))
 Teeth.sprite = 'teeth'
 Teeth.maxHealth = 5
 Teeth.bbox = box2(-.5, -.5, .5, .5)
@@ -12,6 +13,11 @@ Teeth.rotCenter = {.5,.5}
 Teeth.drawCenter = {.5,.5}
 Teeth.initialState = 'searching'
 Teeth.drawScale = {4,4}
+Teeth.touchDamage = 1
+
+Teeth.itemDrops = {
+	['zeta.script.obj.heart'] = .1,
+}
 
 Teeth.searchDist = 5
 Teeth.states.searching = {
@@ -48,12 +54,5 @@ Teeth.states.mad = {
 		self.angle = math.deg(math.atan2(delta[2], delta[1]))
 	end,
 }
-
-Teeth.damage = 1
-function Teeth:touch(other,side)
-	if other == self.madAt then
-		other:takeDamage(self.damage, self, self, side)
-	end
-end
 
 return Teeth

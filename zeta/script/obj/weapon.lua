@@ -53,9 +53,16 @@ end
 Weapon.shotClass = nil
 Weapon.shotDelay = nil
 Weapon.shotSound = nil
-
+Weapon.ammo = nil
 function Weapon:canShoot(player)
 	if player.inputShootLast and not self.rapidFire then return end
+	
+	if self.ammo then
+		local field = 'ammo'..self.ammo
+		if player[field] < 1 then return end
+		player[field] = player[field] - 1
+	end
+
 	player.nextShootTime = game.time + self.shotDelay
 	return true
 end
