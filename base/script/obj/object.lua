@@ -556,6 +556,241 @@ local function buildTileTypePoly(tileType)
 	return {vtxs=vtxs, planes=planes}
 end
 
+--[[
+self has pos and bbox
+x is the 1x1 bbox lower left coordinate
+plane is the plane that chops the box
+	assumes the plane normal is unit
+--]]
+local function testBoxSlope(self, testStuck, x, y, tileType, dt, dx, dy)
+	-- we only handle dt==0 collisions if we're testing interpenetration, i.e. non-blocking touch callbacks 
+	-- and at the moment there are no non-blocking tiles, nor tile touch callbacks
+	if dt == 0 then return dt end
+
+--local print = self:isa(require 'zeta.script.obj.hero') and print or function() end
+
+--print('  ==========================')
+--print('  == BEGIN BOX/SLOPE TEST ==')
+--print('  ==========================')
+--print('testing sloped box at',x,y,'with plane',table.concat(clipPlane,','),'dt',dt,'dx',dx,'dy',dy)
+
+	if not tileType.poly then
+		tileType.poly = buildTileTypePoly(tileType)
+	end
+
+	local vtxs = tileType.poly.vtxs
+	local planes = tileType.poly.planes
+
+--print('vtxs:',table.map(vtxs,function(vtx) return '['..table.concat(vtx,',')..']' end):concat(' '))
+--print('planes:',table.map(planes,function(vtx) return '['..table.concat(vtx,',')..']' end):concat(' '))
+
+	local bestNormal	-- pointing towards self, so when self tests obj, bestNormal is negative of the plane normal
+
+	-- 1) find separating plane greatest depth (positive means we're separating) (plane depth is min of depths of all vtxs, intersection depth is max plane depth)
+	if testStuck then
+		-- test self bbox to obj vtxs
+			-- right
+		local bestPlaneDepth = -math.huge
+		local planeDepth = math.huge
+		for _,vtx in ipairs(vtxs) do
+			planeDepth = math.min(planeDepth, (x + vtx[1]) - (self.pos[1] + self.bbox.max[1]))
+		end
+		if planeDepth > bestPlaneDepth then
+			bestPlaneDepth = planeDepth
+			bestNormal = {-1, 0}
+		end
+				-- left	
+		local planeDepth = math.huge
+		for _,vtx in ipairs(vtxs) do
+			planeDepth = math.min(planeDepth, (self.pos[1] + self.bbox.min[1]) - (x + vtx[1]))
+		end
+		if planeDepth > bestPlaneDepth then
+			bestPlaneDepth = planeDepth
+			bestNormal = {1, 0}
+		end
+				-- up
+		local planeDepth = math.huge
+		for _,vtx in ipairs(vtxs) do
+			planeDepth = math.min(planeDepth, (y + vtx[2]) - (self.pos[2] + self.bbox.max[2]))
+		end
+		if planeDepth > bestPlaneDepth then
+			bestPlaneDepth = planeDepth
+			bestNormal = {0, -1}
+		end	
+				-- down
+		local planeDepth = math.huge
+		for _,vtx in ipairs(vtxs) do
+			planeDepth = math.min(planeDepth, (self.pos[2] + self.bbox.min[2]) - (y + vtx[2]))
+		end
+		if planeDepth > bestPlaneDepth then
+			bestPlaneDepth = planeDepth
+			bestNormal = {0, 1}
+		end
+
+			-- test obj planes to self bbox corners
+		for _,plane in ipairs(planes) do
+			local planeDepth = math.huge
+			for xminmax=1,2 do
+				for yminmax=1,2 do
+					local vx = self.pos[1] + (xminmax == 1 and self.bbox.min[1] or self.bbox.max[1])
+					local vy = self.pos[2] + (yminmax == 1 and self.bbox.min[2] or self.bbox.max[2])
+					planeDepth = math.min(planeDepth, plane[1] * (vx - x) + plane[2] * (vy - y) + plane[3])
+				end
+			end
+			if planeDepth > bestPlaneDepth then
+				bestPlaneDepth = planeDepth
+				bestNormal = plane
+			end
+		end
+--print('bestPlaneDepth',bestPlaneDepth,'bestNormal',table.unpack(bestNormal))
+		if bestPlaneDepth < 0 then
+--print("bestPlaneDepth < 0 means we're stuck")		
+			dt = 0		-- stuck
+		end
+	end
+		
+	-- if dt == 0 then -- all our dtv tests are dtv < dt -- so we can't hit anything else
+	if dt > 0 then
+		-- not moving?
+		bestNormal = nil	-- will this cause problems?
+		if dx ~= 0 or dy ~= 0 then
+
+			-- 2) find intersection of movement along dx,dy
+			-- trace all 'self' vtxs forward on dx,dy, test with intersection against normals within vtxs
+			-- then do the same with vtxs backward on dx,dy, test with self sides.
+
+			-- move 4 vtxs of self.pos+self.bbox
+
+--print('testing self vtxs against slopebox planes') 
+			-- normal[i] is the normal of the edge between vtxs[i] and vtxs[i+1]
+			-- but really just use -y,x and normalize it ...
+			for i=1,#vtxs do
+				local va = vtxs[i]
+				local vb = vtxs[i%#vtxs+1]
+				local plane = planes[i]
+
+				-- current problem:
+				-- moving diagonal right up
+				-- hitting lower right corner on the bottom plane
+				-- plane dot delta says it should be hitting
+				-- but the corner ... technically can't hti that
+			
+				-- testing plane normal to move delta is a good idea
+				local planeDotDelta = plane[1] * dx + plane[2] * dy
+
+--print('plane dot delta',planeDotDelta)				
+				if planeDotDelta < 0 then	-- moving into the plane?
+--print('testing slopebox edge ['..va[1]..','..va[2]..'] -> ['..vb[1]..','..vb[2]..']')
+					for xminmax=1,2 do
+						for yminmax=1,2 do
+							-- also test plane normal to both planes that the vertex lies on
+							-- if it is within 90 of both then use this vertex
+							local planeDotVtxPlane1 = plane[1] * (xminmax == 1 and -1 or 1)
+							local planeDotVtxPlane2 = plane[2] * (yminmax == 1 and -1 or 1)
+							if planeDotVtxPlane1 < 0 or planeDotVtxPlane2 < 0 then
+								local vx = self.pos[1] + (xminmax == 1 and self.bbox.min[1] or self.bbox.max[1])
+								local vy = self.pos[2] + (yminmax == 1 and self.bbox.min[2] or self.bbox.max[2])
+--print('testing self vtx ['..vx..','..vy..']')
+						
+								local vabx = vb[1] - va[1]
+								local vaby = vb[2] - va[2]
+								-- vx + dtv * dx = va[1] + s * vabx
+								-- vy + dtv * dy = va[2] + s * vaby
+								--
+								-- [dx -vabx][dtv] = x + va[1] - vx = v_va_x
+								-- [dy -vaby][ s ] = y + va[2] - vy = v_va_y
+								-- [dtv] = [-vaby vabx] v_va_x
+								-- [ s ] = [ -dy   dx ] v_va_y
+								local v_va_x = (x + va[1]) - vx
+								local v_va_y = (y + va[2]) - vy
+
+								local det = -dx * vaby + dy * vabx
+								if det ~= 0 then	-- 0 means perpendicular
+									local s = (-dy * v_va_x + dx * v_va_y) / det
+									-- use >= <= to hit corners 
+									if s >= 0 and s <= 1 then
+										local dtv = (-vaby * v_va_x + vabx * v_va_y) / det
+										-- getting toe-stumping midway up slopes ...
+										-- either restrict timestep or push back from normal or both
+										dtv = dtv / (1 + collisionEpsilon)
+										if math.abs(dtv) < collisionEpsilon then dtv = 0 end
+										if dtv >= 0 and dtv < dt then
+											dt = dtv
+											bestNormal = planes[i]
+--print('found collision at dt',dt,'normal',table.unpack(bestNormal))
+										end
+									end
+								end
+							end
+						end
+					end
+				end
+			end
+
+--print('testing slopebox vtxs against self planes') 
+			-- move poly by -dx, -dy against bbox
+			for _,vtx in ipairs(vtxs) do
+--print('testing vtx',table.unpack(vtx))				
+
+				local dtx
+				if dx < 0 then
+					-- left of self
+					-- (x + vtx[1]) - dx * dtu = self.pos[1] + self.bbox.max[1]
+					dtx = ((self.pos[1] + self.bbox.min[1]) - (x + vtx[1])) / -dx
+				elseif dx > 0 then
+					-- right of self
+					-- (x + vtx[1]) - dx * dtx = self.pos[1] + self.bbox.max[1]
+					dtx = ((self.pos[1] + self.bbox.max[1]) - (x + vtx[1])) / -dx
+				end
+				if dtx then
+					if math.abs(dtx) < collisionEpsilon then dtx = 0 end
+					-- make sure our collision time 
+					if 0 <= dtx and dtx < dt 
+					-- make sure we're colliding on the self at that point
+					and self.pos[2] + self.bbox.min[2] < y + vtx[2] - dtx * dy
+					and self.pos[2] + self.bbox.max[2] > y + vtx[2] - dtx * dy
+					then
+						dt = dtx
+						bestNormal = dx < 0 and {1,0} or {-1,0}
+--print('found x collision at dt',dt,'normal',table.unpack(bestNormal))									
+					end
+				end
+				
+				local dty
+				if dy < 0 then
+					-- bottom of self 
+					-- (y + vtx[2]) - dy * dtu = self.pos[2] + self.bbox.max[2]
+					dty = ((self.pos[2] + self.bbox.min[2]) - (y + vtx[2])) / -dy
+				elseif dy > 0 then
+					-- top of self 
+					-- (y + vtx[2]) - dy * dty = self.pos[2] + self.bbox.max[2]
+					dty = ((self.pos[2] + self.bbox.max[2]) - (y + vtx[2])) / -dy
+				end
+				if dty then
+					if math.abs(dty) < collisionEpsilon then dty = 0 end
+					if 0 <= dty and dty < dt 
+					-- make sure we're colliding on the self at that point
+					and self.pos[1] + self.bbox.min[1] < x + vtx[1] - dty * dx
+					and self.pos[1] + self.bbox.max[1] > x + vtx[1] - dty * dx
+					then
+						dt = dty
+						bestNormal = dy < 0 and {0,1} or {0,-1}
+--print('found y collision at dt',dt,'normal',table.unpack(bestNormal))									
+					end
+				end		
+			end
+		end
+	end
+
+--print('returning dt',dt,'bestNormal',table.concat(bestNormal or {}, ','))
+--print('  ========================')
+--print('  == END BOX/SLOPE TEST ==')
+--print('  ========================')
+
+	return dt, bestNormal
+end
+
+
 function Object:move_sub(dx,dy)
 
 --local print = self:isa(require 'zeta.script.obj.hero') and print or function() end
@@ -647,6 +882,25 @@ function Object:move_sub(dx,dy)
 									touchedTileY = y
 								end
 							else
+-- [[ real-deal poly intersection								
+								local newNormal
+								dt, newNormal = testBoxSlope(self, false, x, y, tileType, dt, dx, dy)
+								if newNormal then
+									normal = newNormal
+									local adx = math.abs(normal[1])
+									local ady = math.abs(normal[2])
+									if adx > ady then
+										side = normal[1] < 0 and 'Right' or 'Left'
+									else
+										side = normal[2] < 0 and 'Up' or 'Down'
+									end
+									touchedObj = nil
+									touchedTileType = tileType
+									touchedTileX = x
+									touchedTileY = y
+								end
+--]]
+--[=[ poor-man's chop it up into tiny pieces							
 								local udivs = 16
 								local vdivs = 16
 								local plane = tileType.plane
@@ -667,6 +921,7 @@ function Object:move_sub(dx,dy)
 										end
 									end
 								end
+--]=]
 							end
 						end
 					end
@@ -846,6 +1101,10 @@ function Object:move_sub(dx,dy)
 --print('==============')
 end
 
+--[[ physics!
+Object.move = Object.move_sub
+--]]
+-- [[ poor-man's way to do collision: move up, move across, move down (for steps)
 function Object:move(dx,dy)
 	-- if moving left/right then try stepping up as well
 	if self.ongroundLast
@@ -859,6 +1118,7 @@ function Object:move(dx,dy)
 		self:move_sub(dx,dy)
 	end
 end
+--]]
 
 -- new system
 Object.touch = nil -- function(other, side) 
