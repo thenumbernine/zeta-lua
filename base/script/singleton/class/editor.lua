@@ -1344,7 +1344,8 @@ function Editor:updateGUI()
 				then
 					self.selectedSpawnIndex[0] = i
 				end
-				local tilesWide = 5
+				-- it would be nice if wrapping controls was automatic
+				local tilesWide = 4
 				if i % tilesWide > 0 and i < #self.spawnOptions then
 					ig.igSameLine()	
 				end

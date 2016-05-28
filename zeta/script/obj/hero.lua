@@ -235,13 +235,26 @@ Hero.accel = .5
 Hero.walkVel = 7
 Hero.crawlVel = 3
 Hero.runVel = 10
-Hero.maxRunVel = 15
 Hero.timeToMaxSpeed = 1
 -- climb vel
 Hero.climbVel = 5
-	
+
+Hero.maxRunVel = 15
+Hero.speedBoostMaxRunVel
+function Hero:getMaxRunVel()
+	local SpeedBooster = require 'zeta.script.obj.speedbooster'
+	for _,items in ipairs(self.items) do
+		if items[1]:isa(SpeedBooster) then
+			return self.speedBoostMaxRunVel
+		end
+	end
+	return self.maxRunVel
+end
+
 function Hero:update(dt)
 	local level = game.level
+
+	local maxRunVel = self:getMaxRunVel()
 
 	-- only spawn what's in our room
 	local roomPosX, roomPosY = level:getMapTilePos(self.pos:unpack())
@@ -498,7 +511,7 @@ function Hero:update(dt)
 						self.inputMaxSpeedTime = self.inputMaxSpeedTime + dt
 					end
 					if self.inputMaxSpeedTime >= self.timeToMaxSpeed then
-						moveVel = self.maxRunVel
+						moveVel = maxRunVel
 					end
 						
 					if self.onground and (self.inputLeftRight > 0) ~= (self.vel[1] > 0) then
@@ -523,7 +536,7 @@ function Hero:update(dt)
 	if self.onground and not self.ongroundLast then
 		-- TODO check jumping on a tile here
 
-		if self.vel[1] ~= self.maxRunVel and self.vel[1] ~= -self.maxRunVel then
+		if self.vel[1] ~= maxRunVel and self.vel[1] ~= -maxRunVel then
 			self.inputMaxSpeedTime = nil
 		end
 	end
@@ -774,12 +787,10 @@ function Hero:draw(R, viewBBox, holdOveride)
 				if self.onground then
 					if not self.warping and self.inputLeftRight ~= 0 then
 						if self.inputRun then
-							do --if vx ~= self.maxRunVel and vx ~= -self.maxRunVel then
-								if self.weapon then
-									self.seq = 'run_carry'
-								else
-									self.seq = 'run'
-								end
+							if self.weapon then
+								self.seq = 'run_carry'
+							else
+								self.seq = 'run'
 							end
 						else
 							if self.weapon then

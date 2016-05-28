@@ -22,6 +22,7 @@ return {
 	{spawn='zeta.script.obj.attackbonus'},
 	{spawn='zeta.script.obj.defensebonus'},
 	{spawn='zeta.script.obj.energytank'},
+	{spawn='zeta.script.obj.speedbooster'},
 	{spawn='zeta.script.obj.cells'},
 	-- monsters
 		-- mining base
