@@ -66,47 +66,39 @@ function AnimationSystem:load(sprite)
 	sprite.frames = newframes
 end
 
-function AnimationSystem:seqHasFinished(sprite, seqname, startTime)
-	local sprite = self.sprites[sprite]
-	if not sprite then error("failed to find sprite "..tostring(sprite)) end
-	local seq = sprite.seqs[seqname]
+-- returns the sprite object, the seq object, and the frame #
+function AnimationSystem:getInfo(spriteName, seqName, startTime)
+	local sprite = self.sprites[spriteName]
+	if not sprite then error("failed to find sprite "..tostring(spriteName)) end
+	local seq = sprite.seqs[seqName]
 	if not seq then
-		print("failed to find sequence "..tostring(seqname))
+		print("failed to find sequence "..tostring(seqName))
 		seq = sprite.seqs.stand
 		if not seq then return end
 	end
 	
-	local framenumber = game.time - (startTime or 0)
+	local frameNumber = game.time - (startTime or 0)
 	if seq.freq then
-		framenumber = framenumber * seq.freq
+		frameNumber = frameNumber * seq.freq
 	elseif sprite.freq then
-		framenumber = framenumber * sprite.freq
+		frameNumber = frameNumber * sprite.freq
 	end
-	framenumber = framenumber + 1
+	frameNumber = frameNumber + 1
 
-	return framenumber >= #seq+1
+	return sprite, seq, frameNumber
 end
 
-function AnimationSystem:getTex(sprite, seqname, startTime)
-	local sprite = self.sprites[sprite]
-	if not sprite then error("failed to find sprite "..tostring(sprite)) end
-	local seq = sprite.seqs[seqname]
-	if not seq then
-		print("failed to find sequence "..tostring(seqname))
-		seq = sprite.seqs.stand
-		if not seq then return end
-	end
-	
-	local framenumber = game.time - (startTime or 0)
-	if seq.freq then
-		framenumber = framenumber * seq.freq
-	elseif sprite.freq then
-		framenumber = framenumber * sprite.freq
-	end
-	framenumber = (math.floor(framenumber) % #seq) + 1
-	local framename = seq[framenumber]
-	local frame = sprite.frames[framename]
-	if not frame then error("failed to find frame named "..tostring(framename)) end
+function AnimationSystem:seqHasFinished(spriteName, seqName, startTime)
+	local sprite, seq, frameNumber = self:getInfo(spriteName, seqName, startTime)
+	return frameNumber >= #seq+1
+end
+
+function AnimationSystem:getTex(spriteName, seqName, startTime)
+	local sprite, seq, frameNumber = self:getInfo(spriteName, seqName, startTime)
+	frameNumber = (math.floor(frameNumber - 1) % #seq) + 1
+	local frameName = seq[frameNumber]
+	local frame = sprite.frames[frameName]
+	if not frame then error("failed to find frame named "..tostring(frameName)) end
 	return frame.tex
 end
 

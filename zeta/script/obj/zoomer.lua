@@ -18,9 +18,17 @@ function Zoomer:init(...)
 	self.vel[1] = self.speed
 end
 
-function Zoomer:touchTile()
-	self.vel[1] = -self.vel[1]
+function Zoomer:touchTile(tile, side, normal)
+	if normal[1] > 0 then
+		self.vel[1] = self.speed
+	elseif normal[1] < 0 then
+		self.vel[1] = -self.speed
+	end
+	self.pos[1] = self.lastpos[1] + self.vel[1] * .1
+	self.pos[2] = self.lastpos[2]
+	self.vel[2] = 0
 	self.drawMirror = self.vel[1] < 0
+	return true
 end
 
 local Missile = require 'zeta.script.obj.missilelauncher'.shotClass

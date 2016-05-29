@@ -101,27 +101,8 @@ Geemer.states = {
 				then
 					local delta = (self.madAt or self.avoiding).pos - self.pos
 					local len = delta:length()
-					setTimeout(math.random() * .4, function()
-						self:calcVelForJump(delta)					
 					
-						-- if we're on a wall then don't jump into the wa
-						if (self.vel[1] > 0 and self.stuckSide == 'right')
-						or (self.vel[1] < 0 and self.stuckSide == 'left')
-						then
-							self.vel[1] = -self.vel[1]
-						end
-						self.jumpBaseVelX = self.vel[1]
-
-						--self.madAt = nil
-						self.avoiding = nil
-						self.angle = nil
-						self.useGravity = true
-						self.stuckPos = nil
-						self.stuckSide = nil
-						self:setState'searching'
-						self.seq = nil	-- clear hidden seq if you got it
-					end)
-					self:setState(nil)
+					self:setState('waitingToJump', delta)
 				elseif self.irritatedAt then
 					-- shake and let him know you're irritated
 					if game.time > self.nextShakeTime then
@@ -131,7 +112,40 @@ Geemer.states = {
 				end
 			end
 		end,
-	}
+	},
+	waitingToJump = {
+		enter = function(self, delta)
+			self.jumpingEndStateTime = game.time + math.random() * .5
+			self.madDelta = delta
+		end,
+		update = function(self, dt)
+			if game.time < self.jumpingEndStateTime then return end
+			
+			self:calcVelForJump(self.madDelta)					
+		
+			-- if we're on a wall then don't jump into the wa
+			if (self.vel[1] > 0 and self.stuckSide == 'right')
+			or (self.vel[1] < 0 and self.stuckSide == 'left')
+			then
+				self.vel[1] = -self.vel[1]
+			end
+			self.jumpBaseVelX = self.vel[1]
+
+			--self.madAt = nil
+			self.avoiding = nil
+			self.angle = nil
+			self.useGravity = true
+			self.stuckPos = nil
+			self.stuckSide = nil
+			self:setState'jumping'
+			self.seq = nil	-- clear hidden seq if you got it
+		end,
+	},
+	jumping = {
+		update = function(self, dt)
+			if self.onground then self:setState'searching' end
+		end,
+	},
 }
 
 function Geemer:calcVelForJump(delta)
@@ -148,7 +162,11 @@ function Geemer:calcVelForJump(delta)
 	self.vel[2] = jumpVel
 end
 
-Geemer.solidFlags = Geemer.SOLID_NO
+-- hmm... solid_no with geemers lets them pass through eachother
+-- but thye collide when they hit hte player and the player can't get rid of them 
+-- solid_yes doesn't,
+-- but that mobs the player and the player gets stuck
+Geemer.solidFlags = Geemer.SOLID_YES	-- Geemer.SOLID_NO
 Geemer.touchFlags = Geemer.SOLID_YES
 Geemer.blockFlags = Geemer.SOLID_WORLD + Geemer.SOLID_YES
 Geemer.touchDamage = 1

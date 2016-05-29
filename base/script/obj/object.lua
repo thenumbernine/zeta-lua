@@ -1016,10 +1016,10 @@ function Object:move_sub(dx,dy)
 					local opposite = oppositeSide[lside] or error("can't find opposite side for side "..tostring(side))
 					if self.touchPriority >= touchedObj.touchPriority then
 						if self.touch then dontblock = self:touch(touchedObj, lside) or dontblock end
-						if touchedObj.touch then dontblock = touchedObj:touch(self, opposite) or dontblock end
+						if not touchedObj.remove and touchedObj.touch then dontblock = touchedObj:touch(self, opposite) or dontblock end
 					else
 						if touchedObj.touch then dontblock = touchedObj:touch(self, opposite) or dontblock end
-						if self.touch then dontblock = self:touch(touchedObj, lside) or dontblock end
+						if not self.remove and self.touch then dontblock = self:touch(touchedObj, lside) or dontblock end
 					end
 --print('after calling touch, dontblock=',dontblock)				
 				end

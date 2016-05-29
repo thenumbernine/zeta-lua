@@ -188,6 +188,14 @@ function Hero:touch(other, side)
 	end
 	if other == self.holding then return true end
 	if other == self.weapon then return true end
+	if other.heldby == self then return true end
+
+	if self.speedBoostCharge == 1 
+	and other.takeDamage
+	then
+		other:takeDamage(self.maxHealth, self, self, side)
+		return true
+	end
 end
 
 --[[
@@ -373,7 +381,7 @@ function Hero:update(dt)
 		if self.ducking then self:tryToStand() end
 		self.lookingUp = false
 		self.inputMaxSpeedTime = nil
-		self.speedBoostCharge = nil
+		--self.speedBoostCharge = nil
 	else
 		self.useGravity = true
 	end
@@ -568,22 +576,23 @@ function Hero:update(dt)
 					self.vel[1] = self.vel[1] + accel
 					if self.vel[1] > moveVel then self.vel[1] = moveVel end
 				end
-						
+print(self.vel[1])						
 				self.drawMirror = self.inputLeftRight < 0
 			end
 		end
 	end
 	
-	--[[ if we just hit the ground then see if we're at max vel.  if not then reset the run meter
+-- [[ if we just hit the ground then see if we're at max vel.  if not then reset the run meter
 	if self.onground and not self.ongroundLast then
 		-- TODO check jumping on a tile here
 
-		if self.vel[1] ~= maxRunVel and self.vel[1] ~= -maxRunVel then
+		--if self.vel[1] ~= maxRunVel and self.vel[1] ~= -maxRunVel then
+		if math.abs(self.vel[1]) < self.runVel then
 			self.inputMaxSpeedTime = nil
 			self.speedBoostCharge = nil
 		end
 	end
-	--]]
+--]]
 
 	do
 		local tile = level:getTile(self.pos[1] - level.pos[1], self.pos[2] - level.pos[2])
@@ -629,6 +638,7 @@ function Hero:update(dt)
 	if not self.onground
 	and not self.climbing
 	and not self.swimming
+	and not self.ducking
 	and (self.collidedLeft or self.collidedRight)
 	then
 		self.drawMirror = not self.collidedLeft
@@ -641,6 +651,9 @@ function Hero:update(dt)
 
 	-- then start the touch-n-go state
 	if not self.ongroundLast
+	and not self.climbing
+	and not self.swimming
+	and not self.ducking
 	and self.inputJump
 	and not self.inputJumpLast
 	and game.time < self.wallJumpEndTime
@@ -666,8 +679,11 @@ function Hero:update(dt)
 			self:tryToStand()
 		end
 	end
-	-- pushed up while jumping?
-	if not self.onground and self.inputUpDown ~= 0 and self.inputUpDownLast == 0 then
+	-- pushed up or down while jumping?
+	if not self.onground
+	and game.time > self.wallJumpEndTime
+	and self.inputUpDown ~= 0
+	and self.inputUpDownLast == 0 then
 		if self.inputUpDown < 0 and not self.ducking then
 			self.ducking = true
 		elseif self.inputUpDown > 0 and self.ducking then
@@ -922,6 +938,41 @@ function Hero:draw(R, viewBBox, holdOveride)
 		local gl = R.gl
 		gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE)
 		Hero.super.draw(self, R, viewBBox, holdOverride)
+		if l == 1 then
+			local speedEchoTick = math.floor(game.time * 20)
+			if speedEchoTick ~= self.speedEchoTick then
+				self.speedEchoTick = speedEchoTick 
+			
+				-- get current frame ...
+				
+				local animsys = require 'base.script.singleton.animsys'
+				local sprite, seq, frameNumber = animsys:getInfo(self.sprite, self.seq, self.seqStartTime)
+				local startTime = game.time
+				local lifetime = 1
+				local SpeedEcho = Object{
+					solidFlags = 0,
+					blockFlags = 0,
+					touchFlags = 0,
+					pos = self.pos,
+					angle = self.angle,
+					sprite = self.sprite,
+					seq = self.seq,
+					drawMirror = self.drawMirror,
+					removeTime = game.time + lifetime,
+					color = {0,.5,1,1},
+					update = function(self)
+						self.seqStartTime = game.time - frameNumber / (seq.freq or sprite.freq or 1)
+						self.color[4] = 1 - (game.time - startTime) / lifetime
+					end,
+				}
+			end
+			
+			local s = math.sin(game.time * 2 * math.pi) * .5 + .5
+			self.color = {0,.5,1,s}
+			self.drawScale = {1+.2*s, 1+.2*s}
+			Hero.super.draw(self, R, viewBBox, holdOverride)
+			self.drawScale = nil
+		end
 		gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
 		self.color = color
 	end
