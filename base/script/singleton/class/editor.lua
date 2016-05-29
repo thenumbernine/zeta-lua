@@ -26,8 +26,6 @@ local Editor = class()
 --Editor.active = true
 Editor.active = false
 
-Editor.brushOptions = table()
-
 local paintBrush
 local smoothBrush
 
@@ -97,9 +95,8 @@ paintBrush = {
 		end
 	end,
 }
-Editor.brushOptions:insert(paintBrush)
 
-Editor.brushOptions:insert{
+local fillBrush = {
 	name='Fill',
 	paint = function(self, x, y)
 		local level = game.level
@@ -384,7 +381,6 @@ do
 		end,
 	}
 end
-Editor.brushOptions:insert(smoothBrush)
 
 local function hoverTooltip(name)
 	if ig.igIsItemHovered() then
@@ -923,13 +919,15 @@ function InitFileWindow:open()
 end
 
 
-local editModeTiles = 0
-local editModeObjects = 1
-local editModeRooms = 2
-local editModeMove = 3	-- drag to make rect, then click-and-drag rect to move it around
+local editModePaintTiles = 0
+local editModeFillTiles = 1
+local editModeSmoothTiles = 2
+local editModeObjects = 3
+local editModeRooms = 4
+local editModeMove = 5	-- drag to make rect, then click-and-drag rect to move it around
 
 function Editor:init()	
-	self.editMode = ffi.new('int[1]', editModeTiles)
+	self.editMode = ffi.new('int[1]', editModePaintTiles)
 	
 	self.paintingTileType = ffi.new('bool[1]',true)
 	self.paintingFgTile = ffi.new('bool[1]',true)
@@ -949,9 +947,6 @@ function Editor:init()
 	self.alignPatchToAnything = ffi.new('bool[1]',true)
 	self.smoothDiagLevel = ffi.new('int[1]',0)
 
-	-- used for editMode==tile painting
-	self.selectedBrushIndex = ffi.new('int[1]',1)
-	
 	self.selectedTileTypeIndex = ffi.new('int[1]',0)
 	self.selectedFgTileIndex = 0
 	self.selectedBgTileIndex = 0
@@ -1166,7 +1161,11 @@ function Editor:updateGUI()
 		ig.igSeparator()
 	end
 
-	radioTooltip('Edit Tiles', self.editMode, editModeTiles)
+	radioTooltip('Paint Tiles', self.editMode, editModePaintTiles)
+	ig.igSameLine()
+	radioTooltip('Fill Tiles', self.editMode, editModeFillTiles)
+	ig.igSameLine()
+	radioTooltip('Smooth Tiles', self.editMode, editModeSmoothTiles)
 	ig.igSameLine()
 	radioTooltip('Edit Objects', self.editMode, editModeObjects)
 	ig.igSameLine()
@@ -1175,7 +1174,9 @@ function Editor:updateGUI()
 	radioTooltip('Move', self.editMode, editModeMove)
 	ig.igSeparator()
 
-	if self.editMode[0] == editModeTiles 
+	if self.editMode[0] == editModePaintTiles 
+	or self.editMode[0] == editModeFillTiles
+	or self.editMode[0] == editModeSmoothTiles
 	or self.editMode[0] == editModeMove
 	then
 		-- not sure if I should use brushes for painting objects or not ...
@@ -1198,7 +1199,10 @@ function Editor:updateGUI()
 		checkboxTooltip('Stamp Selection', self.moveToolStampPtr)
 	end
 
-	if self.editMode[0] == editModeTiles then
+	if self.editMode[0] == editModePaintTiles
+	or self.editMode[0] == editModeFillTiles
+	or self.editMode[0] == editModeSmoothTiles
+	then
 		
 		if self.paintingTileType[0]
 		--and ig.igCollapsingHeader('Tile Type Options:',0)
@@ -1239,19 +1243,13 @@ function Editor:updateGUI()
 		end		
 	
 		do --if ig.igCollapsingHeader('Brush Options:') then
-			for i,brushOption in ipairs(self.brushOptions) do
-				if i > 1 then
-					ig.igSameLine()
-				end
-				radioTooltip(brushOption.name..' brush', self.selectedBrushIndex, i)
-			end
-			local brushOption = self.brushOptions[self.selectedBrushIndex[0]]
 			-- TODO fill-smoothing?  hmm, sounds dangerously contradictive
-			if brushOption == paintBrush or brushOption == smoothBrush then
+			if self.editMode[0] == editModePaintTiles
+			or self.editMode[0] == editModeSmoothTiles then
 				-- TODO separate sizes for paint and smooth brushes?
 				ig.igSliderInt('Brush Width', self.brushTileWidth, 1, 20)
 				ig.igSliderInt('Brush Height', self.brushTileHeight, 1, 20)
-				if brushOption == paintBrush then
+				if self.editMode[0] == editModePaintTiles then
 					ig.igSliderInt('Stamp Width', self.brushStampWidth, 1, 20)
 					ig.igSliderInt('Stamp Height', self.brushStampHeight, 1, 20)
 					if self.smoothWhilePainting[0] then
@@ -1259,8 +1257,8 @@ function Editor:updateGUI()
 					end
 					checkboxTooltip('Smooth While Painting', self.smoothWhilePainting)
 				end
-				if brushOption == smoothBrush
-				or (brushOption == paintBrush and self.smoothWhilePainting[0])
+				if self.editMode[0] == editModeSmoothTiles
+				or (self.editMode[0] == editModePaintTiles and self.smoothWhilePainting[0])
 				then
 					ig.igSameLine()
 					checkboxTooltip('Unsmooth', self.unsmooth)
@@ -1663,7 +1661,10 @@ function Editor:update()
 		local yf = self.viewBBox.min[2] + (self.viewBBox.max[2] - self.viewBBox.min[2]) * mouse.pos[2]
 		local x = math.floor(xf)
 		local y = math.floor(yf)
-		if self.editMode[0] == editModeTiles then
+		if self.editMode[0] == editModePaintTiles
+		or self.editMode[0] == editModeFillTiles
+		or self.editMode[0] == editModeSmoothTiles
+		then
 			if self.shiftDown then
 				if x >= 1 and y >= 1 and x <= level.size[1] and y <= level.size[2] then
 					if self.paintingTileType[0] then
@@ -1680,7 +1681,13 @@ function Editor:update()
 					end
 				end
 			else
-				self.brushOptions[self.selectedBrushIndex[0]].paint(self, x, y)
+				if self.editMode[0] == editModePaintTiles then
+					paintBrush.paint(self, x, y)
+				elseif self.editMode[0] == editModeFillTiles then
+					fillBrush.paint(self, x, y)
+				elseif self.editMode[0] == editModeSmoothTiles then
+					smoothBrush.paint(self, x, y)
+				end
 			end
 		elseif self.editMode[0] == editModeObjects then	
 			-- only on single click
@@ -2102,10 +2109,13 @@ function Editor:draw(R, viewBBox)
 		local cx = math.floor(self.viewBBox.min[1] + (self.viewBBox.max[1] - self.viewBBox.min[1]) * mouse.pos[1])
 		local cy = math.floor(self.viewBBox.min[2] + (self.viewBBox.max[2] - self.viewBBox.min[2]) * mouse.pos[2])
 		local brushWidth, brushHeight = 1, 1
-		local brushOption
-		if self.editMode[0] == editModeTiles then	-- tiles
-			brushOption = self.brushOptions[self.selectedBrushIndex[0]]
-			if brushOption == paintBrush or brushOption == smoothBrush then
+		if self.editMode[0] == editModePaintTiles
+		or self.editMode[0] == editModeFillTiles
+		or self.editMode[0] == editModeSmoothTiles
+		then	-- tiles
+			if self.editMode[0] == editModePaintTiles
+			or self.editMode[0] == editModeSmoothTiles
+			then
 				brushWidth = self.brushTileWidth[0]
 				brushHeight = self.brushTileHeight[0]
 			end
@@ -2130,7 +2140,7 @@ function Editor:draw(R, viewBBox)
 			xmax - xmin + .8, ymax - ymin + .8,
 			0, 0, 1, 1, 0,
 			1, 1, 0, 1)	--color
-		if brushOption == paintBrush and self.smoothWhilePainting[0] then
+		if self.editMode[0] == editModePaintTiles and self.smoothWhilePainting[0] then
 			xmin = xmin - self.smoothBorder[0]
 			ymin = ymin - self.smoothBorder[0]
 			xmax = xmax + self.smoothBorder[0]

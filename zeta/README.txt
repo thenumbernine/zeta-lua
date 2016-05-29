@@ -25,7 +25,9 @@ a few fixes to both:
 	- add a shootable block tile type, store a separate level for 'original' and 'current' for reloading between rooms
 
 LOW PRIORITY:
-- save files don't save threads 
+save files:
+	- save files aren't saving spawninfo association in some cases
+	- save files don't save threads 
 - separate lua env for level/init.lua and for sandboxes
 - hit 100 objects and you'll stop in midair
 - movement still needs pushing (making use of pushPriority) implementation ... maybe ...
