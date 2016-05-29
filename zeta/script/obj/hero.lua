@@ -241,7 +241,8 @@ Hero.swimDelay = .5
 -- horz vels
 Hero.walkVel = 7
 Hero.crawlVel = 3
-Hero.runVel = 10
+Hero.runVel = 15
+Hero.maxRunVel = 15	-- why are these different?
 Hero.timeToMaxSpeed = 1
 -- climb vel
 Hero.climbVel = 5
@@ -252,7 +253,6 @@ Hero.airAccel = .75
 Hero.swimmingJumpVel = 10
 Hero.ongroundJumpVel = 12
 
-Hero.maxRunVel = 15
 Hero.speedBoostMaxRunVel = 30
 -- goes from 0 to 1 as player goes from max speed to max speed boosted speed
 Hero.speedBoostCharge = 0
@@ -528,7 +528,7 @@ function Hero:update(dt)
 			-- movement in air or when walking
 			if self.inputLeftRight ~= 0 then
 				local moveVel = self.walkVel
-				if self.ducking then
+				if self.onground and self.ducking and self.speedBoostCharge == 0 then
 					moveVel = self.crawlVel
 				elseif self.inputRun then
 					moveVel = self.runVel
@@ -542,7 +542,8 @@ function Hero:update(dt)
 					-- notice, this movement in air or walking on ground ...
 					-- and here i'm using maxRunVel, which is regular or speed boosted ...
 					if self.inputMaxSpeedTime and game.time >= self.inputMaxSpeedTime + self.timeToMaxSpeed then
-						moveVel = maxRunVel
+						local t = self.speedBoostCharge
+						moveVel = self.runVel * (1 - t) + self.speedBoostMaxRunVel * t
 					end
 
 					-- if we're on ground
@@ -551,10 +552,7 @@ function Hero:update(dt)
 					and math.abs(self.vel[1]) >= self.maxRunVel - self.friction
 					then
 						self.speedBoostCharge = math.min(1, self.speedBoostCharge + dt)
-					end
-						
-					local t = self.speedBoostCharge
-					moveVel = self.maxRunVel * (1 - t) + self.speedBoostMaxRunVel * t
+					end	
 					
 					if self.onground and (self.inputLeftRight > 0) ~= (self.vel[1] > 0) then
 						self.inputMaxSpeedTime = nil
@@ -576,7 +574,7 @@ function Hero:update(dt)
 		end
 	end
 	
-	-- if we just hit the ground then see if we're at max vel.  if not then reset the run meter
+	--[[ if we just hit the ground then see if we're at max vel.  if not then reset the run meter
 	if self.onground and not self.ongroundLast then
 		-- TODO check jumping on a tile here
 
@@ -585,6 +583,7 @@ function Hero:update(dt)
 			self.speedBoostCharge = nil
 		end
 	end
+	--]]
 
 	do
 		local tile = level:getTile(self.pos[1] - level.pos[1], self.pos[2] - level.pos[2])
@@ -664,6 +663,14 @@ function Hero:update(dt)
 				self.lookingUp = true
 			end
 		elseif self.inputUpDown == 0 then 
+			self:tryToStand()
+		end
+	end
+	-- pushed up while jumping?
+	if not self.onground and self.inputUpDown ~= 0 and self.inputUpDownLast == 0 then
+		if self.inputUpDown < 0 and not self.ducking then
+			self.ducking = true
+		elseif self.inputUpDown > 0 and self.ducking then
 			self:tryToStand()
 		end
 	end
@@ -779,6 +786,9 @@ end
 
 Hero.removeOnDie = false
 function Hero:die(damage, attacker, inflicter, side)
+	-- stop taking damage once we die
+	self.invincibleEndTime = game.time + 1
+	
 	-- nothing atm
 	if self.dead then return end
 	if self.heldby then self.heldby:setHeld(nil) end

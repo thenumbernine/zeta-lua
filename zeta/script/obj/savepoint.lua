@@ -121,7 +121,7 @@ function SavePoint:playerUse(player)
 			end):concat()..tab..'}'
 		end
 		
-		file['zeta/save/save.txt'] = '{\n'
+		local saveDataSerialized = '{\n'
 			..'\tobjs={\n'
 			..game.objs:map(function(obj,index)
 					
@@ -158,6 +158,24 @@ TODO serialize threads
 		who might have local references to objects ...
 		see how that can get messy?
 --]]
+		
+		file['zeta/save/save.txt'] = saveDataSerialized
+	
+		local arrayRef = class()
+		function arrayRef:init(args)
+			self.index = assert(args.index)
+			self.src = assert(args.src)
+		end
+		local code = [[
+local arrayRef = ...
+local table = require 'ext.table'
+local vec2 = require 'vec.vec2'
+local vec4 = require 'vec.vec4'
+local box2 = require 'vec.box2'
+return ]]..saveDataSerialized	
+		local save = assert(load(code))(arrayRef)
+		game:setSavePoint(save)
+		
 		print('...done')
 	end)
 end
