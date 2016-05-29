@@ -171,6 +171,9 @@ function GLApp:initGL(gl, glname)
 		game.server = server
 	end				
 
+	
+	-- needs tob e done outside game atm because it modifies levelcfg ...
+	-- ... which is passed to game
 	local savefile = 'zeta/save/save.txt'
 	local arrayRef = class()
 	function arrayRef:init(args)
@@ -187,7 +190,11 @@ local vec4 = require 'vec.vec4'
 local box2 = require 'vec.box2'
 return ]]..file[savefile]
 		save = assert(load(code))(arrayRef)
+
+		game:setSavePoint(save)
 	end
+
+
 
 	-- set load level info
 		-- first get it from the modio
@@ -253,146 +260,10 @@ return ]]..file[savefile]
 			game.clientConn.players:insert(player)	-- TODO should be playerClientObjs[i] ... or just don't use clientConn.players
 		end
 	end
-	
+
+
 	game:reset()
 
-	if save then
-		-- NOTICE Game:respawn() uses setTimeout to create objs the next frame
-		-- that would mess this up
-		-- luckily zeta overrides that to do nothing
-		-- (since spawn is room-driven)
-		if game.respawnThread then
-			-- wait for it to finish
-			repeat until not threads:updateThread(game.respawnThread)
-			game.respawnThread = nil
-		end
-		-- after loading, game:reset is called, which calls level:initialize
-		--  which sandbox calls the level initFile
-		-- sandbox is a thread, it's delayed one frame
-		-- this means the level initFile can overwrite the loaded game state
-		-- so I'll have the game keep track of it, and block the thread here
-		if game.levelInitThread then
-			-- wait for it to finish
-			repeat until not threads:updateThread(game.levelInitThread)
-			game.levelInitThread = nil
-		end
-		
-		for k in pairs(game.objs) do
-			game.objs[k] = nil
-		end
-		for k in pairs(game.newObjs) do
-			game.newObjs[k] = nil
-		end	
-		for _,spawnInfo in ipairs(game.level.spawnInfos) do
-			spawnInfo.obj = nil
-		end
---		for k in pairs(game.players) do
---			game.players[k] = nil
---		end
-		for k in pairs(game.session) do
-			game.session[k] = nil
-		end
-		for k,v in pairs(save.session) do
-			game.session[k] = v
-		end
-		
-		game.time = save.time
-		game.sysTime = save.sysTime
-
-		local spawnObjFields = table()
-		local playerObjIndex, playerServerObjIndex
-		for i,saveObj in ipairs(save.objs) do
-			-- copy
-			-- remape spawnInfos (hope they haven't changed)
-			local keystack = table{i}
-			local function deserialize(srcObj, keystack)
-				local obj = {}
-				for k,v in pairs(srcObj) do
-					if type(v) == 'table' then
-						local m = getmetatable(v)
-						if v.src and v.index then
-							if v.src == 'game.server.playerServerObjs' then
-								assert(v.index == 1)
-								playerObjIndex = i
-								playerServerObjIndex = v.index
-								obj[k] = game.server.playerServerObjs[v.index]
-							elseif v.src == 'game.objs' then
-								spawnObjFields:insert(table(keystack):append{k, v.index})
-							elseif v.src == 'game.level.spawnInfos' then
-								obj[k] = game.level.spawnInfos[v.index]
-							else
-								error("can't handle source array "..v.src)
-							end
-						else
-							keystack:insert(k)
-							obj[k] = setmetatable(deserialize(v, keystack), m)
-							assert(k == keystack:remove())
-						end
-					elseif type(v) == 'function' then
-						-- update upvalues within functions
-						-- TODO this assumes the upvalue of 'game' is the game.  
-						-- if you had: do local game = 2 obj.func = function() print(game) end end 
-						--  then the upvalue would be incorrectly replaced
-						-- solution? in any non-class function (like states), don't use upvalues 
-						--  instead require() locally
-						--  or just don't use member functions
-						local j = 1
-						while true do
-							local n = debug.getupvalue(v, j)
-							if not n then break end
-							print('warning: found upvalue',n,'in key',k,'in object',i,'of type',saveObj.spawn)
-							if n == 'game' then
-								print('replacing "game" upvalue!')
-								debug.setupvalue(v, j, game)
-							end
-							j = j + 1
-						end
-						obj[k] = v
-					else
-						obj[k] = v
-					end
-				end
-				return obj
-			end
-			local obj = deserialize(saveObj, keystack)
-			local objclass = require((assert(obj.spawn, "didn't find spawn for obj "..i)))
-			setmetatable(obj, objclass)
-			game.objs[i] = obj
-		end
-	
-		-- use original player objs (for upvalues in anything sandboxed)
-		local srcPlayer = game.objs[playerObjIndex]
-		local player = game.players[1]
-		for k in pairs(player) do
-			player[k] = nil
-		end
-		for k,v in pairs(srcPlayer) do
-			player[k] = v
-		end
-		game.objs[playerObjIndex] = player
-	
-		player.inputUp = nil
-		player.inputDown = nil
-		player.inputUpDown = 0
-		player.inputLeft = nil
-		player.inputRight = nil
-		player.inputLeftRight = 0
-		player.inputShoot = nil
-		player.inputJump = nil
-		player.inputJumpAux = nil
-		player.inputShootAux = nil
-		player.inputPageUp = nil
-		player.inputPageDown = nil
-
-		for _,keys in ipairs(spawnObjFields) do
-			local objIndex = keys:remove()
-			local dst = game.objs 
-			while #keys > 1 do
-				dst = dst[keys:remove(1)]
-			end
-			dst[keys[1]] = game.objs[objIndex]
-		end
-	end
 
 	netcom:addObject{name='game', object=game}
 	

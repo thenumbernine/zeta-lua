@@ -155,6 +155,8 @@ function Game:reset()
 	
 	-- ... and reattach players ...
 	if self.onReset then self:onReset() end	-- callback
+
+	self:loadFromSavePoint() -- ...if we have any save data
 end
 
 function Game:getNextAudioSource()
@@ -237,6 +239,154 @@ function Game:render(preDrawCallback)
 		-- draw player hud
 		player:drawHUD(R, player.viewBBox)
 	end
+end
+
+function Game:setSavePoint(savePoint)
+	self.savePoint = savePoint
+end
+
+function Game:loadFromSavePoint()
+	local save = self.savePoint
+	if not save then return end
+
+	local threads = require 'base.script.singleton.threads'
+
+	-- NOTICE Game:respawn() uses setTimeout to create objs the next frame
+	-- that would mess this up
+	-- luckily zeta overrides that to do nothing
+	-- (since spawn is room-driven)
+	if self.respawnThread then
+		-- wait for it to finish
+		repeat until not threads:updateThread(self.respawnThread)
+		self.respawnThread = nil
+	end
+	-- after loading, self:reset is called, which calls level:initialize
+	--  which sandbox calls the level initFile
+	-- sandbox is a thread, it's delayed one frame
+	-- this means the level initFile can overwrite the loaded self state
+	-- so I'll have the self keep track of it, and block the thread here
+	if self.levelInitThread then
+		-- wait for it to finish
+		repeat until not threads:updateThread(self.levelInitThread)
+		self.levelInitThread = nil
+	end
+	
+	for k in pairs(self.objs) do
+		self.objs[k] = nil
+	end
+	for k in pairs(self.newObjs) do
+		self.newObjs[k] = nil
+	end	
+	for _,spawnInfo in ipairs(self.level.spawnInfos) do
+		spawnInfo.obj = nil
+	end
+--		for k in pairs(self.players) do
+--			self.players[k] = nil
+--		end
+	for k in pairs(self.session) do
+		self.session[k] = nil
+	end
+	for k,v in pairs(save.session) do
+		self.session[k] = v
+	end
+	
+	self.time = save.time
+	self.sysTime = save.sysTime
+
+	local spawnObjFields = table()
+	local playerObjIndex, playerServerObjIndex
+	for i,saveObj in ipairs(save.objs) do
+		-- copy
+		-- remape spawnInfos (hope they haven't changed)
+		local keystack = table{i}
+		local function deserialize(srcObj, keystack)
+			local obj = {}
+			for k,v in pairs(srcObj) do
+				if type(v) == 'table' then
+					local m = getmetatable(v)
+					if v.src and v.index then
+						if v.src == 'game.server.playerServerObjs' then
+							assert(v.index == 1)
+							playerObjIndex = i
+							playerServerObjIndex = v.index
+							obj[k] = self.server.playerServerObjs[v.index]
+						elseif v.src == 'game.objs' then
+							spawnObjFields:insert(table(keystack):append{k, v.index})
+						elseif v.src == 'game.level.spawnInfos' then
+							obj[k] = self.level.spawnInfos[v.index]
+						else
+							error("can't handle source array "..v.src)
+						end
+					else
+						keystack:insert(k)
+						obj[k] = setmetatable(deserialize(v, keystack), m)
+						assert(k == keystack:remove())
+					end
+				elseif type(v) == 'function' then
+					-- update upvalues within functions
+					-- TODO this assumes the upvalue of 'game' is the game.  
+					-- if you had: do local game = 2 obj.func = function() print(game) end end 
+					--  then the upvalue would be incorrectly replaced
+					-- solution? in any non-class function (like states), don't use upvalues 
+					--  instead require() locally
+					--  or just don't use member functions
+					local j = 1
+					while true do
+						local n = debug.getupvalue(v, j)
+						if not n then break end
+						print('warning: found upvalue',n,'in key',k,'in object',i,'of type',saveObj.spawn)
+						if n == 'game' then
+							print('replacing "game" upvalue!')
+							debug.setupvalue(v, j, self)
+						end
+						j = j + 1
+					end
+					obj[k] = v
+				else
+					obj[k] = v
+				end
+			end
+			return obj
+		end
+		local obj = deserialize(saveObj, keystack)
+		local objclass = require((assert(obj.spawn, "didn't find spawn for obj "..i)))
+		setmetatable(obj, objclass)
+		self.objs[i] = obj
+	end
+
+	-- use original player objs (for upvalues in anything sandboxed)
+	local srcPlayer = self.objs[playerObjIndex]
+	local player = self.players[1]
+	for k in pairs(player) do
+		player[k] = nil
+	end
+	for k,v in pairs(srcPlayer) do
+		player[k] = v
+	end
+	self.objs[playerObjIndex] = player
+
+	player.inputUp = nil
+	player.inputDown = nil
+	player.inputUpDown = 0
+	player.inputLeft = nil
+	player.inputRight = nil
+	player.inputLeftRight = 0
+	player.inputShoot = nil
+	player.inputJump = nil
+	player.inputJumpAux = nil
+	player.inputShootAux = nil
+	player.inputPageUp = nil
+	player.inputPageDown = nil
+
+	for _,keys in ipairs(spawnObjFields) do
+		local objIndex = keys:remove()
+		local dst = self.objs 
+		while #keys > 1 do
+			dst = dst[keys:remove(1)]
+		end
+		dst[keys[1]] = self.objs[objIndex]
+	end
+
 end
 
 return Game

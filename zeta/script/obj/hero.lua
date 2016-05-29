@@ -548,7 +548,6 @@ function Hero:update(dt)
 					self.vel[1] = self.vel[1] + accel
 					if self.vel[1] > moveVel then self.vel[1] = moveVel end
 				end
-				print("accel",accel,'vel',self.vel[1])
 				
 				self.drawMirror = self.inputLeftRight < 0
 			end
