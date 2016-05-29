@@ -576,7 +576,6 @@ function Hero:update(dt)
 					self.vel[1] = self.vel[1] + accel
 					if self.vel[1] > moveVel then self.vel[1] = moveVel end
 				end
-print(self.vel[1])						
 				self.drawMirror = self.inputLeftRight < 0
 			end
 		end
@@ -947,6 +946,7 @@ function Hero:draw(R, viewBBox, holdOveride)
 				
 				local animsys = require 'base.script.singleton.animsys'
 				local sprite, seq, frameNumber = animsys:getInfo(self.sprite, self.seq, self.seqStartTime)
+				local freq = seq.freq or sprite.freq or 1
 				local startTime = game.time
 				local lifetime = 1
 				local SpeedEcho = Object{
@@ -958,11 +958,11 @@ function Hero:draw(R, viewBBox, holdOveride)
 					sprite = self.sprite,
 					seq = self.seq,
 					drawMirror = self.drawMirror,
-					removeTime = game.time + lifetime,
 					color = {0,.5,1,1},
 					update = function(self)
-						self.seqStartTime = game.time - frameNumber / (seq.freq or sprite.freq or 1)
+						self.seqStartTime = game.time - frameNumber / freq 
 						self.color[4] = 1 - (game.time - startTime) / lifetime
+						if self.color[4] < 0 then self.remove = true end
 					end,
 				}
 			end

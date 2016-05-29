@@ -30,7 +30,7 @@ function Door:init(...)
 		and obj:isa(Door)
 		and math.abs(obj.startPos[1] - self.startPos[1]) == 1
 		and obj.startPos[2] == self.startPos[2]
-		and not obj.solid
+		and obj.solidFlags == 0
 		then
 			self:setState'open'
 		end
@@ -42,8 +42,8 @@ Door.touchFlags = Door.SOLID_YES	-- player, specifically
 Door.blockFlags = 0
 function Door:touch(other, side)
 	if not other:isa(Hero) then return end
+	if self.solidFlags == 0 then return end
 	self.blockTime = game.time + 1
-	if not self.solid then return end
 
 	local canOpen
 	if not self.color then
@@ -65,6 +65,7 @@ function Door:touch(other, side)
 	end
 
 	if not canOpen then 
+		--[[
 		other.pos[1] = other.lastpos[1]
 		other.vel[1] = 0
 		if self.pos[1] < other.pos[1] then
@@ -72,7 +73,6 @@ function Door:touch(other, side)
 		else
 			other.pos[1] = other.pos[1] - .1
 		end
-		--[[
 		threads:add(function()
 			other:popupMessage('Security Access Level Required!')
 		end)
@@ -86,7 +86,6 @@ Door.states = {
 	opening = {
 		enter = function(self)
 			self.seq = 'unlock'
-			self.solid = false
 			self.solidFlags = 0
 		end,
 		update = function(self,dt)
@@ -100,7 +99,6 @@ Door.states = {
 	open = {
 		enter = function(self)
 			self.seq = 'unlock'
-			self.solid = false
 			self.solidFlags = 0
 		end,
 		update = function(self,dt)
@@ -114,7 +112,6 @@ Door.states = {
 	closing = {
 		enter = function(self)
 			self.seq = 'unlock'
-			self.solid = false
 			self.solidFlags = 0
 		end,
 		update = function(self,dt)
@@ -131,7 +128,6 @@ Door.states = {
 				self:setState'opening'
 			else
 				self.seq = 'stand'
-				self.solid = true
 				self.solidFlags = nil
 			end
 		end,

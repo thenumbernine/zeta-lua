@@ -466,6 +466,8 @@ function Level:draw(R, viewBBox)
 								local sw, sh = stampRow[1], stampRow[2]
 								ti = ti + x % sw
 								tj = tj + y % sh
+								--ti = ti + math.random(sw)-1
+								--tj = tj + math.random(sh)-1
 							end
 						end
 					end
@@ -517,6 +519,8 @@ function Level:draw(R, viewBBox)
 								local sw, sh = stampRow[1], stampRow[2]
 								ti = ti + x % sw
 								tj = tj + y % sh
+								--ti = ti + math.random(sw)-1
+								--tj = tj + math.random(sh)-1
 							end
 						end
 					end
