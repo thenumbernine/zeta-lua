@@ -43,7 +43,6 @@ Hero.maxHealth = 5
 Hero.inputUpDownLast = 0
 Hero.inputRun = false
 Hero.inputJumpTime = -1
-Hero.inputMaxSpeedTime = 0
 Hero.canCarry = true
 
 Hero.preTouchPriority = 10
@@ -255,6 +254,8 @@ Hero.ongroundJumpVel = 12
 
 Hero.maxRunVel = 15
 Hero.speedBoostMaxRunVel = 30
+-- goes from 0 to 1 as player goes from max speed to max speed boosted speed
+Hero.speedBoostCharge = 0
 function Hero:getMaxRunVel()
 	local SpeedBooster = require 'zeta.script.obj.speedbooster'
 	for _,items in ipairs(self.items) do
@@ -264,6 +265,7 @@ function Hero:getMaxRunVel()
 	end
 	return self.maxRunVel
 end
+
 
 Hero.jumpDuration = .15
 Hero.wallJumpEndTime = -1
@@ -371,6 +373,7 @@ function Hero:update(dt)
 		if self.ducking then self:tryToStand() end
 		self.lookingUp = false
 		self.inputMaxSpeedTime = nil
+		self.speedBoostCharge = nil
 	else
 		self.useGravity = true
 	end
@@ -519,6 +522,7 @@ function Hero:update(dt)
 			)
 		then
 			self.inputMaxSpeedTime = nil
+			self.speedBoostCharge = nil
 			-- friction used to be here but I moved it to GameObject for everyone
 		else
 			-- movement in air or when walking
@@ -529,14 +533,32 @@ function Hero:update(dt)
 				elseif self.inputRun then
 					moveVel = self.runVel
 					if self.onground then
-						self.inputMaxSpeedTime = self.inputMaxSpeedTime + dt
+						-- we're running.  determine how long we must keep running to hit the max speed.
+						-- don't keep resetting this value too. 
+						if not self.inputMaxSpeedTime then
+							self.inputMaxSpeedTime = game.time
+						end
 					end
-					if self.inputMaxSpeedTime >= self.timeToMaxSpeed then
+					-- notice, this movement in air or walking on ground ...
+					-- and here i'm using maxRunVel, which is regular or speed boosted ...
+					if self.inputMaxSpeedTime and game.time >= self.inputMaxSpeedTime + self.timeToMaxSpeed then
 						moveVel = maxRunVel
 					end
+
+					-- if we're on ground
+					if self.onground
+					-- and we're at max vel (don't forget friction has been applied last frame)
+					and math.abs(self.vel[1]) >= self.maxRunVel - self.friction
+					then
+						self.speedBoostCharge = math.min(1, self.speedBoostCharge + dt)
+					end
 						
+					local t = self.speedBoostCharge
+					moveVel = self.maxRunVel * (1 - t) + self.speedBoostMaxRunVel * t
+					
 					if self.onground and (self.inputLeftRight > 0) ~= (self.vel[1] > 0) then
 						self.inputMaxSpeedTime = nil
+						self.speedBoostCharge = nil
 					end
 				end
 
@@ -548,7 +570,7 @@ function Hero:update(dt)
 					self.vel[1] = self.vel[1] + accel
 					if self.vel[1] > moveVel then self.vel[1] = moveVel end
 				end
-				
+						
 				self.drawMirror = self.inputLeftRight < 0
 			end
 		end
@@ -560,6 +582,7 @@ function Hero:update(dt)
 
 		if self.vel[1] ~= maxRunVel and self.vel[1] ~= -maxRunVel then
 			self.inputMaxSpeedTime = nil
+			self.speedBoostCharge = nil
 		end
 	end
 
@@ -598,6 +621,7 @@ function Hero:update(dt)
 		else
 			if self.collidedLeft or self.collidedRight then
 				self.inputMaxSpeedTime = nil
+				self.speedBoostCharge = nil
 			end
 		end
 	end
@@ -881,10 +905,8 @@ function Hero:draw(R, viewBBox, holdOveride)
 
 	Hero.super.draw(self, R, viewBBox, holdOverride)
 
-	local speed = math.abs(self.vel[1])
-	local frac = (speed - self.maxRunVel) / (self.speedBoostMaxRunVel - self.maxRunVel)
-	if frac > 0 then
-		local l = math.min(1, frac)
+	if self.speedBoostCharge > 0 then
+		local l = self.speedBoostCharge
 		local color = rawget(self, 'color')
 		self.color = {0,.5*l,l,1}
 		local gl = R.gl
@@ -953,7 +975,7 @@ function Hero:drawHUD(R, viewBBox)
 	R:quad(x+5, y-1, 2, .7,
 		0,0,0,0,0,
 		0,0,0,.5)
-	R:quad(x+5.1, y-.9, 1.8*math.abs(self.vel[1])/self.speedBoostMaxRunVel, .5,
+	R:quad(x+5.1, y-.9, 1.8*self.speedBoostCharge, .5,
 		0,0,0,0,0,
 		0,1,1,.5)
 

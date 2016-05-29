@@ -504,4 +504,6 @@
 	{pos={565.5,898},spawn="zeta.script.obj.cells"},
 	{pos={404.5,834},spawn="zeta.script.obj.walljump"},
 	{pos={443.5,804},spawn="zeta.script.obj.speedbooster"},
+	{pos={555.5,1004},spawn="zeta.script.obj.speedbooster"},
+	{pos={556.5,1004},spawn="zeta.script.obj.walljump"},
 }
