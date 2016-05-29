@@ -5,4 +5,5 @@ return {
 	{name='missile-break', solid=true},
 	{name='grenade-break', solid=true},
 	{name='speed-break', solid=true},
+	{name='spikes', solid=true, damage=5},
 }

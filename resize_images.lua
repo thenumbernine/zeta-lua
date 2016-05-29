@@ -26,7 +26,7 @@ for _,file in ipairs(files) do
 	local image = Image(dir..'/'..file)
 	assert(image.channels == 4)	
 	
---[[ trim whitespace
+-- [[ trim whitespace
 	local b = box2{min={math.huge,math.huge},max={-math.huge,-math.huge}} 
 	for y=0,image.height-1 do
 		for x=0,image.width-1 do
@@ -49,9 +49,11 @@ print('copying')
 print('resizing')
 	image = image:resize(w/h*targetSize,targetSize)
 
+-- [[
 print('canvas square')
 	local w,h = image:size()
 	image = image:copy{x=w/2-targetSize/2, y=h/2-targetSize/2, width=targetSize, height=targetSize}
+--]]
 
 print('saving')	
 	image:save('resized/'..file)

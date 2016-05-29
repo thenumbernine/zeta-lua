@@ -167,6 +167,12 @@ end
 Hero.extraBounceVel = 40
 Hero.idleBounceVel = 10
 
+function Hero:touchTile(tile, side)
+	if tile and tile.damage then
+		self:takeDamage(tile.damage, tile, tile, side)
+	end
+end
+
 function Hero:touch(other, side)
 	-- kick ignore 
 	if other.kickedBy == self
@@ -233,7 +239,6 @@ end
 
 Hero.inputSwimTime = -1
 Hero.swimDelay = .5
-Hero.accel = .5
 -- horz vels
 Hero.walkVel = 7
 Hero.crawlVel = 3
@@ -241,6 +246,12 @@ Hero.runVel = 10
 Hero.timeToMaxSpeed = 1
 -- climb vel
 Hero.climbVel = 5
+				
+Hero.walkAccel = .5	-- ... plus friction ... to counteract friction ... ?
+Hero.airAccel = .75
+
+Hero.swimmingJumpVel = 10
+Hero.ongroundJumpVel = 12
 
 Hero.maxRunVel = 15
 Hero.speedBoostMaxRunVel = 30
@@ -529,13 +540,15 @@ function Hero:update(dt)
 					end
 				end
 
+				local accel = self.onground and (self.walkAccel + self.friction) or self.airAccel
 				if self.inputLeftRight < 0 then
-					self.vel[1] = self.vel[1] - (self.friction + self.accel)
+					self.vel[1] = self.vel[1] - accel
 					if self.vel[1] < -moveVel then self.vel[1] = -moveVel end
 				elseif self.inputLeftRight > 0 then
-					self.vel[1] = self.vel[1] + (self.friction + self.accel)
+					self.vel[1] = self.vel[1] + accel
 					if self.vel[1] > moveVel then self.vel[1] = moveVel end
 				end
+				print("accel",accel,'vel',self.vel[1])
 				
 				self.drawMirror = self.inputLeftRight < 0
 			end
@@ -570,7 +583,7 @@ function Hero:update(dt)
 				self.onground = false
 				self.climbing = nil
 				self.inputJumpTime = game.time
-				self.jumpVel = -10
+				self.jumpVel = -self.swimmingJumpVel
 				self.inputSwimTime = game.time
 			end
 		
@@ -581,7 +594,7 @@ function Hero:update(dt)
 				self.onground = false
 				self.climbing = nil
 				self.inputJumpTime = game.time
-				self.jumpVel = 18	--math.abs(self.vel[1]) * .625
+				self.jumpVel = self.ongroundJumpVel
 			end
 		else
 			if self.collidedLeft or self.collidedRight then

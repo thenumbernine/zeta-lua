@@ -3,8 +3,8 @@ local Game = require 'base.script.singleton.class.game'
 
 local ZetaGame = class(Game)
 ZetaGame.name = 'ZetaGame'
-ZetaGame.gravity = -40
-ZetaGame.maxFallVel = 16	-- slows shots as well ... hmm ... only apply this to non-shot objects?
+ZetaGame.gravity = -15
+ZetaGame.maxFallVel = 40
 
 function ZetaGame:resetObjects(...)
 	ZetaGame.super.resetObjects(self, ...)
