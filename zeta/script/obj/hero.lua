@@ -927,21 +927,40 @@ end
 
 function Hero:drawHUD(R, viewBBox)
 	if Hero.super.drawHUD then Hero.super.drawHUD(self, R, viewBBox) end
-
+	
+	local gl = R.gl
 	-- TODO if start button pushed ...
 	-- then show inventory
 	-- otherwise have 'l' and 'r' cycle ... weapons only? 
 
+	local x = viewBBox.min[1]
 	local y = viewBBox.min[2]+1
 	-- draw gui
 	-- health:
-	y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'HP: '..self.health .. '/' .. self.maxHealth)
+	y=y+1
+	gui.font:drawUnpacked(x, y, 1, -1, 'HP: '..self.health .. '/' .. self.maxHealth)
+	gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
+	-- hp
+	R:quad(x+5, y-1, 2, .7,
+		0,0,0,0,0,
+		0,0,0,.5)
+	R:quad(x+5.1, y-.9, 1.8*self.health/self.maxHealth, .5,
+		0,0,0,0,0,
+		1,0,0,.5)
+	
+	y=y+1
+	-- vel
+	R:quad(x+5, y-1, 2, .7,
+		0,0,0,0,0,
+		0,0,0,.5)
+	R:quad(x+5.1, y-.9, 1.8*math.abs(self.vel[1])/self.speedBoostMaxRunVel, .5,
+		0,0,0,0,0,
+		0,1,1,.5)
+
 	--y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'Cells: ' .. ('%.1f'):format(self.ammoCells)..'/'..self.maxAmmoCells)
 	--y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'ATK +' .. self.attackStat)
 	--y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'DEF +' .. self.defenseStat)
 	
-	local gl = R.gl
-
 	local x = viewBBox.min[1]
 	local function drawInv(item, x, y, items)
 		Object.draw({
