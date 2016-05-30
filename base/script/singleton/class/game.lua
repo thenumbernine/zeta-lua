@@ -80,7 +80,9 @@ function Game:update(dt)
 	for _,obj in ipairs(self.objs) do
 		obj:update(dt)
 	end
-	
+
+--require'base.script.obj.object'.debugUpdate()
+
 		-- remove any objs
 	for i=#self.objs,1,-1 do
 		local obj = self.objs[i]

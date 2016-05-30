@@ -1,9 +1,10 @@
 local Enemy = require 'zeta.script.obj.enemy'
-local GeemerChunk = require 'zeta.script.obj.geemerchunk'
-local stateMachineBehavior = require 'zeta.script.obj.statemachine'
-local hurtsToTouchBehavior = require 'zeta.script.obj.hurtstotouch'
 local game = require 'base.script.singleton.game'
-local Geemer = class(hurtsToTouchBehavior(stateMachineBehavior(Enemy)))
+local Geemer = behaviors(Enemy,
+	require 'zeta.script.obj.statemachine',
+	require 'zeta.script.obj.hurtstotouch',
+	require 'zeta.script.obj.deathtopieces')
+
 Geemer.sprite = 'geemer'
 Geemer.solid = true
 Geemer.maxHealth = 1
@@ -16,6 +17,15 @@ Geemer.shakeEndTime = -1
 Geemer.searchYPaddingDown = 2
 Geemer.searchYPaddingUp = 3
 Geemer.initialState = 'searching'
+
+-- deathToPiecesBehavior
+Geemer.deathPieceDivs = {4,4}
+
+-- Enemy (itemDropOnDeathBehavior)
+Geemer.itemDrops = {
+	['zeta.script.obj.heart'] = .1,
+}
+Geemer.deathSound = 'explode1'
 
 function Geemer:init(args)
 	Geemer.super.init(self, args)
@@ -215,21 +225,10 @@ function Geemer:hit(damage, attacker, inflicter, side)
 	self.madAt = attacker
 end
 
-Geemer.itemDrops = {
-	['zeta.script.obj.heart'] = .1,
-}
-Geemer.deathSound = 'explode1'
 function Geemer:die(damage, attacker, inflicter, side)
 	-- spawn item drops, remove self, sound explosion
 	Geemer.super.die(self, damage, attacker, inflicter, side)
-	-- puff of smoke	
-	--local Puff = require 'zeta.script.obj.puff'
-	--Puff.puffAt(self.pos:unpack())
-	GeemerChunk.makeAt{
-		pos = self.pos,
-		-- should be inflicter.pos, but the shot needs to stop at the surface for that to happen
-		dir = (self.pos - attacker.pos):normalize(),
-	}
+	
 	-- piss off the geemers around you
 	for _,other in ipairs(game.objs) do
 		if other:isa(Geemer) then

@@ -788,6 +788,16 @@ local function testBoxSlope(self, testStuck, x, y, tileType, dt, dx, dy)
 end
 
 
+--[[
+local numObjsTested = 0
+local avgNumTestsPerObj = 0
+function Object.debugUpdate()
+print(numObjsTested..' objs tested, '..avgNumTestsPerObj / numObjsTested..' avg objs per test')
+avgNumTestsPerObj = 0 
+numObjsTested = 0
+end
+--]]
+
 function Object:move_sub(dx,dy)
 
 --local print = self:isa(require 'zeta.script.obj.hero') and print or function() end
@@ -939,11 +949,13 @@ function Object:move_sub(dx,dy)
 			and (bit.band(self.touchFlags, obj.solidFlags) ~= 0
 				or bit.band(obj.touchFlags, self.solidFlags) ~= 0
 				or bit.band(self.blockFlags, obj.solidFlags) ~= 0
-				or bit.band(obj.blockFlags, self.solidFlags) ~= 0
+				--or bit.band(obj.blockFlags, self.solidFlags) ~= 0
 			)
 			-- don't check objects twice
 			and (not objsTested or not table.find(objsTested, obj))
 			then
+--avgNumTestsPerObj = avgNumTestsPerObj + 1 
+				
 				local newSide
 				dt, newSide = testBoxBox(
 					self,
@@ -1103,6 +1115,7 @@ Object.move = Object.move_sub
 --]]
 -- [[ poor-man's way to do collision: move up, move across, move down (for steps)
 function Object:move(dx,dy)
+	
 	-- if moving left/right then try stepping up as well
 	if self.ongroundLast
 	and dx ~= 0
@@ -1114,6 +1127,8 @@ function Object:move(dx,dy)
 	else
 		self:move_sub(dx,dy)
 	end
+
+--numObjsTested = numObjsTested + 1
 end
 --]]
 

@@ -10,6 +10,7 @@ BossGeemer.sprite = 'boss-geemer'
 BossGeemer.jumpVel = 20
 BossGeemer.runVel = 10
 BossGeemer.attackDist = 10
+BossGeemer.deathPieceDivs = {8,8}	-- 16x16 is still too slow ...
 
 function BossGeemer:init(...)
 	BossGeemer.super.init(self, ...)
@@ -81,14 +82,7 @@ end
 
 function BossGeemer:die(damage, attacker, inflicter, side)
 	BossGeemer.super.die(self, damage, attacker, inflicter, side)
-	for i=1,4 do
-		GeemerChunk.makeAt{
-			pos = self.pos,
-			-- should be inflicter.pos, but the shot needs to stop at the surface for that to happen
-			dir = (self.pos - attacker.pos):normalize(),
-		}
-	end
-
+	-- kill all geemers we spawned
 	for _,geemer in ipairs(self.spawnedGeemers) do
 		geemer:die(damage, attacker, inflicter, side)
 	end
