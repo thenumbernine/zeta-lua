@@ -1,4 +1,3 @@
-local class = require 'ext.class'
 local Object = require 'base.script.obj.object'
 local Hero = require 'zeta.script.obj.hero'
 local game = require 'base.script.singleton.game'
@@ -45,8 +44,8 @@ function Item:playerGrab(player, side)
 	do
 		local found = false
 		for _,items in ipairs(player.items) do
-			if self.class ~= require 'zeta.script.obj.keycard'	-- they have to be held uniquely
-			and items[1].class == self.class
+			if getmetatable(self) ~= require 'zeta.script.obj.keycard'	-- they have to be held uniquely
+			and getmetatable(items[1]) == getmetatable(self)
 			and items[1].name == self.name
 			then
 				items:insert(self)

@@ -1,6 +1,4 @@
-local class = require 'ext.class'
 local Game = require 'base.script.singleton.class.game'
-
 local ZetaGame = class(Game)
 ZetaGame.name = 'ZetaGame'
 ZetaGame.gravity = -15

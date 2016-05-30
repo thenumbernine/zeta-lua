@@ -1,8 +1,5 @@
-local class = require 'ext.class'
 local Object = require 'base.script.obj.object'
 local game = require 'base.script.singleton.game'
-local box2 = require 'vec.box2'
-
 local Barrier = class(Object)
 Barrier.sprite = 'barrier'
 Barrier.solid = false

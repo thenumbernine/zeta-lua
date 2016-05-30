@@ -1,10 +1,8 @@
 -- shot object:
 
 local BlasterShot = (function()
-	local class = require 'ext.class'
 	local Object = require 'base.script.obj.object'
 	local game = require 'base.script.singleton.game'
-	local box2 = require 'vec.box2'
 
 	local BlasterShot = class(Object)
 	BlasterShot.bbox = box2(-.1, 0, .1, .2)
@@ -60,7 +58,6 @@ end)()
 -- world object
 
 local Blaster = (function()
-	local class = require 'ext.class'
 	local Weapon = require 'zeta.script.obj.weapon'
 	local game = require 'base.script.singleton.game'
 	

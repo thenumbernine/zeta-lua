@@ -1,6 +1,4 @@
-local class = require 'ext.class'
 local AmmoTank = require 'zeta.script.obj.ammotank'
-
 local GrenadeItem = class(AmmoTank)
 GrenadeItem.sprite = 'grenade'
 GrenadeItem.ammo = 'Grenades'

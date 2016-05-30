@@ -1,10 +1,6 @@
-local class = require 'ext.class'
 local Sandbox = class()
 
 Sandbox.prefixCode = [[
-local vec2 = require 'vec.vec2'
-local vec4 = require 'vec.vec4'
-local box2 = require 'vec.box2'
 local editor = require 'base.script.singleton.editor'
 local threads = require 'base.script.singleton.threads'
 local game = require 'base.script.singleton.game'

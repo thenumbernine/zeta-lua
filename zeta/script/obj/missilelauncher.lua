@@ -1,12 +1,8 @@
 local Missile = (function()
-	local class = require 'ext.class'
 	local Object = require 'base.script.obj.object'
 	local game = require 'base.script.singleton.game'
 	local MissileBlast = require 'zeta.script.obj.missileblast'
 	local Puff = require 'zeta.script.obj.puff'
-	local vec2 = require 'vec.vec2'
-	local box2 = require 'vec.box2'
-
 	local Missile = class(Object)
 	Missile.bbox = box2(-.1, 0, .1, .2)
 	Missile.sprite = 'missile'
@@ -84,9 +80,7 @@ local Missile = (function()
 end)()
 
 local MissileLauncher = (function()
-	local class = require 'ext.class'
 	local Weapon  = require 'zeta.script.obj.weapon'
-	
 	local MissileLauncher = class(Weapon)
 	MissileLauncher.sprite = 'missilelauncher'
 	MissileLauncher.shotDelay = .5

@@ -1,5 +1,3 @@
-local class = require 'ext.class'
-local table = require 'ext.table'
 local audio = require 'base.script.singleton.audio'
 local modio = require 'base.script.singleton.modio'
 local AudioSource = require 'audio.source'
@@ -171,7 +169,6 @@ function Game:getNextAudioSource()
 	until self.audioSourceIndex == startIndex
 end
 
-local box2 = require 'vec.box2'
 function Game:render(preDrawCallback)
 	local glapp = require 'base.script.singleton.glapp'
 	local editor = require 'base.script.singleton.editor'

@@ -1,13 +1,9 @@
 local Grenade = (function()
-	local class = require 'ext.class'
-	local box2 = require 'vec.box2'
-	local vec2 = require 'vec.vec2'
 	local Object = require 'base.script.obj.object'
 	local takesDamageBehavior = require 'zeta.script.obj.takesdamage'
 	local MissileBlast = require 'zeta.script.obj.missileblast'
 	local Puff = require 'zeta.script.obj.puff'
 	local game = require 'base.script.singleton.game'
-	
 	local Grenade = class(takesDamageBehavior(Object))
 	Grenade.bbox = box2(-.1, 0, .1, .2)
 	Grenade.sprite = 'grenade'
@@ -136,9 +132,7 @@ local Grenade = (function()
 end)()
 
 local GrenadeLauncher = (function()
-	local class = require 'ext.class'
 	local Weapon  = require 'zeta.script.obj.weapon'
-
 	local GrenadeLauncher = class(Weapon)
 	GrenadeLauncher.sprite = 'grenadelauncher'
 	GrenadeLauncher.shotDelay = .5

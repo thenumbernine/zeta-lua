@@ -1,10 +1,6 @@
 --[[
 this is special.  it's not to be overridden, so I put the class in this file rather than singleton/class/
 --]]
-local class = require 'ext.class'
-local table = require 'ext.table'
-local io = require 'ext.io'
-
 local ModIO = class()
 
 -- find somewhere before anyone else requires this file

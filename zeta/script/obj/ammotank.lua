@@ -1,6 +1,4 @@
-local class = require 'ext.class'
 local ItemBonus = require 'zeta.script.obj.itembonus'
-
 local AmmoTank = class(ItemBonus)
 AmmoTank.amount = 1	-- how much
 -- AmmoTank.ammo = 'Cells' -- 'Grenades' -- etc ...

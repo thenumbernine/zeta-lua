@@ -1,6 +1,4 @@
-local class = require 'ext.class'
 local Geemer = require 'zeta.script.obj.geemer'
-local box2 = require 'vec.box2'
 local game = require 'base.script.singleton.game'
 local GeemerChunk = require 'zeta.script.obj.geemerchunk'
 
@@ -69,7 +67,6 @@ function BossGeemer:spawnSomeGeemers(n)
 	local xmin = math.floor(self.pos[1] / level.mapTileSize[1]) * level.mapTileSize[1] + 1
 	local xmax = xmin + level.mapTileSize[1] - 2
 	local y = math.ceil(self.pos[2] / level.mapTileSize[2]) * level.mapTileSize[2] - 2
-	local Geemer = require 'zeta.script.obj.geemer'
 	local RedGeemer = require 'zeta.script.obj.redgeemer'
 	RedGeemer = class(RedGeemer)
 	RedGeemer.maxHealth = 3

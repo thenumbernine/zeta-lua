@@ -1,5 +1,11 @@
 #!/usr/bin/env luajit
+
+-- setup global env:
+ffi = require 'ffi'
+bit = require 'bit'
 require 'ext'
+require 'vec'
+
 -- setup mod order  (todo store dependencies and add them accordingly?)
 local modio = require 'base.script.singleton.modio'
 modio.search = table{'base'}

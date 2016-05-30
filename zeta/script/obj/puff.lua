@@ -1,9 +1,5 @@
-local class = require 'ext.class'
 local Object = require 'base.script.obj.object'
-local vec4 = require 'vec.vec4'
-
 local Puff = class(Object)
-
 Puff.sprite = 'puff'
 Puff.solid = false
 Puff.collidesWithWorld = false

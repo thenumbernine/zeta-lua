@@ -1,18 +1,8 @@
-local table = require 'ext.table'
-local class = require 'ext.class'
-
-local bit = require 'bit'
-local ffi = require 'ffi'
 local sdl = require 'ffi.sdl'
 local gl = require 'ffi.OpenGL'
 local ig = require 'ffi.imgui'
-
-local vec2 = require 'vec.vec2'
-local vec3 = require 'vec.vec3'
-local box2 = require 'vec.box2'
 local Tex2D = require 'gl.tex2d'
 local Image = require 'image'
-
 local gui = require 'base.script.singleton.gui'
 local animsys = require 'base.script.singleton.animsys'
 local threads = require 'base.script.singleton.threads'

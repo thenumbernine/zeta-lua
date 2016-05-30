@@ -1,7 +1,5 @@
-local class = require 'ext.class'
 local Weapon = require 'zeta.script.obj.weapon'
 local game = require 'base.script.singleton.game'
-
 local Skillsaw = class(Weapon)
 Skillsaw.sprite = 'sawblade'	-- TODO sprite of its own
 Skillsaw.rotCenter = {.5, .5}

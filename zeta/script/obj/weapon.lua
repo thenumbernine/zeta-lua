@@ -1,11 +1,7 @@
-local class = require 'ext.class'
-local vec2 = require 'vec.vec2'
 local Item = require 'zeta.script.obj.item'
 local OverlayObject = require 'base.script.item'
 local game = require 'base.script.singleton.game'
-
 local Weapon = class(Item)
-
 Weapon.isWeapon = true
 Weapon.rotCenter = {0, .5}
 

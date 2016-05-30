@@ -1,7 +1,5 @@
-local class = require 'ext.class'
 local ItemBonus = require 'zeta.script.obj.itembonus'
 local crystalItemBehavior = require 'zeta.script.obj.crystalitem'
-
 local EnergyTank = class(crystalItemBehavior(ItemBonus))
 EnergyTank.sprite = 'heart'
 EnergyTank.healthBonus = 1

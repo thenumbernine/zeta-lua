@@ -1,10 +1,7 @@
-local class = require 'ext.class'
 local Enemy = require 'zeta.script.obj.enemy'
 local stateMachineBehavior = require 'zeta.script.obj.statemachine'
 local hurtsToTouchBehavior = require 'zeta.script.obj.hurtstotouch'
-local box2 = require 'vec.box2'
 local game = require 'base.script.singleton.game'
-
 local Teeth = class(hurtsToTouchBehavior(stateMachineBehavior(Enemy)))
 Teeth.sprite = 'teeth'
 Teeth.maxHealth = 5

@@ -1,11 +1,5 @@
 local GLApp = require 'glapp'
-local bit = require 'bit'
-local ffi = require 'ffi'
 local sdl = require 'ffi.sdl'
-local vec2 = require 'vec.vec2'
-local box2 = require 'vec.box2'
-local class = require 'ext.class'
-local io = require 'ext.io'
 
 local NetCom = require 'netrefl.netcom'
 require 'netrefl.netfield_list'
@@ -184,10 +178,6 @@ function GLApp:initGL(gl, glname)
 	if io.fileexists(savefile) then
 		local code = [[
 local arrayRef = ...
-local table = require 'ext.table'
-local vec2 = require 'vec.vec2'
-local vec4 = require 'vec.vec4'
-local box2 = require 'vec.box2'
 return ]]..file[savefile]
 		save = assert(load(code))(arrayRef)
 

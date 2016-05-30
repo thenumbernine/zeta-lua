@@ -1,4 +1,3 @@
-local class = require 'ext.class'
 local game = require 'base.script.singleton.game'
 local texsys = require 'base.script.singleton.texsys'
 local modio = require 'base.script.singleton.modio'

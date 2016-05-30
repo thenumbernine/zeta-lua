@@ -1,11 +1,8 @@
 -- shot object:
 
 local PlasmaShot = (function()
-	local class = require 'ext.class'
 	local Object = require 'base.script.obj.object'
 	local game = require 'base.script.singleton.game'
-	local box2 = require 'vec.box2'
-
 	local PlasmaShot = class(Object)
 	PlasmaShot.bbox = box2(-.1, 0, .1, .2)
 	PlasmaShot.sprite = 'plasma-shot'
@@ -86,10 +83,8 @@ end)()
 -- world object
 
 local PlasmaRifle = (function()
-	local class = require 'ext.class'
 	local Weapon = require 'zeta.script.obj.weapon'
 	local game = require 'base.script.singleton.game'
-	
 	local PlasmaRifle = class(Weapon)
 	PlasmaRifle.sprite = 'plasma-rifle'
 	PlasmaRifle.shotDelay = .05

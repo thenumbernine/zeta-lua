@@ -1,6 +1,3 @@
-local class = require 'ext.class'
-local vec2 = require 'vec.vec2'
-local vec4 = require 'vec.vec4'
 local Object = require 'base.script.obj.object'
 local Hero = require 'zeta.script.obj.hero'
 local KeyCard = require 'zeta.script.obj.keycard'

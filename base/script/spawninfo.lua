@@ -1,4 +1,3 @@
-local class = require 'ext.class'
 local SpawnInfo = class()
 
 function SpawnInfo:init(args)

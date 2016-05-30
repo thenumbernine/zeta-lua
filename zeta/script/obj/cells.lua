@@ -1,4 +1,3 @@
-local class = require 'ext.class'
 local AmmoTank = require 'zeta.script.obj.ammotank'
 local Cells = class(AmmoTank)
 Cells.sprite = 'cells'

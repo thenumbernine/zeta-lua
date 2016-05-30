@@ -1,6 +1,3 @@
-local ffi = require 'ffi'
-local vec2 = require 'vec.vec2'
-local class = require 'ext.class'
 local modio = require 'base.script.singleton.modio'
 
 local Renderer = class()

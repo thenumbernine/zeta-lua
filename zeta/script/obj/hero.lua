@@ -25,16 +25,12 @@ when you pick up an item, you're holding it...
 	- carry
 
 --]]
-local class = require 'ext.class'
-local table = require 'ext.table'
-local box2 = require 'vec.box2'
 local gui = require 'base.script.singleton.gui'
 local game = require 'base.script.singleton.game'
 local editor = require 'base.script.singleton.editor'
 local Object = require 'base.script.obj.object'
 local Player = require 'base.script.obj.player'
 local takesDamageBehavior = require 'zeta.script.obj.takesdamage'
-
 local Hero = class(takesDamageBehavior(Player))
 
 Hero.sprite = 'hero'

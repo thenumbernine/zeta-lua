@@ -1,8 +1,6 @@
 --[[
 holds patch information about the texpack
 --]]
-local table = require 'ext.table'
-
 
 --[[
 select the upper-left corner of a preset patch

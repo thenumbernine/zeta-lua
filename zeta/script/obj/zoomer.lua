@@ -1,7 +1,5 @@
-local class = require 'ext.class'
 local Enemy = require 'zeta.script.obj.enemy'
 local hurtsToTouchBehavior = require 'zeta.script.obj.hurtstotouch'
-
 local Zoomer = class(hurtsToTouchBehavior(Enemy))
 Zoomer.sprite = 'zoomer'
 Zoomer.useGravity = false
@@ -31,12 +29,14 @@ function Zoomer:touchTile(tile, side, normal)
 	return true
 end
 
-local Missile = require 'zeta.script.obj.missilelauncher'.shotClass
-local Grenade = require 'zeta.script.obj.grenadelauncher'.shotClass
 function Zoomer:modifyDamageTaken(damage, attacker, inflicter, side)
 	-- TODO damage type
+	local Missile = require 'zeta.script.obj.missilelauncher'.shotClass
+	local Grenade = require 'zeta.script.obj.grenadelauncher'.shotClass
+	local Hero = require 'zeta.script.obj.hero'
 	if not (inflicter:isa(Missile)
-		or inflicter:isa(Grenade))
+		or inflicter:isa(Grenade)
+		or inflicter:isa(Hero))
 	then
 		return 0
 	end

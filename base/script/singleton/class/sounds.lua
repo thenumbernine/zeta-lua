@@ -1,4 +1,3 @@
-local class = require 'ext.class'
 local audio = require 'base.script.singleton.audio'
 local AudioBuffer = require 'audio.buffer'
 local modio = require 'base.script.singleton.modio'

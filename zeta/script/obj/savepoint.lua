@@ -1,9 +1,7 @@
-local class = require 'ext.class'
 local Object = require 'base.script.obj.object'
 local game = require 'base.script.singleton.game'
 local Hero = require 'zeta.script.obj.hero'
 local threads = require 'base.script.singleton.threads'
-
 local SavePoint = class(Object)
 SavePoint.sprite = 'savepoint'
 SavePoint.solid = false
@@ -19,9 +17,6 @@ function SavePoint:playerUse(player)
 
 	os.execute('mkdir zeta/save')
 
-	local vec2 = require 'vec.vec2'
-	local vec4 = require 'vec.vec4'
-	local box2 = require 'vec.box2'
 	local SpawnInfo = require 'base.script.spawninfo'
 
 	threads:add(function()
@@ -168,10 +163,6 @@ TODO serialize threads
 		end
 		local code = [[
 local arrayRef = ...
-local table = require 'ext.table'
-local vec2 = require 'vec.vec2'
-local vec4 = require 'vec.vec4'
-local box2 = require 'vec.box2'
 return ]]..saveDataSerialized	
 		local save = assert(load(code))(arrayRef)
 		game:setSavePoint(save)

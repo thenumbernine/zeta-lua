@@ -1,4 +1,3 @@
-local class = require 'ext.class'
 local Object = require 'base.script.obj.object'
 local threads = require 'base.script.singleton.threads'
 local game = require 'base.script.singleton.game'

@@ -1,7 +1,4 @@
-local class = require 'ext.class'
 local Object = require 'base.script.obj.object'
-local vec2 = require 'vec.vec2'
-local box2 = require 'vec.box2'
 
 local Player = class(Object)
 

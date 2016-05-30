@@ -1,10 +1,7 @@
-local class = require 'ext.class'
-local vec2 = require 'vec.vec2'
 local Enemy = require 'zeta.script.obj.enemy'
 local stateMachineBehavior = require 'zeta.script.obj.statemachine'
 local hurtsToTouchBehavior = require 'zeta.script.obj.hurtstotouch'
 local game = require 'base.script.singleton.game'
-
 local Bat = class(hurtsToTouchBehavior(stateMachineBehavior(Enemy)))
 Bat.sprite = 'bat'
 Bat.useGravity = false

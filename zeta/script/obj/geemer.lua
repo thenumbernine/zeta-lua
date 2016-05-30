@@ -1,10 +1,8 @@
-local class = require 'ext.class'
 local Enemy = require 'zeta.script.obj.enemy'
-local game = require 'base.script.singleton.game'
 local GeemerChunk = require 'zeta.script.obj.geemerchunk'
 local stateMachineBehavior = require 'zeta.script.obj.statemachine'
 local hurtsToTouchBehavior = require 'zeta.script.obj.hurtstotouch'
-
+local game = require 'base.script.singleton.game'
 local Geemer = class(hurtsToTouchBehavior(stateMachineBehavior(Enemy)))
 Geemer.sprite = 'geemer'
 Geemer.solid = true

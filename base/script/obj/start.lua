@@ -1,4 +1,3 @@
-local class = require 'ext.class'
 local Object = require 'base.script.obj.object'
 local Start = class(Object)
 Start.solidFlags = 0

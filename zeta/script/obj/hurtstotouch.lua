@@ -1,4 +1,3 @@
-local class = require 'ext.class'
 local Hero = require 'zeta.script.obj.hero'
 --[[
 behavior is clever when it's templates at compile time

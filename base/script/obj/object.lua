@@ -1,7 +1,4 @@
 local ffi = require 'ffi'
-local class = require 'ext.class'
-local vec2 = require 'vec.vec2'
-local box2 = require 'vec.box2'
 local animsys = require 'base.script.singleton.animsys'
 local game = require 'base.script.singleton.game'
 local sounds = require 'base.script.singleton.sounds'
