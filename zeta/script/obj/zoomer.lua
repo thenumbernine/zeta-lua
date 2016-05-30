@@ -1,6 +1,5 @@
-local Enemy = require 'zeta.script.obj.enemy'
-local hurtsToTouchBehavior = require 'zeta.script.obj.hurtstotouch'
-local Zoomer = class(hurtsToTouchBehavior(Enemy))
+local Zoomer = behaviors(require 'zeta.script.obj.enemy',
+	require 'zeta.script.behavior.hurtstotouch')
 Zoomer.sprite = 'zoomer'
 Zoomer.useGravity = false
 Zoomer.speed = 3

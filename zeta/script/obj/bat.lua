@@ -1,8 +1,7 @@
-local Enemy = require 'zeta.script.obj.enemy'
-local stateMachineBehavior = require 'zeta.script.obj.statemachine'
-local hurtsToTouchBehavior = require 'zeta.script.obj.hurtstotouch'
 local game = require 'base.script.singleton.game'
-local Bat = class(hurtsToTouchBehavior(stateMachineBehavior(Enemy)))
+local Bat = behaviors(require 'zeta.script.obj.enemy', 
+	require 'zeta.script.behavior.statemachine',
+	require 'zeta.script.behavior.hurtstotouch')
 Bat.sprite = 'bat'
 Bat.useGravity = false
 Bat.solidFlags = Bat.SOLID_NO

@@ -1,6 +1,5 @@
-local ItemBonus = require 'zeta.script.obj.itembonus'
-local crystalItemBehavior = require 'zeta.script.obj.crystalitem'
-local EnergyTank = class(crystalItemBehavior(ItemBonus))
+local EnergyTank = behaviors(require 'zeta.script.obj.itembonus',
+	require 'zeta.script.behavior.crystalitem')
 EnergyTank.sprite = 'heart'
 EnergyTank.healthBonus = 1
 

@@ -1,21 +1,3 @@
-local Object = require 'base.script.obj.object'
-local takesDamageBehavior = require 'zeta.script.obj.takesdamage'
-local Enemy = class(takesDamageBehavior(Object))
-
-Enemy.itemDrops = nil
-function Enemy:die(...)
-	if self.itemDrops then
-		local r = math.random()
-		for k,v in pairs(self.itemDrops) do
-			if r <= v then
-				local itemClass = require(k)
-				itemClass{pos = self.pos}
-				break
-			end
-			r = r - v
-		end
-	end
-	Enemy.super.die(self, ...)
-end
-
-return Enemy
+return behaviors(require 'base.script.obj.object',
+	require 'zeta.script.behavior.takesdamage',
+	require 'zeta.script.behavior.itemdrop')	-- itemdrop has to go after takesdamage

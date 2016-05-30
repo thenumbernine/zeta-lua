@@ -1,9 +1,8 @@
-local Enemy = require 'zeta.script.obj.enemy'
 local game = require 'base.script.singleton.game'
-local Geemer = behaviors(Enemy,
-	require 'zeta.script.obj.statemachine',
-	require 'zeta.script.obj.hurtstotouch',
-	require 'zeta.script.obj.deathtopieces')
+local Geemer = behaviors(require 'zeta.script.obj.enemy',
+	require 'zeta.script.behavior.statemachine',
+	require 'zeta.script.behavior.hurtstotouch',
+	require 'zeta.script.behavior.deathtopieces')
 
 Geemer.sprite = 'geemer'
 Geemer.solid = true
@@ -21,7 +20,7 @@ Geemer.initialState = 'searching'
 -- deathToPiecesBehavior
 Geemer.deathPieceDivs = {4,4}
 
--- Enemy (itemDropOnDeathBehavior)
+-- itemDropOnDeathBehavior
 Geemer.itemDrops = {
 	['zeta.script.obj.heart'] = .1,
 }

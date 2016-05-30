@@ -1,12 +1,10 @@
-local Object = require 'base.script.obj.object'
 local Hero = require 'zeta.script.obj.hero'
 local KeyCard = require 'zeta.script.obj.keycard'
-local stateMachineBehavior = require 'zeta.script.obj.statemachine'
 local threads = require 'base.script.singleton.threads'
 local game = require 'base.script.singleton.game'
 local animsys = require 'base.script.singleton.animsys'
-
-local Door = class(stateMachineBehavior(Object))
+local Door = behaviors(require 'base.script.obj.object',
+	require 'zeta.script.behavior.statemachine')
 Door.sprite = 'door'
 Door.useGravity = false
 Door.pushPriority = math.huge
@@ -15,6 +13,7 @@ Door.timeOpening = .5
 Door.timeOpen = 3
 Door.blockTime = -1	-- last time the door was no longer blocked
 Door.initialState = 'closed'
+Door.moveDist = 3	-- same as its bbox height
 
 function Door:init(...)
 	Door.super.init(self, ...)
@@ -87,7 +86,7 @@ Door.states = {
 		end,
 		update = function(self,dt)
 			local y = math.clamp((game.time - self.stateStartTime) / self.timeOpening, 0, 1)
-			self.pos[2] = self.startPos[2] + 2 * y
+			self.pos[2] = self.startPos[2] + self.moveDist * y
 			if game.time >= self.stateStartTime + self.timeOpening then
 				self:setState'open'
 			end
@@ -100,7 +99,7 @@ Door.states = {
 		end,
 		update = function(self,dt)
 			-- keep open
-			self.pos[2] = self.startPos[2] + 2
+			self.pos[2] = self.startPos[2] + self.moveDist
 			if game.time >= self.stateStartTime + self.timeOpen then
 				self:setState'closing'
 			end
@@ -113,7 +112,7 @@ Door.states = {
 		end,
 		update = function(self,dt)
 			local y = math.clamp(1 - (game.time - self.stateStartTime) / self.timeOpening, 0, 1)
-			self.pos[2] = self.startPos[2] + 2 * y
+			self.pos[2] = self.startPos[2] + self.moveDist * y
 			if game.time >= game.time + self.timeOpening then
 				self:setState'closed'
 			end

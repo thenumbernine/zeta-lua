@@ -1,5 +1,4 @@
-local Item = require 'zeta.script.obj.item'
-local crystalItemBehavior = require 'zeta.script.obj.crystalitem'
-local WallJump = class(crystalItemBehavior(Item))
+local WallJump = behaviors(require 'zeta.script.obj.item',
+	require 'zeta.script.behavior.crystalitem')
 WallJump.sprite = 'walljump'
 return WallJump

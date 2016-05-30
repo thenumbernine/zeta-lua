@@ -1,5 +1,4 @@
-local Item = require 'zeta.script.obj.item'
-local crystalItemBehavior = require 'zeta.script.obj.crystalitem'
-local SpeedBooster = class(crystalItemBehavior(Item))
+local SpeedBooster = behaviors(require 'zeta.script.obj.item',
+	require 'zeta.script.behavior.crystalitem')
 SpeedBooster.sprite = 'speed-booster'
 return SpeedBooster

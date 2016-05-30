@@ -1,8 +1,8 @@
-local Enemy = require 'zeta.script.obj.enemy'
-local stateMachineBehavior = require 'zeta.script.obj.statemachine'
-local hurtsToTouchBehavior = require 'zeta.script.obj.hurtstotouch'
 local game = require 'base.script.singleton.game'
-local Teeth = class(hurtsToTouchBehavior(stateMachineBehavior(Enemy)))
+local Teeth = behaviors(require 'zeta.script.obj.enemy',
+	require 'zeta.script.behavior.statemachine',
+	require 'zeta.script.behavior.hurtstotouch')
+
 Teeth.sprite = 'teeth'
 Teeth.maxHealth = 5
 Teeth.bbox = box2(-.5, -.5, .5, .5)
@@ -10,11 +10,18 @@ Teeth.rotCenter = {.5,.5}
 Teeth.drawCenter = {.5,.5}
 Teeth.initialState = 'searching'
 Teeth.drawScale = {4,4}
+Teeth.solidFlags = Teeth.SOLID_NO
+Teeth.blockFlags = Teeth.SOLID_WORLD
+
+-- hurtsToTouchBehavior
 Teeth.touchDamage = 1
 
+-- itemDropBehavior
 Teeth.itemDrops = {
 	['zeta.script.obj.heart'] = .1,
 }
+
+-- stateMachineBehavior
 
 Teeth.searchDist = 5
 Teeth.states.searching = {
@@ -28,9 +35,6 @@ Teeth.states.searching = {
 		end
 	end,
 }
-
-Teeth.solidFlags = Teeth.SOLID_NO
-Teeth.blockFlags = Teeth.SOLID_WORLD
 
 Teeth.speed = 7
 Teeth.jumpVel = 15
