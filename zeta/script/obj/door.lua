@@ -13,7 +13,7 @@ local Door = class(stateMachineBehavior(Object))
 Door.sprite = 'door'
 Door.useGravity = false
 Door.pushPriority = math.huge
-Door.bbox = {min={-.5,0}, max={.5,2}}
+Door.bbox = {min={-.5,0}, max={.5,3}}
 Door.timeOpening = .5
 Door.timeOpen = 3
 Door.blockTime = -1	-- last time the door was no longer blocked
