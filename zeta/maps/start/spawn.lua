@@ -518,4 +518,6 @@
 	{pos={609.5,875},spawn="zeta.script.obj.door"},
 	{pos={576.5,874},spawn="zeta.script.obj.door"},
 	{color={0,1,0,1},pos={577.5,874},spawn="zeta.script.obj.door"},
+	{pos={256.5,908},spawn="zeta.script.obj.door"},
+	{pos={257.5,908},spawn="zeta.script.obj.door"},
 }

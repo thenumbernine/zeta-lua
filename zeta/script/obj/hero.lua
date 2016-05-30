@@ -258,9 +258,6 @@ Hero.climbVel = 5
 Hero.walkAccel = .5	-- ... plus friction ... to counteract friction ... ?
 Hero.airAccel = .75
 
-Hero.swimmingJumpVel = 10
-Hero.ongroundJumpVel = 12
-
 Hero.speedBoostMaxRunVel = 30
 -- goes from 0 to 1 as player goes from max speed to max speed boosted speed
 Hero.speedBoostCharge = 0
@@ -275,7 +272,29 @@ function Hero:getMaxRunVel()
 end
 
 
-Hero.jumpDuration = .15
+Hero.swimmingJumpVel = 10
+-- t0 = jump duration
+-- v = jump velocity
+-- before jump duration: y = v t
+-- after jump duration: y0 = v t0 is the height at which gravity kicks in
+-- a is gravity, a < 0 
+-- y = y0 + v (t - t0) + 1/2 a (t - t0)^2 is the height after the jump
+-- y' = 0 at v + a (t - t0) = 0 <=> a (t - t0) = -v <=> th = t0 - v / a
+-- y(th) = y0 + v (th - t0) + 1/2 a (th - t0)^2 = y0 + v (-v/a) + 1/2 a (-v/a)^2 = y0 - v^2/a + 1/2 v^2/a = y0 - 1/2 v^2/a = yh is the max height of the jump
+-- yh = y0 - 1/2 v^2 / a <=> 1/2 v^2 / (-a) + v t0 - yh = 0 <=> v = a (t0 ± sqrt(t0^2 - 2 yh / a ))
+-- also means t0 = yh / v + 1/2 v / a
+do 
+	local jumpHeight = 6.5
+-- [[ define by height
+	Hero.jumpDuration = .15
+	Hero.ongroundJumpVel = game.gravity * (Hero.jumpDuration - math.sqrt(Hero.jumpDuration^2 - 2 * jumpHeight / game.gravity))
+--]]
+--[[ define by time ... can't get too high of vel before duration becomes zero
+	Hero.ongroundJumpVel = 12
+	Hero.jumpDuration = jumpHeight / Hero.ongroundJumpVel + .5 * Hero.ongroundJumpVel / game.gravity
+--]]
+end
+
 Hero.wallJumpEndTime = -1
 Hero.wallJumpHorzVel = 10
 function Hero:update(dt)
@@ -491,14 +510,7 @@ function Hero:update(dt)
 		
 	if self.collidedUp then
 		self.inputJumpTime = nil
-		local y = self.pos[2] + self.bbox.max[2] + .5 - level.pos[2]
-		for x=math.floor(self.pos[1] + self.bbox.min[1] - level.pos[1]),math.floor(self.pos[1] + self.bbox.max[1] - level.pos[1]) do
-			local tile = level:getTile(x,y)
-			if tile and tile.solid and tile.onHit then
-				tile:onHit(self)
-				break
-			end
-		end
+		self.vel[2] = 0
 	end
 
 	
@@ -598,12 +610,6 @@ function Hero:update(dt)
 		self.swimming = tile and tile.fluid and #tile.fluid > 0
 	end
 		
-	--[[
-	standing: 4
-	walking: 4.5
-	running: 5
-	max speed: 6
-	--]]
 	if self.onground or self.climbing or self.swimming then
 		if self.swimming then
 			if self.inputJump and (self.inputSwimTime + self.swimDelay < game.time) then
@@ -657,6 +663,8 @@ function Hero:update(dt)
 	and not self.inputJumpLast
 	and game.time < self.wallJumpEndTime
 	then
+		self.inputJumpTime = game.time
+		self.jumpVel = self.ongroundJumpVel
 		self.vel[2] = self.jumpVel
 		if self.collidedLeft then
 			self.vel[1] = self.wallJumpHorzVel
@@ -736,6 +744,13 @@ function Hero:update(dt)
 				self.vel[2] = self.vel[2] + self.jumpVel
 			end
 		end
+	end
+	if not self.inputJump 
+	and self.inputJumpLast 
+	and self.vel[2] > 0
+	then
+		self.inputJumpTime = nil
+		self.vel[2] = 0
 	end
 
 	self:refreshSize()
