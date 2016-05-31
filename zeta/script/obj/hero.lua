@@ -30,7 +30,8 @@ local gui = require 'base.script.singleton.gui'
 local game = require 'base.script.singleton.game'
 local editor = require 'base.script.singleton.editor'
 local Hero = behaviors(require 'base.script.obj.player',
-	require 'zeta.script.behavior.takesdamage')
+	require 'zeta.script.behavior.takesdamage',
+	require 'zeta.script.behavior.deathtopieces')
 
 Hero.sprite = 'hero'
 Hero.maxHealth = 5
@@ -826,8 +827,6 @@ function Hero:die(damage, attacker, inflicter, side)
 	self.collidesWithObjects = false
 	self.dead = true
 	
-	Hero.super.die(self, damage, attacker, inflicter, side)
-	
 	-- if we're respawning, keep items and weapon?
 	-- but really I should be restarting the whole level
 	--self.weapon = nil
@@ -835,6 +834,10 @@ function Hero:die(damage, attacker, inflicter, side)
 	--self.respawnTime = game.time + 1
 
 	setTimeout(1, game.reset, game)
+	
+	Hero.super.die(self, damage, attacker, inflicter, side)
+
+	self.sprite = false
 end
 
 function Hero:respawn()
@@ -872,10 +875,7 @@ function Hero:draw(R, viewBBox, holdOveride)
 		vx = vx - self.touchEntDown.vel[1]
 	end
 	
-	if self.dead then
-		self.seq = 'die'
-		self.drawMirror = bit.band(math.floor(game.time * 8), 1) == 1
-	else
+	if not self.dead then
 		if self.climbing then
 			if self.vel[1] ~= 0 or self.vel[2] ~= 0 then
 				self.seq = 'climb'	-- moving

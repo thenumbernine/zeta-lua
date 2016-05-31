@@ -500,6 +500,8 @@ function Level:draw(R, viewBBox)
 				local tj = (fgtileindex - ti) / tilesWide
 
 				-- [[ begin ugliness
+				-- TODO give level a setter for fg and bg tiles (not the 'Original' buffer, but the dynamic one)
+				-- and, upon setting, bake this into the texels there
 				local px = math.floor(ti / patch.width)
 				local locCol = patch.locs[px]
 				if locCol then

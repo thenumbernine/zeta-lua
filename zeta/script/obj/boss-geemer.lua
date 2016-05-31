@@ -1,6 +1,5 @@
 local Geemer = require 'zeta.script.obj.geemer'
 local game = require 'base.script.singleton.game'
-local GeemerChunk = require 'zeta.script.obj.geemerchunk'
 
 local BossGeemer = class(Geemer)
 BossGeemer.maxHealth = 20

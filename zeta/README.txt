@@ -3,26 +3,16 @@ TODO list
 next: add next cave section
 	and some more cave monsters
 
-- go ahead and put ext & vec on global namespace.  they're probably already there.
-- merge grenade items and grenade shots.
-	make grenade launchers shoot the item itself
-	same with missiles
-	this way someone can pick up a shot grenade (and throw it back) ... maybe
-	it makes for custom ammo though
+- you can slide through doors sometimes.  maybe it's only if it's a keycard door and it starts open from you walking into the room. 
+- put non-colliding objects on a separate update loop ... or link objects to rooms/tiles/etc, and have collision detection only test those objects
+
 - editor: 
-	- move texpack tiles and change map tiles accordingly
 	- separate 'object' into 'create object' and 'select object'
 	- click-and-drag on tile selection to form rectangles for brush + stamp size?
 	- show bbox box2 field around object and have manipulators
 	- show vec2 fields as offsets ...? or absolute positions if the meta editor info says so.
 	- object classes use 'spawnfields' for editor fields, types, and tooltips
 - environmental effects ... foreground warping (underwater, heat), blowing wind, falling snow/rain/leaves, etc
-
-- texpack tile swapping doesn't replace tiles in breakblocks.
-- also, tile field type turns into numbers as soon as the object is unselected and reselected.
-a few fixes to both:
-	- keep things the way they are, have certain auto fields detected as tile type (rename 'tileIndex' to 'tile' too?) 
-	- add a shootable block tile type, store a separate level for 'original' and 'current' for reloading between rooms
 
 LOW PRIORITY:
 save files:
@@ -34,14 +24,11 @@ save files:
 - arbitrary room sizes (no fixed grid) - in fact, double as spawnInfo and bbox
 
 monsters:
-	- fix geemer chunks ... to be new sprites?  and let you pick them up and craft health with them? 
 	- add moar mining base monsters:
 		- flying drones ...
-		- other evil robots like you
+		- evil robots 
 	- add moar cave monsters.  
-		- venus fly traps
 		- close-range guy
-		- things that fly back and forth maybe
 		- maybe some kind of shooter
 
 buttons:
