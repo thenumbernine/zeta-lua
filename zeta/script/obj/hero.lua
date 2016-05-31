@@ -162,9 +162,16 @@ end
 Hero.extraBounceVel = 40
 Hero.idleBounceVel = 10
 
-function Hero:touchTile(tile, side)
-	if tile and tile.damage then
-		self:takeDamage(tile.damage, tile, tile, side)
+function Hero:touchTile(tileType, side, plane, x, y)
+	if tileType.damage then
+		self:takeDamage(tileType.damage, tileType, tileType, side)
+	end
+
+	if self.speedBoostCharge == 1
+	and tileType.name == 'speed-break'
+	then
+		game.level:clearTileAndBreak(x,y, self)
+		return true
 	end
 end
 

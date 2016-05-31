@@ -847,7 +847,6 @@ function Object:move_sub(dx,dy)
 		local cxmax = self.pos[1] + self.bbox.max[1] + math.max(dt * dx,0)
 		local cymax = self.pos[2] + self.bbox.max[2] + math.max(dt * dy,0)
 --print('testing entire bbox',box2(cxmin,cymin,cxmax,cymax)) 
-		
 		-- if we can collide with the world
 		-- I'm not checking touchFlags because allowing touching non-blocking tiles 
 		--  would mean rechecking tiles with certain tiles (previously checked, touched, and non-blocked) excluded
@@ -1011,10 +1010,9 @@ function Object:move_sub(dx,dy)
 			local dontblock
 			if touchedTileType then
 --print('calling self.touchTile',self.touchTile,touchedTileType,lside,normal)
-				if self.touchTile then 
-					dontblock = self:touchTile(touchedTileType, lside, normal, touchedTileX, touchedTileY) or dontblock
-					if self.remove then return end
-				end
+				if self.touchTile then dontblock = self:touchTile(touchedTileType, lside, normal, touchedTileX, touchedTileY) or dontblock end
+				if self.remove then return end
+				-- TODO tile touch callbacks?
 			end
 			
 --print('touchedObj is',touchedObj)			
