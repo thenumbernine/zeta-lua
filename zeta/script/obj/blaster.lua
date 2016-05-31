@@ -51,10 +51,12 @@ local BlasterShot = (function()
 					obj = {
 						pos = {x+.5,y+.5},
 						tex = level.texpackTex,
+						--[[
 						u0 = ti/tilesWide,
 						v0 = (tj+1)/tilesWide,
 						u1 = (ti+1)/tilesWide,
 						v1 = tj/tilesHigh,
+						--]]
 					},
 					dir = self.vel:normalize(),
 					divs = {4,4},
