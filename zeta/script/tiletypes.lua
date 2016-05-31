@@ -1,9 +1,9 @@
 return {
-	{name='blaster-break', solid=true},
-	{name='plasma-break', solid=true},
-	{name='skillsaw-break', solid=true},
-	{name='missile-break', solid=true},
-	{name='grenade-break', solid=true},
-	{name='speed-break', solid=true},
-	{name='spikes', solid=true, damage=5},
+	require 'zeta.script.tile.blasterbreak'(),
+	require 'zeta.script.tile.plasmabreak'(),
+	require 'zeta.script.tile.skillsawbreak'(),
+	require 'zeta.script.tile.missilebreak'(),
+	require 'zeta.script.tile.grenadebreak'(),
+	require 'zeta.script.tile.speedbreak'(),
+	require 'zeta.script.tile.spikes'(),
 }
