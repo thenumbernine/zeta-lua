@@ -45,7 +45,6 @@ end
 -- no easy way to do that
 -- so I'm copying the body of Object.draw 
 function SpritePieces:draw(R, viewBBox)
-	if not self.sprite then return end
 	
 	local tex
 	if self.tex then
@@ -128,12 +127,13 @@ end
 
 function SpritePieces.makeFrom(args)
 	local obj = args.obj
+	local useGravity = false	-- obj.useGravity
 	local dir = args.dir
 	local udivs, vdivs = table.unpack(args.divs)
 	local baseVel = 7
 	local spreadVel = 3
 	local randVel = 1
-	local baseVelY = obj.useGravity and 12 or 0
+	local baseVelY = useGravity and 12 or 0
 	local du = 1/udivs
 	local dv = 1/vdivs
 	for i=0,udivs-1 do
@@ -152,12 +152,12 @@ function SpritePieces.makeFrom(args)
 				drawMirror = obj.drawMirror,
 				drawScale = obj.drawScale,
 				drawCenter = obj.drawCenter,
-				--useGravity = obj.useGravity,
+				useGravity = useGravity,
 				rotation = (math.random() * 2 - 1) * 2000,
-				u0 = args.u0 or 0,
-				v0 = args.v0 or 1,
-				u1 = args.u1 or 1,
-				v1 = args.v1 or 0,
+				u0 = obj.u0 or 0,
+				v0 = obj.v0 or 1,
+				u1 = obj.u1 or 1,
+				v1 = obj.v1 or 0,
 				u = u, 
 				v = v, 
 				du = du,

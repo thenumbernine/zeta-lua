@@ -32,31 +32,31 @@ local BlasterShot = (function()
 		if tileType and tileType.name == 'blaster-break' then
 			-- TODO level setter for current tile
 			-- and maybe built-in smoothing?
+			self:playSound'explode1'
 		
 			local level = game.level
 			local tileIndex = level.fgTileMap[(x-1)+level.size[1]*(y-1)]
+			
 			level.tileMap[(x-1)+level.size[1]*(y-1)] = 0
 			level.fgTileMap[(x-1)+level.size[1]*(y-1)] = 0
 
 			local tilesWide = level.texpackTex.width / level.tileSize
 			local tilesHigh = level.texpackTex.height / level.tileSize
 			if tileIndex > 0 then
-				tileIndex = tileIndex - 1
-				local ti = tileIndex % tilesWide
-				local tj = (tileIndex - ti) / tilesWide
+				local ti = (tileIndex - 1) % tilesWide
+				local tj = (tileIndex - ti - 1) / tilesWide
 
-				self:playSound'explode1'
 				local SpritePieces = require 'zeta.script.obj.spritepieces'
 				SpritePieces.makeFrom{
 					obj = {
 						pos = {x+.5,y+.5},
-						tex = level.texpackTex,
-						--[[
+						tex = assert(level.texpackTex),
+						drawScale = {1,1},
+						drawCenter = {.5,.5},
 						u0 = ti/tilesWide,
-						v0 = (tj+1)/tilesWide,
+						v0 = (tj+1)/tilesHigh,
 						u1 = (ti+1)/tilesWide,
 						v1 = tj/tilesHigh,
-						--]]
 					},
 					dir = self.vel:normalize(),
 					divs = {4,4},

@@ -864,6 +864,8 @@ function Hero:modifyDamageTaken(damage, attacker, inflicter, side)
 end
 
 function Hero:draw(R, viewBBox, holdOveride)
+	if not self.sprite then return end
+	
 	if self.invincibleEndTime >= game.time then
 		if math.floor(game.time * 8) % 2 == 0 then
 			return

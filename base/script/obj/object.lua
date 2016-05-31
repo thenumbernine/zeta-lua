@@ -939,18 +939,19 @@ function Object:move_sub(dx,dy)
 		-- test objs
 		for _,obj in ipairs(game.objs) do
 			-- don't collide self with self
-			if obj ~= self 
-			-- only collide objects touching the combined bbox
-			and cxmin <= obj.pos[1] + obj.bbox.max[1]
-			and cxmax >= obj.pos[1] + obj.bbox.min[1]
-			and cymin <= obj.pos[2] + obj.bbox.max[2]
-			and cymax >= obj.pos[2] + obj.bbox.min[2]
+			if not obj.remove
+			and obj ~= self 
 			-- only collide if we will can touch or be blocked by them
 			and (bit.band(self.touchFlags, obj.solidFlags) ~= 0
 				or bit.band(obj.touchFlags, self.solidFlags) ~= 0
 				or bit.band(self.blockFlags, obj.solidFlags) ~= 0
 				--or bit.band(obj.blockFlags, self.solidFlags) ~= 0
 			)
+			-- only collide objects touching the combined bbox
+			and cxmin <= obj.pos[1] + obj.bbox.max[1]
+			and cxmax >= obj.pos[1] + obj.bbox.min[1]
+			and cymin <= obj.pos[2] + obj.bbox.max[2]
+			and cymax >= obj.pos[2] + obj.bbox.min[2]
 			-- don't check objects twice
 			and (not objsTested or not table.find(objsTested, obj))
 			then
@@ -1012,6 +1013,7 @@ function Object:move_sub(dx,dy)
 --print('calling self.touchTile',self.touchTile,touchedTileType,lside,normal)
 				if self.touchTile then 
 					dontblock = self:touchTile(touchedTileType, lside, normal, touchedTileX, touchedTileY) or dontblock
+					if self.remove then return end
 				end
 			end
 			
@@ -1025,10 +1027,14 @@ function Object:move_sub(dx,dy)
 					local opposite = oppositeSide[lside] or error("can't find opposite side for side "..tostring(side))
 					if self.touchPriority >= touchedObj.touchPriority then
 						if self.touch then dontblock = self:touch(touchedObj, lside) or dontblock end
+						if self.remove then return end
 						if not touchedObj.remove and touchedObj.touch then dontblock = touchedObj:touch(self, opposite) or dontblock end
+						if self.remove then return end
 					else
 						if touchedObj.touch then dontblock = touchedObj:touch(self, opposite) or dontblock end
-						if not self.remove and self.touch then dontblock = self:touch(touchedObj, lside) or dontblock end
+						if self.remove then return end
+						if not touchedObj.remove and self.touch then dontblock = self:touch(touchedObj, lside) or dontblock end
+						if self.remove then return end
 					end
 --print('after calling touch, dontblock=',dontblock)				
 				end
