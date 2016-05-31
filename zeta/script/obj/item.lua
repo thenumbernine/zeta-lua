@@ -62,6 +62,10 @@ function Item:playerGrab(player, side)
 		player.weapon = self
 	end
 	self.heldby = player
+
+	self.solidFlags = 0
+	self.blockFlags = 0
+	self.touchFlags = 0
 end
 
 return Item
