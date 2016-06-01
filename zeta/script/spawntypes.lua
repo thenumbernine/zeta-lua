@@ -37,4 +37,15 @@ return {
 	{spawn='zeta.script.obj.bat'},
 	{spawn='zeta.script.obj.zoomer'},
 	{spawn='zeta.script.obj.teeth'},
+
+
+-- serialization uses spawntypes for metatable lookup, so any object that is saved needs to be in this list
+-- that includes shots and death particles
+-- TODO have a separate added list for non-spawnable objects?
+
+	{spawn='zeta.script.obj.spritepieces'},
+	{spawn='zeta.script.obj.blastershot'},
+	{spawn='zeta.script.obj.plasmashot'},
+	{spawn='zeta.script.obj.grenade'},
+	{spawn='zeta.script.obj.missile'},
 }

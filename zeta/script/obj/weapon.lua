@@ -46,10 +46,10 @@ function Weapon:onUse(player)
 	player.weapon = self
 end
 
-Weapon.shotClass = nil
-Weapon.shotDelay = nil
-Weapon.shotSound = nil
-Weapon.ammo = nil
+--Weapon.shotClass = nil
+--Weapon.shotDelay = nil
+--Weapon.shotSound = nil
+--Weapon.ammo = nil
 function Weapon:canShoot(player)
 	if player.inputShootLast and not self.rapidFire then return end
 	

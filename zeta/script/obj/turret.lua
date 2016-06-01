@@ -1,7 +1,7 @@
 local Enemy = require 'zeta.script.obj.enemy'
 local MissileBlast = require 'zeta.script.obj.missileblast'
 local Blaster = require 'zeta.script.obj.blaster'
-local BlasterShot = Blaster.shotClass
+local BlasterShot = require 'zeta.script.obj.blastershot'
 local game = require 'base.script.singleton.game'
 local Turret = class(Enemy)
 Turret.sprite = 'turret-body'
