@@ -175,6 +175,7 @@ function Hero:touchTile(tileType, side, plane, x, y)
 	end
 end
 
+Hero.speedBoostDamageTime = -1
 function Hero:touch(other, side)
 	-- kick ignore 
 	if other.kickedBy == self
@@ -195,7 +196,9 @@ function Hero:touch(other, side)
 
 	if self.speedBoostCharge == 1 
 	and other.takeDamage
+	and self.speedBoostDamageTime < game.time
 	then
+		self.speedBoostDamageTime = game.time + .1
 		other:takeDamage(self.maxHealth, self, self, side)
 		return true
 	end
@@ -573,6 +576,7 @@ function Hero:update(dt)
 					if self.onground
 					-- and we're at max vel (don't forget friction has been applied last frame)
 					and math.abs(self.vel[1]) >= self.maxRunVel - self.friction
+					and self:findItem(nil, require 'zeta.script.obj.speedbooster'.is)
 					then
 						self.speedBoostCharge = math.min(1, self.speedBoostCharge + dt)
 					end	
@@ -607,7 +611,7 @@ function Hero:update(dt)
 		end
 	end
 --]]
-
+	
 	do
 		local tile = level:getTile(self.pos[1] - level.pos[1], self.pos[2] - level.pos[2])
 		self.swimming = tile and tile.fluid and #tile.fluid > 0
@@ -819,9 +823,6 @@ end
 
 Hero.removeOnDie = false
 function Hero:die(damage, attacker, inflicter, side)
-	-- stop taking damage once we die
-	self.invincibleEndTime = game.time + 1
-	
 	-- nothing atm
 	if self.dead then return end
 	if self.heldby then self.heldby:setHeld(nil) end
@@ -870,9 +871,15 @@ function Hero:modifyDamageTaken(damage, attacker, inflicter, side)
 	return math.max(0, damage - self.defenseStat)
 end
 
+function Hero:takeDamage(damage, attacker, inflicter, side)
+	if self.dead then return end
+	--if self.speedBoostCharge == 1 then return end	-- should speed boost make you invincible, or just hit first?
+	return Hero.super.takeDamage(self, damage, attacker, inflicter, side) 
+end
+
 function Hero:draw(R, viewBBox, holdOveride)
 	if not self.sprite then return end
-	
+
 	if self.invincibleEndTime >= game.time then
 		if math.floor(game.time * 8) % 2 == 0 then
 			return

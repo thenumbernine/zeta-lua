@@ -497,8 +497,6 @@
 	{pos={565.5,898},spawn="zeta.script.obj.cells"},
 	{pos={404.5,834},spawn="zeta.script.obj.walljump"},
 	{pos={443.5,804},spawn="zeta.script.obj.speedbooster"},
-	{pos={555.5,1004},spawn="zeta.script.obj.speedbooster"},
-	{pos={556.5,1004},spawn="zeta.script.obj.walljump"},
 	{pos={413.5,949},spawn="zeta.script.obj.savepoint"},
 	{pos={360.5,949},spawn="zeta.script.obj.savepoint"},
 	{pos={266.5,904},spawn="zeta.script.obj.energytank"},

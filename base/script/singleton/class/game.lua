@@ -159,6 +159,8 @@ function Game:reset()
 	self:loadFromSavePoint() -- ...if we have any save data
 end
 
+Game.volume = .1
+
 function Game:getNextAudioSource()
 	if #self.audioSources == 0 then return end
 	local startIndex = self.audioSourceIndex
