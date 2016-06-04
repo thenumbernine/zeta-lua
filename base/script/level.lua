@@ -104,9 +104,9 @@ function Level:init(args)
 	-- enum of tileMap values. 0 => nil 
 	self.tileTypes = assert(args.tileTypes)
 	
-	-- is this even needed? only by the editor.
-	-- TODO enum upon creation of classes 
+	-- used by editor and by save/load 
 	self.spawnTypes = assert(args.spawnTypes)
+	self.serializeTypes = assert(args.serializeTypes)
 
 	self.pos = vec2(0,0)
 	self.vel = vec2(0,0)

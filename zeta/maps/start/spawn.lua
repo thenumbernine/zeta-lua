@@ -515,5 +515,7 @@
 	{pos={256.5,908},spawn="zeta.script.obj.door"},
 	{pos={257.5,908},spawn="zeta.script.obj.door"},
 	{pos={568.5,871},spawn="zeta.script.obj.walljump"},
-	{color={1,0,1,1},pos={219.5,873},spawn="zeta.script.obj.keycard"},
+	{pos={270.5,970},spawn="zeta.script.obj.keycard"},
+	{pos={269.5,970},spawn="zeta.script.obj.keycard"},
+	{color={1,0,1,1},pos={268.5,970},spawn="zeta.script.obj.keycard"},
 }

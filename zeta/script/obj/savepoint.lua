@@ -121,17 +121,17 @@ function SavePoint:playerUse(player)
 			..game.objs:map(function(obj,index)
 					
 					local m = getmetatable(obj)
-					local _, spawntype = game.levelcfg.spawnTypes:find(nil, function(spawnType)
+					local _, spawnType = game.levelcfg.serializeTypes:find(nil, function(spawnType)
 						return m == require(spawnType.spawn)
 					end)
-					if not spawntype
+					if not spawnType
 					and m == require 'zeta.script.obj.hero'
 					then
-						spawntype = {spawn='zeta.script.obj.hero'}
+						spawnType = {spawn='zeta.script.obj.hero'}
 					end
 
 					obj = setmetatable(table(obj),nil)
-					obj.spawn = spawntype and spawntype.spawn or "error('can\\'t find spawntype')"
+					obj.spawn = spawnType and spawnType.spawn or "error('can\\'t find spawnType')"
 				
 					local tab = '\t\t'
 					local s = serialize(obj, tab)

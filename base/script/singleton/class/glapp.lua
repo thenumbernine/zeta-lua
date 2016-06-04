@@ -196,13 +196,16 @@ return ]]..file[savefile]
 	
 	local tileTypes = table()
 	local spawnTypes = table()
+	local serializeTypes = table()
 	for i=#modio.search,1,-1 do	-- start with lowest (base) first, for sequence sake
 		local mod = modio.search[i]
 		if io.fileexists(mod..'/script/tiletypes.lua') then
 			tileTypes:append(require(mod..'.script.tiletypes'))
 		end
 		if io.fileexists(mod..'/script/spawntypes.lua') then
-			spawnTypes:append(require(mod..'.script.spawntypes'))
+			local spawnTypes = require(mod..'.script.spawntypes')
+			spawnTypes:append(spawnTypes.spawn)
+			serializeTypes:append(spawnTypes.serialize)
 		end
 	end
 	-- now normalize all planes
@@ -219,6 +222,7 @@ return ]]..file[savefile]
 	end
 	levelcfg.tileTypes = tileTypes
 	levelcfg.spawnTypes = spawnTypes
+	levelcfg.serializeTypes = serializeTypes
 
 	game:setLevel(levelcfg)
 	
