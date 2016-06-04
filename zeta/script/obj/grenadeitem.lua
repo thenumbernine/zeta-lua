@@ -9,6 +9,7 @@ GrenadeItem.shotUpSpeed = 8
 GrenadeItem.shotSound = nil
 GrenadeItem.drawOffsetStanding = {.625, .5}
 GrenadeItem.drawOffsetDucking = {.625, .25}
+now that grenades are ammo numbers, how do I make them throwable? 
 --]]
 
 return GrenadeItem

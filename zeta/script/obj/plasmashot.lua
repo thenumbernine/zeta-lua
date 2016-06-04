@@ -28,7 +28,7 @@ PlasmaShot.solidFlags = PlasmaShot.SOLID_SHOT
 PlasmaShot.touchFlags = PlasmaShot.SOLID_WORLD + PlasmaShot.SOLID_YES + PlasmaShot.SOLID_NO
 PlasmaShot.blockFlags = PlasmaShot.SOLID_WORLD + PlasmaShot.SOLID_YES
 
-function PlasmaShot:touchTile(tile, side)
+function PlasmaShot:touchTile(tileType, side)
 	if tileType.name == 'plasma-break' then
 		game.level:clearTileAndBreak(x,y, self)
 	end

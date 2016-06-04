@@ -34,7 +34,7 @@ end
 -- look for player
 -- shoot at player
 Turret.searchDist = 10
-Turret.shootDist = 8
+Turret.shootDist = 10
 Turret.rotationSpeed = 360 	-- degrees per second
 function Turret:update(dt)
 	Turret.super.update(self, dt)
@@ -134,8 +134,7 @@ function Turret:shoot()
 end
 
 Turret.itemDrops = {
-	['zeta.script.obj.heart'] = .05,
-	['zeta.script.obj.grenadeitem'] = .05,
+	['zeta.script.obj.heart'] = .2,
 }
 
 -- TODO missileblast object, use it here, grenades, and missiles

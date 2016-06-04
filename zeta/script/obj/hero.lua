@@ -653,7 +653,7 @@ function Hero:update(dt)
 	and not self.ducking
 	and (self.collidedLeft or self.collidedRight)
 	then
-		self.drawMirror = not self.collidedLeft
+		--self.drawMirror = not self.collidedLeft
 		self.vel[2] = self.vel[2] * .5
 		local WallJump = require 'zeta.script.obj.walljump'
 		if self:findItem(nil, WallJump.is) then
