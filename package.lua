@@ -108,12 +108,14 @@ local function makeWin(arch)
 	local osDir = 'dist/win'..bits
 	mkdir(osDir)
 	local runBat = osDir..'/run.bat'
+
+-- TODO for now windows runs with no audio and no editor.  eventually add OpenAL and C/ImGui support. 
 	file[runBat] = [[
 cd data
 set PATH=%PATH%;bin\Windows\]]..arch..'\n'..[[
 set LUA_PATH=./?.lua;./?/?.lua
 set LUAJIT_LIBPATH=.
-luajit.exe init.lua > out.txt 2> err.txt
+luajit.exe init.lua noeditor audio=null > out.txt 2> err.txt
 cd ..
 ]]
 
@@ -187,9 +189,9 @@ local function makeOSX()
 	local macOSDir = contentsDir..'/MacOS'
 	mkdir(macOSDir)
 	local runSh = macOSDir..'/run.sh' 
+-- https://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 	file[runSh] = [[
 #!/usr/bin/env bash
-# https://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $DIR/../Resources
 export LUA_PATH="./?.lua;./?/?.lua"
