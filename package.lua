@@ -115,7 +115,7 @@ cd data
 set PATH=%PATH%;bin\Windows\]]..arch..'\n'..[[
 set LUA_PATH=./?.lua;./?/?.lua
 set LUAJIT_LIBPATH=.
-luajit.exe init.lua editor=nil audio=null libpngVersion=1.5.13 > out.txt 2> err.txt
+luajit.exe init.lua editor=nil audio=null > out.txt 2> err.txt
 cd ..
 ]]
 

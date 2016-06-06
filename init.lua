@@ -20,14 +20,6 @@ for i=1,select('#',...) do
 		package.loaded['audio.currentsystem'] = audio
 	end
 
-	-- override libpng version
-	-- TODO I can get libpng to fail if I give it the wrong version
-	--  but how do you get the right version from it?
-	local libpngVersion = arg:match('^libpngVersion=(.*)$')
-	if libpngVersion then
-		require 'image.luajit.libpngVersion'.libpngVersion = libpngVersion
-	end
-
 	-- override editor -- for distributions without ImGui
 	if arg == 'editor=nil' then
 		package.loaded['base.script.singleton.editor'] = function() end
