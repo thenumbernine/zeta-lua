@@ -175,7 +175,7 @@ end
 
 function Game:render(preDrawCallback)
 	local glapp = require 'base.script.singleton.glapp'
-	local editor = require 'base.script.singleton.editor'
+	local editor = require 'base.script.singleton.editor'()
 	local R = self.R
 	local gl = R.gl
 	local windowWidth, windowHeight = glapp:size()
@@ -227,7 +227,9 @@ function Game:render(preDrawCallback)
 							
 		local level = self.level
 		level:draw(R, player.viewBBox)
-		if editor then editor:draw(R, player.viewBBox) end
+		if editor and editor.active then
+			editor:draw(R, player.viewBBox)
+		end
 		
 		-- clear draw flags
 		do

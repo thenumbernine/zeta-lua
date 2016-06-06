@@ -1,7 +1,7 @@
 local Sandbox = class()
 
 Sandbox.prefixCode = [[
-local editor = require 'base.script.singleton.editor'
+local editor = require 'base.script.singleton.editor'()
 local threads = require 'base.script.singleton.threads'
 local game = require 'base.script.singleton.game'
 local level = game.level

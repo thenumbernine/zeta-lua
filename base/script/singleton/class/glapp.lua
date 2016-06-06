@@ -261,7 +261,7 @@ return ]]..file[savefile]
 	
 	-- don't include this til after opengl is initialized
 	gui = require 'base.script.singleton.gui'
-	editor = require 'base.script.singleton.editor'
+	editor = require 'base.script.singleton.editor'()
 	if editor then editor:setTileKeys(tilekeys) end
 
 	if levelcfg.music then
@@ -292,7 +292,7 @@ function GLApp:event(event, ...)
 		if editor:event(event) then return end
 	end
 
-	if editor.active and editor.isHandlingKeyboard then return end
+	if editor and editor.active and editor.isHandlingKeyboard then return end
 
 	if #game.clientConn.players >= 2 then
 		local player = game.clientConn.players[2]

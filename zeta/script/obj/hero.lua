@@ -28,7 +28,7 @@ when you pick up an item, you're holding it...
 local Object = require 'base.script.obj.object'
 local gui = require 'base.script.singleton.gui'
 local game = require 'base.script.singleton.game'
-local editor = require 'base.script.singleton.editor'
+local editor = require 'base.script.singleton.editor'()
 local Hero = behaviors(require 'base.script.obj.player',
 	require 'zeta.script.behavior.takesdamage',
 	require 'zeta.script.behavior.deathtopieces')

@@ -22,7 +22,7 @@ for i=1,select('#',...) do
 
 	-- override editor -- for distributions without ImGui
 	if arg == 'noeditor' then
-		package.loaded['base.script.singleton.editor'] = false
+		package.loaded['base.script.singleton.editor'] = function() end
 	end
 end
 
