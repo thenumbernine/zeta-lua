@@ -1,22 +1,31 @@
-#!/usr/bin/env lua -lluarocks.require
+#!/usr/bin/env luajit
 -- script to make an .app package
 
 local target = ...
 
+local ffi = require 'ffi'
 require 'ext'
-local lfs = require 'lfs'
 
 -- TODO make sure name has no spaces/symbols, or is properly escaped for all these cp commands: 
 local name = 'DumpWorld'	-- or whatever you want to call the .app
 
+local function fixpath(path)
+	if ffi.os == 'Windows' then
+		return path:gsub('/','\\')
+	else
+		return path
+	end
+end
+
 local function mkdir(dir)
-	print('mkdir '..dir)
-	lfs.mkdir(dir)
+	local cmd = 'mkdir '..fixpath(dir)
+	print(cmd)
+	os.execute(cmd)
 end
 
 local function exec(cmd)
 	print(cmd)
-	if _VERSION == 'Lua 5.1' then
+	if _VERSION == 'Lua 5.1' and not ffi then
 		assert(os.execute(cmd)==0)
 	else
 		assert(os.execute(cmd))
@@ -26,39 +35,67 @@ end
 -- TODO replace all exec(cp) and exec(rsync) with my own copy
 -- or at least something that works on all OS's
 
+local function copyToDir(file,dir)
+	if ffi.os == 'Windows' then
+		-- /Y means suppress error on overwriting files
+		exec('copy '..fixpath(file)..' '..fixpath(dir)..' /Y')
+	else
+		exec('cp '..file..' '..dir)
+	end
+end
+
 -- the platform-independent stuff:
 local function copyBody(destDir)
-	exec('cp init.lua '..destDir)
+	copyToDir('init.lua', destDir)
+	copyToDir('package.lua', destDir)
 	-- internal project folders
 	for _,dir in ipairs{
 		-- TODO enable according to which is used init.lua & its deps
 		'base',
-		--'brightmoon',
-		--'mario',
-		--'metroid',
 		'zeta',
 	} do
-		exec('cp -R '..dir..' '..destDir)
+		if ffi.os == 'Windows' then
+			exec('xcopy '..dir..' '..fixpath(destDir)..'\\'..dir..' /E /I /Y')
+		else
+			exec('cp -R '..dir..' '..destDir)
+		end
 	end
 	-- external project folders
 	-- only copy *.lua files ... or at least don't copy .git files
-	for _,dir in ipairs{'ext','glapp','imguiapp','vec','parser','image','audio','netrefl','resourcecache','threadmanager','simplexnoise','gui','gl'
-		--,'gles2'	-- for android only
+	for _,dir in ipairs{
+		'ext',
+		'glapp',
+		--'imguiapp',	-- TODO: not for windows only
+		'vec',
+		'parser',
+		'image',
+		'audio',
+		'netrefl',
+		'resourcecache',
+		'threadmanager',
+		'simplexnoise',
+		'gui',
+		'gl',
+		--'gles2'	-- for android only
 	} do
-		exec("rsync -avm --include='*.lua' -f 'hide,! */' ../"..dir.." "..destDir)
+		if ffi.os == 'Windows' then
+			exec('xcopy ..\\'..dir..'\\*.lua '..fixpath(destDir)..'\\'..dir..' /E /I /Y')
+		else
+			exec("rsync -avm --include='*.lua' -f 'hide,! */' ../"..dir.." "..destDir)
+		end
 	end
 	-- ffi bindings
 	mkdir(destDir..'/ffi')
 	for _,fn in ipairs{'sdl','OpenGL','glu','OpenAL','OpenALUT','png','imgui'} do
-		exec('cp ../ffi/'..fn..'.lua '..destDir..'/ffi')
+		copyToDir('../ffi/'..fn..'.lua', destDir..'/ffi')
 	end
 	mkdir(destDir..'/ffi/c')
 	for _,fn in ipairs{'setjmp','stdio','stdlib','string','time'} do
-		exec('cp ../ffi/c/'..fn..'.lua '..destDir..'/ffi/c')
+		copyToDir('../ffi/c/'..fn..'.lua', destDir..'/ffi/c')
 	end
 	mkdir(destDir..'/ffi/c/sys')
 	for _,fn in ipairs{'time'} do
-		exec('cp ../ffi/c/sys/'..fn..'.lua '..destDir..'/ffi/c/sys')
+		copyToDir('../ffi/c/sys/'..fn..'.lua', destDir..'/ffi/c/sys')
 	end
 end
 
@@ -73,9 +110,10 @@ local function makeWin(arch)
 	local runBat = osDir..'/run.bat'
 	file[runBat] = [[
 cd data
+set PATH=%PATH%;bin\Windows\]]..arch..'\n'..[[
 set LUA_PATH=./?.lua;./?/?.lua
 set LUAJIT_LIBPATH=.
-bin\Windows\]]..arch..[[\luajit.exe init.lua > out.txt 2> err.txt
+luajit.exe init.lua > out.txt 2> err.txt
 cd ..
 ]]
 
@@ -87,17 +125,21 @@ cd ..
 	mkdir(binDir)
 	
 	-- copy luajit
-	exec('cp ../ufo/bin/Windows/'..arch..'/luajit.exe '..binDir)
-	exec('cp ../ufo/bin/Windows/'..arch..'/luajit.dll '..binDir)
-	exec('cp ../ufo/bin/Windows/'..arch..'/luajit.lib '..binDir)
-
+	copyToDir('../ufo/bin/Windows/'..arch..'/luajit.exe', binDir)
+	
 	-- copy body
 	copyBody(dataDir)
 
 	-- copy ffi windows dlls's
-	for _,fn in ipairs{'sdl','png','regal'} do
-		for _,ext in ipairs{'dll','lib','pdb'} do
-			exec('cp ../ufo/bin/Windows/'..arch..'/'..fn..'.'..ext..' '..binDir)
+	for _,fn in ipairs{
+		'luajit',
+		'sdl',
+		'png',
+		'z',	-- needed by png
+		'regal',	-- I thought I commented out my OpenGL loading of regal ...
+	} do
+		for _,ext in ipairs{'dll','lib'} do
+			copyToDir('../ufo/bin/Windows/'..arch..'/'..fn..'.'..ext, binDir)
 		end
 	end
 end
@@ -177,4 +219,4 @@ end
 
 if target == 'all' or target == 'osx' then makeOSX() end
 if target == 'all' or target == 'win32' then makeWin('x86') end
-if target == 'all' or target == 'win64' then makeWin('x64') end
+--if target == 'all' or target == 'win64' then makeWin('x64') end -- ufo only runs the 64 bit versions for amd ...

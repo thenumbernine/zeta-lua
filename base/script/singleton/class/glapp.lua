@@ -92,7 +92,7 @@ local fpsFrames = 0
 
 local R
 local GLApp = class(GLApp) 
-local ImGuiApp = require 'imguiapp'
+local ImGuiApp = editor and require 'imguiapp' or nil
 	-- closest resolution:
 GLApp.width = 1024
 GLApp.height = 768
@@ -100,8 +100,6 @@ GLApp.title = 'Dump World'
 GLApp.sdlInitFlags = bit.bor(sdl.SDL_INIT_VIDEO, sdl.SDL_INIT_JOYSTICK)
 
 function GLApp:initGL(gl, glname)
-	ImGuiApp.initGL(self, gl, glname)
-
 	local Renderer = modio:require 'script.singleton.class.renderer'
 	local rendererClass = Renderer.requireClasses[glname]
 	if not rendererClass then error("don't have support for "..tostring(glname)) end
@@ -276,6 +274,10 @@ return ]]..file[savefile]
 			bgAudioSource:setGain(.5)
 			bgAudioSource:play()
 		end
+	end
+
+	if editor then
+		ImGuiApp.initGL(self, gl, glname)
 	end
 	
 	R:report('init end')
@@ -470,7 +472,9 @@ end
 
 function GLApp:exit()
 	audio:shutdown()
-	ImGuiApp.exit(self)
+	if editor then
+		ImGuiApp.exit(self)
+	end
 end
 
 return GLApp
