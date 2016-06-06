@@ -92,7 +92,7 @@ local fpsFrames = 0
 
 local R
 local GLApp = class(GLApp) 
-local ImGuiApp = editor and require 'imguiapp' or nil
+local ImGuiApp
 	-- closest resolution:
 GLApp.width = 1024
 GLApp.height = 768
@@ -201,9 +201,9 @@ return ]]..file[savefile]
 			tileTypes:append(require(mod..'.script.tiletypes'))
 		end
 		if io.fileexists(mod..'/script/spawntypes.lua') then
-			local spawnTypes = require(mod..'.script.spawntypes')
-			spawnTypes:append(spawnTypes.spawn)
-			serializeTypes:append(spawnTypes.serialize)
+			local modSpawnTypes = require(mod..'.script.spawntypes')
+			spawnTypes:append(modSpawnTypes.spawn)
+			serializeTypes:append(modSpawnTypes.serialize)
 		end
 	end
 	-- now normalize all planes
@@ -277,6 +277,7 @@ return ]]..file[savefile]
 	end
 
 	if editor then
+		ImGuiApp = require 'imguiapp'
 		ImGuiApp.initGL(self, gl, glname)
 	end
 	
