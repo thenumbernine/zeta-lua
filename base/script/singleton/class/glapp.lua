@@ -203,6 +203,7 @@ return ]]..file[savefile]
 		if io.fileexists(mod..'/script/spawntypes.lua') then
 			local modSpawnTypes = require(mod..'.script.spawntypes')
 			spawnTypes:append(modSpawnTypes.spawn)
+			serializeTypes:append(modSpawnTypes.spawn)
 			serializeTypes:append(modSpawnTypes.serialize)
 		end
 	end
