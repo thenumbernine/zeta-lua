@@ -628,28 +628,29 @@ function MoveWorldWindow:init()
 	self.yPtr = ffi.new('int[1]',0)
 end
 
+function MoveWorldWindow:open()
+	self.opened[0] = true
+	self.xPtr[0] = 0
+	self.yPtr[0] = 0
+end
+
 -- draws the button
 -- shows the popup if it's opened
 function MoveWorldWindow:update()
-	if buttonTooltip('Move Whole World') then
-		self.opened[0] = true
-		self.xPtr[0] = 0
-		self.yPtr[0] = 0
+	if not self.opened[0] then return end
+
+	ig.igBegin('Move World', self.opened)
+	ig.igInputInt('Move X', self.xPtr)
+	ig.igInputInt('Move Y', self.yPtr)
+	if ig.igButton('OK') then
+		doMoveWorld(self.xPtr[0], self.yPtr[0])
+		self.opened[0] = false
 	end
-	if self.opened[0] then
-		ig.igBegin('Move World', self.opened)
-		ig.igInputInt('Move X', self.xPtr)
-		ig.igInputInt('Move Y', self.yPtr)
-		if ig.igButton('OK') then
-			doMoveWorld(self.xPtr[0], self.yPtr[0])
-			self.opened[0] = false
-		end
-		ig.igSameLine()
-		if ig.igButton('Cancel') then
-			self.opened[0] = false
-		end
-		ig.igEnd()
+	ig.igSameLine()
+	if ig.igButton('Cancel') then
+		self.opened[0] = false
 	end
+	ig.igEnd()
 end
 
 local TileExchangeWindow = class()
@@ -669,167 +670,164 @@ function TileExchangeWindow:init(editor)
 end
 
 function TileExchangeWindow:update()
+	
+	if not self.opened[0] then return end
+	
 	local level = game.level
 	local editor = self.editor
 	
-	if buttonTooltip('Tile Exchange') then
-		self.opened[0] = true
-	end
+	ig.igPushIdStr('Tile Exchange Window')
+	ig.igBegin('Tile Exchange', self.opened)
 	
-	if self.opened[0] then
-		ig.igPushIdStr('Tile Exchange Window')
-		ig.igBegin('Tile Exchange', self.opened)
-		
-		checkboxTooltip('Tile Type', editor.paintingTileType)
-		ig.igSameLine()
-		checkboxTooltip('Fg Tile', editor.paintingFgTile)
-		ig.igSameLine()
-		checkboxTooltip('Bg Tile', editor.paintingBgTile)
+	checkboxTooltip('Tile Type', editor.paintingTileType)
+	ig.igSameLine()
+	checkboxTooltip('Fg Tile', editor.paintingFgTile)
+	ig.igSameLine()
+	checkboxTooltip('Bg Tile', editor.paintingBgTile)
 
-		ig.igSeparator()
+	ig.igSeparator()
 
-		--[[ here we're going to need a button that shows a popup that lets you choose
-		ig.igPushIdStr('Tile Type From')
-		editor:tileTypeButton(self.tileTypeFrom
-		ig.igPopId()
-		ig.igPushIdStr('Tile Type To')
-		ig.igPopId()
-		--]]
+	--[[ here we're going to need a button that shows a popup that lets you choose
+	ig.igPushIdStr('Tile Type From')
+	editor:tileTypeButton(self.tileTypeFrom
+	ig.igPopId()
+	ig.igPushIdStr('Tile Type To')
+	ig.igPopId()
+	--]]
 
-		ig.igPushIdStr('Tile From')
-		editor.pickTileWindow:openButton('from', self.tileFrom, function(i)
-			self.tileFrom = i
-		end)
-		
-		ig.igPopId()
-		ig.igSameLine()
-		
-		ig.igPushIdStr('Tile To')
-		editor.pickTileWindow:openButton('to', self.tileTo, function(i)
-			self.tileTo = i
-		end)
-		ig.igPopId()
-		
-		ig.igSliderInt('width', self.widthPtr, 1, 64)
-		ig.igSliderInt('height', self.heightPtr, 1, 64)
-		
-		checkboxTooltip('from->to', self.transferTilesFromToPtr)
-		ig.igSameLine()
-		checkboxTooltip('to->from', self.transferTilesToFromPtr)
+	ig.igPushIdStr('Tile From')
+	editor.pickTileWindow:openButton('from', self.tileFrom, function(i)
+		self.tileFrom = i
+	end)
+	
+	ig.igPopId()
+	ig.igSameLine()
+	
+	ig.igPushIdStr('Tile To')
+	editor.pickTileWindow:openButton('to', self.tileTo, function(i)
+		self.tileTo = i
+	end)
+	ig.igPopId()
+	
+	ig.igSliderInt('width', self.widthPtr, 1, 64)
+	ig.igSliderInt('height', self.heightPtr, 1, 64)
+	
+	checkboxTooltip('from->to', self.transferTilesFromToPtr)
+	ig.igSameLine()
+	checkboxTooltip('to->from', self.transferTilesToFromPtr)
 
-		if self.tileFrom > 0
-		and self.tileTo > 0	-- TODO handle clear for 'move to' to support selective erases
-		and (self.transferTilesFromToPtr[0] or self.transferTilesToFromPtr[0])
-		then 
-			local texpackImage = level.texpackImage
-			local width, height, channels, format = texpackImage.width, texpackImage.height, texpackImage.channels, texpackImage.format
-			local tilesWide = width / level.tileSize
-			local tilesHigh = height / level.tileSize
-			local moveFromXMin = (self.tileFrom-1) % tilesWide
-			local moveFromYMin = (self.tileFrom-moveFromXMin-1) / tilesWide
-			local moveFromXMax = moveFromXMin + self.widthPtr[0] - 1
-			local moveFromYMax = moveFromYMin + self.heightPtr[0] - 1
-			local moveToXMin = (self.tileTo-1) % tilesWide
-			local moveToYMin = (self.tileTo-moveToXMin-1) / tilesWide
-			local moveToXMax = moveToXMin + self.widthPtr[0] - 1
-			local moveToYMax = moveToYMin + self.heightPtr[0] - 1
+	if self.tileFrom > 0
+	and self.tileTo > 0	-- TODO handle clear for 'move to' to support selective erases
+	and (self.transferTilesFromToPtr[0] or self.transferTilesToFromPtr[0])
+	then 
+		local texpackImage = level.texpackImage
+		local width, height, channels, format = texpackImage.width, texpackImage.height, texpackImage.channels, texpackImage.format
+		local tilesWide = width / level.tileSize
+		local tilesHigh = height / level.tileSize
+		local moveFromXMin = (self.tileFrom-1) % tilesWide
+		local moveFromYMin = (self.tileFrom-moveFromXMin-1) / tilesWide
+		local moveFromXMax = moveFromXMin + self.widthPtr[0] - 1
+		local moveFromYMax = moveFromYMin + self.heightPtr[0] - 1
+		local moveToXMin = (self.tileTo-1) % tilesWide
+		local moveToYMin = (self.tileTo-moveToXMin-1) / tilesWide
+		local moveToXMax = moveToXMin + self.widthPtr[0] - 1
+		local moveToYMax = moveToYMin + self.heightPtr[0] - 1
 
-			if ig.igButton('Swap In Texpack')
-			then
-				local newTexpackImage = Image(width, height, channels, format)
-				for j=0,tilesHigh-1 do
-					for i=0,tilesWide-1 do
-						for u=0,level.tileSize-1 do
-							for v=0,level.tileSize-1 do
-								local dx = u + level.tileSize * i
-								local dy = v + level.tileSize * j
-								local sx, sy = dx, dy
-								if self.transferTilesFromToPtr[0] 
-								and i >= moveFromXMin and i <= moveFromXMax
-								and j >= moveFromYMin and j <= moveFromYMax
-								then
-									sx = u + level.tileSize * (i - moveFromXMin + moveToXMin)
-									sy = v + level.tileSize * (j - moveFromYMin + moveToYMin)
-								elseif self.transferTilesToFromPtr[0]
-								and i >= moveToXMin and i <= moveToXMax
-								and j >= moveToYMin and j <= moveToYMax
-								then
-									sx = u + level.tileSize * (i - moveToXMin + moveFromXMin)
-									sy = v + level.tileSize * (j - moveToYMin + moveFromYMin)
-								end
-								for k = 0,channels-1 do
-									newTexpackImage.buffer[k+channels*(dx+width*dy)] = 
-										texpackImage.buffer[k+channels*(sx+width*sy)]
-								end
+		if ig.igButton('Swap In Texpack')
+		then
+			local newTexpackImage = Image(width, height, channels, format)
+			for j=0,tilesHigh-1 do
+				for i=0,tilesWide-1 do
+					for u=0,level.tileSize-1 do
+						for v=0,level.tileSize-1 do
+							local dx = u + level.tileSize * i
+							local dy = v + level.tileSize * j
+							local sx, sy = dx, dy
+							if self.transferTilesFromToPtr[0] 
+							and i >= moveFromXMin and i <= moveFromXMax
+							and j >= moveFromYMin and j <= moveFromYMax
+							then
+								sx = u + level.tileSize * (i - moveFromXMin + moveToXMin)
+								sy = v + level.tileSize * (j - moveFromYMin + moveToYMin)
+							elseif self.transferTilesToFromPtr[0]
+							and i >= moveToXMin and i <= moveToXMax
+							and j >= moveToYMin and j <= moveToYMax
+							then
+								sx = u + level.tileSize * (i - moveToXMin + moveFromXMin)
+								sy = v + level.tileSize * (j - moveToYMin + moveFromYMin)
+							end
+							for k = 0,channels-1 do
+								newTexpackImage.buffer[k+channels*(dx+width*dy)] = 
+									texpackImage.buffer[k+channels*(sx+width*sy)]
 							end
 						end
 					end
 				end
-				level.texpackImage = newTexpackImage
-				level.texpackTex:delete()
-				level.texpackTex = Tex2D{
-					image = level.texpackImage,
-					minFilter = gl.GL_NEAREST,
-					magFilter = gl.GL_NEAREST,
-					internalFormat = gl.GL_RGBA,
-					format = gl.GL_RGBA,
-				}
 			end
-			if ig.igIsItemHovered() then
-				ig.igBeginTooltip()
-				ig.igText('Exchange two tile ranges within the texpack.\n'
-						..'The map will retain its tile indexes, so\n'
-						..'textures will appear exchanged in the map as well.')
-				ig.igEndTooltip()
-			end
-			
-			if ig.igButton('Swap in Level') then
-				local maps = table()
-				if editor.paintingFgTile[0] then maps:insert(level.fgTileMapOriginal) end
-				if editor.paintingBgTile[0] then maps:insert(level.bgTileMapOriginal) end
-				for _,map in ipairs(maps) do
-					for y=0,level.size[2]-1 do
-						for x=0,level.size[1]-1 do
-							local tile = map[x+level.size[1]*y]
-							if tile > 0 then
-								local tx = (tile-1) % tilesWide
-								local ty = (tile-tx-1) / tilesWide
-								local update
-								if self.transferTilesFromToPtr[0]
-								and tx >= moveFromXMin and tx <= moveFromXMax
-								and ty >= moveFromYMin and ty <= moveFromYMax
-								then
-									tx = tx - moveFromXMin + moveToXMin
-									ty = ty - moveFromYMin + moveToYMin
-									update = true
-								elseif self.transferTilesToFromPtr[0]
-								and tx >= moveToXMin and tx <= moveToXMax
-								and ty >= moveToYMin and ty <= moveToYMax
-								then
-									tx = tx - moveToXMin + moveFromXMin
-									ty = ty - moveToYMin + moveFromYMin
-									update = true
-								end
-								if update then
-									map[x+level.size[1]*y] = 1 + tx + tilesWide * ty
-								end
-							end
-						end
-					end
-				end
-				level:refreshTiles()
-			end
-			
-			if ig.igIsItemHovered() then
-				ig.igBeginTooltip()
-				ig.igText('Exchange two tile ranges of indexes within the map.')
-				ig.igEndTooltip()
-			end
+			level.texpackImage = newTexpackImage
+			level.texpackTex:delete()
+			level.texpackTex = Tex2D{
+				image = level.texpackImage,
+				minFilter = gl.GL_NEAREST,
+				magFilter = gl.GL_NEAREST,
+				internalFormat = gl.GL_RGBA,
+				format = gl.GL_RGBA,
+			}
 		end
-
-		ig.igEnd()
-		ig.igPopId()
+		if ig.igIsItemHovered() then
+			ig.igBeginTooltip()
+			ig.igText('Exchange two tile ranges within the texpack.\n'
+					..'The map will retain its tile indexes, so\n'
+					..'textures will appear exchanged in the map as well.')
+			ig.igEndTooltip()
+		end
+		
+		if ig.igButton('Swap in Level') then
+			local maps = table()
+			if editor.paintingFgTile[0] then maps:insert(level.fgTileMapOriginal) end
+			if editor.paintingBgTile[0] then maps:insert(level.bgTileMapOriginal) end
+			for _,map in ipairs(maps) do
+				for y=0,level.size[2]-1 do
+					for x=0,level.size[1]-1 do
+						local tile = map[x+level.size[1]*y]
+						if tile > 0 then
+							local tx = (tile-1) % tilesWide
+							local ty = (tile-tx-1) / tilesWide
+							local update
+							if self.transferTilesFromToPtr[0]
+							and tx >= moveFromXMin and tx <= moveFromXMax
+							and ty >= moveFromYMin and ty <= moveFromYMax
+							then
+								tx = tx - moveFromXMin + moveToXMin
+								ty = ty - moveFromYMin + moveToYMin
+								update = true
+							elseif self.transferTilesToFromPtr[0]
+							and tx >= moveToXMin and tx <= moveToXMax
+							and ty >= moveToYMin and ty <= moveToYMax
+							then
+								tx = tx - moveToXMin + moveFromXMin
+								ty = ty - moveToYMin + moveFromYMin
+								update = true
+							end
+							if update then
+								map[x+level.size[1]*y] = 1 + tx + tilesWide * ty
+							end
+						end
+					end
+				end
+			end
+			level:refreshTiles()
+		end
+		
+		if ig.igIsItemHovered() then
+			ig.igBeginTooltip()
+			ig.igText('Exchange two tile ranges of indexes within the map.')
+			ig.igEndTooltip()
+		end
 	end
+
+	ig.igEnd()
+	ig.igPopId()
 end
 
 local ConsoleWindow = class()
@@ -840,11 +838,8 @@ function ConsoleWindow:init()
 end
 
 function ConsoleWindow:update()
-	if buttonTooltip('Console') then
-		self.opened[0] = true
-	end
-
 	if not self.opened[0] then return end
+
 	local bufferSize = ffi.sizeof(self.buffer)
 
 	ig.igBegin('Console', self.opened)
@@ -936,6 +931,7 @@ function Editor:init()
 	-- smooth brush options:
 	self.alignPatchToAnything = ffi.new('bool[1]',true)
 	self.smoothDiagLevel = ffi.new('int[1]',0)
+	self.unsmooth = ffi.new('bool[1]',false)
 
 	self.selectedTileTypeIndex = ffi.new('int[1]',0)
 	self.selectedFgTileIndex = 0
@@ -950,7 +946,7 @@ function Editor:init()
 	self.showRooms = ffi.new('bool[1]',true)
 	
 	self.noClipping = ffi.new('bool[1]',true)
-	self.unsmooth = ffi.new('bool[1]',false)
+	self.removeAllObjsPtr = ffi.new('bool[1]',false)
 
 	self.pickTileTypeWindow = PickTileTypeWindow(self)
 	self.pickTileWindow = PickTileWindow()
@@ -1066,7 +1062,6 @@ function Editor:setTileKeys()
 end
 
 function Editor:updateGUI()
-	ig.igText('EDITOR')
 	local level = game.level
 
 	local function alert(str)
@@ -1084,72 +1079,76 @@ function Editor:updateGUI()
 		end
 		--]]
 	end
+	
+	if self.removeAllObjsPtr[0] then
+		for _,spawnInfo in ipairs(level.spawnInfos) do
+			spawnInfo:removeObj()
+		end
+	end
 
 	self.pickTileTypeWindow:update()
 	self.pickTileWindow:update()
+	self.moveWorldWindow:update()
+	self.tileExchangeWindow:update()
+	self.consoleWindow:update()
 
-	do --if ig.igCollapsingHeader('Display...') then
-		self.viewSizePtr = self.viewSizePtr or ffi.new('float[1]')
-		self.viewSizePtr[0] = game.viewSize
-		ig.igSliderFloat('zoom', self.viewSizePtr, 1, math.max(level.size:unpack()), '%.3f', 3)
-		game.viewSize = tonumber(self.viewSizePtr[0])
-	
-		checkboxTooltip('no clipping', self.noClipping)
-		ig.igSameLine()
-		checkboxTooltip('Show Tile Types', self.showTileTypes)
-		ig.igSameLine()
-		checkboxTooltip('Show Spawn Infos', self.showSpawnInfos)
-		ig.igSameLine()
-		checkboxTooltip('Show Objects', self.showObjects)
-		ig.igSameLine()
-		checkboxTooltip('Show Rooms', self.showRooms)
-	end
-	
-	do --if ig.igCollapsingHeader('Misc...') then
-		self.removeAllObjsPtr = self.removeAllObjsPtr or ffi.new('bool[1]',false)
-		checkboxTooltip('remove all objs', self.removeAllObjsPtr)
-		if self.removeAllObjsPtr[0] then
-			for _,spawnInfo in ipairs(level.spawnInfos) do
-				spawnInfo:removeObj()
+	ig.igBegin('Editor', nil, ig.ImGuiWindowFlags_MenuBar)
+	if ig.igBeginMenuBar() then
+		if ig.igBeginMenu('File') then
+			if ig.igMenuItem('Save Map') then
+				self:saveMap()
 			end
+			if ig.igMenuItem('Save Backgrounds') then
+				self:saveBackgrounds()
+			end
+			if ig.igMenuItem('Save Texpack') then
+				self:saveTexpack()
+			end
+			if ig.igMenuItem('Edit Level Init Code') then
+				self.initFileWindow:open()
+			end
+			ig.igEndMenu()
 		end
-		ig.igSameLine()
-		if buttonTooltip('respawn all objs') then
-			for _,spawnInfo in ipairs(level.spawnInfos) do
-				spawnInfo:removeObj()
-				spawnInfo:respawn()
+		
+		if ig.igBeginMenu('Display') then
+			ig.igMenuItem('no clipping', nil, self.noClipping)
+			ig.igMenuItem('Show Tile Types', nil, self.showTileTypes)
+			ig.igMenuItem('Show Spawn Infos', nil, self.showSpawnInfos)
+			ig.igMenuItem('Show Objects', nil, self.showObjects)
+			ig.igMenuItem('Show Rooms', nil, self.showRooms)
+			ig.igEndMenu()
+		end
+	
+		if ig.igBeginMenu('Misc') then
+			
+			ig.igMenuItem('remove all objs', nil, self.removeAllObjsPtr)
+			if ig.igMenuItem('respawn all objs') then
+				for _,spawnInfo in ipairs(level.spawnInfos) do
+					spawnInfo:removeObj()
+					spawnInfo:respawn()
+				end
 			end
+
+			-- adds the buttons and does the updating
+			if ig.igMenuItem('Move Whole World', nil, self.moveWorldWindow.opened) then
+				self.moveWorldWindow:open()
+			end
+			ig.igMenuItem('Tile Exchange', nil, self.tileExchangeWindow.opened)
+			ig.igMenuItem('Console', nil, self.consoleWindow.opened)
+
+			ig.igEndMenu()
 		end
 
-		ig.igSameLine()
-		self.moveWorldWindow:update()
-		ig.igSameLine()
-		self.tileExchangeWindow:update()
-		ig.igSameLine()
-		self.consoleWindow:update()
-		ig.igSeparator()
+		ig.igEndMenuBar()
 	end
+
+	self.viewSizePtr = self.viewSizePtr or ffi.new('float[1]')
+	self.viewSizePtr[0] = game.viewSize
+	ig.igSliderFloat('zoom', self.viewSizePtr, 1, math.max(level.size:unpack()), '%.3f', 3)
+	game.viewSize = tonumber(self.viewSizePtr[0])
 
 	-- call this before the Edit Level Init Code button so the pointer exists
 	self.initFileWindow:update()
-	do --if ig.igCollapsingHeader('File...') then
-		if buttonTooltip('Save Map') then
-			self:saveMap()
-		end
-		ig.igSameLine()
-		if buttonTooltip('Save Backgrounds') then
-			self:saveBackgrounds()
-		end
-		ig.igSameLine()
-		if buttonTooltip('Save Texpack') then
-			self:saveTexpack()
-		end
-		ig.igSameLine()
-		if buttonTooltip('Edit Level Init Code') then
-			self.initFileWindow:open()
-		end
-		ig.igSeparator()
-	end
 
 	radioTooltip('Paint Tiles', self.editMode, editModePaintTiles)
 	ig.igSameLine()
@@ -1578,6 +1577,9 @@ function Editor:updateGUI()
 			end
 		end
 	end
+	
+	ig.igSpacing()
+	ig.igEnd()
 end
 
 
