@@ -14,22 +14,19 @@ next: add next cave section
 	- object classes use 'spawnfields' for editor fields, types, and tooltips
 - environmental effects ... foreground warping (underwater, heat), blowing wind, falling snow/rain/leaves, etc
 
-LOW PRIORITY:
-save files:
-	- save files aren't saving spawninfo association in some cases
-	- save files don't save threads 
-- separate lua env for level/init.lua and for sandboxes
-- hit 100 objects and you'll stop in midair
-- movement still needs pushing (making use of pushPriority) implementation ... maybe ...
-- arbitrary room sizes (no fixed grid) - in fact, double as spawnInfo and bbox
-
 monsters:
 	- add moar mining base monsters:
-		- flying drones ...
 		- evil robots 
 	- add moar cave monsters.  
 		- close-range guy
-		- maybe some kind of shooter
+		- shooting monster 
+
+LOW PRIORITY:
+- save files don't save threads 
+- separate lua env for level/init.lua and for sandboxes (so globals in level script code don't overwrite globals in the game)
+- hit 100 objects and you'll stop in midair
+- movement still needs pushing (making use of pushPriority) implementation ... maybe ...
+- arbitrary room sizes (no fixed grid) - in fact, double as spawnInfo and bbox
 
 buttons:
 	- up/down to aim, left/right to move

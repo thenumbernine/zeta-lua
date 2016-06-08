@@ -316,7 +316,14 @@ function Game:loadFromSavePoint()
 						elseif v.src == 'game.objs' then
 							spawnObjFields:insert(table(keystack):append{k, v.index})
 						elseif v.src == 'game.level.spawnInfos' then
-							obj[k] = self.level.spawnInfos[v.index]
+							local spawnInfo = assert(self.level.spawnInfos[v.index])
+							obj[k] = spawnInfo
+							-- if we're setting an object's spawnInfo field
+							-- and that object is in game.objs
+							-- then set the spawnInfo's object to this
+							if k == 'spawnInfo' and #keystack == 1 then
+								spawnInfo.obj = obj
+							end
 						else
 							error("can't handle source array "..v.src)
 						end
