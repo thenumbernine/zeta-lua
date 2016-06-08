@@ -37,7 +37,7 @@ Teeth.states.searching = {
 }
 
 Teeth.speed = 7
-Teeth.jumpVel = 15
+Teeth.jumpVel = 10
 Teeth.jawFreq = 10
 Teeth.angle = 90
 Teeth.jawAngle = 0
