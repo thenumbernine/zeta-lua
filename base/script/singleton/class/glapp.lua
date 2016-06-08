@@ -302,10 +302,10 @@ function GLApp:event(event, ...)
 			player.inputUpDown = 0
 			player.inputLeftRight = 0
 			
-			if bit.band(event.jhat.value, 1) ~= 0 then player.inputUpDown = player.inputUpDown + 1 end
-			if bit.band(event.jhat.value, 4) ~= 0 then player.inputUpDown = player.inputUpDown - 1 end
-			if bit.band(event.jhat.value, 2) ~= 0 then player.inputLeftRight = player.inputLeftRight + 1 end
-			if bit.band(event.jhat.value, 8) ~= 0 then player.inputLeftRight = player.inputLeftRight - 1 end
+			if bit.band(event.jhat.value, sdl.SDL_HAT_UP) ~= 0 then player.inputUpDown = player.inputUpDown + 1 end
+			if bit.band(event.jhat.value, sdl.SDL_HAT_DOWN) ~= 0 then player.inputUpDown = player.inputUpDown - 1 end
+			if bit.band(event.jhat.value, sdl.SDL_HAT_RIGHT) ~= 0 then player.inputLeftRight = player.inputLeftRight + 1 end
+			if bit.band(event.jhat.value, sdl.SDL_HAT_LEFT) ~= 0 then player.inputLeftRight = player.inputLeftRight - 1 end
 		
 		elseif event.type == sdl.SDL_JOYAXISMOTION then
 			if event.jaxis.axis == 0 then
