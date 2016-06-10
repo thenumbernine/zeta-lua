@@ -18,7 +18,7 @@ function BlasterShot:init(...)
 	self.drawMirror = self.vel[1] < 0
 	if self.drawMirror then self.angle = -self.angle end
 
-	self.removeTime = game.time + .2
+--	self.removeTime = game.time + .2
 end
 
 BlasterShot.solidFlags = BlasterShot.SOLID_SHOT	

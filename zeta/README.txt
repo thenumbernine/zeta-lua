@@ -1,5 +1,12 @@
 TODO list
 
+- make falling fast again (g=40)
+- add maxfall velocity to the player alone?
+- make more use of the grab button?
+- separate touch-n-go (opposite dir + jump) from wall grind (grab button)
+- add grab-able blocks for climbing
+
+
 next: add next cave section
 	and some more cave monsters
 

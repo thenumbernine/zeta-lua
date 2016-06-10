@@ -653,8 +653,13 @@ function Hero:update(dt)
 	and not self.ducking
 	and (self.collidedLeft or self.collidedRight)
 	then
-		--self.drawMirror = not self.collidedLeft
-		self.vel[2] = self.vel[2] * .5
+		-- wall grinding? via the pick-up button
+		if self.inputShootAux
+		and true--self:findItem(nil, require 'zeta.script.obj.wallgrab'.is)
+		then
+			self.drawMirror = not self.collidedLeft
+			self.vel[2] = -game.gravity * dt	--self.vel[2] * .5
+		end
 		local WallJump = require 'zeta.script.obj.walljump'
 		if self:findItem(nil, WallJump.is) then
 			self.wallJumpEndTime = game.time + .15
