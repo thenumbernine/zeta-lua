@@ -1,6 +1,6 @@
-local Object = require 'base.script.obj.object'
 local game = require 'base.script.singleton.game'
-local Sawblade = class(Object)
+local Sawblade = behaviors(require 'zeta.script.obj.enemy',
+	require 'zeta.script.behavior.deathtopieces')
 Sawblade.sprite = 'sawblade'
 Sawblade.solid = false
 local radius = .75
@@ -13,6 +13,7 @@ Sawblade.damage = 3
 Sawblade.rotation = 3000
 Sawblade.pushForce = 7
 Sawblade.circuit = 'Main'
+Sawblade.maxHealth = 20
 
 function Sawblade:init(...)
 	Sawblade.super.init(self, ...)
@@ -28,6 +29,7 @@ Sawblade.solidFlags = 0
 Sawblade.touchFlags = Sawblade.SOLID_YES -- player
 					+ Sawblade.SOLID_NO -- geemer
 					+ Sawblade.SOLID_GRENADE -- grenades
+					+ Sawblade.SOLID_SHOT
 Sawblade.blockFlags = 0
 Sawblade.touchPriority = 9	-- above shots, below hero
 function Sawblade:touch(other, side)

@@ -3,7 +3,6 @@ local Geemer = behaviors(require 'zeta.script.obj.enemy',
 	require 'zeta.script.behavior.statemachine',
 	require 'zeta.script.behavior.hurtstotouch',
 	require 'zeta.script.behavior.deathtopieces')
-
 Geemer.sprite = 'geemer'
 Geemer.solid = true
 Geemer.maxHealth = 1

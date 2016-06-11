@@ -1,6 +1,6 @@
-local Object = require 'base.script.obj.object'
 local game = require 'base.script.singleton.game'
-local Barrier = class(Object)
+local Barrier = behaviors(require 'zeta.script.obj.enemy',
+	require 'zeta.script.behavior.deathtopieces')
 Barrier.sprite = 'barrier'
 Barrier.solid = false
 Barrier.timeOn = 3
@@ -9,6 +9,7 @@ Barrier.damage = 2
 Barrier.bbox = box2(-.3, 0, .3, 3)
 Barrier.shockEndTime = -1
 Barrier.circuit = 'Main'
+Barrier.maxHealth = 10
 
 function Barrier:init(...)
 	Barrier.super.init(self, ...)
@@ -20,6 +21,7 @@ Barrier.solidFlags = 0
 Barrier.touchFlags = Barrier.SOLID_YES -- for player
 					+ Barrier.SOLID_NO -- for geemer
 					+ Barrier.SOLID_GRENADE -- for grenades
+					+ Barrier.SOLID_SHOT
 Barrier.blockFlags = 0 
 Barrier.touchPriority = 9	-- above shots, below hero
 function Barrier:touch(other, side)
@@ -30,6 +32,7 @@ function Barrier:touch(other, side)
 		-- stop grenades immediately.  stops missiles as well.
 		if other.blast then other:blast() end
 	end
+	
 	return true
 end
 
@@ -52,8 +55,10 @@ function Barrier:update(dt)
 		end
 		
 		self.sprite = 'barrier' -- class default
+		self.touchFlags = self.SOLID_YES + self.SOLID_NO + self.SOLID_GRENADE + self.SOLID_SHOT 
 	else
 		self.sprite = false	-- tell Object:draw not to draw anything
+		self.touchFlags = self.SOLID_YES + self.SOLID_NO
 	end
 end
 
