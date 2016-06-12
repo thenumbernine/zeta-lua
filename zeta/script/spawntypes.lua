@@ -18,10 +18,10 @@ return {
 		{spawn='zeta.script.obj.plasmarifle'},
 		-- powerups
 		{spawn='zeta.script.obj.healthitem'},
-		{spawn='zeta.script.obj.missileitem'},
 		{spawn='zeta.script.obj.healthmaxitem'},
 		{spawn='zeta.script.obj.cellsmaxitem'},
 		{spawn='zeta.script.obj.grenademaxitem'},
+		{spawn='zeta.script.obj.missilemaxitem'},
 		{spawn='zeta.script.obj.attackbonus'},
 		{spawn='zeta.script.obj.defensebonus'},
 		{spawn='zeta.script.obj.speedbooster'},

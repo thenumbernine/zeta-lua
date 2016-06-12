@@ -1,5 +1,5 @@
-local PowerupItem = require 'zeta.script.obj.powerupitem'
-local AmmoMaxItem = class(PowerupItem)
+local AmmoMaxItem = behaviors(require 'zeta.script.obj.powerupitem',
+	require 'zeta.script.behavior.crystalitem')
 AmmoMaxItem.amount = 1	-- how much
 -- AmmoMaxItem.ammo = 'Cells' -- 'Grenades' -- etc ...
 
