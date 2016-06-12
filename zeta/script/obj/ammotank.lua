@@ -1,5 +1,5 @@
-local ItemBonus = require 'zeta.script.obj.itembonus'
-local AmmoTank = class(ItemBonus)
+local PowerupItem = require 'zeta.script.obj.powerupitem'
+local AmmoTank = class(PowerupItem)
 AmmoTank.amount = 1	-- how much
 -- AmmoTank.ammo = 'Cells' -- 'Grenades' -- etc ...
 

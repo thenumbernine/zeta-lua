@@ -1,5 +1,5 @@
-local ItemBonus = require 'zeta.script.obj.itembonus'
-local AttackBonus = class(ItemBonus)
+local PowerupItem = require 'zeta.script.obj.powerupitem'
+local AttackBonus = class(PowerupItem)
 AttackBonus.sprite = 'attack-bonus'
 AttackBonus.invSeq = 'stand2'
 AttackBonus.attackBonus = 1

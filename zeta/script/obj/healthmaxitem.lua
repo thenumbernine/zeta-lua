@@ -1,4 +1,4 @@
-local HealthMaxItem = behaviors(require 'zeta.script.obj.itembonus',
+local HealthMaxItem = behaviors(require 'zeta.script.obj.powerupitem',
 	require 'zeta.script.behavior.crystalitem')
 HealthMaxItem.sprite = 'heart'
 HealthMaxItem.healthBonus = 1
