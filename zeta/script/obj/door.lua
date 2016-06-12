@@ -38,8 +38,8 @@ Door.touchFlags = Door.SOLID_YES	-- player, specifically
 Door.blockFlags = 0
 function Door:touch(other, side)
 	if not other:isa(Hero) then return end
+	self.blockTime = game.time + .1
 	if self.solidFlags == 0 then return end
-	self.blockTime = game.time + 1
 
 	local canOpen
 	if not self.color then
@@ -113,7 +113,7 @@ Door.states = {
 		update = function(self,dt)
 			local y = math.clamp(1 - (game.time - self.stateStartTime) / self.timeOpening, 0, 1)
 			self.pos[2] = self.startPos[2] + self.moveDist * y
-			if game.time >= game.time + self.timeOpening then
+			if game.time >= self.stateStartTime + self.timeOpening then
 				self:setState'closed'
 			end
 		end,
@@ -123,8 +123,8 @@ Door.states = {
 			if game.time < self.blockTime then
 				self:setState'opening'
 			else
-				self.seq = 'stand'
-				self.solidFlags = self.SOLID_WORLD
+				self.seq = nil
+				self.solidFlags = nil
 			end
 		end,
 	},
