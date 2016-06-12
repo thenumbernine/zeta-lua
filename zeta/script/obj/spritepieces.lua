@@ -24,11 +24,8 @@ function SpritePieces:init(args)
 	self.color = {1,1,1,1}
 end
 
-SpritePieces.moving = true
 function SpritePieces:update(dt)
-	if self.moving then
-		SpritePieces.super.update(self, dt)
-	end
+	SpritePieces.super.update(self, dt)
 	-- freeze animation
 	if self.sprite then
 		self.seqStartTime = game.time - self.frameNumber / self.freq 
@@ -41,7 +38,6 @@ function SpritePieces:update(dt)
 	else
 		-- turn off movement altogether and save collision tests
 		self.useGravity = false
-		self.moving = false
 	end
 end
 
