@@ -10,7 +10,7 @@ Bat.solidFlags = Bat.SOLID_NO
 Bat.maxHealth = 5
 Bat.touchDamage = 3
 Bat.itemDrops = {
-	['zeta.script.obj.heart'] = .1,
+	['zeta.script.obj.healthitem'] = .1,
 }
 
 function Bat:init(...)

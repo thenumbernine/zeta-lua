@@ -18,7 +18,7 @@ Geemer.initialState = 'searching'
 
 -- itemDropOnDeathBehavior
 Geemer.itemDrops = {
-	['zeta.script.obj.heart'] = .1,
+	['zeta.script.obj.healthitem'] = .1,
 }
 Geemer.deathSound = 'explode1'
 

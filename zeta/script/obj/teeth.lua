@@ -18,7 +18,7 @@ Teeth.touchDamage = 1
 
 -- itemDropBehavior
 Teeth.itemDrops = {
-	['zeta.script.obj.heart'] = .1,
+	['zeta.script.obj.healthitem'] = .1,
 }
 
 -- stateMachineBehavior

@@ -139,7 +139,7 @@ end
 
 Turret.itemDrops = {
 	['zeta.script.obj.grenadeitem'] = .2,
-	['zeta.script.obj.heart'] = .2,
+	['zeta.script.obj.healthitem'] = .2,
 }
 
 -- TODO missileblast object, use it here, grenades, and missiles
