@@ -20,7 +20,7 @@ return {
 		{spawn='zeta.script.obj.healthitem'},
 		{spawn='zeta.script.obj.grenadeitem'},
 		{spawn='zeta.script.obj.missileitem'},
-		{spawn='zeta.script.obj.cells'},
+		{spawn='zeta.script.obj.cellsmaxitem'},
 		{spawn='zeta.script.obj.attackbonus'},
 		{spawn='zeta.script.obj.defensebonus'},
 		{spawn='zeta.script.obj.healthmaxitem'},
