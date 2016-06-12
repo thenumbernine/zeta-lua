@@ -33,6 +33,7 @@ end
 -- shoot at player
 Turret.searchDist = 20
 Turret.shootDist = 20
+Turret.shootAngleThreshold = 30	-- degrees
 Turret.rotationSpeed = 360 	-- degrees per second
 function Turret:update(dt)
 	Turret.super.update(self, dt)
@@ -87,7 +88,7 @@ function Turret:update(dt)
 		if bestObj then
 			targetAngle = math.deg(math.atan2(bestDelta[2], bestDelta[1]))
 			if bestDelta:length() < self.shootDist
-			and math.abs(self.angle - targetAngle) < 30 then
+			and math.abs(self.angle - targetAngle) < self.shootAngleThreshold then
 				self:shoot()
 			end
 		end
@@ -111,7 +112,7 @@ function Turret:hit(damage, attacker, inflicter, side)
 end
 
 Turret.nextShootTime = -1
-Turret.shotDelay = .4
+Turret.shotDelay = .6
 Turret.ammo = 3	-- three shots then refill
 Turret.ammoRefillDelay = Turret.shotDelay	--2
 Turret.shotSpeed = 5
