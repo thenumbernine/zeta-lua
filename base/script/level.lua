@@ -100,6 +100,7 @@ spawnFile contents are as follows:
 }
 --]]
 function Level:init(args)
+	self.objsAtTile = table()
 
 	-- enum of tileMap values. 0 => nil 
 	self.tileTypes = assert(args.tileTypes)

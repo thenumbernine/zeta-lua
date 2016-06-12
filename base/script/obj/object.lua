@@ -72,6 +72,12 @@ function Object:init(args)
 		end
 	end
 
+	--[[
+	since i'm not holding individual tile objects anymore, 
+	i'll have level allocate them only for tiles that have objects on them 
+	--]]
+	self.tiles = {}
+
 	game:addObject(self)	-- only do this once per object.  don't reuse, or change the uid system
 
 	if args.create then
@@ -81,6 +87,8 @@ function Object:init(args)
 			sandbox(args.create, 'self', self)
 		end)
 	end
+
+	self:link()
 end
 
 function Object:update(dt)
@@ -171,12 +179,73 @@ function Object:setSeq(seq, seqNext)
 end
 
 function Object:setPos(x,y)
+	self:unlink()
 	self.pos[1], self.pos[2] = x,y
+	self:link()
 end
 
 function Object:moveToPos(x,y)
 	self:move(x - self.pos[1], y - self.pos[2])
 end
+
+function Object:unlink()
+	local level = game.level
+	local numtiles = #self.tiles
+	for i=1,numtiles do
+		local tile = self.tiles[i]
+		assert(tile.objs:removeObject(self))
+		if #tile.objs == 0 then
+			local x, y = tile.pos:unpack()
+			local col = level.objsAtTile[x]
+			assert(col[y] == tile)
+			col[y] = nil
+			if not next(col) then
+				level.objsAtTile[x] = nil
+			end
+		end
+		-- clear as we go. safe because #self.tiles is stored upon iteration init		
+		self.tiles[i] = nil
+	end
+end
+
+function Object:link()
+	local level = game.level
+	local minx = self.pos[1] + self.bbox.min[1] - level.pos[1]
+	local miny = self.pos[2] + self.bbox.min[2] - level.pos[2]
+	local maxx = self.pos[1] + self.bbox.max[1] - level.pos[1]
+	local maxy = self.pos[2] + self.bbox.max[2] - level.pos[2]
+
+	if minx > level.size[1]
+	or miny > level.size[2]
+	or maxx < 1
+	or maxy < 1
+	then return end	-- no tiles to link to
+
+	if minx < 1 then minx = 1 end
+	if miny < 1 then miny = 1 end
+	if maxx > level.size[1] then maxx = level.size[1] end
+	if maxy > level.size[2] then maxy = level.size[2] end
+
+	local numtiles=1
+	for x=math.floor(minx),math.floor(maxx) do
+		local col = level.objsAtTile[x]
+		if not col then
+			col = table()
+			level.objsAtTile[x] = col
+		end
+		for y=math.floor(miny),math.floor(maxy) do
+			local tile = col[y]
+			if not tile then
+				tile = {objs=table(),pos=vec2(x,y)}
+				col[y] = tile
+			end
+			tile.objs:insertUnique(self)
+			self.tiles[numtiles] = tile
+			numtiles = numtiles + 1
+		end
+	end
+end
+
 
 --[[
 move is always run by all objects on update, even if dx,dy == 0,0
@@ -847,27 +916,30 @@ function Object:move_sub(dx,dy)
 		local cxmax = self.pos[1] + self.bbox.max[1] + math.max(dt * dx,0)
 		local cymax = self.pos[2] + self.bbox.max[2] + math.max(dt * dy,0)
 --print('testing entire bbox',box2(cxmin,cymin,cxmax,cymax)) 
-		-- if we can collide with the world
-		-- I'm not checking touchFlags because allowing touching non-blocking tiles 
-		--  would mean rechecking tiles with certain tiles (previously checked, touched, and non-blocked) excluded
-		-- which I don't have support for, nor see a use for
-		-- I'm thinking of getting rid of tile.touch anyways.
-		if bit.band(self.blockFlags, Object.SOLID_WORLD) ~= 0 then
-			-- test world
-			local xmin = math.floor(cxmin)-1
-			local ymin = math.floor(cymin)-1
-			local xmax = math.floor(cxmax)+1
-			local ymax = math.floor(cymax)+1
+		
+		local xmin = math.floor(cxmin)-1
+		local ymin = math.floor(cymin)-1
+		local xmax = math.floor(cxmax)+1
+		local ymax = math.floor(cymax)+1
 --print('testing tile bounds',box2(xmin,ymin,xmax,ymax))
-			-- test oob
-			if xmax < 1 or ymax < 1 or xmin > level.size[1] or ymin > level.size[2] then
+		-- test oob
+		if xmax < 1 or ymax < 1 or xmin > level.size[1] or ymin > level.size[2] then
 --print('movement off the tile map')
-			else
-				-- clamp size
-				if xmin < 1 then xmin = 1 end
-				if xmax > level.size[1] then xmax = level.size[1] end
-				if ymin < 1 then ymin = 1 end
-				if ymax > level.size[2] then ymax = level.size[2] end
+		else
+			-- clamp size
+			if xmin < 1 then xmin = 1 end
+			if xmax > level.size[1] then xmax = level.size[1] end
+			if ymin < 1 then ymin = 1 end
+			if ymax > level.size[2] then ymax = level.size[2] end	
+			
+			-- if we can collide with the world
+			-- I'm not checking touchFlags because allowing touching non-blocking tiles 
+			--  would mean rechecking tiles with certain tiles (previously checked, touched, and non-blocked) excluded
+			-- which I don't have support for, nor see a use for
+			-- I'm thinking of getting rid of tile.touch anyways.
+			if bit.band(self.blockFlags, Object.SOLID_WORLD) ~= 0 then
+
+			-- test world
 --print('clamped tile bounds to',box2(xmin,ymin,xmax,ymax))			
 				for y=ymin,ymax do
 					for x=xmin,xmax do
@@ -888,7 +960,7 @@ function Object:move_sub(dx,dy)
 									touchedTileY = y
 								end
 							else
--- [[ real-deal poly intersection								
+--[[ real-deal poly intersection								
 								local newNormal
 								dt, newNormal = testBoxSlope(self, false, x, y, tileType, dt, dx, dy)
 								if newNormal then
@@ -906,7 +978,7 @@ function Object:move_sub(dx,dy)
 									touchedTileY = y
 								end
 --]]
---[=[ poor-man's chop it up into tiny pieces							
+-- [=[ poor-man's chop it up into tiny pieces							
 								local udivs = 16
 								local vdivs = 16
 								local plane = tileType.plane
@@ -933,47 +1005,58 @@ function Object:move_sub(dx,dy)
 					end
 				end
 			end
-		end
-
-		-- test objs
-		for _,obj in ipairs(game.objs) do
-			-- don't collide self with self
-			if not obj.remove
-			and obj ~= self 
-			-- only collide if we will can touch or be blocked by them
-			and (bit.band(self.touchFlags, obj.solidFlags) ~= 0
-				or bit.band(obj.touchFlags, self.solidFlags) ~= 0
-				or bit.band(self.blockFlags, obj.solidFlags) ~= 0
-				--or bit.band(obj.blockFlags, self.solidFlags) ~= 0
-			)
-			-- only collide objects touching the combined bbox
-			and cxmin <= obj.pos[1] + obj.bbox.max[1]
-			and cxmax >= obj.pos[1] + obj.bbox.min[1]
-			and cymin <= obj.pos[2] + obj.bbox.max[2]
-			and cymax >= obj.pos[2] + obj.bbox.min[2]
-			-- don't check objects twice
-			and (not objsTested or not table.find(objsTested, obj))
-			then
---avgNumTestsPerObj = avgNumTestsPerObj + 1 
 				
-				local newSide
-				dt, newSide = testBoxBox(
-					self,
-					true,	-- testStuck.  only needs to be true if self isn't blocked by this object. 
-					obj.pos[1]+obj.bbox.min[1],
-					obj.pos[2]+obj.bbox.min[2],
-					obj.pos[1]+obj.bbox.max[1],
-					obj.pos[2]+obj.bbox.max[2],
-					dt,
-					dx,
-					dy)
-				if newSide then
-					side = newSide
-					normal = dirs[oppositeSide[side:lower()]]
-					touchedObj = obj
-					touchedTileType = nil
-					touchedTileX = nil
-					touchedTileY = nil
+			-- test objs	
+			for x=xmin,xmax do
+				local col = level.objsAtTile[x]
+				if col then
+					for y=ymin,ymax do
+						local tile = col[y]
+						if tile then
+							
+							for _,obj in ipairs(tile.objs) do
+								-- don't collide self with self
+								if not obj.remove
+								and obj ~= self 
+								-- only collide if we will can touch or be blocked by them
+								and (bit.band(self.touchFlags, obj.solidFlags) ~= 0
+									or bit.band(obj.touchFlags, self.solidFlags) ~= 0
+									or bit.band(self.blockFlags, obj.solidFlags) ~= 0
+									--or bit.band(obj.blockFlags, self.solidFlags) ~= 0
+								)
+								-- only collide objects touching the combined bbox
+								and cxmin <= obj.pos[1] + obj.bbox.max[1]
+								and cxmax >= obj.pos[1] + obj.bbox.min[1]
+								and cymin <= obj.pos[2] + obj.bbox.max[2]
+								and cymax >= obj.pos[2] + obj.bbox.min[2]
+								-- don't check objects twice
+								and (not objsTested or not table.find(objsTested, obj))
+								then
+					--avgNumTestsPerObj = avgNumTestsPerObj + 1 
+									
+									local newSide
+									dt, newSide = testBoxBox(
+										self,
+										true,	-- testStuck.  only needs to be true if self isn't blocked by this object. 
+										obj.pos[1]+obj.bbox.min[1],
+										obj.pos[2]+obj.bbox.min[2],
+										obj.pos[1]+obj.bbox.max[1],
+										obj.pos[2]+obj.bbox.max[2],
+										dt,
+										dx,
+										dy)
+									if newSide then
+										side = newSide
+										normal = dirs[oppositeSide[side:lower()]]
+										touchedObj = obj
+										touchedTileType = nil
+										touchedTileX = nil
+										touchedTileY = nil
+									end
+								end
+							end
+						end
+					end
 				end
 			end
 		end
@@ -1116,7 +1199,8 @@ Object.move = Object.move_sub
 --]]
 -- [[ poor-man's way to do collision: move up, move across, move down (for steps)
 function Object:move(dx,dy)
-	
+	self:unlink()
+
 	-- if moving left/right then try stepping up as well
 	if self.ongroundLast
 	and dx ~= 0
@@ -1130,6 +1214,7 @@ function Object:move(dx,dy)
 	end
 
 --numObjsTested = numObjsTested + 1
+	self:link()
 end
 --]]
 

@@ -10,6 +10,10 @@ SpritePieces.lifetime = 5
 SpritePieces.rotCenter = {.5,.5}
 SpritePieces.angle = 0
 
+-- for now link/unlink is only used for physics/interaction
+function SpritePieces:link() end
+function SpritePieces:unlink() end
+
 function SpritePieces:init(args)
 	SpritePieces.super.init(self, args)
 	if self.sprite then

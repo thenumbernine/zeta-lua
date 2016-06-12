@@ -1,7 +1,5 @@
 local Enemy = require 'zeta.script.obj.enemy'
 local MissileBlast = require 'zeta.script.obj.missileblast'
-local Blaster = require 'zeta.script.obj.blaster'
-local BlasterShot = require 'zeta.script.obj.blastershot'
 local game = require 'base.script.singleton.game'
 local Turret = class(Enemy)
 Turret.sprite = 'turret-body'
@@ -53,9 +51,13 @@ function Turret:update(dt)
 		-- TODO - flag for 'detected by turrets' ? 
 		local bestDist, bestObj, bestDelta
 		local Hero = require 'zeta.script.obj.hero'
-		local Geemer = require 'zeta.script.obj.geemer'
-		for _,obj in ipairs(game.objs) do
-			if obj:isa(Hero) or obj:isa(Geemer) then
+		--local Geemer = require 'zeta.script.obj.geemer'
+		--for obj in game:objsInRange(self.searchDist) do
+		--for _,obj in ipairs(game.objs) do
+		for _,obj in ipairs(game.players) do
+			if obj:isa(Hero)
+			--or obj:isa(Geemer)
+			then
 				local delta = obj.pos - self.pos
 				if delta:length() < self.searchDist then
 					local blocked
@@ -109,9 +111,9 @@ function Turret:hit(damage, attacker, inflicter, side)
 end
 
 Turret.nextShootTime = -1
-Turret.shotDelay = .5
+Turret.shotDelay = .4
 Turret.ammo = 3	-- three shots then refill
-Turret.ammoRefillDelay = 2
+Turret.ammoRefillDelay = Turret.shotDelay	--2
 function Turret:shoot()
 	if self.health == 0 then return end
 	if self.nextShootTime >= game.time then return end
@@ -123,17 +125,20 @@ function Turret:shoot()
 		self.nextShootTime = game.time + self.shotDelay
 	end
 
+	local Blaster = require 'zeta.script.obj.blaster'
 	self:playSound(Blaster.shotSound)
 	local theta = math.rad(self.angle)
 	local dir = vec2(math.cos(theta), math.sin(theta))
+	local BlasterShot = require 'zeta.script.obj.blastershot'
 	BlasterShot{
 		shooter = self,
 		pos = self.pos,
-		vel = dir * Blaster.shotSpeed,
+		vel = dir * 7,
 	}
 end
 
 Turret.itemDrops = {
+	['zeta.script.obj.grenadeitem'] = .2,
 	['zeta.script.obj.heart'] = .2,
 }
 

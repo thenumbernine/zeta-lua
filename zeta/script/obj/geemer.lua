@@ -16,9 +16,6 @@ Geemer.searchYPaddingDown = 2
 Geemer.searchYPaddingUp = 3
 Geemer.initialState = 'searching'
 
--- deathToPiecesBehavior
-Geemer.deathPieceDivs = {4,4}
-
 -- itemDropOnDeathBehavior
 Geemer.itemDrops = {
 	['zeta.script.obj.heart'] = .1,
@@ -172,7 +169,7 @@ end
 -- but thye collide when they hit hte player and the player can't get rid of them 
 -- solid_yes doesn't,
 -- but that mobs the player and the player gets stuck
-Geemer.solidFlags = Geemer.SOLID_YES	-- Geemer.SOLID_NO
+Geemer.solidFlags = Geemer.SOLID_NO	-- Geemer.SOLID_YES
 Geemer.touchFlags = Geemer.SOLID_YES
 Geemer.blockFlags = Geemer.SOLID_WORLD + Geemer.SOLID_YES
 Geemer.touchDamage = 1

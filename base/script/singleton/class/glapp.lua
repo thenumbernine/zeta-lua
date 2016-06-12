@@ -85,9 +85,6 @@ local joysticks = {}
 local numPlayers = 1
 
 local timescale = 1
-local fpsTime = 0
-local fpsFrames = 0
-
 
 
 local R
@@ -400,20 +397,28 @@ function GLApp:updateGUI(...)
 	return editor:updateGUI(...)
 end
 
-local frames = 0
-local lastTime = os.time()
+local fpsTime = 0
+local fpsFrames = 0
 function GLApp:update(...)
 	R:report('update begin')
 
 	-- [[ show fps
-	do
-		frames = frames + 1
-		local thisTime = os.time() 
-		if thisTime ~= lastTime then
-			print('fps: '..frames/(thisTime-lastTime))
-			frames = 0
-			lastTime = thisTime
+	fpsFrames = fpsFrames + 1
+	if sysThisTime - fpsTime > 1 then
+		io.write('fps: '..(fpsFrames / (sysThisTime - fpsTime)))
+		fpsTime = sysThisTime
+		fpsFrames = 0
+		-- [=[ show # objs
+		local tileCount = 0
+		for x,col in pairs(game.level.objsAtTile) do
+			for y,tile in pairs(col) do
+				tileCount = tileCount + 1
+			end
 		end
+		io.write(' tiles: '..tileCount)
+		--]=]
+		io.write('\n')
+		io.stdout:flush()
 	end
 	--]]
 
@@ -450,14 +455,6 @@ function GLApp:update(...)
 		end
 	end
 
-	--[[
-	fpsFrames = fpsFrames + 1
-	if sysThisTime - fpsTime > 1 then
-		print(fpsFrames / (sysThisTime - fpsTime))
-		fpsTime = sysThisTime
-		fpsFrames = 0
-	end
-	--]]
 	game:render()
 	R:report('game:render')
 	

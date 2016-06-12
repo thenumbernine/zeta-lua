@@ -17,10 +17,13 @@ function SavePoint:playerUse(player)
 
 	os.execute('mkdir zeta/save')
 
+
 	local SpawnInfo = require 'base.script.spawninfo'
 
 	threads:add(function()
 		coroutine.yield()
+
+-- [=[ serialize-everything
 
 		-- shouldn't be any objects in waiting to attach when this runs
 		-- i.e. it should run from the thread update, not the game object loop
@@ -115,7 +118,9 @@ function SavePoint:playerUse(player)
 				return tab..'\t'..line..',\n'
 			end):concat()..tab..'}'
 		end
-		
+	
+		for _,obj in ipairs(game.objs) do obj:unlink() end
+
 		local saveDataSerialized = '{\n'
 			..'\tobjs={\n'
 			..game.objs:map(function(obj,index)
@@ -147,13 +152,19 @@ function SavePoint:playerUse(player)
 			end):concat('\n')
 			..',\n'
 			..'}\n'
+		
+		for _,obj in ipairs(game.objs) do obj:link() end
 --[[
 TODO serialize threads
 	this means serializing functions
 		who might have local references to objects ...
 		see how that can get messy?
 --]]
-		
+	
+--]=]
+--[=[ serialize only player stats (and reset rooms)
+--]=]
+
 		file['zeta/save/save.txt'] = saveDataSerialized
 	
 		local arrayRef = class()

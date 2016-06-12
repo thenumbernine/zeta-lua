@@ -19,7 +19,7 @@ end
 
 local USES_CELLS = false
 Skillsaw.powerDuration = 3	-- how long the attack lasts
-Skillsaw.rechargeDelay = 2	-- extra delay
+Skillsaw.rechargeDelay = 0 -- 2	-- extra delay
 function Skillsaw:canShoot(player)
 	-- doing the attack so long as the player holds the button down?
 	if self.attackEndTime and game.time < self.attackEndTime then
@@ -51,15 +51,29 @@ Skillsaw.damage = 1
 function Skillsaw:doShoot(player, pos, vel)
 	if self.power < .5 then return end
 	-- don't allow cells to recharge
-	for _,obj in ipairs(game.objs) do
-		if obj ~= player
-		and obj.takeDamage then
-			local delta = (obj.pos + {0,.5}) - (player.pos + self.drawOffset)
-			local length = delta:length()
-			if length < self.attackDist * self.attackDist
-			and delta:dot(vel) / length > math.cos(math.rad(.5*self.attackAngleSpread))
-			then
-				obj:takeDamage(self.damage, player, self, nil)	-- side? really?
+	for x=math.floor(player.pos[1]+self.drawOffset[1]-self.attackDist-1),
+		math.ceil(player.pos[1]+self.drawOffset[1]+self.attackDist+1)
+	do
+		local col = game.level.objsAtTile[x]
+		if col then
+			for y=math.floor(player.pos[2]+self.drawOffset[2]-self.attackDist-1),
+				math.ceil(player.pos[2]+self.drawOffset[2]+self.attackDist+1)
+			do
+				local tile = col[y]
+				if tile then
+					for _,obj in ipairs(tile.objs) do
+						if obj ~= player
+						and obj.takeDamage then
+							local delta = (obj.pos + {0,.5}) - (player.pos + self.drawOffset)
+							local length = delta:length()
+							if length < self.attackDist * self.attackDist
+							and delta:dot(vel) / length > math.cos(math.rad(.5*self.attackAngleSpread))
+							then
+								obj:takeDamage(self.damage, player, self, nil)	-- side? really?
+							end
+						end
+					end
+				end
 			end
 		end
 	end

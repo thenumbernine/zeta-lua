@@ -1,7 +1,7 @@
 local Game = require 'base.script.singleton.class.game'
 local ZetaGame = class(Game)
 ZetaGame.name = 'ZetaGame'
-ZetaGame.gravity = -50
+ZetaGame.gravity = -15
 ZetaGame.maxFallVel = 16
 
 function ZetaGame:resetObjects(...)

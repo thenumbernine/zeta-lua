@@ -112,6 +112,7 @@ end
 
 -- private?
 function Game:doRemoveObj(obj)
+	obj:unlink()
 	-- make sure it's not a player?
 	local spawnInfo = obj.spawnInfo
 	if spawnInfo then	-- unlink from spawnInfo 

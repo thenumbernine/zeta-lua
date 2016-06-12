@@ -1,17 +1,14 @@
 TODO list
 
-- make falling fast again (g=40)
-- add maxfall velocity to the player alone?
-- make more use of the grab button?
-- separate touch-n-go (opposite dir + jump) from wall grind (grab button)
-- add grab-able blocks for climbing
-
+- add grab-able blocks for climbing?
+- add grappling hook
+- savepoints only save player stats.  no need to worry about serializing everything/threads/etc
+- use ffi vec2 (lots of overhaul)
 
 next: add next cave section
 	and some more cave monsters
 
 - you can slide through doors sometimes.  maybe it's only if it's a keycard door and it starts open from you walking into the room. 
-- put non-colliding objects on a separate update loop ... or link objects to rooms/tiles/etc, and have collision detection only test those objects
 
 - editor: 
 	- separate 'object' into 'create object' and 'select object'
@@ -31,9 +28,8 @@ monsters:
 LOW PRIORITY:
 - save files don't save threads 
 - separate lua env for level/init.lua and for sandboxes (so globals in level script code don't overwrite globals in the game)
-- hit 100 objects and you'll stop in midair
+- if you hit 100 objects then you'll stop in midair
 - movement still needs pushing (making use of pushPriority) implementation ... maybe ...
-- arbitrary room sizes (no fixed grid) - in fact, double as spawnInfo and bbox
 
 buttons:
 	- up/down to aim, left/right to move
