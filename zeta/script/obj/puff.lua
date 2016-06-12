@@ -2,8 +2,6 @@ local Object = require 'base.script.obj.object'
 local Puff = class(Object)
 Puff.sprite = 'puff'
 Puff.solid = false
-Puff.collidesWithWorld = false
-Puff.collidesWithObjects = false
 Puff.useGravity = false
 Puff.baseLiveTime = 1
 

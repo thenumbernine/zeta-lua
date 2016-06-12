@@ -1,13 +1,14 @@
 local Object = require 'base.script.obj.object'
 local game = require 'base.script.singleton.game'
+
 local Terminal = class(Object)
+
 Terminal.sprite = 'terminal'
 Terminal.solid = false
-Terminal.collidesWithObjs = false
-
+Terminal.useGravity = false
 Terminal.solidFlags = 0
-Terminal.touchFlags = Terminal.SOLID_WORLD + Terminal.SOLID_YES
-Terminal.blockFlags = Terminal.SOLID_WORLD
+Terminal.touchFlags = Terminal.SOLID_YES
+Terminal.blockFlags = 0
 
 function Terminal:playerUse(player)
 	local threads = require 'base.script.singleton.threads'

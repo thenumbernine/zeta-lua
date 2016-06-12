@@ -116,7 +116,7 @@ function Grenade:blast(alreadyHit)
 					other:takeDamage(self.splashDamage, self.shooter, self, side)
 				end
 				-- TODO ... only solid? (should grenades be solid?) only takeDamage (should grenades take damage?)
-				if other:isa(Grenade) and other.collidesWithWorld then
+				if other:isa(Grenade) then
 					other.vel = other.vel + delta * (force / (lenSq + 1))
 					other.vel[2] = other.vel[2] + 5
 					other.detonateTime = math.min(other.detonateTime, game.time + math.random() * .8 + .2)

@@ -19,7 +19,7 @@ function PlasmaShot:init(...)
 end
 
 function PlasmaShot:update(dt, ...)
-	if self.collidesWithObjects then
+	if self.solidFlags ~= 0 then
 		self.angle = game.time
 	end
 	PlasmaShot.super.update(self, dt, ...)
@@ -58,8 +58,6 @@ function PlasmaShot:blast()
 	self.pos[2] = self.pos[2] - .25
 	self.angle = nil
 
-	self.collidesWithWorld = false
-	self.collidesWithObjects = false
 	self.solidFlags = 0
 	self.touchFlags = 0
 	self.blockFlags = 0

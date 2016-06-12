@@ -6,8 +6,6 @@ return function(args)
 		pos = args.pos,
 	}
 	tick.solid = false
-	tick.collidesWithWorld = false
-	tick.collidesWithObjects = false
 	tick.solidFlags = 0
 	tick.touchFlags = 0
 	tick.blockFlags = 0

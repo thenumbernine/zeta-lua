@@ -1,3 +1,5 @@
+#!/usr/bin/env lua
+
 local function exec(cmd)
 	print(cmd)
 	if _VERSION == 'Lua 5.1' and not ffi then

@@ -99,8 +99,6 @@ self.holding.pos[2] = self.pos[2]
 		end
 
 		self.holding.heldby = nil
-		self.holding.collidesWithObjects = nil
-		self.holding.collidesWithWorld = nil
 		self.holding = nil	
 	end
 	
@@ -112,8 +110,6 @@ self.holding.pos[2] = self.pos[2]
 	
 		self.holding = other
 		self.holding.heldby = self
-		self.holding.collidesWithObjects = false
-		self.holding.collidesWithWorld = false
 	
 -- clear collision flags 
 -- this assumes only classes set flags and not objects
@@ -838,7 +834,6 @@ function Hero:die(damage, attacker, inflicter, side)
 	self.ducking = false
 	self.lookingUp = false
 	self.solid = false
-	self.collidesWithObjects = false
 	self.dead = true
 	
 	-- if we're respawning, keep items and weapon?
@@ -858,8 +853,6 @@ function Hero:respawn()
 	self.health = self.maxHealth
 	self.respawnTime = nil
 	self.solid = nil
-	self.collidesWithWorld = nil
-	self.collidesWithObjects = nil
 	self.dead = nil
 	self.vel[1], self.vel[2] = 0,0
 	self:setPos(unpack(game:getStartPos()))

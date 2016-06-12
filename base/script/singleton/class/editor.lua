@@ -1626,14 +1626,10 @@ function Editor:update()
 		player.invincibleEndTime = game.time + .1
 		player.isClipping = true
 		player.useGravity = false
-		player.collidesWithWorld = false
-		player.collidesWithObjects = false
 	else
 		if player.isClipping then
 			player.isClipping = nil
 			player.useGravity = true
-			player.collidesWithWorld = nil
-			player.collidesWithObjects = nil
 		end
 	end
 	
