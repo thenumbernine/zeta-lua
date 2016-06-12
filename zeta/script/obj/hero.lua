@@ -1072,10 +1072,6 @@ function Hero:drawHUD(R, viewBBox)
 		0,0,0,0,0,
 		0,1,1,.5)
 
-	--y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'Cells: ' .. ('%.1f'):format(self.ammoCells)..'/'..self.maxAmmoCells)
-	--y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'ATK +' .. self.attackStat)
-	--y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'DEF +' .. self.defenseStat)
-	
 	local x = viewBBox.min[1]
 	local function drawInv(item, x, y, items)
 		Object.draw({
@@ -1104,6 +1100,12 @@ function Hero:drawHUD(R, viewBBox)
 	end
 
 	if game.paused and not self.popupMessageText then
+
+		y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'Cells: ' .. ('%.1f'):format(self.ammoCells)..'/'..self.maxAmmoCells)
+		y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'Grenades: ' .. ('%.1f'):format(self.ammoGrenades)..'/'..self.maxAmmoGrenades)
+		y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'Missiles: ' .. ('%.1f'):format(self.ammoMissiles)..'/'..self.maxAmmoMissiles)
+		y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'DEF +' .. self.defenseStat)
+		y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'ATK +' .. self.attackStat)
 
 		gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
 		R:quad(

@@ -91,7 +91,7 @@
 	{pos={436.5,945},spawn="zeta.script.obj.turret"},
 	{pos={445.5,944},spawn="zeta.script.obj.turret"},
 	{pos={444.5,936},spawn="zeta.script.obj.turret"},
-	{create="remove 'boss-geemer'\nif session.geemerBossKilled then\n\9self.remove = true\nend",name="create-boss-geemer-trigger",pos={580.5,876},spawn="zeta.script.obj.trigger",trigger="if session.geemerBossKilled then\n\9return\nend\nrespawn 'boss-geemer'"},
+	{create="remove 'boss-geemer'\nif session.geemerBossKilled then\n\9self.remove = true\nend",name="create-boss-geemer-trigger",pos={581.5,878},spawn="zeta.script.obj.trigger",trigger="if session.geemerBossKilled then\n\9return\nend\nrespawn 'boss-geemer'"},
 	{name="boss-geemer",onDie="session.geemerBossKilled = true\npopup('defeated boss geemer!')\n-- drop a keycard\ncreate 'zeta.script.obj.keycard'{pos=findSpawnInfoNamed'create-boss-geemer-trigger'.pos, color={0,1,0,1}}\n-- center the view on the player\nstopCenterView()\n-- stop blocking the exit\nremove('geemer-left-wall', 'geemer-right-wall')\n",pos={593.5,881},spawn="zeta.script.obj.boss-geemer"},
 	{pos={485.5,942},spawn="zeta.script.obj.attackbonus"},
 	{pos={403.5,1014},spawn="zeta.script.obj.healthmaxitem"},
