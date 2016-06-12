@@ -1,13 +1,13 @@
 local PowerupItem = require 'zeta.script.obj.powerupitem'
-local AmmoTank = class(PowerupItem)
-AmmoTank.amount = 1	-- how much
--- AmmoTank.ammo = 'Cells' -- 'Grenades' -- etc ...
+local AmmoMaxItem = class(PowerupItem)
+AmmoMaxItem.amount = 1	-- how much
+-- AmmoMaxItem.ammo = 'Cells' -- 'Grenades' -- etc ...
 
-function AmmoTank:onGiveBonus(player)
+function AmmoMaxItem:onGiveBonus(player)
 	local field = 'ammo' .. self.ammo
 	player[field] = player[field] + self.amount
 	local max = 'maxAmmo' .. self.ammo
 	player[max] = player[max] + self.amount
 end
 
-return AmmoTank
+return AmmoMaxItem

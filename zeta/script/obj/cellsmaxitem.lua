@@ -1,5 +1,5 @@
-local AmmoTank = require 'zeta.script.obj.ammotank'
-local CellsMaxItem = class(AmmoTank)
+local AmmoMaxItem = require 'zeta.script.obj.ammomaxitem'
+local CellsMaxItem = class(AmmoMaxItem)
 CellsMaxItem.sprite = 'cells'
 CellsMaxItem.ammo = 'Cells'
 return CellsMaxItem

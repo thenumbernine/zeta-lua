@@ -1,5 +1,5 @@
-local AmmoTank = require 'zeta.script.obj.ammotank'
-local GrenadeItem = class(AmmoTank)
+local AmmoMaxItem = require 'zeta.script.obj.ammomaxitem'
+local GrenadeItem = class(AmmoMaxItem)
 GrenadeItem.sprite = 'grenade'
 GrenadeItem.ammo = 'Grenades'
 

@@ -1,5 +1,5 @@
-local AmmoTank = require 'zeta.script.obj.ammotank'
-local MissileItem = class(AmmoTank)
+local AmmoMaxItem = require 'zeta.script.obj.ammomaxitem'
+local MissileItem = class(AmmoMaxItem)
 MissileItem.sprite = 'missile'
 MissileItem.angle = 90
 MissileItem.rotCenter = {0,.5}
