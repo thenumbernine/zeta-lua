@@ -7,6 +7,7 @@ Blaster.shotDelay = .1
 Blaster.shotSpeed = 35
 Blaster.shotClass = BlasterShot
 Blaster.shotSound = 'shoot'
+Blaster.shotOffset = vec2(0, .45)
 
 --[[ if you want the blaster to use cells 
 function Blaster:canShoot(player)
