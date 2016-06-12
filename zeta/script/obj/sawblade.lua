@@ -1,8 +1,9 @@
 local game = require 'base.script.singleton.game'
+
 local Sawblade = behaviors(require 'zeta.script.obj.enemy',
 	require 'zeta.script.behavior.deathtopieces')
+
 Sawblade.sprite = 'sawblade'
-Sawblade.solid = false
 local radius = .75
 Sawblade.bbox = {min={-radius,-radius+.5}, max={radius,radius+.5}}
 Sawblade.rotCenter = {.5,.5}

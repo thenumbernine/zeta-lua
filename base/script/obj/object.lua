@@ -7,7 +7,6 @@ local sandbox = require 'base.script.singleton.sandbox'
 
 local Object = class()
 
-Object.solid = true
 Object.useGravity = true
 Object.friction = 1		-- additive, not scalar
 Object.seq = 'stand'

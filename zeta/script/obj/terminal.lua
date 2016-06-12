@@ -4,7 +4,6 @@ local game = require 'base.script.singleton.game'
 local Terminal = class(Object)
 
 Terminal.sprite = 'terminal'
-Terminal.solid = false
 Terminal.useGravity = false
 Terminal.solidFlags = 0
 Terminal.touchFlags = Terminal.SOLID_YES

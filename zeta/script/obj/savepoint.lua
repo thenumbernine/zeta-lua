@@ -2,13 +2,14 @@ local Object = require 'base.script.obj.object'
 local game = require 'base.script.singleton.game'
 local Hero = require 'zeta.script.obj.hero'
 local threads = require 'base.script.singleton.threads'
-local SavePoint = class(Object)
-SavePoint.sprite = 'savepoint'
-SavePoint.solid = false
 
+local SavePoint = class(Object)
+
+SavePoint.sprite = 'savepoint'
+SavePoint.useGravity = false
 SavePoint.solidFlags = 0
-SavePoint.touchFlags = SavePoint.SOLID_WORLD + SavePoint.SOLID_YES
-SavePoint.blockFlags = SavePoint.SOLID_WORLD
+SavePoint.touchFlags = SavePoint.SOLID_YES
+SavePoint.blockFlags = 0
 
 function SavePoint:playerUse(player)
 	threads:add(function()

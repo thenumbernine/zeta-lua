@@ -4,12 +4,12 @@ local game = require 'base.script.singleton.game'
 local animsys = require 'base.script.singleton.animsys'
 
 local EnergyRefill = class(Object)
-EnergyRefill.sprite = 'energyrefill'
-EnergyRefill.solid = false
 
+EnergyRefill.sprite = 'energyrefill'
+EnergyRefill.useGravity = false
 EnergyRefill.solidFlags = 0
-EnergyRefill.touchFlags = EnergyRefill.SOLID_WORLD + EnergyRefill.SOLID_YES
-EnergyRefill.blockFlags = EnergyRefill.SOLID_WORLD
+EnergyRefill.touchFlags = EnergyRefill.SOLID_YES
+EnergyRefill.blockFlags = 0
 
 -- TODO get from animsys:
 local sparkSeqTime = .5

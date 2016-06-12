@@ -6,7 +6,6 @@ local Grenade = behaviors(require 'base.script.obj.object',
 Grenade.bbox = box2(-.1, 0, .1, .2)
 Grenade.sprite = 'grenade'
 Grenade.maxHealth = 1
-Grenade.solid = true
 Grenade.damage = 3
 Grenade.splashDamage = 3
 Grenade.rotCenter = {.5, .5}

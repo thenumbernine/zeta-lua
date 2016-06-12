@@ -2,10 +2,11 @@ local Object = require 'base.script.obj.object'
 local game = require 'base.script.singleton.game'
 local MissileBlast = require 'zeta.script.obj.missileblast'
 local Puff = require 'zeta.script.obj.puff'
+
 local Missile = class(Object)
+
 Missile.bbox = box2(-.1, 0, .1, .2)
 Missile.sprite = 'missile'
-Missile.solid = false
 Missile.useGravity = false
 Missile.damage = 5
 Missile.splashDamage = 3
@@ -13,7 +14,6 @@ Missile.rotCenter = {.5, .5}
 
 function Missile:init(...)
 	Missile.super.init(self, ...)
-
 	self.shooter:hasKicked(self)
 	self.angle = math.deg(math.atan2(self.vel[2], self.vel[1]))
 end

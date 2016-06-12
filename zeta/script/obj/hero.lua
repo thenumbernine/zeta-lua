@@ -233,12 +233,16 @@ function Hero:tryToStand()
 end
 
 function Hero:beginWarp()
-	self.solid = false
+	self.solidFlags = 0
+	self.touchFlags = 0
+	self.blockFlags = 0
 	self.warping = true
 end
 
 function Hero:endWarp(destX, destY, canCarryThru)
-	self.solid = true
+	self.solidFlags = nil
+	self.touchFlags = nil
+	self.blockFlags = nil
 	self.warping = false
 	if not canCarryThru then	-- by default don't allow folks to carry things through warps
 		self:setHeld(nil)
@@ -833,7 +837,9 @@ function Hero:die(damage, attacker, inflicter, side)
 	self.climbing = false
 	self.ducking = false
 	self.lookingUp = false
-	self.solid = false
+	self.solidFlags = 0
+	self.touchFlags = 0
+	self.blockFlags = 0
 	self.dead = true
 	
 	-- if we're respawning, keep items and weapon?
@@ -852,7 +858,9 @@ end
 function Hero:respawn()
 	self.health = self.maxHealth
 	self.respawnTime = nil
-	self.solid = nil
+	self.solidFlags = nil
+	self.touchFlags = nil
+	self.blockFlags = nil
 	self.dead = nil
 	self.vel[1], self.vel[2] = 0,0
 	self:setPos(unpack(game:getStartPos()))

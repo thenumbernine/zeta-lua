@@ -1,9 +1,10 @@
 local Enemy = require 'zeta.script.obj.enemy'
 local MissileBlast = require 'zeta.script.obj.missileblast'
 local game = require 'base.script.singleton.game'
+
 local Turret = class(Enemy)
+
 Turret.sprite = 'turret-body'
-Turret.solid = false
 Turret.maxHealth = 3
 Turret.rotCenter = {.5, .5}
 Turret.angle = 90

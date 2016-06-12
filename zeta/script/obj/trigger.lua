@@ -4,8 +4,8 @@ local game = require 'base.script.singleton.game'
 local sandbox = require 'base.script.singleton.sandbox'
 
 local Trigger = class(Object)
+
 Trigger.useGravity = false
-Trigger.solid = false
 Trigger.pushPriority = math.huge	-- can't push
 Trigger.nextTriggerTime = -1
 Trigger.wait = math.huge	-- wait forever, so default trigger only once

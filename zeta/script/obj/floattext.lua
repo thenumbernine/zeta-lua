@@ -5,7 +5,6 @@ return function(args)
 	local tick = Object{
 		pos = args.pos,
 	}
-	tick.solid = false
 	tick.solidFlags = 0
 	tick.touchFlags = 0
 	tick.blockFlags = 0

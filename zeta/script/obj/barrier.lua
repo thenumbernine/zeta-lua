@@ -2,7 +2,6 @@ local game = require 'base.script.singleton.game'
 local Barrier = behaviors(require 'zeta.script.obj.enemy',
 	require 'zeta.script.behavior.deathtopieces')
 Barrier.sprite = 'barrier'
-Barrier.solid = false
 Barrier.timeOn = 3
 Barrier.timeOff = 1
 Barrier.damage = 2
