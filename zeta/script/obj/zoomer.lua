@@ -41,4 +41,11 @@ function Zoomer:modifyDamageTaken(damage, attacker, inflicter, side)
 	end
 end
 
+Zoomer.itemDrops = {
+	['zeta.script.obj.healthitem'] = .1,
+	['zeta.script.obj.cellitem'] = .1,
+	['zeta.script.obj.grenadeitem'] = .1,
+	['zeta.script.obj.missileitem'] = .1,
+}
+
 return Zoomer

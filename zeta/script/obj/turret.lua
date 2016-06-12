@@ -138,8 +138,10 @@ function Turret:shoot()
 end
 
 Turret.itemDrops = {
-	['zeta.script.obj.grenadeitem'] = .2,
-	['zeta.script.obj.healthitem'] = .2,
+	['zeta.script.obj.healthitem'] = .1,
+	['zeta.script.obj.cellitem'] = .1,
+	['zeta.script.obj.grenadeitem'] = .1,
+	['zeta.script.obj.missileitem'] = .1,
 }
 
 -- TODO missileblast object, use it here, grenades, and missiles
