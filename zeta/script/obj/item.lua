@@ -39,7 +39,7 @@ function Item:playerGrab(player, side)
 		end
 		self.spawnInfo = nil
 	end
-
+	
 	-- add item to player
 	do
 		local found = false

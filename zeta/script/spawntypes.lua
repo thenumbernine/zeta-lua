@@ -23,7 +23,7 @@ return {
 		{spawn='zeta.script.obj.cells'},
 		{spawn='zeta.script.obj.attackbonus'},
 		{spawn='zeta.script.obj.defensebonus'},
-		{spawn='zeta.script.obj.energytank'},
+		{spawn='zeta.script.obj.healthmaxitem'},
 		{spawn='zeta.script.obj.speedbooster'},
 		{spawn='zeta.script.obj.walljump'},
 		-- monsters

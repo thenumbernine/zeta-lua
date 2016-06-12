@@ -1,9 +1,9 @@
 TODO list
 
-- add grab-able blocks for climbing?
+- add grab-able blocks for climbing?  separate item than wall-jump?  a wall-grab/climb item?
 - add grappling hook
-- savepoints only save player stats.  no need to worry about serializing everything/threads/etc
-- use ffi vec2 (lots of overhaul)
+- make savepoints only save player stats.  no need to worry about serializing everything/threads/etc
+- use ffi vec2 (lots of overhaul).  should make things faster.  by just a little.
 
 next: add next cave section
 	and some more cave monsters
