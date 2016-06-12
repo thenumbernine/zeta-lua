@@ -1,12 +1,13 @@
 local Object = require 'base.script.obj.object'
 local game = require 'base.script.singleton.game'
 local PlasmaShot = class(Object)
-PlasmaShot.bbox = box2(-.1, 0, .1, .2)
+PlasmaShot.bbox = box2(-.1, -.1, .1, .1)
 PlasmaShot.sprite = 'plasma-shot'
 PlasmaShot.useGravity = false
 PlasmaShot.solid = false
 PlasmaShot.damage = 3
 PlasmaShot.rotCenter = {.5, .5}
+PlasmaShot.drawCenter = {.5, .5}
 
 function PlasmaShot:init(...)
 	PlasmaShot.super.init(self, ...)

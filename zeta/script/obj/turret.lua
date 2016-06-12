@@ -31,8 +31,8 @@ end
 
 -- look for player
 -- shoot at player
-Turret.searchDist = 10
-Turret.shootDist = 10
+Turret.searchDist = 20
+Turret.shootDist = 20
 Turret.rotationSpeed = 360 	-- degrees per second
 function Turret:update(dt)
 	Turret.super.update(self, dt)
@@ -114,6 +114,7 @@ Turret.nextShootTime = -1
 Turret.shotDelay = .4
 Turret.ammo = 3	-- three shots then refill
 Turret.ammoRefillDelay = Turret.shotDelay	--2
+Turret.shotSpeed = 5
 function Turret:shoot()
 	if self.health == 0 then return end
 	if self.nextShootTime >= game.time then return end
@@ -133,7 +134,7 @@ function Turret:shoot()
 	BlasterShot{
 		shooter = self,
 		pos = self.pos,
-		vel = dir * 7,
+		vel = dir * self.shotSpeed,
 	}
 end
 

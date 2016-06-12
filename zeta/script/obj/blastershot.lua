@@ -2,12 +2,13 @@ local Object = require 'base.script.obj.object'
 local game = require 'base.script.singleton.game'
 
 local BlasterShot = class(Object)
-BlasterShot.bbox = box2(-.1, 0, .1, .2)
+BlasterShot.bbox = box2(-.1, -.1, .1, .1)
 BlasterShot.sprite = 'blaster-shot'
 BlasterShot.useGravity = false
 BlasterShot.solid = false
 BlasterShot.damage = 1
 BlasterShot.rotCenter = {.5, .5}
+BlasterShot.drawCenter = {.5, .5}
 
 function BlasterShot:init(...)
 	BlasterShot.super.init(self, ...)
