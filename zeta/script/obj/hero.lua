@@ -653,16 +653,16 @@ function Hero:update(dt)
 	and not self.ducking
 	and (self.collidedLeft or self.collidedRight)
 	then
-		-- wall grinding? via the pick-up button
-		--if self.inputShootAux
-		--and true--self:findItem(nil, require 'zeta.script.obj.wallgrab'.is)
-		do --then
-			self.drawMirror = not self.collidedLeft
-			--self.vel[2] = -game.gravity * dt	-- to stop
-			self.vel[2] = self.vel[2] * .5	-- to go slow
-		end
 		local WallJump = require 'zeta.script.obj.walljump'
-		if self:findItem(nil, WallJump.is) then
+		local hasWallJump = self:findItem(nil, WallJump.is)
+		-- wall grinding? via the pick-up button
+		if self.inputShootAux and hasWallJump then
+			self.drawMirror = not self.collidedLeft
+			self.vel[2] = -game.gravity * dt	-- to stop
+			--self.vel[2] = self.vel[2] * .5	-- to go slow
+			-- TODO instead of stopping while holding, remember who/where you're hooked onto, update with that, and only release upon (a) jump, or (b) ... either tapping again or releasing the grab button ... and allow this for collide-up as well as left and right
+		end
+		if hasWallJump then
 			self.wallJumpEndTime = game.time + .15
 		end
 	end

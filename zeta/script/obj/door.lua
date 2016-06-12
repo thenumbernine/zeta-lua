@@ -124,7 +124,7 @@ Door.states = {
 				self:setState'opening'
 			else
 				self.seq = 'stand'
-				self.solidFlags = nil
+				self.solidFlags = self.SOLID_WORLD
 			end
 		end,
 	},
