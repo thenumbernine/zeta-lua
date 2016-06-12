@@ -18,7 +18,7 @@ function TouchItem:touch(other)
 	-- hopefully that won't be a problem.
 	-- I can't imagine an item being touch-to-get and pickup-to-get
 	-- maybe I should get rid of pickup items altogether
-	self:onGiveBonus(other
+	self:onGiveBonus(other)
 end
 
 return TouchItem
