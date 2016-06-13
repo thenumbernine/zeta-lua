@@ -839,7 +839,6 @@ function Hero:die(damage, attacker, inflicter, side)
 	self.lookingUp = false
 	self.solidFlags = 0
 	self.touchFlags = 0
-	self.blockFlags = 0
 	self.dead = true
 	
 	-- if we're respawning, keep items and weapon?

@@ -4,6 +4,7 @@ TODO list
 - add grappling hook
 - make savepoints only save player stats.  no need to worry about serializing everything/threads/etc
 - use ffi vec2 (lots of overhaul).  should make things faster.  by just a little.
+- triggers stop blaster shots
 
 next: add next cave section
 	and some more cave monsters
@@ -46,8 +47,6 @@ buttons:
 			- activating/deactivating items (powerup suits, high-jump, etc)
 			- selecting current aux item (grappling hook, speed booster, jetpack, pick-up gloves, etc)
 
-- how to craft? designated locations (like aquaria)? or anywhere?
-
 stats:
 	* attack (+ to damage)
 	* defense (- to damage ... with a minimum?)
@@ -56,13 +55,6 @@ stats:
 	- running max speed? or only special mod for speed boost?
 
 items:
-	* health boost
-		- craft: 1 green tentacle + 1 emerald
-	* attack boost (temporary)
-		- craft: 1 red tentacle + 1 ruby 
-	* shield boost (temporary)
-		- craft: 1 red tentacle + 1 emeralde
-	- grenades
 	- cloak (temporary)
 	- flare (lighting)
 

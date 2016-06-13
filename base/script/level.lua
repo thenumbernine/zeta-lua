@@ -482,12 +482,35 @@ function Level:draw(R, viewBBox)
 	end
 
 	-- draw objects
+	-- [[ all at once
 	for _,obj in ipairs(game.objs) do
 		if not obj.drawn then
 			obj:draw(R, viewBBox)
 			obj.drawn = true
 		end
 	end
+	--]]
+	--[[ only touching visible tiles
+	-- this doesn't render temp objects though ...
+	-- I wasn't attching them to tile.objs because they aren't collidable
+	-- should I be making two separate lists on tile?  one for collidable, one for drawable?
+	for x=xmin,xmax do
+		local col = self.objsAtTile[x]
+		if col then
+			for y=ymin,ymax do
+				local tile = col[y]
+				if tile then
+					for _,obj in ipairs(tile.objs) do
+						if not obj.drawn then
+							obj:draw(R, viewBBox)
+							obj.drawn = true
+						end
+					end
+				end
+			end
+		end
+	end
+	--]]
 
 	self.texpackTex:bind()
 	for y=ymin,ymax do

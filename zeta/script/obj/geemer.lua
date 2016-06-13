@@ -149,6 +149,7 @@ Geemer.states = {
 	jumping = {
 		update = function(self, dt)
 			if self.onground then self:setState'searching' end
+			self.vel[1] = self.jumpBaseVelX
 		end,
 	},
 }
