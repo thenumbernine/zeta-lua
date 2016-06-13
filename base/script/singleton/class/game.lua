@@ -317,13 +317,17 @@ function Game:loadFromSavePoint()
 						elseif v.src == 'game.objs' then
 							spawnObjFields:insert(table(keystack):append{k, v.index})
 						elseif v.src == 'game.level.spawnInfos' then
-							local spawnInfo = assert(self.level.spawnInfos[v.index])
-							obj[k] = spawnInfo
-							-- if we're setting an object's spawnInfo field
-							-- and that object is in game.objs
-							-- then set the spawnInfo's object to this
-							if k == 'spawnInfo' and #keystack == 1 then
-								spawnInfo.obj = obj
+							local spawnInfo = self.level.spawnInfos[v.index]
+							if not spawnInfo then
+								print("can't find spawnInfo["..v.index.."], which means the map has probably been changed since the last save")
+							else
+								obj[k] = spawnInfo
+								-- if we're setting an object's spawnInfo field
+								-- and that object is in game.objs
+								-- then set the spawnInfo's object to this
+								if k == 'spawnInfo' and #keystack == 1 then
+									spawnInfo.obj = obj
+								end
 							end
 						else
 							error("can't handle source array "..v.src)
