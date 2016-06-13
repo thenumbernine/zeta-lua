@@ -12,6 +12,7 @@ end
 
 -- first zip the dir itself - before the dists have been copied into subdirs
 exec('cd .. && 7z a dumpworld.7z dumpworld/')
+os.execute('mkdir dist')
 exec('mv ../dumpworld.7z dist/')
 exec('scp -i ~/Documents/.christopheremoore.net/digitalocean_christopheremoore.com_rsa dist/dumpworld.7z root@christopheremoore.net:/var/www/christopheremoore.net/')
 
@@ -23,4 +24,4 @@ for _,dist in ipairs{'osx', 'win32'} do
 	exec('mv dist/dumpworld dist/'..dist)
 end
 
-print("don't forget to clean out the dist folder!")
+exec('rm -fr dist')
