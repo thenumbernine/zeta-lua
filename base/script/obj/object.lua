@@ -157,14 +157,14 @@ function Object:update(dt)
 	end
 	
 	-- animation next cycle
-	
-	self.seqHasFinished = nil	-- NOTICE this only gets set when 'seqNext' is set
-	if self.seqNext then
-		-- determine frame number (without modulo) for this animation
+
+	if self.sprite and self.seq then
 		self.seqHasFinished = animsys:seqHasFinished(self.sprite, self.seq or 'stand', self.seqStartTime)
-		if self.seqHasFinished then
-			self:setSeq(self.seqNext)	-- or maybe a stack?
+		if self.seqNext and self.seqHasFinished then
+			self:setSeq(self.seqNext)
 		end
+	else
+		self.seqHasFinished = nil
 	end
 end
 

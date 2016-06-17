@@ -141,4 +141,15 @@ return {
 			chomp=seq{name='chomp',n=12,freq=25},
 		},
 	},
+
+	-- misc
+
+	{
+		name='breakblock',
+		dir='breakblock',
+		seqs={
+			stand={'stand1', 'stand2', 'stand3', 'stand4', 'stand5', freq=15},
+			unbreak={'stand5', 'stand4', 'stand3', 'stand2', 'stand1', freq=15},
+		},
+	},
 }

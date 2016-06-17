@@ -26,7 +26,7 @@ BlasterShot.touchFlags = BlasterShot.SOLID_WORLD + BlasterShot.SOLID_YES + Blast
 BlasterShot.blockFlags = BlasterShot.SOLID_WORLD + BlasterShot.SOLID_YES
 
 function BlasterShot:touchTile(tileType, side, plane, x, y)
-	if tileType.name == 'blaster-break' then
+	if require 'zeta.script.tile.blasterbreak'.is(tileType) then
 		game.level:clearTileAndBreak(x,y, self)
 	end
 	self.remove = true

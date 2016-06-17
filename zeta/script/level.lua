@@ -12,11 +12,10 @@ function ZetaLevel:clearTileAndBreak(x,y, other)
 	
 	other:playSound'explode1'
 
+	--[[ deathtopieces-like behavior 
 	local tileIndex = self.fgTileMap[(x-1)+self.size[1]*(y-1)]
-	
 	self.tileMap[(x-1)+self.size[1]*(y-1)] = 0
 	self.fgTileMap[(x-1)+self.size[1]*(y-1)] = 0
-
 	local tilesWide = self.texpackTex.width / self.tileSize
 	local tilesHigh = self.texpackTex.height / self.tileSize
 	if tileIndex > 0 then
@@ -39,7 +38,13 @@ function ZetaLevel:clearTileAndBreak(x,y, other)
 			divs = {4,4},
 		}
 	end
-
+	--]]
+	-- [[ breakblocks (works with regenerating breakblocks
+	local BreakBlock = require 'zeta.script.obj.breakblock'
+	BreakBlock{
+		pos={x,y}
+	}
+	--]]
 end
 
 return ZetaLevel
