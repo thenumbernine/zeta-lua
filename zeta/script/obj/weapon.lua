@@ -6,7 +6,7 @@ Weapon.isWeapon = true
 Weapon.rotCenter = {0, .5}
 
 Weapon.shotOffset = vec2(0, .25)
-Weapon.shotSpeed = nil
+--Weapon.shotSpeed = nil
 function Weapon:getShotPosVel(player)
 	local pos = vec2(
 		player.pos[1] + (player.drawMirror and -self.shotOffset[1] or self.shotOffset[1]),
@@ -64,7 +64,7 @@ function Weapon:canShoot(player)
 end
 
 function Weapon:doShoot(player, pos, vel)
-	self.shotClass{
+	return self.shotClass{
 		shooter = player,
 		pos = pos,
 		vel = vel, 

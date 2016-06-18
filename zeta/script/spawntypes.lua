@@ -16,6 +16,7 @@ return {
 		{spawn='zeta.script.obj.missilelauncher'},
 		{spawn='zeta.script.obj.grenadelauncher'},
 		{spawn='zeta.script.obj.plasmarifle'},
+		{spawn='zeta.script.obj.grapplinghook'},
 		-- powerups
 		{spawn='zeta.script.obj.healthitem'},
 		{spawn='zeta.script.obj.cellitem'},

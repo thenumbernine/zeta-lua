@@ -1031,4 +1031,5 @@
 	{pos={458.5,915},spawn="zeta.script.obj.sawblade",timeOffset=0,travel={6,0},travelTime=2},
 	{pos={458.5,914},spawn="zeta.script.obj.sawblade",timeOffset=0.10000000149012,travel={6,0},travelTime=2},
 	{pos={458.5,913},spawn="zeta.script.obj.sawblade",timeOffset=0.20000000298023,travel={6,0},travelTime=2},
+	{pos={394.5,908},spawn="zeta.script.obj.grapplinghook"},
 }

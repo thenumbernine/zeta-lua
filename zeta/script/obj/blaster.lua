@@ -1,6 +1,5 @@
 local BlasterShot = require 'zeta.script.obj.blastershot'
 local Weapon = require 'zeta.script.obj.weapon'
-local game = require 'base.script.singleton.game'
 local Blaster = class(Weapon)
 Blaster.sprite = 'blaster'
 Blaster.shotDelay = .1
@@ -11,6 +10,7 @@ Blaster.shotOffset = vec2(0, .45)
 
 --[[ if you want the blaster to use cells 
 function Blaster:canShoot(player)
+	local game = require 'base.script.singleton.game'
 	if not Blaster.super.canShoot(self, player) then return end
 	if player.ammoCells < 1 then return end
 	player.ammoCells = player.ammoCells - 1
