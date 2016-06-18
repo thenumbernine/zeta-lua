@@ -1,3 +1,4 @@
+local game = require 'base.script.singleton.game'
 local itemDropBehavior = function(parentClass)
 	--assert(parentClass.isa({class=parentClass}, require 'zeta.script.obj.takesdamage'))
 	
@@ -5,15 +6,24 @@ local itemDropBehavior = function(parentClass)
 
 	--ItemDropTemplate.itemDrops maps from spawn classes to probabilities that they occur (assumed to be normalized)
 	function ItemDropTemplate:die(...)
-		if self.itemDrops then
+		local player = game.players[1]
+		if player and self.itemDrops then
 			local r = math.random()
-			for k,v in pairs(self.itemDrops) do
-				if r <= v then
-					local itemClass = require(k)
-					itemClass{pos = self.pos}
+			for classname,chance in pairs(self.itemDrops) do
+				if r <= chance then
+					local itemClass = require(classname)
+				
+					if classname == 'zeta.script.obj.healthitem' and player.health == player.maxHealth then
+					elseif classname == 'zeta.script.obj.cellitem' and player.ammoCells == player.maxAmmoCells then
+					elseif classname == 'zeta.script.obj.grenadeitem' and player.ammoGrenades == player.maxAmmoGrenades then
+					elseif classname == 'zeta.script.obj.missileitem' and player.ammoMissiles == player.maxAmmoMissiles then
+					else
+						itemClass{pos = self.pos}
+					end
+
 					break
 				end
-				r = r - v
+				r = r - chance
 			end
 		end
 		return ItemDropTemplate.super.die(self, ...)
