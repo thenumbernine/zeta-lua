@@ -9,9 +9,7 @@ level is going to contain ...
 --]]
 
 local ffi = require 'ffi'
-local gl = require 'ffi.OpenGL'
 local bit = require 'bit'
-local Tex2D = require 'gl.tex2d'
 local modio = require 'base.script.singleton.modio'
 local texsys = require 'base.script.singleton.texsys'
 local game = require 'base.script.singleton.game'	-- this should exist by now, right?
@@ -224,6 +222,8 @@ function Level:init(args)
 		self.texpackFilename = modio:find('texpack.png')
 		assert(self.texpackFilename, "better put your textures in a texpack")
 		self.texpackImage = Image(self.texpackFilename)
+		local Tex2D = require 'gl.tex2d'	-- TODO use R
+		local gl = game.R.gl
 		self.texpackTex = Tex2D{
 			image = self.texpackImage,
 			minFilter = gl.GL_NEAREST,
@@ -287,7 +287,11 @@ function Level:init(args)
 			end
 		end
 	end
-
+	
+	local roomsFile = args.roomsFile or (mappath and mappath..'/rooms.lua')
+	self.roomProps = not (roomsFile and io.fileexists[roomsFile]) and table() or assert(load('return '..file[roomsFile]))
+	assert(type(self.roomProps)=='table')
+	
 	-- remember this for initialize()'s sake
 	local initFile
 	if mappath then initFile = mappath..'/init.lua' end
@@ -376,8 +380,29 @@ function Level:update(dt)
 	self.pos[2] = self.pos[2] + self.vel[2] * dt
 end
 
+local vec4f = require 'ffi.vec.vec4f'
 local patch = require 'base.script.patch'
 function Level:draw(R, viewBBox)
+
+	-- [[ testing lighting
+	local player = game.players[1]
+	if player then
+		local gl = R.gl
+		gl.glEnable(gl.GL_LIGHTING)
+		gl.glEnable(gl.GL_LIGHT0)
+		gl.glLightfv(gl.GL_LIGHT0, gl.GL_AMBIENT, vec4f(0,0,0,1):ptr())
+		gl.glLightfv(gl.GL_LIGHT0, gl.GL_DIFFUSE, vec4f(1,1,1,1):ptr())
+		gl.glLightfv(gl.GL_LIGHT0, gl.GL_SPECULAR, vec4f(1,1,1,1):ptr())
+		gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, vec4f(player.pos[1], player.pos[2]+1, 1, 1):ptr())
+		gl.glLightf(gl.GL_LIGHT0, gl.GL_CONSTANT_ATTENUATION, 0)
+		--gl.glLightf(gl.GL_LIGHT0, gl.GL_LINEAR_ATTENUATION, 1/10)
+		gl.glLightf(gl.GL_LIGHT0, gl.GL_QUADRATIC_ATTENUATION, 1/10^2)
+		gl.glMaterialfv(gl.GL_FRONT_AND_BACK, gl.GL_AMBIENT, vec4f(0,0,0,0):ptr())
+		gl.glMaterialfv(gl.GL_FRONT_AND_BACK, gl.GL_DIFFUSE, vec4f(1,1,1,1):ptr())
+		gl.glMaterialfv(gl.GL_FRONT_AND_BACK, gl.GL_SPECULAR, vec4f(0,0,0,0):ptr())
+		gl.glNormal3f(0,0,1)
+	end
+	--]]
 
 	-- clone & offset
 	local bbox = box2(
@@ -558,6 +583,12 @@ function Level:draw(R, viewBBox)
 			end
 		end
 	end
+
+	-- [[ testing lighting
+	local gl = R.gl
+	gl.glDisable(gl.GL_LIGHTING)
+	--]]
+
 end
 
 return Level

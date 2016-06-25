@@ -1,255 +1,68 @@
-== map ==
-
-         1.colony#1		5.colony#2    8.ice pole
-				    4.alien_civ	
-		    2.caves 		    9.underground sky
-        6.desert    3.grassland
-	  7.water 
-			        10.magma
-
-========
-summary:
-========
-
-space prospecting
-mining colony
-two different bases
-seemingly uninhabited planet
-struck some foreign structure 
-began to investigate
-found an underground cave structure 
-followed the minerals in it
-contacted their home base company 
-that told them to investigate further
-found monsters that killed some of the crew
-that's when they tried to escape
-base 1 managed to leave
-base 2 rocket failed
-and team 2 fled to the caves
-you are one of the robots that got left behind
-
-section 1. - colony #1 whose rocket left
-you start off not knowing what's going on
-computer terminals tell you that colony #1's team had just left in an escape rocket
-- and that the weapons cache is unlocked, and gives you a blaster
-(secret: find one team member that died when activating you, get his keycard)
-you go down, underground the mining operation
-learn from terminal that monsters invaded, that defenses went haywire, and that some crew went to hide in the caves
-find first monsters
-keep going to find first boss in the edge of the base - big evil alien monster
-get the green key door so you can go back through the locked doors in the mining base. 
-(from then on if go back to the mining base, you find it repopulated by monsters)
-[section 1 first leads to section 2]
-[section 1 can see the door to secret weapon , access from next section plot point]
-	[this secret has access with first secret keycard to a escape rocket booster]
-have the way to the caves loop back through the base a few times?
-	second boss of section 1 - drilling machine that has gone wrong
-	get ... a shield?
-
-section 2. - mining caves
-next you enter into the caves
-there are some hints of alien civilization
-and still lots of monsters
-and some rogue robots
-you find a few of the survivors
-someone is talking about how bad the monsters are
-find another boss - king of the evil robots
-(side quest: someone is talking about something they left back in the mining base
-	take their keycard, go back to an extra room, fight another miniboss,
-	get a powerup -- better weapon.
-	if you have the first secret keycard then you can find a escape rocket booster part.)
-keep going to find the entrance to the grassland
-[section 2 can see a door to the section 6 -- desert -- access with grappling or something]
-[section 2 leads to section 3]
-
-section 3. - underground grassland
-(by this point if you haven't found the first secret keycard, it goes away)
-boss
-grassland has trees and forests in it
-still only monsters
-find more survivors who are building cabins and stuff like that
-they tell you they're established things aren't so bad out there
-maybe find a piece of the escape rocket, someone asks you if it'll help
-they ask you to look them up if a rescue ship ever comes
-
-section 4. - underground alien civilization
-keep going to find a town of native aliens to the planet
-they're surprised you exist, you're surprised they exist
-they tell you about some evil monsters that are plaguing them
-that's the next boss
-then you tell them about the humans lost in the caves
-	the native aliens help rescue some of them
-aliens then lead humans to the surface where colony #2 is
-
-section 5. - colony #2 whose escape rocket didn't leave
-make it to the first colony, next to the second
-find yet another escape rocket booster piece 
-(side quest: collect all parts to launch the escape rocket)
-find the place overrun with monsters
-fight a boss, get an item.
-humans re-settle here
-... try to up establish communications back to earth
-... craft you a better weapon ...
-humans know they're going to need some resources for the long stay while waiting to evacuate
-  aliens point you to the water sector for fresh water
-
-section 6. - desert area before water area
-gotta go through the desert to get to the water
-find another kind of aliens that tell you the first ones are bad
-or something like that
-they're fighting or something
-idk bff jill
-boss
-get to water area
-
-section 7. - water area
-water area
-fight boss
-flip switch
-go back to human colony, find they have water, get a reward or something, another item
-	find that comm hasn't worked, you need to go to the pole to avoid rad belt or something
-monster fight happens
-	get new item
-
-section 8. - ice pole
-another boss fight
-another item
-or something
-setup communications relay
-... maybe you get the message out, maybe you don't
-go back to human colony, find all is well
-aliens say they got attacked or something
-talk to them, start a fight between civilizations or something
-they tell you go to underground sky area to fight the baddies
-maybe secret space elevator to orbiting space colony? or something?
-
-section 9.
-underground sky
-find more stuff
-jetpack etc
-boss
-item
-etc
-moar boss
-
-section 10.
-magma area
-fight the end boss of the whole game
-ending #1: boss dies, planet dies
-	- if humans got rescue message out then they get taken back
-		- if aliens and humans coop they can go back too
-	- if you got your escape rocket ship then you take off
-run back to the surface
-find the humans getting rescued in time
-you have the choice to leave there
-or ... secret ending ... if you got all the escape rocket pieces 
-	then you take the escape rocket to the next planet of the evil alien home world 
-	... and if you failed on the rescue comm *and* got all escape rocket pieces
-		... then you take the humans back with you
-	otherwise maybe an alien or two or something? idk bff gil
-
-==========
-details:
-==========
-
-you wake up
-at the space colony
-everyone's gone
-temrinal says:
-	"evacuation orders given"
-	"proceed to launchpad 1 for immediate departure"
-
-another terminal says "weapon storage override"
-and you get the the blaster appears (default max ammo 5 cells, slowly recharges)
-
-another says
-	"surface output.  proceed west to mining colony."
-
-(secret: 
-	go left
-	crawl through tunnels
-	climb down the ladder
-	find one last scientist left behind
-	another terminal reads
-		"I'm going to activate the defense robot
-		maybe he can protect me from these creatures..."
-	...and then you find his keycard -- for use later
-)
-
-go left you find the former launchpad from where the escape rocket had just took off.
-
-keep going left and you find the entrance to the caves below the base
-
-from there you maybe find some red sirens that are blinking
-and gun turrets
-
-you pass by some doors that are locked, with red shining lights and "security level 1" or something
-	... behind one can be a max-life powerup
-	... behind another can be a blaster cell max powerup
-	... behind another can be an armor powerup
-
-down in the base you find another terminal
-	"Emergency alarm deactivated." (and the sirens stop)
-
-down another room, another terminal:
-	"Journal Entry:
-	When mining in the crust of this planet we
-		stumbled across a unique cave system.
-	Not sure how they were formed.
-		The minerals seem to proceed through the caves.
-	The prospecting company is eager for us to follow."
-
-from there go right, find the path to the caves
-...and your first monsters, the jumping wall critters
-... and bats too? you always need swooping monsters paired with jumping monsters. (spelunkey, metroid, cave story, ...)
-hidden geemeers too
-
-keep going and find a boss of some sort ... mega-geemer?
-have him blocking some sort of power supply or some kind of mining base terminal or something
-
-after you defeat him, the mining base is now full of monsters
-... and off of his room there's a terminal that says "security level 1 access granted"
-	... and it makes the securty level 1 red doors turn green and are open
-
-keep going past the boss to enter into the caves
+new idea ...
+'metroid' (sci fi) meets 'castlevania' (medieval) ... 
+set in modern times
 
 
-=========================
-super metroid bosses & minibosses
-1. chozo in crateria
-2. spore spawn in brinstar
-3. kraid in brinstar
-4. crocomire in norfair
-5. phantoon in wrecked ship
-6. snake dude in maridia
-7. dragoon in maridia
-8. chozo in norfair
-9. ridley in norfair
-10. mother brain in tourian
+	- see people turning into mindless violent zombies
+	- find out about broadcasts overriding human senses.  "They Live!"
+level 1: tv station. los angeles.
+	find people controlled by invisible (predator-style cloaking) 9 ft tall lizards 
+	midway boss, you fight one of these lizards 
+	fight to the top of the building, blow up the big antennae.  just like the movie. boss fight is helecopter.  just like the movie.
+	then the lizard people are revealed.  but everyone is still too apathetic and stupid.  they don't care.
+	from there you read docs: "they weren't just using cloaks and radio waves, they were also mass-drugging the population!"
+level 2: water treatment facility. los angeles again.
+	stop them from poisoning the water!
+	flouridation.  "vital life fluids" quote for dr. strangelove.
+	from there learn they are getting the air as well ... (source: nasa papers on lithium particulate spraying, los alamos papers on aluminum particulate spraying)
+	follow a supply truck back to find 
+level 3: unlisted airbase with unmarked planes.  los angeles.
+	stop the spraying of stuff on the populations.
+	find some underground high speed rail to take you to a military base
+level 4: deep underground military base.  outskirst of los angeles.
+	arrive, look at schematics, see genetic experiments, go down and stop them. 
+	let some human test subjects free.
+	midpoint boss:  fight some genetic super mutant "with chemical kill switch" (source: darpa rfp for making such creatures, and their excuse: "because the russians and chinese are already working on this")
+	find the 'thermal disaggregation' high speed laser drill (cite patent?)
+	fight either that, or some other monster in the caves ...
+	ride the rail system, come across a bump in the road
+	find an entrance to an underground civilization ...
+level 5: underground alien civilization.  arizona.
+	aliens that shoot lasers at you by waving their hands in front of their chest (source: phil schneider's description).
+	have some lost cities of gold, advanced technology, holograms, etc ... (source: grand canyon city legends / hopi legends of reptilians under los angeles / windmakers legends)
+level 6: mt graham, lucifer telescope
+	come up to the surface
+	find yourself at mt graham (source: all the weird tall creatures sighted climbing the mountain ... was it mt graham or another mountain?)
+	go next door to the vatican's 'lucifer' telescope.  blow it up.
+(TODO this could be a great reason to transition next to the vatican and its underground city. maybe go here after dulce base and the underground rail is finished.) 
+	continue on the fast train ...
+level 7: dulce base
+(TODO seems this base could be merged with the first base ... but where would the detour to mt graham fit in?)
+	find a tr-3b parked at unlisted the air base.
+	"next on the list, gotta take down that weaponized satellite defense laser system..." (source: darpa, again, for their plans to put a giant 25-mile-wide solar panel into orbit, with intentions to 'beam wireless energy' to the surface, and options to 'weaponize' the technology)
+	push the autopilot.
+	goes back to antarctica.
+level 6: antarctica. mt. erebus, (to reference the doom videogame)
+	fight off fallen cherubim with bull heads bipedal calf feet.  (reference: doom, ezekiel 1, 'devil of devonshire', etc)
+	fight off some aliens or something.  idk.
+	finally get around to the satellite system.
+level 7: finally get to earth orbit, satellites for defense system, etc
+	take down satellite defense system.
+	somewhere in there
+	learn of secret worldwide domination plans.  to use money to enslave humanity.
+		to open a portal to hell using cern.
+		decide to take out two birds with one stone
+level 8: crash land the satellite into cern or something
+	interrupt right as the countdown to turn on the hell portal in cern was at '1'
+	fight some miniboss
+	"you're too late!" and the bad guy flips the switch
+	the devil walks through the portal, everyone falls for him, he tells them he destroys everyone who doesn't follow him
+	and points you out, and everyone goes after you.
+	final boss fight: kill the devil, defend the pepole trying to defeat you, save humanity
 
-cave story bosses:
-1. balrog in the shack in mimiga village
-2. evil mimiga Igor in the egg corridor
-3. balrog at bomb robot's house in grasstown
-4. evil mimiga in the upper room in grasstown
-5. balrog as a frog at gum base room in grasstown
-6. curly brace in sand zone
-7. omega in the sand zone
-8. evil mimiga Toroko in the storehouse in the sand zone
-9. pooh black--that ghost in the old hospital in labyrinth
-10. monster x in labyrinth
-11. balrog immediately after in labyrinth
-12. undead core immediately after in labyrinth
-13. ironhead--that one fish in the reservoir
-14. the sisters--dragons in egg corridor v2
-15. ma pignon--mushroom in mimiga village
-16. red demon in the last cave
-17. misery in the throne room
-18. the doctor v1 in the throne room
-19. the doctor v2 in the throne room
-20. the undead core
-21. heavy press in hell
-22. ballos first form
-23. ballos second form
-24. ballos third form
-25. ballos final form
+other level options:
+	- vatican, and the buildings under it.
+	- giza. bosses: pharaoh? some egyptian mutant false-god- anubus, sphynx, etc?
+	- cozco / nazca lines.  bosses: conehead skull guys who stand 9ft tall.  a conehead skull guy would be a great boss.
+	- atlantis / lemuria / mu.  bosses: sea people.
+	- phobos, deimos, far side of moon, moon of saturn, etc ... orion ...

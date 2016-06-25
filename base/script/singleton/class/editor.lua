@@ -1061,6 +1061,224 @@ function Editor:setTileKeys()
 	end)
 end
 
+local fieldTypeNames = table{'string', 'number', 'boolean', 'vec2', 'vec4', 'box2', 'tile'}
+local fieldTypeEnum = {}
+for i,fieldTypeName in ipairs(fieldTypeNames) do
+	fieldTypeEnum[fieldTypeName] = i-1	-- minus one because the combo is 0-based
+end
+
+function Editor:editProperties(editorPropsField, selectedField, createNew, reservedKeys)
+	local textBufferSize = 2048
+
+	local function createProp(k,v, fieldType, cantDelete)
+		if reservedKeys and reservedKeys[k] then
+			print("can't create key named "..k)
+		end
+		
+		assert(type(k) == 'string')	-- non-string keys allowed?
+		-- non-string values?
+		local prop = {
+			k = k,
+			--kstr = ffi.new('char[?]', textBufferSize),
+			cantDelete = cantDelete,
+		}
+		
+		--ffi.copy(prop.kstr, k, math.min(#k+1, textBufferSize-1)) 
+		--infno.kstr[textBufferSize-1] = 0
+
+		if not fieldType then
+			-- deduce from value
+			fieldType = fieldTypeEnum.string
+			if type(v) == 'boolean' then
+				fieldType = fieldTypeEnum.boolean
+			elseif type(v) == 'table' then
+				if #v == 2 then
+					fieldType = fieldTypeEnum.vec2
+				elseif #v == 4 then
+					fieldType = fieldTypeEnum.vec4
+				elseif v.min and v.max then
+					fieldType = fieldTypeEnum.box2
+				end
+			-- fieldTypeEnum.tile is used for only specific fields
+			--  so auto-detect will be difficult 
+			-- for now it's predefined, based on k: fieldTypeEnum.tile
+			elseif type(v) == 'number' then
+				if k == 'tileIndex' then
+					fieldType = fieldTypeEnum.tile
+				else
+					fieldType = fieldTypeEnum.number
+				end
+			end
+		end
+		assert(type(fieldType) == 'number')
+		assert(fieldType >= 0 and fieldType < #fieldTypeNames)
+		prop.fieldType = ffi.new('int[1]',fieldType)
+		
+		if fieldType == fieldTypeEnum.string then
+			prop.vptr = ffi.new('char[?]', textBufferSize)
+			local vs = tostring(v)
+			ffi.copy(prop.vptr, vs, math.min(#vs+1, textBufferSize-1)) 
+			prop.vptr[textBufferSize-1] = 0
+		elseif fieldType == fieldTypeEnum.number then
+			prop.vptr = ffi.new('float[1]', v)
+		elseif fieldType == fieldTypeEnum.boolean then 
+			prop.vptr = ffi.new('bool[1]', v)
+		elseif fieldType == fieldTypeEnum.vec2 then
+			prop.vptr = ffi.new('float[2]', v[1], v[2])
+		elseif fieldType == fieldTypeEnum.vec4 then
+			prop.vptr = ffi.new('float[4]', v[1], v[2], v[3], v[4])
+		elseif fieldType == fieldTypeEnum.box2 then
+			prop.vptr = ffi.new('float[4]', v.min[1], v.min[2], v.max[1], v.max[2])
+		elseif fieldType == fieldTypeEnum.tile then
+			prop.vptr = ffi.new('int[1]', v)
+		end
+
+		return prop	
+	end
+
+	-- if we selected a new object
+	if self[selectedField] ~= self[selectedField..'Last'] then
+		self[editorPropsField] = table()
+		-- add any predefined properties
+		if createNew then createNew(createProp) end 
+		-- and add the rest
+		for k,v in pairs(self[selectedField]) do
+			if not self[editorPropsField]:find(nil, function(prop)
+				return prop.k == k
+			end) 
+			and not (reservedKeys and reservedKeys[k])
+			then
+				self[editorPropsField]:insert(createProp(k,v))
+			end
+		end
+		self[selectedField..'Last'] = self[selectedField]
+	end
+		
+	for i=#self[editorPropsField],1,-1 do
+		local prop = self[editorPropsField][i]
+		local propTitle = prop.k
+	
+		ig.igPushIdStr('prop #'..i)
+					
+		if prop.fieldType[0] == fieldTypeEnum.string then
+			local done
+			if prop.multiLineVisible then
+				ig.igPushIdStr('multiline')
+				-- ctrl+enter returns by default?
+				done = ig.igInputTextMultiline(propTitle, prop.vptr, textBufferSize,
+					ig.ImVec2(0,0),
+					ig.ImGuiInputTextFlags_EnterReturnsTrue
+					+ ig.ImGuiInputTextFlags_AllowTabInput)
+				done = done or ig.igButton('done editing')
+				ig.igPopId()
+			else
+				ig.igPushIdStr('singleline')
+				done = ig.igInputText(propTitle, prop.vptr, textBufferSize, ig.ImGuiInputTextFlags_EnterReturnsTrue + ig.ImGuiInputTextFlags_AllowTabInput)
+				ig.igPopId()
+			end
+			if done then
+				-- save changes
+				self[selectedField][prop.k] = ffi.string(prop.vptr)
+				prop.multiLineVisible = false
+			end					
+		
+			ig.igSameLine()
+			local bool = ffi.new('bool[1]', prop.multiLineVisible or false)
+			checkboxTooltip('...', bool)
+			prop.multiLineVisible = bool[0]
+
+		elseif prop.fieldType[0] == fieldTypeEnum.number then
+			ig.igInputFloat(propTitle, prop.vptr) 
+			self[selectedField][prop.k] = prop.vptr[0]
+		elseif prop.fieldType[0] == fieldTypeEnum.boolean then
+			checkboxTooltip(propTitle, prop.vptr)
+			self[selectedField][prop.k] = prop.vptr[0]
+		elseif prop.fieldType[0] == fieldTypeEnum.vec2 then
+			ig.igInputFloat2(propTitle, prop.vptr)
+			self[selectedField][prop.k][1] = prop.vptr[0]
+			self[selectedField][prop.k][2] = prop.vptr[1]
+
+			--[[ it'd be nice to toggle fields between vector/point
+			but that'd meen keeping track of that flag even after it is deselected
+			and that would mean keeping track of the flag for *all* objs
+			two ways to do that:
+			1) make different types for vectors vs points (needlessly complex for file formats)
+			2) allow the user/script to toggle/specify them for all objects at once
+			in the end ... just use spawninfos for positions whenever possible
+			ig.igSameLine()
+			local bool = ffi.new('bool[1]', prop.isAbsolute)
+			checkboxTooltip('abs', bool)
+			prop.isAbsolute = bool
+			--]]
+		elseif prop.fieldType[0] == fieldTypeEnum.vec4 then
+			ig.igInputFloat4(propTitle, prop.vptr)
+			self[selectedField][prop.k][1] = prop.vptr[0]
+			self[selectedField][prop.k][2] = prop.vptr[1]
+			self[selectedField][prop.k][3] = prop.vptr[2]
+			self[selectedField][prop.k][4] = prop.vptr[3]
+		elseif prop.fieldType[0] == fieldTypeEnum.box2 then
+			ig.igInputFloat4(propTitle, prop.vptr)
+			self[selectedField][prop.k].min[1] = prop.vptr[0]
+			self[selectedField][prop.k].min[2] = prop.vptr[1]
+			self[selectedField][prop.k].max[1] = prop.vptr[2]
+			self[selectedField][prop.k].max[2] = prop.vptr[3]
+		elseif prop.fieldType[0] == fieldTypeEnum.tile then
+			self.pickTileWindow:openButton(nil, prop.vptr[0], function(tileIndex)
+				prop.vptr[0] = tileIndex
+				self[selectedField][prop.k] = prop.vptr[0]
+			end)
+			ig.igSameLine()
+			ig.igText(prop.vptr[0]..' -- '..propTitle)
+		end
+		
+		if not prop.cantDelete then
+			ig.igSameLine()
+			if ig.igButton('X') then
+				self[editorPropsField]:remove(i)
+				self[selectedField][prop.k] = nil
+			end
+		end
+		
+		ig.igPopId()
+	end
+	
+	ig.igSeparator()
+
+	self.newFieldType = self.newFieldType or ffi.new('int[1]', 0)
+	ig.igCombo('new field type', self.newFieldType, fieldTypeNames)
+
+	self.newFieldStr = self.newFieldStr or ffi.new('char[?]', textBufferSize)
+	if ig.igInputText('new field name', self.newFieldStr, textBufferSize, ig.ImGuiInputTextFlags_EnterReturnsTrue)
+	then
+		local k = ffi.string(self.newFieldStr)
+		if reservedKeys and reservedKeys[k] then
+			alert("can't use the reserved field: "..k)
+		elseif self[selectedField][k] ~= nil then
+			alert("the field "..k.." already exists")
+		else
+			local fieldType = self.newFieldType[0]
+			local v
+			if fieldType == fieldTypeEnum.string then
+				v = ''
+			elseif fieldType == fieldTypeEnum.number then
+				v = 0
+			elseif fieldType == fieldTypeEnum.boolean then
+				v = false
+			elseif fieldType == fieldTypeEnum.vec2 then
+				v = vec2(0,0)
+			elseif fieldType == fieldTypeEnum.vec4 then
+				v = vec4(1,1,1,1)
+			elseif fieldType == fieldTypeEnum.box2 then
+				v = box2(-.5, 0, .5, 1)
+			elseif fieldType == fieldTypeEnum.tile then
+				v = 0
+			end
+			self[selectedField][k] = v
+			self[editorPropsField]:insert(createProp(k, v, fieldType))
+		end
+	end
+end
+
 function Editor:updateGUI()
 	local level = game.level
 
@@ -1346,213 +1564,15 @@ function Editor:updateGUI()
 		end
 		if self.selectedSpawnInfo then
 			do --if ig.igCollapsingHeader('Object Properties:') then
-				local textBufferSize = 2048
-			
-				local fieldTypeNames = table{'string', 'number', 'boolean', 'vec2', 'vec4', 'box2', 'tile'}
-				local fieldTypeEnum = {}
-				for i,fieldTypeName in ipairs(fieldTypeNames) do
-					fieldTypeEnum[fieldTypeName] = i-1	-- minus one because the combo is 0-based
-				end
-				
-				local function createProp(k,v, fieldType)
-					if k == 'obj' then return end		-- obj is reserved
-					
-					assert(type(k) == 'string')	-- non-string keys in spawnobjects?
-					-- non-string values?
-					local prop = {
-						k = k,
-						--kstr = ffi.new('char[?]', textBufferSize),
-					}
-					
-					--ffi.copy(prop.kstr, k, math.min(#k+1, textBufferSize-1)) 
-					--infno.kstr[textBufferSize-1] = 0
-			
-					if not fieldType then
-						-- deduce from value
-						fieldType = fieldTypeEnum.string
-						if type(v) == 'boolean' then
-							fieldType = fieldTypeEnum.boolean
-						elseif type(v) == 'table' then
-							if #v == 2 then
-								fieldType = fieldTypeEnum.vec2
-							elseif #v == 4 then
-								fieldType = fieldTypeEnum.vec4
-							elseif v.min and v.max then
-								fieldType = fieldTypeEnum.box2
-							end
-						-- fieldTypeEnum.tile is used for only specific fields
-						--  so auto-detect will be difficult 
-						-- for now it's predefined, based on k: fieldTypeEnum.tile
-						elseif type(v) == 'number' then
-							if k == 'tileIndex' then
-								fieldType = fieldTypeEnum.tile
-							else
-								fieldType = fieldTypeEnum.number
-							end
-						end
-					end
-					prop.fieldType = ffi.new('int[1]',fieldType)
-					
-					if fieldType == fieldTypeEnum.string then
-						prop.vptr = ffi.new('char[?]', textBufferSize)
-						local vs = tostring(v)
-						ffi.copy(prop.vptr, vs, math.min(#vs+1, textBufferSize-1)) 
-						prop.vptr[textBufferSize-1] = 0
-					elseif fieldType == fieldTypeEnum.number then
-						prop.vptr = ffi.new('float[1]', v)
-					elseif fieldType == fieldTypeEnum.boolean then 
-						prop.vptr = ffi.new('bool[1]', v)
-					elseif fieldType == fieldTypeEnum.vec2 then
-						prop.vptr = ffi.new('float[2]', v[1], v[2])
-					elseif fieldType == fieldTypeEnum.vec4 then
-						prop.vptr = ffi.new('float[4]', v[1], v[2], v[3], v[4])
-					elseif fieldType == fieldTypeEnum.box2 then
-						prop.vptr = ffi.new('float[4]', v.min[1], v.min[2], v.max[1], v.max[2])
-					elseif fieldType == fieldTypeEnum.tile then
-						prop.vptr = ffi.new('int[1]', v)
-					end
-
-					return prop	
-				end
-
-				-- if we selected a new object
-				if self.selectedSpawnInfo ~= self.lastSelectedSpawnInfo then
-					self.spawnInfoProps = table()
-					-- put these first and in order	
-					self.spawnInfoProps:insert(createProp('spawn', self.selectedSpawnInfo.spawn))
-					self.spawnInfoProps:insert(createProp('pos', self.selectedSpawnInfo.pos))
-					-- and add the rest
-					for k,v in pairs(self.selectedSpawnInfo) do
-						if k ~= 'obj' and k ~= 'pos' and k ~= 'spawn' then
-							self.spawnInfoProps:insert(createProp(k,v))
-						end
-					end
-					self.lastSelectedSpawnInfo = self.selectedSpawnInfo
-				end
-					
-				for i=#self.spawnInfoProps,1,-1 do
-					local prop = self.spawnInfoProps[i]
-					local propTitle = prop.k
-					
-					ig.igPushIdStr('spawnprop #'..i)
-								
-					if prop.fieldType[0] == fieldTypeEnum.string then
-						local done
-						if prop.multiLineVisible then
-							ig.igPushIdStr('multiline')
-							-- ctrl+enter returns by default?
-							done = ig.igInputTextMultiline(propTitle, prop.vptr, textBufferSize,
-								ig.ImVec2(0,0),
-								ig.ImGuiInputTextFlags_EnterReturnsTrue
-								+ ig.ImGuiInputTextFlags_AllowTabInput)
-							done = done or ig.igButton('done editing')
-							ig.igPopId()
-						else
-							ig.igPushIdStr('singleline')
-							done = ig.igInputText(propTitle, prop.vptr, textBufferSize, ig.ImGuiInputTextFlags_EnterReturnsTrue + ig.ImGuiInputTextFlags_AllowTabInput)
-							ig.igPopId()
-						end
-						if done then
-							-- save changes
-							self.selectedSpawnInfo[prop.k] = ffi.string(prop.vptr)
-							prop.multiLineVisible = false
-						end					
-					
-						ig.igSameLine()
-						local bool = ffi.new('bool[1]', prop.multiLineVisible or false)
-						checkboxTooltip('...', bool)
-						prop.multiLineVisible = bool[0]
-			
-					elseif prop.fieldType[0] == fieldTypeEnum.number then
-						ig.igInputFloat(propTitle, prop.vptr) 
-						self.selectedSpawnInfo[prop.k] = prop.vptr[0]
-					elseif prop.fieldType[0] == fieldTypeEnum.boolean then
-						checkboxTooltip(propTitle, prop.vptr)
-						self.selectedSpawnInfo[prop.k] = prop.vptr[0]
-					elseif prop.fieldType[0] == fieldTypeEnum.vec2 then
-						ig.igInputFloat2(propTitle, prop.vptr)
-						self.selectedSpawnInfo[prop.k][1] = prop.vptr[0]
-						self.selectedSpawnInfo[prop.k][2] = prop.vptr[1]
-		
-						--[[ it'd be nice to toggle fields between vector/point
-						but that'd meen keeping track of that flag even after it is deselected
-						and that would mean keeping track of the flag for *all* objs
-						two ways to do that:
-						1) make different types for vectors vs points (needlessly complex for file formats)
-						2) allow the user/script to toggle/specify them for all objects at once
-						in the end ... just use spawninfos for positions whenever possible
-						ig.igSameLine()
-						local bool = ffi.new('bool[1]', prop.isAbsolute)
-						checkboxTooltip('abs', bool)
-						prop.isAbsolute = bool
-						--]]
-					elseif prop.fieldType[0] == fieldTypeEnum.vec4 then
-						ig.igInputFloat4(propTitle, prop.vptr)
-						self.selectedSpawnInfo[prop.k][1] = prop.vptr[0]
-						self.selectedSpawnInfo[prop.k][2] = prop.vptr[1]
-						self.selectedSpawnInfo[prop.k][3] = prop.vptr[2]
-						self.selectedSpawnInfo[prop.k][4] = prop.vptr[3]
-					elseif prop.fieldType[0] == fieldTypeEnum.box2 then
-						ig.igInputFloat4(propTitle, prop.vptr)
-						self.selectedSpawnInfo[prop.k].min[1] = prop.vptr[0]
-						self.selectedSpawnInfo[prop.k].min[2] = prop.vptr[1]
-						self.selectedSpawnInfo[prop.k].max[1] = prop.vptr[2]
-						self.selectedSpawnInfo[prop.k].max[2] = prop.vptr[3]
-					elseif prop.fieldType[0] == fieldTypeEnum.tile then
-						self.pickTileWindow:openButton(nil, prop.vptr[0], function(tileIndex)
-							prop.vptr[0] = tileIndex
-							self.selectedSpawnInfo[prop.k] = prop.vptr[0]
-						end)
-						ig.igSameLine()
-						ig.igText(prop.vptr[0]..' -- '..propTitle)
-					end
-					
-					if prop.k ~= 'pos' and prop.k ~= 'spawn' then
-						ig.igSameLine()
-						if ig.igButton('X') then
-							self.spawnInfoProps:remove(i)
-							self.selectedSpawnInfo[prop.k] = nil
-						end
-					end
-					
-					ig.igPopId()
-				end
-				
-				ig.igSeparator()
-	
-				self.newFieldType = self.newFieldType or ffi.new('int[1]', 0)
-				ig.igCombo('new field type', self.newFieldType, fieldTypeNames)
-
-				self.newFieldStr = self.newFieldStr or ffi.new('char[?]', textBufferSize)
-				if ig.igInputText('new field name', self.newFieldStr, textBufferSize, ig.ImGuiInputTextFlags_EnterReturnsTrue)
-				then
-					local k = ffi.string(self.newFieldStr)
-					if k == 'obj' then
-						alert("can't use the reserved field 'obj'")
-					elseif self.selectedSpawnInfo[k] ~= nil then
-						alert("the field "..k.." already exists")
-					else
-						local fieldType = self.newFieldType[0]
-						local v
-						if fieldType == fieldTypeEnum.string then
-							v = ''
-						elseif fieldType == fieldTypeEnum.number then
-							v = 0
-						elseif fieldType == fieldTypeEnum.boolean then
-							v = false
-						elseif fieldType == fieldTypeEnum.vec2 then
-							v = vec2(0,0)
-						elseif fieldType == fieldTypeEnum.vec4 then
-							v = vec4(1,1,1,1)
-						elseif fieldType == fieldTypeEnum.box2 then
-							v = box2(-.5, 0, .5, 1)
-						elseif fieldType == fieldTypeEnum.tile then
-							v = 0
-						end
-						self.selectedSpawnInfo[k] = v
-						self.spawnInfoProps:insert(createProp(k, v, fieldType))
-					end
-				end
+				self:editProperties(
+					'spawnInfoProps',	-- holds all the ig props of the current object
+					'selectedSpawnInfo',	-- specifies the current object
+					function(createProp)	-- call this when a new object is selected to create default props
+						-- put these first and in order	
+						self.spawnInfoProps:insert(createProp('spawn', self.selectedSpawnInfo.spawn, nil, true))
+						self.spawnInfoProps:insert(createProp('pos', self.selectedSpawnInfo.pos, nil, true))
+					end,
+					{obj=1})
 			end
 			if ig.igButton('spawn obj') then
 				self.selectedSpawnInfo:removeObj()
@@ -1576,6 +1596,15 @@ function Editor:updateGUI()
 				end
 			end
 		end
+
+		self.selectedRoom = level.roomProps[self.selectedRoomIndex[0]]
+		if not self.selectedRoom then
+			self.selectedRoom = {}
+			level.roomProps[self.selectedRoomIndex[0]] = self.selectedRoom
+		end
+		self:editProperties(
+			'roomProps',
+			'selectedRoom')
 	end
 	
 	ig.igSpacing()
@@ -2196,6 +2225,7 @@ function Editor:saveMap()
 	end
 
 	-- save spawninfos
+	-- indent the first level of tables only.  no indent on nested tables.
 	file[modio.search[1]..'/maps/'..modio.levelcfg.path..'/spawn.lua'] = 
 		'{\n'
 		..level.spawnInfos:map(function(spawnInfo)
@@ -2206,6 +2236,9 @@ function Editor:saveMap()
 			return '\t'..tolua(t)..','
 		end):concat('\n')
 		..'\n}'
+
+	--save room properties
+	file[modio.search[1]..'/maps/'..modio.levelcfg.path..'/rooms.lua'] = tolua(level.roomProps)
 end
 
 function Editor:saveBackgrounds()

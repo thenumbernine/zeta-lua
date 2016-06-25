@@ -1,0 +1,1 @@
+{{lightAmbient=1},[0]={}}
