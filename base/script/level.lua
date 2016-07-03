@@ -289,7 +289,12 @@ function Level:init(args)
 	end
 	
 	local roomsFile = args.roomsFile or (mappath and mappath..'/rooms.lua')
-	self.roomProps = not (roomsFile and io.fileexists[roomsFile]) and table() or assert(load('return '..file[roomsFile]))
+	if roomsFile then roomsFile = modio:find(roomsFile) end
+	if roomsFile then
+		self.roomProps = assert(assert(load('return '..file[roomsFile]))())
+	else
+		self.roomProps = table()
+	end
 	assert(type(self.roomProps)=='table')
 	
 	-- remember this for initialize()'s sake
@@ -385,23 +390,29 @@ local patch = require 'base.script.patch'
 function Level:draw(R, viewBBox)
 
 	-- [[ testing lighting
+if useLighting then
 	local player = game.players[1]
 	if player then
 		local gl = R.gl
 		gl.glEnable(gl.GL_LIGHTING)
 		gl.glEnable(gl.GL_LIGHT0)
-		gl.glLightfv(gl.GL_LIGHT0, gl.GL_AMBIENT, vec4f(0,0,0,1):ptr())
+		gl.glLightModelfv(gl.GL_LIGHT_MODEL_AMBIENT, vec4f(0,0,0,0):ptr())
+		gl.glLightModelf(gl.GL_LIGHT_MODEL_LOCAL_VIEWER, 1)
+		local t = self.roomProps[player.room]
+		local l = t and t.lightAmbient or 0
+		gl.glLightfv(gl.GL_LIGHT0, gl.GL_AMBIENT, vec4f(l,l,l,1):ptr())
 		gl.glLightfv(gl.GL_LIGHT0, gl.GL_DIFFUSE, vec4f(1,1,1,1):ptr())
 		gl.glLightfv(gl.GL_LIGHT0, gl.GL_SPECULAR, vec4f(1,1,1,1):ptr())
 		gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, vec4f(player.pos[1], player.pos[2]+1, 1, 1):ptr())
 		gl.glLightf(gl.GL_LIGHT0, gl.GL_CONSTANT_ATTENUATION, 0)
 		--gl.glLightf(gl.GL_LIGHT0, gl.GL_LINEAR_ATTENUATION, 1/10)
 		gl.glLightf(gl.GL_LIGHT0, gl.GL_QUADRATIC_ATTENUATION, 1/10^2)
-		gl.glMaterialfv(gl.GL_FRONT_AND_BACK, gl.GL_AMBIENT, vec4f(0,0,0,0):ptr())
+		gl.glMaterialfv(gl.GL_FRONT_AND_BACK, gl.GL_AMBIENT, vec4f(1,1,1,1):ptr())
 		gl.glMaterialfv(gl.GL_FRONT_AND_BACK, gl.GL_DIFFUSE, vec4f(1,1,1,1):ptr())
 		gl.glMaterialfv(gl.GL_FRONT_AND_BACK, gl.GL_SPECULAR, vec4f(0,0,0,0):ptr())
 		gl.glNormal3f(0,0,1)
 	end
+end
 	--]]
 
 	-- clone & offset

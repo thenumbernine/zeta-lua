@@ -1,6 +1,5 @@
 local game = require 'base.script.singleton.game'
-
-local Sawblade = behaviors(require 'zeta.script.obj.enemy',
+local Sawblade = behaviors(require 'base.script.obj.object',
 	require 'zeta.script.behavior.deathtopieces')
 
 Sawblade.sprite = 'sawblade'
