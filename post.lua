@@ -24,4 +24,4 @@ for _,dist in ipairs{'osx', 'win32'} do
 	exec('mv dist/dumpworld dist/'..dist)
 end
 
-exec('rm -fr dist')
+--exec('rm -fr dist')

@@ -1624,7 +1624,9 @@ function Editor:event(event)
 	or event.type == sdl.SDL_KEYUP
 	then
 		local buttonDown = event.type == sdl.SDL_KEYDOWN
-		if event.key.keysym.sym == 167 then	-- ` key for editor
+		if event.key.keysym.sym == 167
+		or event.key.keysym.sym == 96
+		then	-- ` key for editor
 			if buttonDown and not self.isHandlingKeyboard then
 				self.active = not self.active
 				return true
