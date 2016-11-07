@@ -1,3 +1,9 @@
+-- if we're loading from a save point then return
+-- .. but the code that calls this is wrapped in a block:
+-- "don't do this if game.savePoint exists"
+-- so why's it getting this far?
+if game.savePoint then return end
+
 for _,obj in ipairs(game.objs) do obj.remove = true end
 game.objs = table()
 level.spawnInfos = table()
@@ -71,7 +77,10 @@ local rooms = table()
 for i=0,blocksWide-1 do
 	blocks[i] = {}
 	for j=0,blocksHigh-1 do
-		blocks[i][j] = {pos=vec2(i,j), wall={'solid', 'solid', 'solid', 'solid'}}
+		blocks[i][j] = {
+			pos = vec2(i, j),
+			wall = {'solid', 'solid', 'solid', 'solid'},
+		}
 	end
 end
 
@@ -225,21 +234,52 @@ local itemConstraints = {
 		enemies = {
 			'zeta.script.obj.geemer',
 		},
+		hiddenItems = {
+			'zeta.script.obj.healthitem',
+			'zeta.script.obj.healthmaxitem',
+				
+			'zeta.script.obj.attackbonus',
+			'zeta.script.obj.defensebonus',
+		},
+		roomItems = {
+			'zeta.script.obj.savepoint',
+			'zeta.script.obj.energyrefill',
+			'zeta.script.obj.skillsaw',
+		},
 	},
 	{
 		color = vec3(1,0,0),
 		enemies = {
 			'zeta.script.obj.geemer',
-			'zeta.script.obj.geemer',
+			'zeta.script.obj.zoomer',
 			'zeta.script.obj.redgeemer',
+		},
+		hiddenItems = {
+			'zeta.script.obj.grenadeitem',
+			'zeta.script.obj.grenademaxitem',
+		},
+		roomItems = {
+			'zeta.script.obj.savepoint',
+			'zeta.script.obj.energyrefill',
+			'zeta.script.obj.grenadelauncher',
 		},
 	},
 	{
 		color = vec3(0,1,0),
 		enemies = {
 			'zeta.script.obj.geemer',
+			'zeta.script.obj.zoomer',
+			'zeta.script.obj.bat',
 			'zeta.script.obj.redgeemer',
-			'zeta.script.obj.redgeemer',
+		},
+		hiddenItems = {
+			'zeta.script.obj.missileitem',
+			'zeta.script.obj.missilemaxitem',
+		},
+		roomItems = {
+			'zeta.script.obj.savepoint',
+			'zeta.script.obj.energyrefill',
+			'zeta.script.obj.missilelauncher',
 		},
 	},
 	{
@@ -247,7 +287,19 @@ local itemConstraints = {
 		enemies = {
 			'zeta.script.obj.geemer',
 			'zeta.script.obj.redgeemer',
+			'zeta.script.obj.zoomer',
+			'zeta.script.obj.bat',
 			'zeta.script.obj.teeth',
+		},
+		hiddenItems = {
+			'zeta.script.obj.cellitem',
+			'zeta.script.obj.cellmaxitem',
+		},
+		roomItems = {
+			'zeta.script.obj.savepoint',
+			'zeta.script.obj.energyrefill',
+			'zeta.script.obj.plasmarifle',
+			'zeta.script.obj.grapplinghook',
 		},
 	},
 }
@@ -288,18 +340,57 @@ for i=2,#itemConstraints do
 		return true
 	end)
 	shuffle(otherOptions)
-	local numExtraDoors = 0	--math.min(getGenMaxExtraDoors(), #otherOptions)
+	local numExtraDoors = math.min(getGenMaxExtraDoors(), #otherOptions)
 	for j=1,numExtraDoors do
 		local option = otherOptions[j]
 		option.src.wall[option.offsetIndex] = itemConstraint.color
 		option.neighbor.wall[oppositeOffsetIndex[option.offsetIndex]] = itemConstraint.color
 	end
-	
-	spawnInfos:insert{
-		pos={(lastBlock.pos[1] + .5) * level.mapTileSize[1] + 1.5, (lastBlock.pos[2] + .5) * level.mapTileSize[2]},
+
+
+	local function makeItemRoom(block, item)
+		if #block.room.blocks > 1 then
+			block.room.blocks:removeObject(block)
+			block.room = nil
+			local room = Room()
+			roomChain:insert(room)
+			room:addBlock(block)
+			for i,offset in ipairs(offsets) do
+				local neighbor = getBlockAt(block.pos+offset)
+				if neighbor and not block.wall[i] then
+					assert(not neighbor.wall[oppositeOffsetIndex[i]])
+					block.wall[i] = vec3(0,0,0)
+					neighbor.wall[oppositeOffsetIndex[i]] = vec3(0,0,0)
+				end
+			end
+		end
+		block.room.noMonsters = true
+		item.pos = {
+			(block.pos[1] + .5) * level.mapTileSize[1] + 1.5, 
+			(block.pos[2] + .5) * level.mapTileSize[2],
+		}
+		spawnInfos:insert(item)
+		
+	end
+
+	makeItemRoom(lastBlock, {
 		spawn='zeta.script.obj.keycard',
 		color = table(itemConstraints[i].color):append{1},
-	}
+	})
+
+	for _,spawn in ipairs(itemConstraint.roomItems) do
+		local allBlocks = table()
+		for _,room in ipairs(roomChain) do
+			for _,block in ipairs(room.blocks) do
+				if not allBlocks:find(block)
+				and not block.noMonsters
+				then
+					allBlocks:insert(block)
+				end
+			end
+		end
+		makeItemRoom(assert(pickRandom(allBlocks)), {spawn=spawn})
+	end
 end
 
 -- merge neighbors 
@@ -526,69 +617,103 @@ for _,room in ipairs(rooms) do
 	end
 end
 
--- add monsters
-for _,itemConstraint in ipairs(itemConstraints) do
-	if #itemConstraint.enemies > 0  then
-		for _,room in ipairs(itemConstraint.roomChain or {}) do
-			for _,block in ipairs(room.blocks) do
-				for i=1,5 do
-					local spawnType = assert(pickRandom(itemConstraint.enemies))
-					local x,y
-					if ({
-						['zeta.script.obj.teeth'] = 1,
-					})[spawnType] then
-						-- pick something on the floor
-						x = math.random(0,level.mapTileSize[1]-1) + block.pos[1] * level.mapTileSize[1]
-						y = math.random(0,level.mapTileSize[2]-1) + block.pos[2] * level.mapTileSize[2]
-					elseif ({
-						['zeta.script.obj.turret'] = 1,
-						['zeta.script.obj.geemer'] = 1,
-						['zeta.script.obj.redgeemer'] = 1,
-					})[spawnType] then
-						-- pick something on the wall
-						x = math.random(0,level.mapTileSize[1]-1) + block.pos[1] * level.mapTileSize[1]
-						y = math.random(0,level.mapTileSize[2]-1) + block.pos[2] * level.mapTileSize[2]
-					else
-						-- anywhere
-						x = math.random(0,level.mapTileSize[1]-1) + block.pos[1] * level.mapTileSize[1]
-						y = math.random(0,level.mapTileSize[2]-1) + block.pos[2] * level.mapTileSize[2]
-					end
-					
-					spawnInfos:insert{
-						spawn = spawnType,
-						pos = vec2(x+.5,y),
-					}
-				end
-			end
-		end
-	end
-end
 
 -- start room spawn point
 spawnInfos:insert(1, {
-	spawn='base.script.obj.start',
-	pos={
+	spawn = 'base.script.obj.start',
+	pos = {
 		level.mapTileSize[1] * (startRoomPos[1] + .5) + 1.5,
 		level.mapTileSize[2] * (startRoomPos[2] + .5),
 	},
 })
 spawnInfos:insert(2, {
-	spawn='zeta.script.obj.blaster',
-	pos={
+	spawn = 'zeta.script.obj.blaster',
+	pos = {
 		level.mapTileSize[1] * (startRoomPos[1] + .5) + 2.5,
 		level.mapTileSize[2] * (startRoomPos[2] + .5),
 	},
 })
 
 for _,info in ipairs(spawnInfos) do
-	if info.spawn == 'base.script.obj.start'
-	or info.spawn == 'zeta.script.obj.keycard'
-	then
+	if table{
+		'base.script.obj.start',
+		'zeta.script.obj.keycard',
+		'zeta.script.obj.savepoint',
+		'zeta.script.obj.energyrefill',
+		'zeta.script.obj.healthitem',
+		'zeta.script.obj.healthmaxitem',
+		'zeta.script.obj.attackbonus',
+		'zeta.script.obj.defensebonus',
+			
+		'zeta.script.obj.skillsaw',
+		'zeta.script.obj.grenadeitem',
+		'zeta.script.obj.grenademaxitem',
+		'zeta.script.obj.grenadelauncher',
+		'zeta.script.obj.missileitem',
+		'zeta.script.obj.missilemaxitem',
+		'zeta.script.obj.missilelauncher',
+		'zeta.script.obj.cellitem',
+		'zeta.script.obj.cellmaxitem',
+		'zeta.script.obj.plasmarifle',
+			'zeta.script.obj.grapplinghook',
+	}:find(info.spawn) then
 		for ofs=1,5 do
 			local x = info.pos[1]-4.5+ofs
 			local y = info.pos[2]-2
 			level.tileMap[x + level.size[1]*y] = baseTileType
 			level.fgTileMap[x + level.size[1]*y] = baseFgTile 
+		end
+	end
+end
+
+
+-- add items 
+for _,itemConstraint in ipairs(itemConstraints) do
+	if #itemConstraint.enemies > 0  then
+		for _,room in ipairs(itemConstraint.roomChain or {}) do
+			if not room.noMonsters then
+				for _,block in ipairs(room.blocks) do
+					for i=1,5 do
+						local spawnType = assert(pickRandom(itemConstraint.enemies))
+						local x,y
+						if ({
+							['zeta.script.obj.teeth'] = 1,
+						})[spawnType] then
+							-- pick something on the floor
+							repeat
+								x = math.random(1,level.mapTileSize[1]-2) + block.pos[1] * level.mapTileSize[1]
+								y = math.random(1,level.mapTileSize[2]-2) + block.pos[2] * level.mapTileSize[2]
+							until level.tileMap[x+level.size[1]*y] == clearTileType
+							and level.tileMap[x+level.size[1]*(y-1)] == baseTileType
+						elseif ({
+							['zeta.script.obj.turret'] = 1,
+							['zeta.script.obj.geemer'] = 1,
+							['zeta.script.obj.redgeemer'] = 1,
+						})[spawnType] then
+							-- pick something on the wall
+							repeat
+								x = math.random(1,level.mapTileSize[1]-2) + block.pos[1] * level.mapTileSize[1]
+								y = math.random(1,level.mapTileSize[2]-2) + block.pos[2] * level.mapTileSize[2]
+							until level.tileMap[x+level.size[1]*y] == clearTileType
+							and (level.tileMap[x+level.size[1]*(y-1)] == baseTileType
+							or level.tileMap[x+level.size[1]*(y+1)] == baseTileType
+							or level.tileMap[x-1+level.size[1]*y] == baseTileType
+							or level.tileMap[x+1+level.size[1]*y] == baseTileType)
+						else
+							-- anywhere
+							repeat
+								x = math.random(1,level.mapTileSize[1]-2) + block.pos[1] * level.mapTileSize[1]
+								y = math.random(1,level.mapTileSize[2]-2) + block.pos[2] * level.mapTileSize[2]
+							until level.tileMap[x+level.size[1]*y] == clearTileType
+						end
+						
+						spawnInfos:insert{
+							spawn = spawnType,
+							pos = vec2(x+1.5,y+1),
+						}
+					end
+				end
+			end
 		end
 	end
 end
