@@ -402,7 +402,7 @@ local fpsFrames = 0
 function GLApp:update(...)
 	R:report('update begin')
 
-	-- [[ show fps
+	--[[ show fps
 	fpsFrames = fpsFrames + 1
 	if sysThisTime - fpsTime > 1 then
 		io.write('fps: '..(fpsFrames / (sysThisTime - fpsTime)))

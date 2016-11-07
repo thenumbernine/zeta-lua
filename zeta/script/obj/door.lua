@@ -19,6 +19,11 @@ function Door:init(...)
 	Door.super.init(self, ...)
 	self.startPos = vec2(self.pos:unpack())
 
+	-- TODO fix th rendering too plz
+	if self.angle == 90 then
+		self.bbox = box2{min={-.5,0}, max={2.5,1}}
+	end
+
 	-- room system ...
 	-- if there's a door next to this, and it's open, then open this door too
 	for _,obj in ipairs(game.objs) do

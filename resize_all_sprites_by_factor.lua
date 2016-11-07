@@ -8,7 +8,7 @@ for dir in file['.']() do
 				local fn = dir..'/'..f
 				local image = Image(fn)
 				local w, h = image:size()
-				image = image:resize(w*2, h*2)
+				image = image:resize(w/2, h/2)
 				image:save(fn)
 				print(fn, image:size())
 			end

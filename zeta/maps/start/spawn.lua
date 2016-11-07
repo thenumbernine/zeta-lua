@@ -1,7 +1,7 @@
 {
 	{pos={547.5,1004},spawn="zeta.script.obj.terminal",text="Evacuation orders given!\nPlease proceed to launchpad 1 for immediate departure!"},
 	{pos={581.5,983},spawn="zeta.script.obj.terminal",text="Journal Entry:\nTeam 1 left without us.\nTeam 2's rocket won't start.\nI think I'm going to go activate the defense robot to help us fight these creatures off...",use="if session.cyanKeyGiven then return end\nsession.cyanKeyGiven = true\ncreate\n 'zeta.script.obj.keycard'\n {pos = self.pos + {-1,0},\n  color = {0,1,1,1}}"},
-	{pos={550.5,1004},spawn="zeta.script.obj.terminal",text="defense protocols initiated\nweapons storage unlocked",use="if session.colonyWeaponLockerGiven then return end\nsession.colonyWeaponLockerGiven = true\ncreate'zeta.script.obj.blaster'{pos=self.pos+{1,0}}\ncreate'zeta.script.obj.grenadelauncher'{pos=self.pos+{2,0}}\ncreate'zeta.script.obj.plasmarifle'{pos=self.pos+{2,0}}"},
+	{pos={550.5,1004},spawn="zeta.script.obj.terminal",text="defense protocols initiated\nweapons storage unlocked",use="if session.colonyWeaponLockerGiven then\n\9return\nend\nsession.colonyWeaponLockerGiven = true\ncreate'zeta.script.obj.blaster'{pos=self.pos+{1,0}}\n--create'zeta.script.obj.grenadelauncher'{pos=self.pos+{2,0}}\n--create'zeta.script.obj.plasmarifle'{pos=self.pos+{2,0}}"},
 	{pos={439.5,911},spawn="zeta.script.obj.turret"},
 	{pos={445.5,911},spawn="zeta.script.obj.turret"},
 	{pos={445.5,909},spawn="zeta.script.obj.turret"},

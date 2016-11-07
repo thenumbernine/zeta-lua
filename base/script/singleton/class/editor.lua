@@ -16,10 +16,7 @@ local Editor = class()
 --Editor.active = true
 Editor.active = false
 
-local paintBrush
-local smoothBrush
-
-paintBrush = {
+Editor.paintBrush = {
 	name = 'Paint',
 	paint = function(self, cx, cy)
 		local level = game.level
@@ -81,12 +78,12 @@ paintBrush = {
 		end
 	
 		if self.smoothWhilePainting[0] then
-			smoothBrush.paint(self, cx, cy, self.smoothBorder[0])
+			Editor.smoothBrush.paint(self, cx, cy, self.smoothBorder[0])
 		end
 	end,
 }
 
-local fillBrush = {
+Editor.fillBrush = {
 	name='Fill',
 	paint = function(self, x, y)
 		local level = game.level
@@ -240,7 +237,7 @@ do
 		return index > 0
 	end
 
-	smoothBrush = {
+	Editor.smoothBrush = {
 		name = 'Smooth',
 		-- names in the neighbor table of where the patch tiles are
 		paint = function(self, cx, cy, extraBorder)
@@ -1701,11 +1698,11 @@ function Editor:update()
 				end
 			else
 				if self.editMode[0] == editModePaintTiles then
-					paintBrush.paint(self, x, y)
+					Editor.paintBrush.paint(self, x, y)
 				elseif self.editMode[0] == editModeFillTiles then
-					fillBrush.paint(self, x, y)
+					Editor.fillBrush.paint(self, x, y)
 				elseif self.editMode[0] == editModeSmoothTiles then
-					smoothBrush.paint(self, x, y)
+					Editor.smoothBrush.paint(self, x, y)
 				end
 			end
 		elseif self.editMode[0] == editModeObjects then	
@@ -2261,7 +2258,12 @@ function Editor:saveBackgrounds()
 end
 
 function Editor:saveTexpack()
-	game.level.texpackImage:save(game.level.texpackFilename)
+	game.level.texpackImage:save(
+		-- always save for the level only -- don't overwrite global
+		modio.search[1]..'/maps/'..modio.levelcfg.path..'/texpack.png'
+		-- save where we got it from (global or level-specific)
+		--game.level.texpackFilename
+	)
 end
 
 return Editor

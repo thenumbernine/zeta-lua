@@ -62,10 +62,9 @@ local function copyBody(destDir)
 	end
 	-- external project folders
 	-- only copy *.lua files ... or at least don't copy .git files
-	for _,dir in ipairs{
+	for _,dir in ipairs(table{
 		'ext',
 		'glapp',
-		--'imguiapp',	-- TODO: not for windows only
 		'vec',
 		'parser',
 		'image',
@@ -75,11 +74,13 @@ local function copyBody(destDir)
 		'threadmanager',
 		'simplexnoise',
 		'gui',
-		'gl',
-		--'gles2'	-- for android only
-	} do
+	}:append(
+		ffi.os == 'Windows' and {} or {'imguiapp'}	-- not for windows
+	):append(
+		ffi.os == 'Android' and {'gles2'} or {'gl'}
+	)) do
 		if ffi.os == 'Windows' then
-			exec('xcopy ..\\'..dir..'\\*.lua '..fixpath(destDir)..'\\'..dir..' /E /I /Y')
+			exec('xcopy ..\\'..fixpath(dir)..'\\*.lua '..fixpath(destDir)..'\\'..fixpath(dir)..' /E /I /Y')
 		else
 			exec("rsync -avm --include='*.lua' -f 'hide,! */' ../"..dir.." "..destDir)
 		end
@@ -88,6 +89,12 @@ local function copyBody(destDir)
 	mkdir(destDir..'/ffi')
 	for _,fn in ipairs{'sdl','OpenGL','glu','OpenAL','OpenALUT','png','imgui'} do
 		copyToDir('../ffi/'..fn..'.lua', destDir..'/ffi')
+	end
+	mkdir(destDir..'/ffi/vec')
+	for _,fn in ipairs{
+		'create_ffi', 'vec2d', 'vec2f', 'vec2i', 'vec3b', 'vec3d', 'vec3f', 'vec3i', 'vec3ub', 'vec4d', 'vec4f', 'vec4i', 'vec4ub'
+	} do
+		copyToDir('../ffi/vec/'..fn..'.lua', destDir..'/ffi/vec')
 	end
 	mkdir(destDir..'/ffi/c')
 	for _,fn in ipairs{'setjmp','stdio','stdlib','string','time'} do
@@ -115,7 +122,7 @@ cd data
 set PATH=%PATH%;bin\Windows\]]..arch..'\n'..[[
 set LUA_PATH=./?.lua;./?/?.lua
 set LUAJIT_LIBPATH=.
-luajit.exe init.lua editor=nil audio=null > out.txt 2> err.txt
+bin\Windows\x86\luajit.exe init.lua editor=nil audio=null > out.txt 2> err.txt
 cd ..
 ]]
 

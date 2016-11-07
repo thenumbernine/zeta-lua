@@ -9,7 +9,7 @@ local Image = require 'image'
 local dir = assert(arg[1], "expected dir")
 print('dir:',dir)
 
-local targetSize = tonumber(arg[2]) or 32
+local targetSize = tonumber(arg[2]) or 16
 print('target size:',targetSize)
 
 local files = table()

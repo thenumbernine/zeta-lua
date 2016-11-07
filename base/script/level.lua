@@ -55,7 +55,9 @@ local Level = class()
 
 -- how many pixels wide and high a tile is
 -- used for sprites and for texpack tiles
-Level.tileSize = 32
+Level.tileSize = 16
+
+-- how many tiles in a 'maptile'
 Level.mapTileSize = vec2(32, 32)
 
 local function rgbAt(image, x, y)
@@ -178,7 +180,19 @@ function Level:init(args)
 	end
 
 	-- load backgrounds here
-	self.backgrounds = table(dofile(modio:find('script/backgrounds.lua')))
+	self.backgrounds = table(
+		assert(
+			assert(
+				load('return '..
+					assert(
+						file[
+							assert(modio:find('script/backgrounds.lua'))
+						]
+					)
+				)
+			)()
+		)
+	)
 	for i,background in ipairs(self.backgrounds) do
 		local fn = modio:find('backgrounds/'..background.name..'.png')
 		if fn then
@@ -219,8 +233,11 @@ function Level:init(args)
 
 	-- hold all textures in one place
 	do
-		self.texpackFilename = modio:find('texpack.png')
-		assert(self.texpackFilename, "better put your textures in a texpack")
+		self.texpackFilename = modio:find(mappath..'/texpack.png')
+		if not self.texpackFilename then
+			self.texpackFilename = modio:find('texpack.png')
+			assert(self.texpackFilename, "better put your textures in a texpack")
+		end
 		self.texpackImage = Image(self.texpackFilename)
 		local Tex2D = require 'gl.tex2d'	-- TODO use R
 		local gl = game.R.gl
