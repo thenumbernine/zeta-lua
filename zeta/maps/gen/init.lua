@@ -1,14 +1,34 @@
-#!/usr/bin/env luajit
-local seed = os.time()
+for _,obj in ipairs(game.objs) do obj.remove = true end
+game.objs = table()
+level.spawnInfos = table()
+local modio = require 'base.script.singleton.modio'
+local path = modio.search[1]..'/maps/'..modio.levelcfg.path
+local seed = assert(tonumber(assert(path:match('gen(%d+)'))))
+
+local blocksWide = level.size[1] / level.mapTileSize[1]
+local blocksHigh = level.size[2] / level.mapTileSize[2]
+local spawnInfos = table()
+
 math.randomseed(seed)
 print('seed',seed)
 
 local Image = require 'image'
 local simplexNoise = require 'simplexnoise.2d'
-require 'vec'
+--require 'vec'
+--require 'ext'
 function vec2.lInfLength(v) return math.max(math.abs(v[1]), math.abs(v[2])) end
 function vec2.l1Length(v) return math.abs(v[1]) + math.abs(v[2]) end
-require 'ext'
+
+
+local clearTileType = 0	-- tileTypes.EMPTY
+local clearFgTile = 0
+
+local baseTileType = 1 -- tileTypes.SOLID
+local baseFgTile = 0x000101
+
+local ladderTileType = 15	-- tileTiles.LADDER
+local ladderTile = 2
+
 
 
 local offsets = {vec2(1,0), vec2(0,1), vec2(-1,0), vec2(0,-1)}
@@ -18,18 +38,6 @@ local axisForOffsetIndex = {1,2,1,2}
 local positiveOffsetIndexForAxis = {1,2}
 local negativeOffsetIndexForAxis = {3,4}
 
-local blocksWide = 8
-local blocksHigh = 8
-local blockSize = vec2(32, 32)
-
-local clearColor = 0
-local clearFgColor = 0
-
-local baseColor = 0x000001	-- bgr
-local baseFgColor = 0x000101
-
-local ladderColor = 0x00000f
-local ladderFgColor = 2 
 
 local function getGenMaxExtraDoors() return math.random(25) end
 local function getGenNumRoomsInChain() return math.random(100,200) end
@@ -58,21 +66,12 @@ local function shuffle(ar)
 	return ar
 end
 
-local function hexToRGB(hex)
-	return bit.band(bit.rshift(hex, 16), 0xff) / 0xff,
-		bit.band(bit.rshift(hex, 8), 0xff) / 0xff,
-		bit.band(hex, 0xff) / 0xff
-end
-
-local spawnInfos = table()
-
-
 local blocks = {}
 local rooms = table()
 for i=0,blocksWide-1 do
 	blocks[i] = {}
 	for j=0,blocksHigh-1 do
-		blocks[i][j] = {pos=vec2(i,j), wall={'solid', 'solid', 'solid', 'solid'}, objs=table()}
+		blocks[i][j] = {pos=vec2(i,j), wall={'solid', 'solid', 'solid', 'solid'}}
 	end
 end
 
@@ -221,10 +220,36 @@ local function buildRoomChain(startRoom, startBlock, numRooms, extDoorType)
 end
 
 local itemConstraints = {
-	{color=vec3(0,0,0)},
-	{color=vec3(1,0,0)},
-	{color=vec3(0,1,0)},
-	{color=vec3(0,0,1)},
+	{
+		color = vec3(0,0,0),
+		enemies = {
+			'zeta.script.obj.geemer',
+		},
+	},
+	{
+		color = vec3(1,0,0),
+		enemies = {
+			'zeta.script.obj.geemer',
+			'zeta.script.obj.geemer',
+			'zeta.script.obj.redgeemer',
+		},
+	},
+	{
+		color = vec3(0,1,0),
+		enemies = {
+			'zeta.script.obj.geemer',
+			'zeta.script.obj.redgeemer',
+			'zeta.script.obj.redgeemer',
+		},
+	},
+	{
+		color = vec3(0,0,1),
+		enemies = {
+			'zeta.script.obj.geemer',
+			'zeta.script.obj.redgeemer',
+			'zeta.script.obj.teeth',
+		},
+	},
 }
 for _,itemConstraint in ipairs(itemConstraints) do
 	itemConstraints[tostring(itemConstraint.color)] = itemConstraint
@@ -271,15 +296,13 @@ for i=2,#itemConstraints do
 	end
 	
 	spawnInfos:insert{
-		pos={(lastBlock.pos[1] + .5) * blockSize[1], (lastBlock.pos[2] + .5) * blockSize[2]},
+		pos={(lastBlock.pos[1] + .5) * level.mapTileSize[1] + 1.5, (lastBlock.pos[2] + .5) * level.mapTileSize[2]},
 		spawn='zeta.script.obj.keycard',
 		color = table(itemConstraints[i].color):append{1},
 	}
 end
 
 -- merge neighbors 
-
--- [=[
 for _,room in ipairs(rooms) do
 	for _,block in ipairs(room.blocks) do
 		for offsetIndex,offset in ipairs(offsets) do
@@ -295,7 +318,6 @@ for _,room in ipairs(rooms) do
 		end
 	end
 end
---]=]
 
 -- fill in the tiles ...
 
@@ -325,43 +347,35 @@ end
 
 
 
-local tileImg = Image(blocksWide * blockSize[1], blocksHigh * blockSize[2],3,'unsigned char')
-local tileFgImg = Image(blocksWide * blockSize[1], blocksHigh * blockSize[2],3,'unsigned char')
-local tileBgImg = Image(blocksWide * blockSize[1], blocksHigh * blockSize[2],3,'unsigned char')
-local backgroundImg = Image(blocksWide * blockSize[1], blocksHigh * blockSize[2],3,'unsigned char')
-local roomImg = Image(blocksWide, blocksHigh, 3, 'unsigned char')
-
---local seamImg = Image(blocksWide * blockSize[1], blocksHigh * blockSize[2])
---local colorImg = Image(blocksWide * blockSize[1], blocksHigh * blockSize[2])
-for y=0,blockSize[2]*blocksHigh-1 do
-	for x=0,blockSize[1]*blocksWide-1 do
-		setpixel(tileImg,x,y,baseColor)
-		setpixel(tileFgImg,x,y,baseFgColor)
-		setpixel(tileBgImg,x,y,clearFgColor)
-		setpixel(backgroundImg,x,y,1)
+for y=0,level.mapTileSize[2]*blocksHigh-1 do
+	for x=0,level.mapTileSize[1]*blocksWide-1 do
+		level.tileMap[x+level.size[1]*y] = baseTileType
+		level.fgTileMap[x+level.size[1]*y] = baseFgTile
+		level.bgTileMap[x+level.size[1]*y] = clearFgTile
+		level.backgroundMap[x+level.size[1]*y] = 1
 	end
 end
 for y=0,blocksHigh-1 do
 	for x=0,blocksWide-1 do
-		setpixel(roomImg,x,y,0)
+		level.roomMap[x+level.sizeInMapTiles[1]*y] = 0
 	end
 end
 
 
 for _,room in ipairs(rooms) do
 	for _,block in ipairs(room.blocks) do
-		for y=0,blockSize[2]-1 do
-			for x=0,blockSize[1]-1 do
+		for y=0,level.mapTileSize[2]-1 do
+			for x=0,level.mapTileSize[1]-1 do
 		
-				local rx = x + blockSize[1] * block.pos[1]
-				local ry = y + blockSize[2] * block.pos[2]
+				local rx = x + level.mapTileSize[1] * block.pos[1]
+				local ry = y + level.mapTileSize[2] * block.pos[2]
 				
 				--[[
 				do
 					local scale = 2
-					local r = noise(scale*rx/(blocksWide*blockSize[1]), scale*ry/(blocksHigh*blockSize[2])) * .5 + .5
-					local g = noise(scale*rx/(blocksWide*blockSize[1]) + 3.7, scale*ry/(blocksHigh*blockSize[2]) + 2.5) * .5 + .5
-					local b = noise(scale*rx/(blocksWide*blockSize[1]) - 2.3, scale*ry/(blocksHigh*blockSize[2]) - 1.1) * .5 + .5
+					local r = noise(scale*rx/(blocksWide*level.mapTileSize[1]), scale*ry/(blocksHigh*level.mapTileSize[2])) * .5 + .5
+					local g = noise(scale*rx/(blocksWide*level.mapTileSize[1]) + 3.7, scale*ry/(blocksHigh*level.mapTileSize[2]) + 2.5) * .5 + .5
+					local b = noise(scale*rx/(blocksWide*level.mapTileSize[1]) - 2.3, scale*ry/(blocksHigh*level.mapTileSize[2]) - 1.1) * .5 + .5
 					local m = math.sqrt(r*r + g*g + b*b)
 					r,g,b = r/m,g/m,b/m
 					colorImg(rx,ry,r,g,b)
@@ -376,23 +390,23 @@ for _,room in ipairs(rooms) do
 				for n=1,2 do
 					local ofspos = vec2()
 					ofspos[n] = 1
-					if bv[n] >= blockSize[n]/2 then
+					if bv[n] >= level.mapTileSize[n]/2 then
 						local ofsblock = getBlockAt(block.pos + ofspos)
 						if not ofsblock or ofsblock.room ~= room or block.wall[positiveOffsetIndexForAxis[n]] then
-							local infl = square((bv[n] - blockSize[n]/2) / (blockSize[n]/2))
+							local infl = square((bv[n] - level.mapTileSize[n]/2) / (level.mapTileSize[n]/2))
 							lensq = lensq + infl
 						end
 					else
 						local ofsblock = getBlockAt(block.pos - ofspos)
 						if not ofsblock or ofsblock.room ~= room or block.wall[negativeOffsetIndexForAxis[n]] then
-							local infl = square((bv[n] - blockSize[n]/2) / (blockSize[n]/2))
+							local infl = square((bv[n] - level.mapTileSize[n]/2) / (level.mapTileSize[n]/2))
 							lensq = lensq + infl
 						end
 					end
 				end
 				local len = math.sqrt(lensq)
 				
-				local noise = simplexNoise(rx/blockSize[1], ry/blockSize[2])
+				local noise = simplexNoise(rx/level.mapTileSize[1], ry/level.mapTileSize[2])
 				noise = (noise + 1) * .5	-- [0,1]
 				noise = noise * .7	-- .7 leaves a 3x3 in the middle
 				len = len + noise
@@ -401,30 +415,30 @@ for _,room in ipairs(rooms) do
 				-- len in [.1, .9] is empty
 				-- len in [.9, 1] is the wall
 				if len < .9 then	-- non-wall region ...
-					setpixel(tileImg,rx, ry, clearColor)
-					setpixel(tileFgImg,rx, ry, clearFgColor)
+					level.tileMap[rx+level.size[1]*ry] = clearTileType
+					level.fgTileMap[rx + level.size[1]*ry] = clearFgTile
 					
 					if not block.wall[sideForName.up]
 					or not block.wall[sideForName.down]
 					then
 						-- TODO pick different up/down methods: slopes, right-angles, platforms
-						if false then	--block.wall[sideForName.left] and block.wall[sideForName.right] then
+						if true then	--block.wall[sideForName.left] and block.wall[sideForName.right] then
 							-- TODO slopes or right-angles or something
 							
 						else
 							-- platforms
-							setpixel(tileImg,rx, ry, baseColor)
-							setpixel(tileFgImg,rx, ry, baseFgColor)
+							level.tileMap[rx + level.size[1]*ry] = baseTileType
+							level.fgTileMap[rx + level.size[1]*ry] = baseFgTile
 							do	--if len < .7 then	-- platform valid
 								if y % 4 == 0 then	-- platform 
 									local xymod = (x + y) % 8
-									if xymod >= 2 or x == blockSize[1]/2 then
-										setpixel(tileImg,rx, ry, clearColor)
-										setpixel(tileFgImg,rx, ry, clearFgColor)
+									if xymod >= 2 or x == level.mapTileSize[1]/2 then
+										level.tileMap[rx+level.size[1]*ry] = clearTileType
+										level.fgTileMap[rx+level.size[1]*ry] = clearFgTile
 									end
 								else
-									setpixel(tileImg,rx, ry, clearColor)
-									setpixel(tileFgImg,rx, ry, clearFgColor)
+									level.tileMap[rx+level.size[1]*ry] = clearTileType
+									level.fgTileMap[rx+level.size[1]*ry] = clearFgTile
 								end
 							end
 						end
@@ -448,38 +462,33 @@ for _,room in ipairs(rooms) do
 				-- TODO clearColor is being used to clear the whole column.
 				-- we should have it clear the whole column as empty
 				-- and then use clearColor for clearing the wall
-				local constraintClearColor = itemConstraint.clearColor or clearColor
-				local constraintClearFgColor = itemConstraint.clearFgColor or clearFgColor
+				local constraintClearTileType = itemConstraint.clearColor or clearTileType
+				local constraintClearFgTile = itemConstraint.clearFgTile or clearFgTile
 			
 				local left = vec2(-offset[2], offset[1])
 				-- clear the whole column from center to edge
-				for i=0,blockSize[n]/2 do
+				for i=0,level.mapTileSize[n]/2 do
 					for j=-1,1 do
-						local pos = vec2(blockSize[1]/2, blockSize[2]/2) + offset * i + left * j
-						local x, y = blockSize[1] * block.pos[1] + pos[1], blockSize[2] * block.pos[2] + pos[2]
-						if i >= blockSize[n]/2 - 1 then	-- at the end of the column make our 
-							setpixel(tileImg,x, y, constraintClearColor)
-							setpixel(tileFgImg,x, y, constraintClearFgColor)
+						local pos = vec2(level.mapTileSize[1]/2, level.mapTileSize[2]/2) + offset * i + left * j
+						local x, y = level.mapTileSize[1] * block.pos[1] + pos[1], level.mapTileSize[2] * block.pos[2] + pos[2]
+						if i >= level.mapTileSize[n]/2 - 1 then	-- at the end of the column make our 
+							level.tileMap[x+level.size[1]*y] = constraintClearTileType
+							level.fgTileMap[x+level.size[1]*y] = constraintClearFgTile
 							--seamImg(x, y, 1,1,1)	-- make shootable blocks stand out, so give them a different seam color
 						else
-							setpixel(tileImg,x, y, clearColor)	-- up to then, clear the way
-							setpixel(tileFgImg,x, y, clearFgColor)	-- up to then, clear the way
+							level.tileMap[x+level.size[1]*y] = clearTileType	-- up to then, clear the way
+							level.fgTileMap[x+level.size[1]*y] = clearFgTile	-- up to then, clear the way
 						end
 					end
 				end
 				-- and while we're at it,  make sure the rest of the wall is solid
-				for i=blockSize[n]/2,blockSize[n]/2 do
-					for j=2,blockSize[n2]/2 do
-						local pos = vec2(blockSize[1]/2, blockSize[2]/2) + offset * i + left * j
-						local x, y = blockSize[1] * block.pos[1] + pos[1], blockSize[2] * block.pos[2] + pos[2]
-						setpixel(tileImg,x,y, baseColor)
-						setpixel(tileFgImg,x,y, baseFgColor)
+				for i=level.mapTileSize[n]/2,level.mapTileSize[n]/2 do
+					for j=2,level.mapTileSize[n2]/2 do
+						local pos = vec2(level.mapTileSize[1]/2, level.mapTileSize[2]/2) + offset * i + left * j
+						local x, y = level.mapTileSize[1] * block.pos[1] + pos[1], level.mapTileSize[2] * block.pos[2] + pos[2]
+						level.tileMap[x+level.size[1]*y] = baseTileType
+						level.fgTileMap[x+level.size[1]*y] = baseFgTile
 					end
-				end
-				if doorSpawnColor then -- draw a doortype
-					local pos = vec2(blockSize[1]/2, blockSize[2]/2) + offset * (blockSize[n]/2)
-					local x, y = blockSize[1] * block.pos[1] + pos[1], blockSize[2] * block.pos[2] + pos[2]
-					--setpixel(tileImg,x, y, doorSpawnColor)
 				end
 				if true --itemConstraint.door 
 				then
@@ -491,8 +500,8 @@ for _,room in ipairs(rooms) do
 							and table(itemConstraint.color):append{1} 
 							or nil,
 						pos = vec2(
-							blockSize[1]/2+.5 + offset[1] * (blockSize[n]/2 + ofs) + blockSize[1] * block.pos[1],
-							blockSize[2]/2 + offset[2] * (blockSize[n]/2 + ofs) + blockSize[2] * block.pos[2]),
+							level.mapTileSize[1]/2+.5 + offset[1] * (level.mapTileSize[n]/2 + ofs) + level.mapTileSize[1] * block.pos[1],
+							level.mapTileSize[2]/2 + offset[2] * (level.mapTileSize[n]/2 + ofs) + level.mapTileSize[2] * block.pos[2]),
 					}
 				end
 			end
@@ -501,23 +510,55 @@ for _,room in ipairs(rooms) do
 		if block.wall[sideForName.up] ~= 'solid'
 		or block.wall[sideForName.down] ~= 'solid'
 		then
-			for y=0,blockSize[2]-1 do
-				for x=0,blockSize[1]-1 do
-					local rx = x + blockSize[1] * block.pos[1]
-					local ry = y + blockSize[2] * block.pos[2]
-					if x == blockSize[1]/2
-					and getpixel(tileImg,rx,ry) == clearColor
+			for y=0,level.mapTileSize[2]-1 do
+				for x=0,level.mapTileSize[1]-1 do
+					local rx = x + level.mapTileSize[1] * block.pos[1]
+					local ry = y + level.mapTileSize[2] * block.pos[2]
+					if x == level.mapTileSize[1]/2
+					and level.tileMap[rx + level.size[1]*ry] == clearTileType
 					then
-						setpixel(tileImg,rx,ry,ladderColor)
-						setpixel(tileBgImg,rx,ry,ladderFgColor)
+						level.tileMap[rx + level.size[1]*ry] = ladderTileType
+						level.bgTileMap[rx + level.size[1]*ry] = ladderTile
 					end
 				end
 			end
 		end
+	end
+end
 
-		-- now if there's any items ...
-		if block.objs then
-			for _,obj in ipairs(block.objs) do
+-- add monsters
+for _,itemConstraint in ipairs(itemConstraints) do
+	if #itemConstraint.enemies > 0  then
+		for _,room in ipairs(itemConstraint.roomChain or {}) do
+			for _,block in ipairs(room.blocks) do
+				for i=1,5 do
+					local spawnType = assert(pickRandom(itemConstraint.enemies))
+					local x,y
+					if ({
+						['zeta.script.obj.teeth'] = 1,
+					})[spawnType] then
+						-- pick something on the floor
+						x = math.random(0,level.mapTileSize[1]-1) + block.pos[1] * level.mapTileSize[1]
+						y = math.random(0,level.mapTileSize[2]-1) + block.pos[2] * level.mapTileSize[2]
+					elseif ({
+						['zeta.script.obj.turret'] = 1,
+						['zeta.script.obj.geemer'] = 1,
+						['zeta.script.obj.redgeemer'] = 1,
+					})[spawnType] then
+						-- pick something on the wall
+						x = math.random(0,level.mapTileSize[1]-1) + block.pos[1] * level.mapTileSize[1]
+						y = math.random(0,level.mapTileSize[2]-1) + block.pos[2] * level.mapTileSize[2]
+					else
+						-- anywhere
+						x = math.random(0,level.mapTileSize[1]-1) + block.pos[1] * level.mapTileSize[1]
+						y = math.random(0,level.mapTileSize[2]-1) + block.pos[2] * level.mapTileSize[2]
+					end
+					
+					spawnInfos:insert{
+						spawn = spawnType,
+						pos = vec2(x+.5,y),
+					}
+				end
 			end
 		end
 	end
@@ -527,22 +568,43 @@ end
 spawnInfos:insert(1, {
 	spawn='base.script.obj.start',
 	pos={
-		blockSize[1] * (startRoomPos[1] + .5) + 2.5,
-		blockSize[2] * (startRoomPos[2] + .5),
+		level.mapTileSize[1] * (startRoomPos[1] + .5) + 1.5,
+		level.mapTileSize[2] * (startRoomPos[2] + .5),
 	},
 })
+spawnInfos:insert(2, {
+	spawn='zeta.script.obj.blaster',
+	pos={
+		level.mapTileSize[1] * (startRoomPos[1] + .5) + 2.5,
+		level.mapTileSize[2] * (startRoomPos[2] + .5),
+	},
+})
+
+for _,info in ipairs(spawnInfos) do
+	if info.spawn == 'base.script.obj.start'
+	or info.spawn == 'zeta.script.obj.keycard'
+	then
+		for ofs=1,5 do
+			local x = info.pos[1]-4.5+ofs
+			local y = info.pos[2]-2
+			level.tileMap[x + level.size[1]*y] = baseTileType
+			level.fgTileMap[x + level.size[1]*y] = baseFgTile 
+		end
+	end
+end
 
 -- color blocks accordingly
 for i,itemConstraint in ipairs(itemConstraints) do
 	for _,room in ipairs(itemConstraint.roomChain or {}) do
 		for _,block in ipairs(room.blocks) do
-			for y=0,blockSize[2]-1 do
-				for x=0,blockSize[1]-1 do
-					local rx = x + blockSize[1] * block.pos[1]
-					local ry = y + blockSize[2] * block.pos[2]
-					if getpixel(tileFgImg,rx,ry) == baseFgColor then
-						setpixel(tileFgImg,rx,ry, 1+256*i)
+			for y=0,level.mapTileSize[2]-1 do
+				for x=0,level.mapTileSize[1]-1 do
+					local rx = x + level.mapTileSize[1] * block.pos[1]
+					local ry = y + level.mapTileSize[2] * block.pos[2]
+					if level.fgTileMap[rx + level.size[1]*ry] == baseFgTile then
+						level.fgTileMap[rx + level.size[1]*ry] = 1+256*i
 					end
+					level.backgroundMap[rx+level.size[1]*ry] = i
 				end
 			end
 		end
@@ -551,20 +613,16 @@ end
 
 for i,room in ipairs(rooms) do
 	for _,block in ipairs(room.blocks) do
-		setpixel(roomImg,block.pos[1],block.pos[2],i)
+		level.roomMap[block.pos[1]+block.pos[2]*level.sizeInMapTiles[1]] = i
 	end
 end
 
-tileImg:save('zeta/maps/gen/tile.png')
-tileFgImg:save('zeta/maps/gen/tile-fg.png')
-tileBgImg:save('zeta/maps/gen/tile-bg.png')
-backgroundImg:save('zeta/maps/gen/background.png')
-roomImg:save('zeta/maps/gen/room.png')
---seamImg:save('seam.png')
-local spawnCode = '{\n'..spawnInfos:map(function(info) return '\t'..tolua(info)..',\n' end):concat()..'}\n'	-- TODO pretty up vec2's
-file['zeta/maps/gen/spawn.lua'] = spawnCode
-print(spawnCode)
---colorImg:save('color.png')
+local editor = require 'base.script.singleton.editor'()
+editor.smoothBrush.paint(editor, level.size[1]/2, level.size[2]/2, math.max(level.size:unpack())+10)
+
+level:processSpawnInfoArgs(spawnInfos)
+level:backupTiles()
+editor:saveMap()
 
 local usedBlocks = 0
 for _,room in ipairs(rooms) do

@@ -34,7 +34,8 @@ modio.search = table{'base'}
 -- [[ zeta
 modio.search:insert(1, 'zeta')
 modio.levelcfg = {
-	path = 'gen',
+	blocksWide = 8, blocksHigh = 8,
+	--path = 'gen',
 	--path = 'reboot',
 	--path = 'start',
 	--path = 'start original',

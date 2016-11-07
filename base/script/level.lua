@@ -222,14 +222,7 @@ function Level:init(args)
 	end
 
 	-- backup 
-	for _,field in ipairs{'tileMap', 'fgTileMap', 'bgTileMap', 'backgroundMap'} do
-		local src = self[field]
-		local srctype = tostring(ffi.typeof(src))
-		local ctype = assert(srctype:match('^ctype<(.*)>$'), "failed to deduce ctype from "..srctype)
-		local dst = ffi.new(ctype, self.size[1] * self.size[2])
-		ffi.copy(dst, src, ffi.sizeof(src))
-		self[field..'Original'] = dst 
-	end
+	self:backupTiles()
 
 	-- hold all textures in one place
 	do
@@ -262,14 +255,6 @@ function Level:init(args)
 		end
 	end
 --]]
--- [[ only make what mapTiles we need
-	local function addMapTile(x,y)
-		local rx = math.floor((x-1) / self.mapTileSize[1]) + 1
-		local ry = math.floor((y-1) / self.mapTileSize[2]) + 1
-		if not self.mapTiles[rx] then self.mapTiles[rx] = {} end
-		if not self.mapTiles[rx][ry] then self.mapTiles[rx][ry] = MapTile(rx,ry) end
-	end
---]]
 
 	self.startPositions = table(args.startPositions)
 	self.spawnInfos = table()
@@ -283,24 +268,7 @@ function Level:init(args)
 			spawnInfoFile = modio:find(spawnInfoFile)
 			if spawnInfoFile then
 				local spawnInfos = assert(assert(load('return '..file[spawnInfoFile]))())
-				for _,args in ipairs(spawnInfos) do
-
-					if type(args.spawn) ~= 'string' then
-						error("don't know how to handle spawn of type "..tostring(args.spawn))
-					end
-					
-					assert(type(args.pos) == 'table')
-					args.pos = vec2(unpack(args.pos))
-				
-					local spawnInfo = SpawnInfo(args)
-					self.spawnInfos:insert(spawnInfo)	-- center on x and y
-			
-					addMapTile(args.pos:unpack())
-					local mapTile = self:getMapTile(args.pos:unpack())
-					if mapTile then
-						mapTile:addSpawnInfo(spawnInfo)
-					end
-				end
+				self:processSpawnInfoArgs(spawnInfos)	
 			end
 		end
 	end
@@ -319,6 +287,47 @@ function Level:init(args)
 	if mappath then initFile = mappath..'/init.lua' end
 	if args.initFile then initFile = args.initFile end
 	self.initFile = initFile
+	print('initFile',self.initFile)
+end
+
+function Level:processSpawnInfoArgs(spawnInfos)
+-- [[ only make what mapTiles we need
+	local function addMapTile(x,y)
+		local rx = math.floor((x-1) / self.mapTileSize[1]) + 1
+		local ry = math.floor((y-1) / self.mapTileSize[2]) + 1
+		if not self.mapTiles[rx] then self.mapTiles[rx] = {} end
+		if not self.mapTiles[rx][ry] then self.mapTiles[rx][ry] = MapTile(rx,ry) end
+	end
+--]]
+	
+	for _,args in ipairs(spawnInfos) do
+		if type(args.spawn) ~= 'string' then
+			error("don't know how to handle spawn of type "..tostring(args.spawn))
+		end
+		
+		assert(type(args.pos) == 'table')
+		args.pos = vec2(unpack(args.pos))
+	
+		local spawnInfo = SpawnInfo(args)
+		self.spawnInfos:insert(spawnInfo)	-- center on x and y
+
+		addMapTile(args.pos:unpack())
+		local mapTile = self:getMapTile(args.pos:unpack())
+		if mapTile then
+			mapTile:addSpawnInfo(spawnInfo)
+		end
+	end
+end
+
+function Level:backupTiles()
+	for _,field in ipairs{'tileMap', 'fgTileMap', 'bgTileMap', 'backgroundMap'} do
+		local src = self[field]
+		local srctype = tostring(ffi.typeof(src))
+		local ctype = assert(srctype:match('^ctype<(.*)>$'), "failed to deduce ctype from "..srctype)
+		local dst = ffi.new(ctype, self.size[1] * self.size[2])
+		ffi.copy(dst, src, ffi.sizeof(src))
+		self[field..'Original'] = dst 
+	end
 end
 
 function Level:refreshTiles()
@@ -361,7 +370,7 @@ function Level:initialize()
 
 	-- do an initial respawn
 	self:initialSpawn()
-	
+
 	-- run any init scripts if they're there
 	if self.initFile then
 		local initFile = modio:find(self.initFile)

@@ -180,7 +180,6 @@ return ]]..file[savefile]
 	end
 
 
-
 	-- set load level info
 		-- first get it from the modio
 	local levelcfg = 
@@ -188,7 +187,25 @@ return ]]..file[savefile]
 		or modio.levelcfg
 		or (io.fileexists'levelcfg.lua' and assert(load('return '..file['levelcfg.lua']))())
 	assert(levelcfg, "failed to find levelcfg info in save file, modio, or levelcfg.lua file")
+
 	
+	-- zetatron-specific
+	if not levelcfg.path then
+		local seed = os.time()
+		print('generating seed '..seed)
+		levelcfg.path = 'gen'..seed
+		os.execute('mkdir zeta/maps/'..levelcfg.path)
+		local Level = require 'base.script.level'
+		require 'image'(
+			Level.mapTileSize[1] * levelcfg.blocksWide,
+			Level.mapTileSize[2] * levelcfg.blocksHigh,
+			3,
+			'unsigned char'):save('zeta/maps/'..levelcfg.path..'/tile.png')
+		file['zeta/maps/'..levelcfg.path..'/init.lua'] = file['zeta/maps/gen/init.lua']
+		file['zeta/maps/'..levelcfg.path..'/texpack.png'] = file['zeta/maps/gen/texpack.png']
+	end
+	
+
 	local tileTypes = table()
 	local spawnTypes = table()
 	local serializeTypes = table()

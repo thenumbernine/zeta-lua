@@ -153,11 +153,27 @@ function Game:reset()
 	
 	-- init spawns separate after game.level is assigned (in case they want to reference it)
 	self.levelInitThread = self.level:initialize()
-	
+
+	if not self.savePoint then
+		local threads = require 'base.script.singleton.threads'
+		-- after loading, self:reset is called, which calls level:initialize
+		--  which sandbox calls the level initFile
+		-- sandbox is a thread, it's delayed one frame
+		-- this means the level initFile can overwrite the loaded self state
+		-- so I'll have the self keep track of it, and block the thread here
+		if self.levelInitThread then
+			-- wait for it to finish
+			repeat until not threads:updateThread(self.levelInitThread)
+			self.levelInitThread = nil
+		end
+	end
+
 	-- ... and reattach players ...
 	if self.onReset then self:onReset() end	-- callback
 
-	self:loadFromSavePoint() -- ...if we have any save data
+	if self.savePoint then
+		self:loadFromSavePoint() -- ...if we have any save data
+	end
 end
 
 Game.volume = .1
@@ -263,16 +279,6 @@ function Game:loadFromSavePoint()
 		-- wait for it to finish
 		repeat until not threads:updateThread(self.respawnThread)
 		self.respawnThread = nil
-	end
-	-- after loading, self:reset is called, which calls level:initialize
-	--  which sandbox calls the level initFile
-	-- sandbox is a thread, it's delayed one frame
-	-- this means the level initFile can overwrite the loaded self state
-	-- so I'll have the self keep track of it, and block the thread here
-	if self.levelInitThread then
-		-- wait for it to finish
-		repeat until not threads:updateThread(self.levelInitThread)
-		self.levelInitThread = nil
 	end
 	
 	for k in pairs(self.objs) do
