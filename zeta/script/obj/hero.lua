@@ -290,7 +290,7 @@ Hero.swimmingJumpVel = 10
 -- yh = y0 - 1/2 v^2 / a <=> 1/2 v^2 / (-a) + v t0 - yh = 0 <=> v = a (t0 ± sqrt(t0^2 - 2 yh / a ))
 -- also means t0 = yh / v + 1/2 v / a
 do 
-	local jumpHeight = 4.25
+	local jumpHeight = 7.25	-- 4.25
 -- [[ define by height
 	Hero.jumpDuration = .15
 	Hero.ongroundJumpVel = game.gravity * (Hero.jumpDuration - math.sqrt(Hero.jumpDuration^2 - 2 * jumpHeight / game.gravity))

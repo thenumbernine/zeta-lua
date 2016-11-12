@@ -7,6 +7,7 @@ if game.savePoint then return end
 for _,obj in ipairs(game.objs) do obj.remove = true end
 game.objs = table()
 level.spawnInfos = table()
+
 local modio = require 'base.script.singleton.modio'
 local path = modio.search[1]..'/maps/'..modio.levelcfg.path
 local seed = assert(tonumber(assert(path:match('gen(%d+)'))))
@@ -18,12 +19,29 @@ local spawnInfos = table()
 math.randomseed(seed)
 print('seed',seed)
 
-local Image = require 'image'
 local simplexNoise = require 'simplexnoise.2d'
---require 'vec'
---require 'ext'
-function vec2.lInfLength(v) return math.max(math.abs(v[1]), math.abs(v[2])) end
-function vec2.l1Length(v) return math.abs(v[1]) + math.abs(v[2]) end
+local function lInfLength(v) return math.max(math.abs(v[1]), math.abs(v[2])) end
+local function l1Length(v) return math.abs(v[1]) + math.abs(v[2]) end
+local function square(x) return x*x end
+
+local function pickRandom(ar)
+	return ar[math.random(#ar)]
+end
+
+local function pickLast(ar)
+	return ar[#ar]
+end
+
+local function shuffle(ar)
+	local tmp = table()
+	for i=1,#ar do
+		tmp:insert( math.random(#tmp+1), ar[i] )
+	end
+	for i=1,#tmp do
+		ar[i] = tmp:remove(math.random(#tmp))
+	end
+	return ar
+end
 
 
 local function findTileType(tileTypeName)
@@ -58,26 +76,6 @@ local function getGenRoomSize() return math.ceil(math.random() * math.random() *
 local probToRemoveInterRoomWalls = 0
 
 
-local function square(x) return x*x end
-
-local function pickRandom(ar)
-	return ar[math.random(#ar)]
-end
-
-local function pickLast(ar)
-	return ar[#ar]
-end
-
-local function shuffle(ar)
-	local tmp = table()
-	for i=1,#ar do
-		tmp:insert( math.random(#tmp+1), ar[i] )
-	end
-	for i=1,#tmp do
-		ar[i] = tmp:remove(math.random(#tmp))
-	end
-	return ar
-end
 
 local blocks = {}
 local rooms = table()
@@ -148,7 +146,7 @@ local function buildRoomChain(startRoom, startBlock, numRooms, extDoorType)
 		-- l1-dist from the last block
 		local roomDist = 0
 		if lastBlock then
-			roomDist = (lastBlock.pos - a.src.pos):l1Length()
+			roomDist = l1Length(lastBlock.pos - a.src.pos)
 		end
 		
 		-- [0,1], 0 = matching last momentum dir, 1 = opposite dir
@@ -425,32 +423,6 @@ for _,room in ipairs(rooms) do
 end
 
 -- fill in the tiles ...
-
-local function setpixel(img, x, y, hex)
-	x = math.floor(x)
-	if x < 0 or x >= img.width then print("got bad x value "..x) return end
-	y = math.floor(y)
-	if y < 0 or y >= img.height then print("got bad y value "..y) return end
-	y = img.height-y-1
-	for ch=0,2 do
-		img.buffer[ch + img.channels * (x + img.width * y)] = bit.rshift(hex, 8*ch)
-	end
-end
-
-local function getpixel(img, x, y)
-	x = math.floor(x)
-	if x < 0 or x >= img.width then print("got bad x value "..x) return end
-	y = math.floor(y)
-	if y < 0 or y >= img.height then print("got bad y value "..y) return end
-	y = img.height-y-1
-	local hex = 0
-	for ch=0,2 do
-		hex = bit.bor(hex, bit.lshift(img.buffer[ch + img.channels * (x + img.width * y)], 8*ch))
-	end
-	return hex
-end
-
-
 
 for y=0,level.mapTileSize[2]*blocksHigh-1 do
 	for x=0,level.mapTileSize[1]*blocksWide-1 do

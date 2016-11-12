@@ -201,7 +201,9 @@ return ]]..file[savefile]
 			Level.mapTileSize[2] * levelcfg.blocksHigh,
 			3,
 			'unsigned char'):save('zeta/maps/'..levelcfg.path..'/tile.png')
+		
 		file['zeta/maps/'..levelcfg.path..'/init.lua'] = file['zeta/maps/gen/init.lua']
+		--file['zeta/maps/'..levelcfg.path..'/init.lua'] = file['zeta/maps/gen/gen2.lua']
 		file['zeta/maps/'..levelcfg.path..'/texpack.png'] = file['zeta/maps/gen/texpack.png']
 	end
 	
