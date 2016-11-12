@@ -33,6 +33,7 @@ modio.search = table{'base'}
 
 -- [[ zeta
 modio.search:insert(1, 'zeta')
+modio.search:insert'mario'
 modio.levelcfg = {
 	blocksWide = 8, blocksHigh = 8,
 	--path = 'gen',

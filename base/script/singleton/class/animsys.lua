@@ -97,7 +97,9 @@ function AnimationSystem:getTex(spriteName, seqName, startTime)
 	frameNumber = (math.floor(frameNumber - 1) % #seq) + 1
 	local frameName = seq[frameNumber]
 	local frame = sprite.frames[frameName]
-	if not frame then error("failed to find frame named "..tostring(frameName)) end
+	if not frame then 
+		error("failed to find frame named "..tostring(frameName)..'\n'..tolua(sprite, {indent=true})) 
+	end
 	return frame.tex
 end
 

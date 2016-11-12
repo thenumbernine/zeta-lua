@@ -290,7 +290,7 @@ Hero.swimmingJumpVel = 10
 -- yh = y0 - 1/2 v^2 / a <=> 1/2 v^2 / (-a) + v t0 - yh = 0 <=> v = a (t0 ± sqrt(t0^2 - 2 yh / a ))
 -- also means t0 = yh / v + 1/2 v / a
 do 
-	local jumpHeight = 6.5
+	local jumpHeight = 4.25
 -- [[ define by height
 	Hero.jumpDuration = .15
 	Hero.ongroundJumpVel = game.gravity * (Hero.jumpDuration - math.sqrt(Hero.jumpDuration^2 - 2 * jumpHeight / game.gravity))
@@ -659,7 +659,7 @@ function Hero:update(dt)
 		-- wall grinding? via the pick-up button
 		if --self.inputShootAux and 
 		hasWallJump then
-			self.drawMirror = not self.collidedLeft
+			--self.drawMirror = not self.collidedLeft
 			self.vel[2] = -game.gravity * dt	-- to stop
 			--self.vel[2] = self.vel[2] * .5	-- to go slow
 			-- TODO instead of stopping while holding, remember who/where you're hooked onto, update with that, and only release upon (a) jump, or (b) ... either tapping again or releasing the grab button ... and allow this for collide-up as well as left and right

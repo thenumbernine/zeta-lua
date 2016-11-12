@@ -1,11 +1,12 @@
 local Item = require 'zeta.script.obj.item'
 local TouchItem = class(Item)
 TouchItem.useGravity = false
+TouchItem.duration = 10
 
 function TouchItem:init(...)
 	TouchItem.super.init(self, ...)
 	local game = require 'base.script.singleton.game'
-	self.removeTime = game.time + 10
+	self.removeTime = game.time + self.duration
 end
 
 function TouchItem:touch(other)

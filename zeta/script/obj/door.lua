@@ -14,6 +14,7 @@ Door.timeOpen = 3
 Door.blockTime = -1	-- last time the door was no longer blocked
 Door.initialState = 'closed'
 Door.moveDist = 3	-- same as its bbox height
+Door.moveAxis = 2
 
 function Door:init(...)
 	Door.super.init(self, ...)
@@ -21,7 +22,10 @@ function Door:init(...)
 
 	-- TODO fix th rendering too plz
 	if self.angle == 90 then
-		self.bbox = box2{min={-.5,0}, max={2.5,1}}
+		self.bbox = box2(-.5, 0, 2.5, 1)
+		self.drawCenter = vec2(.5, .5)
+		self.rotCenter = vec2(.5, .5 + .5/3)
+		self.moveAxis = 1
 	end
 
 	-- room system ...
@@ -91,7 +95,7 @@ Door.states = {
 		end,
 		update = function(self,dt)
 			local y = math.clamp((game.time - self.stateStartTime) / self.timeOpening, 0, 1)
-			self.pos[2] = self.startPos[2] + self.moveDist * y
+			self.pos[self.moveAxis] = self.startPos[self.moveAxis] + self.moveDist * y
 			if game.time >= self.stateStartTime + self.timeOpening then
 				self:setState'open'
 			end
@@ -104,7 +108,7 @@ Door.states = {
 		end,
 		update = function(self,dt)
 			-- keep open
-			self.pos[2] = self.startPos[2] + self.moveDist
+			self.pos[self.moveAxis] = self.startPos[self.moveAxis] + self.moveDist
 			if game.time >= self.stateStartTime + self.timeOpen then
 				self:setState'closing'
 			end
@@ -117,7 +121,7 @@ Door.states = {
 		end,
 		update = function(self,dt)
 			local y = math.clamp(1 - (game.time - self.stateStartTime) / self.timeOpening, 0, 1)
-			self.pos[2] = self.startPos[2] + self.moveDist * y
+			self.pos[self.moveAxis] = self.startPos[self.moveAxis] + self.moveDist * y
 			if game.time >= self.stateStartTime + self.timeOpening then
 				self:setState'closed'
 			end

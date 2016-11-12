@@ -1,12 +1,13 @@
 local game = require 'base.script.singleton.game'
 local Geemer = behaviors(require 'zeta.script.obj.enemy',
 	require 'zeta.script.behavior.statemachine',
-	require 'zeta.script.behavior.hurtstotouch',
-	require 'zeta.script.behavior.deathtopieces')
+	require 'zeta.script.behavior.hurtstotouch'
+	--,require 'zeta.script.behavior.deathtopieces'
+)
 Geemer.sprite = 'geemer'
 Geemer.maxHealth = 1
 Geemer.attackDist = 5
-Geemer.jumpVel = 11
+Geemer.jumpVel = 20
 Geemer.runVel = 7
 Geemer.alertDist = 10
 Geemer.nextShakeTime = -1
@@ -172,7 +173,7 @@ end
 -- but thye collide when they hit hte player and the player can't get rid of them 
 -- solid_yes doesn't,
 -- but that mobs the player and the player gets stuck
-Geemer.solidFlags = Geemer.SOLID_NO	-- Geemer.SOLID_YES
+Geemer.solidFlags = Geemer.SOLID_YES	-- Geemer.SOLID_NO
 Geemer.touchFlags = Geemer.SOLID_YES
 Geemer.blockFlags = Geemer.SOLID_WORLD + Geemer.SOLID_YES
 Geemer.touchDamage = 1

@@ -26,15 +26,22 @@ function vec2.lInfLength(v) return math.max(math.abs(v[1]), math.abs(v[2])) end
 function vec2.l1Length(v) return math.abs(v[1]) + math.abs(v[2]) end
 
 
-local clearTileType = 0	-- tileTypes.EMPTY
-local clearFgTile = 0
+local function findTileType(tileTypeName)
+	local tileTypeClass = assert(require(tileTypeName))
+	return game.levelcfg.tileTypes:find(nil, function(tileType)
+		return tileTypeClass == getmetatable(tileType)
+	end)
+end
 
-local baseTileType = 1 -- tileTypes.SOLID
-local baseFgTile = 0x000101
 
-local ladderTileType = 15	-- tileTiles.LADDER
+local emptyTileType = 0
+local solidTileType = findTileType'base.script.tile.solid'
+local ladderTileType = findTileType'base.script.tile.ladder'
+local blasterBreakTileType = findTileType'zeta.script.tile.blasterbreak'
+
+local emptyFgTile = 0
+local solidFgTile = 0x000101
 local ladderTile = 2
-
 
 
 local offsets = {vec2(1,0), vec2(0,1), vec2(-1,0), vec2(0,-1)}
@@ -45,8 +52,8 @@ local positiveOffsetIndexForAxis = {1,2}
 local negativeOffsetIndexForAxis = {3,4}
 
 
-local function getGenMaxExtraDoors() return math.random(25) end
-local function getGenNumRoomsInChain() return math.random(100,200) end
+local function getGenMaxExtraDoors() return 0 end --math.random(25) end
+local function getGenNumRoomsInChain() return math.random(10,20) end-- math.random(100,200) end
 local function getGenRoomSize() return math.ceil(math.random() * math.random() * 20) end
 local probToRemoveInterRoomWalls = 0
 
@@ -172,7 +179,7 @@ local function buildRoomChain(startRoom, startBlock, numRooms, extDoorType)
 				break
 			end
 			shuffle(emptyOptions)
-			emptyOptions:sort(cmp)
+			--emptyOptions:sort(cmp)
 			
 			local optionIndex = 1	--math.floor(math.random() * math.random() * #emptyOptions) + 1
 			local option = emptyOptions[optionIndex]
@@ -180,7 +187,7 @@ local function buildRoomChain(startRoom, startBlock, numRooms, extDoorType)
 			local neighborBlock = option.neighbor
 			local neighborOffsetIndex = option.offsetIndex
 			--lastOffsetIndex = option.offsetIndex
-			lastOffsetIndex = math.random(4)
+			--lastOffsetIndex = math.random(4)
 			
 			srcBlock.wall[neighborOffsetIndex] = doorType
 			neighborBlock.wall[oppositeOffsetIndex[neighborOffsetIndex]] = doorType
@@ -228,18 +235,25 @@ local function buildRoomChain(startRoom, startBlock, numRooms, extDoorType)
 	return chainRooms, lastBlock
 end
 
-local itemConstraints = {
+-- stupid turrets and sawblades
+game.session.defensesActive_Main = true
+
+local goals = {
 	{
 		color = vec3(0,0,0),
 		enemies = {
-			'zeta.script.obj.geemer',
+			'zeta.script.obj.sawblade',
+			'zeta.script.obj.turret',
+			'mario.script.obj.goomba',
+			'mario.script.obj.koopa',
+			'mario.script.obj.ballnchain',
 		},
 		hiddenItems = {
-			'zeta.script.obj.healthitem',
-			'zeta.script.obj.healthmaxitem',
+			{spawn='zeta.script.obj.healthitem', duration=1e+9},
+			{spawn='zeta.script.obj.healthmaxitem'},
 				
-			'zeta.script.obj.attackbonus',
-			'zeta.script.obj.defensebonus',
+			{spawn='zeta.script.obj.attackbonus'},
+			{spawn='zeta.script.obj.defensebonus'},
 		},
 		roomItems = {
 			'zeta.script.obj.savepoint',
@@ -255,8 +269,8 @@ local itemConstraints = {
 			'zeta.script.obj.redgeemer',
 		},
 		hiddenItems = {
-			'zeta.script.obj.grenadeitem',
-			'zeta.script.obj.grenademaxitem',
+			{spawn='zeta.script.obj.grenadeitem'},
+			{spawn='zeta.script.obj.grenademaxitem'},
 		},
 		roomItems = {
 			'zeta.script.obj.savepoint',
@@ -273,8 +287,8 @@ local itemConstraints = {
 			'zeta.script.obj.redgeemer',
 		},
 		hiddenItems = {
-			'zeta.script.obj.missileitem',
-			'zeta.script.obj.missilemaxitem',
+			{spawn='zeta.script.obj.missileitem'},
+			{spawn='zeta.script.obj.missilemaxitem'},
 		},
 		roomItems = {
 			'zeta.script.obj.savepoint',
@@ -292,8 +306,8 @@ local itemConstraints = {
 			'zeta.script.obj.teeth',
 		},
 		hiddenItems = {
-			'zeta.script.obj.cellitem',
-			'zeta.script.obj.cellmaxitem',
+			{spawn='zeta.script.obj.cellitem'},
+			{spawn='zeta.script.obj.cellmaxitem'},
 		},
 		roomItems = {
 			'zeta.script.obj.savepoint',
@@ -303,8 +317,8 @@ local itemConstraints = {
 		},
 	},
 }
-for _,itemConstraint in ipairs(itemConstraints) do
-	itemConstraints[tostring(itemConstraint.color)] = itemConstraint
+for _,goal in ipairs(goals) do
+	goals[tostring(goal.color)] = goal
 end
 
 local startRoom = Room()
@@ -314,7 +328,7 @@ local startBlock = assert(getBlockAt(startRoomPos))
 startRoom:addBlock(startBlock)
 
 local lastBlock = startBlock
-for i=2,#itemConstraints do
+for i=2,#goals do
 	-- pick a new source room to start spawning the chain from
 	local emptyOptions = getEmptyNeighborOptions(rooms)
 	if #emptyOptions == 0 then
@@ -323,12 +337,12 @@ for i=2,#itemConstraints do
 	end
 	local srcRoom = pickRandom(emptyOptions).src.room
 	
-	local itemConstraint = itemConstraints[i-1]
+	local goal = goals[i-1]
 	
 	-- draw out a new chain to a new item.  place it behind an old item's door (or a combination or any # of the last items ...)
 	local roomChain
-	roomChain, lastBlock = buildRoomChain(srcRoom, lastBlock, getGenNumRoomsInChain(), itemConstraint.color)
-	itemConstraint.roomChain = roomChain
+	roomChain, lastBlock = buildRoomChain(srcRoom, lastBlock, getGenNumRoomsInChain(), goal.color)
+	goal.roomChain = roomChain
 
 	local otherOptions = getNeighborOptions(roomChain, function(dstblock, srcblock, offset, offsetIndex)
 		if not dstblock.room then return false end	-- make sure there's a room
@@ -343,8 +357,8 @@ for i=2,#itemConstraints do
 	local numExtraDoors = math.min(getGenMaxExtraDoors(), #otherOptions)
 	for j=1,numExtraDoors do
 		local option = otherOptions[j]
-		option.src.wall[option.offsetIndex] = itemConstraint.color
-		option.neighbor.wall[oppositeOffsetIndex[option.offsetIndex]] = itemConstraint.color
+		option.src.wall[option.offsetIndex] = goal.color
+		option.neighbor.wall[oppositeOffsetIndex[option.offsetIndex]] = goal.color
 	end
 
 
@@ -375,10 +389,10 @@ for i=2,#itemConstraints do
 
 	makeItemRoom(lastBlock, {
 		spawn='zeta.script.obj.keycard',
-		color = table(itemConstraints[i].color):append{1},
+		color = table(goals[i].color):append{1},
 	})
 
-	for _,spawn in ipairs(itemConstraint.roomItems) do
+	for _,spawn in ipairs(goal.roomItems) do
 		local allBlocks = table()
 		for _,room in ipairs(roomChain) do
 			for _,block in ipairs(room.blocks) do
@@ -440,9 +454,9 @@ end
 
 for y=0,level.mapTileSize[2]*blocksHigh-1 do
 	for x=0,level.mapTileSize[1]*blocksWide-1 do
-		level.tileMap[x+level.size[1]*y] = baseTileType
-		level.fgTileMap[x+level.size[1]*y] = baseFgTile
-		level.bgTileMap[x+level.size[1]*y] = clearFgTile
+		level.tileMap[x+level.size[1]*y] = solidTileType
+		level.fgTileMap[x+level.size[1]*y] = solidFgTile
+		level.bgTileMap[x+level.size[1]*y] = emptyFgTile
 		level.backgroundMap[x+level.size[1]*y] = 1
 	end
 end
@@ -506,8 +520,8 @@ for _,room in ipairs(rooms) do
 				-- len in [.1, .9] is empty
 				-- len in [.9, 1] is the wall
 				if len < .9 then	-- non-wall region ...
-					level.tileMap[rx+level.size[1]*ry] = clearTileType
-					level.fgTileMap[rx + level.size[1]*ry] = clearFgTile
+					level.tileMap[rx+level.size[1]*ry] = emptyTileType
+					level.fgTileMap[rx + level.size[1]*ry] = emptyFgTile
 					
 					if not block.wall[sideForName.up]
 					or not block.wall[sideForName.down]
@@ -518,18 +532,18 @@ for _,room in ipairs(rooms) do
 							
 						else
 							-- platforms
-							level.tileMap[rx + level.size[1]*ry] = baseTileType
-							level.fgTileMap[rx + level.size[1]*ry] = baseFgTile
+							level.tileMap[rx + level.size[1]*ry] = solidTileType
+							level.fgTileMap[rx + level.size[1]*ry] = solidFgTile
 							do	--if len < .7 then	-- platform valid
 								if y % 4 == 0 then	-- platform 
 									local xymod = (x + y) % 8
 									if xymod >= 2 or x == level.mapTileSize[1]/2 then
-										level.tileMap[rx+level.size[1]*ry] = clearTileType
-										level.fgTileMap[rx+level.size[1]*ry] = clearFgTile
+										level.tileMap[rx+level.size[1]*ry] = emptyTileType
+										level.fgTileMap[rx+level.size[1]*ry] = emptyFgTile
 									end
 								else
-									level.tileMap[rx+level.size[1]*ry] = clearTileType
-									level.fgTileMap[rx+level.size[1]*ry] = clearFgTile
+									level.tileMap[rx+level.size[1]*ry] = emptyTileType
+									level.fgTileMap[rx+level.size[1]*ry] = emptyFgTile
 								end
 							end
 						end
@@ -546,15 +560,15 @@ for _,room in ipairs(rooms) do
 				-- consider the door type ...
 				--  if it's a legit door then set the clear color to 1,1,1 and the door spawn color to whatever
 				--  if it's a secret door then set the clear color to the block type color and the door spawn color to nil
-				local itemConstraint = itemConstraints[tostring(doorType)]
-				if not itemConstraint then
+				local goal = goals[tostring(doorType)]
+				if not goal then
 					error("failed to find door type "..tostring(doorType))
 				end
 				-- TODO clearColor is being used to clear the whole column.
 				-- we should have it clear the whole column as empty
 				-- and then use clearColor for clearing the wall
-				local constraintClearTileType = itemConstraint.clearColor or clearTileType
-				local constraintClearFgTile = itemConstraint.clearFgTile or clearFgTile
+				local constraintClearTileType = goal.clearColor or emptyTileType
+				local constraintClearFgTile = goal.emptyFgTile or emptyFgTile
 			
 				local left = vec2(-offset[2], offset[1])
 				-- clear the whole column from center to edge
@@ -567,8 +581,8 @@ for _,room in ipairs(rooms) do
 							level.fgTileMap[x+level.size[1]*y] = constraintClearFgTile
 							--seamImg(x, y, 1,1,1)	-- make shootable blocks stand out, so give them a different seam color
 						else
-							level.tileMap[x+level.size[1]*y] = clearTileType	-- up to then, clear the way
-							level.fgTileMap[x+level.size[1]*y] = clearFgTile	-- up to then, clear the way
+							level.tileMap[x+level.size[1]*y] = emptyTileType	-- up to then, clear the way
+							level.fgTileMap[x+level.size[1]*y] = emptyFgTile	-- up to then, clear the way
 						end
 					end
 				end
@@ -577,18 +591,18 @@ for _,room in ipairs(rooms) do
 					for j=2,level.mapTileSize[n2]/2 do
 						local pos = vec2(level.mapTileSize[1]/2, level.mapTileSize[2]/2) + offset * i + left * j
 						local x, y = level.mapTileSize[1] * block.pos[1] + pos[1], level.mapTileSize[2] * block.pos[2] + pos[2]
-						level.tileMap[x+level.size[1]*y] = baseTileType
-						level.fgTileMap[x+level.size[1]*y] = baseFgTile
+						level.tileMap[x+level.size[1]*y] = solidTileType
+						level.fgTileMap[x+level.size[1]*y] = solidFgTile
 					end
 				end
-				if true --itemConstraint.door 
+				if true --goal.door 
 				then
 					local ofs = offset[n] == -1 and 0 or 1
 					spawnInfos:insert{
 						angle = n == 2 and 90 or nil,
 						spawn = 'zeta.script.obj.door', 
-						color = itemConstraint.color ~= vec3(0,0,0) 
-							and table(itemConstraint.color):append{1} 
+						color = goal.color ~= vec3(0,0,0) 
+							and table(goal.color):append{1} 
 							or nil,
 						pos = vec2(
 							level.mapTileSize[1]/2+.5 + offset[1] * (level.mapTileSize[n]/2 + ofs) + level.mapTileSize[1] * block.pos[1],
@@ -606,7 +620,7 @@ for _,room in ipairs(rooms) do
 					local rx = x + level.mapTileSize[1] * block.pos[1]
 					local ry = y + level.mapTileSize[2] * block.pos[2]
 					if x == level.mapTileSize[1]/2
-					and level.tileMap[rx + level.size[1]*ry] == clearTileType
+					and level.tileMap[rx + level.size[1]*ry] == emptyTileType
 					then
 						level.tileMap[rx + level.size[1]*ry] = ladderTileType
 						level.bgTileMap[rx + level.size[1]*ry] = ladderTile
@@ -634,77 +648,133 @@ spawnInfos:insert(2, {
 	},
 })
 
+-- these objects deserve a platform
+-- TODO make sure the platform doesn't overwrite an object
+local platformSpawns = table{
+	'base.script.obj.start',
+	'zeta.script.obj.keycard',
+	'zeta.script.obj.savepoint',
+	'zeta.script.obj.energyrefill',
+	'zeta.script.obj.healthitem',
+	'zeta.script.obj.healthmaxitem',
+	'zeta.script.obj.attackbonus',
+	'zeta.script.obj.defensebonus',
+		
+	'zeta.script.obj.skillsaw',
+	'zeta.script.obj.grenadeitem',
+	'zeta.script.obj.grenademaxitem',
+	'zeta.script.obj.grenadelauncher',
+	'zeta.script.obj.missileitem',
+	'zeta.script.obj.missilemaxitem',
+	'zeta.script.obj.missilelauncher',
+	'zeta.script.obj.cellitem',
+	'zeta.script.obj.cellmaxitem',
+	'zeta.script.obj.plasmarifle',
+	'zeta.script.obj.grapplinghook',
+}:map(function(v,k) return true, v end)
+
 for _,info in ipairs(spawnInfos) do
-	if table{
-		'base.script.obj.start',
-		'zeta.script.obj.keycard',
-		'zeta.script.obj.savepoint',
-		'zeta.script.obj.energyrefill',
-		'zeta.script.obj.healthitem',
-		'zeta.script.obj.healthmaxitem',
-		'zeta.script.obj.attackbonus',
-		'zeta.script.obj.defensebonus',
-			
-		'zeta.script.obj.skillsaw',
-		'zeta.script.obj.grenadeitem',
-		'zeta.script.obj.grenademaxitem',
-		'zeta.script.obj.grenadelauncher',
-		'zeta.script.obj.missileitem',
-		'zeta.script.obj.missilemaxitem',
-		'zeta.script.obj.missilelauncher',
-		'zeta.script.obj.cellitem',
-		'zeta.script.obj.cellmaxitem',
-		'zeta.script.obj.plasmarifle',
-			'zeta.script.obj.grapplinghook',
-	}:find(info.spawn) then
+	if platformSpawns[info.spawn] then
 		for ofs=1,5 do
 			local x = info.pos[1]-4.5+ofs
 			local y = info.pos[2]-2
-			level.tileMap[x + level.size[1]*y] = baseTileType
-			level.fgTileMap[x + level.size[1]*y] = baseFgTile 
+			level.tileMap[x + level.size[1]*y] = solidTileType
+			level.fgTileMap[x + level.size[1]*y] = solidFgTile 
 		end
 	end
 end
 
 
+local function pickRandomTile(block)
+	local safeBorder = 4
+	local x = math.random(safeBorder,level.mapTileSize[1]-safeBorder-1) + block.pos[1] * level.mapTileSize[1]
+	local y = math.random(safeBorder,level.mapTileSize[2]-safeBorder-1) + block.pos[2] * level.mapTileSize[2]
+	return x, y
+end
+
+
+-- pick something on the floor
+local function pickTileOnGround(block)
+	local x,y
+	repeat
+		x,y = pickRandomTile(block)
+	until level.tileMap[x+level.size[1]*y] == emptyTileType
+	and level.tileMap[x+level.size[1]*(y-1)] == solidTileType
+	return x,y
+end
+
+local function pickTileOnEdge(block)
+	local x,y
+	repeat
+		x,y = pickRandomTile(block)
+	until level.tileMap[x+level.size[1]*y] == emptyTileType
+	and (level.tileMap[x+level.size[1]*(y-1)] == solidTileType
+	or level.tileMap[x+level.size[1]*(y+1)] == solidTileType
+	or level.tileMap[x-1+level.size[1]*y] == solidTileType
+	or level.tileMap[x+1+level.size[1]*y] == solidTileType)
+	return x,y
+end
+
+local function pickTileEmpty(block)
+	local x,y
+	repeat
+		x,y = pickRandomTile(block)
+	until level.tileMap[x+level.size[1]*y] == emptyTileType
+	return x,y
+end
+
+local function pickTileSolidOnEdge(block)
+	local x,y
+	repeat
+		x,y = pickRandomTile(block)
+	until level.tileMap[x+level.size[1]*y] == solidTileType
+	and (level.tileMap[x+level.size[1]*(y-1)] == emptyTileType
+	or level.tileMap[x+level.size[1]*(y+1)] == emptyTileType
+	or level.tileMap[x-1+level.size[1]*y] == emptyTileType
+	or level.tileMap[x+1+level.size[1]*y] == emptyTileType)
+	return x,y
+end
+
 -- add items 
-for _,itemConstraint in ipairs(itemConstraints) do
-	if #itemConstraint.enemies > 0  then
-		for _,room in ipairs(itemConstraint.roomChain or {}) do
+local hiddenItemsSoFar = table()
+for goalIndex,goal in ipairs(goals) do
+	local goalRoomChain = goal.roomChain or {}
+	local totalBlocks = table()
+	for _,room in ipairs(goalRoomChain) do totalBlocks:append(room.blocks) end
+	print('goal #'..goalIndex..' #roomChain '..#goalRoomChain..' #totalBlocks '..#totalBlocks)
+	for _,itemArgs in ipairs(goal.hiddenItems or {}) do
+		local block = pickRandom(totalBlocks)
+		if block then
+			local x,y = pickTileSolidOnEdge(block)
+			level.tileMap[x+level.size[1]*y] = blasterBreakTileType
+			level.fgTileMap[x+level.size[1]*y] = 36
+			print('placing goal '..goalIndex..' item '..itemArgs.spawn..' at '..vec2(x+1.5,y+1))
+			spawnInfos:insert(table(itemArgs, {pos = vec2(x+1.5,y+1)}))
+		else
+			print('unable to place hidden item '..itemArgs.spawn)
+		end
+	end
+	if #goal.enemies > 0  then
+		for _,room in ipairs(goal.roomChain or {}) do
 			if not room.noMonsters then
 				for _,block in ipairs(room.blocks) do
 					for i=1,5 do
-						local spawnType = assert(pickRandom(itemConstraint.enemies))
+						local spawnType = assert(pickRandom(goal.enemies))
 						local x,y
 						if ({
 							['zeta.script.obj.teeth'] = 1,
 						})[spawnType] then
-							-- pick something on the floor
-							repeat
-								x = math.random(1,level.mapTileSize[1]-2) + block.pos[1] * level.mapTileSize[1]
-								y = math.random(1,level.mapTileSize[2]-2) + block.pos[2] * level.mapTileSize[2]
-							until level.tileMap[x+level.size[1]*y] == clearTileType
-							and level.tileMap[x+level.size[1]*(y-1)] == baseTileType
+							x,y = pickTileOnGround(block)
 						elseif ({
 							['zeta.script.obj.turret'] = 1,
 							['zeta.script.obj.geemer'] = 1,
 							['zeta.script.obj.redgeemer'] = 1,
 						})[spawnType] then
 							-- pick something on the wall
-							repeat
-								x = math.random(1,level.mapTileSize[1]-2) + block.pos[1] * level.mapTileSize[1]
-								y = math.random(1,level.mapTileSize[2]-2) + block.pos[2] * level.mapTileSize[2]
-							until level.tileMap[x+level.size[1]*y] == clearTileType
-							and (level.tileMap[x+level.size[1]*(y-1)] == baseTileType
-							or level.tileMap[x+level.size[1]*(y+1)] == baseTileType
-							or level.tileMap[x-1+level.size[1]*y] == baseTileType
-							or level.tileMap[x+1+level.size[1]*y] == baseTileType)
+							x,y = pickTileOnEdge(block)
 						else
 							-- anywhere
-							repeat
-								x = math.random(1,level.mapTileSize[1]-2) + block.pos[1] * level.mapTileSize[1]
-								y = math.random(1,level.mapTileSize[2]-2) + block.pos[2] * level.mapTileSize[2]
-							until level.tileMap[x+level.size[1]*y] == clearTileType
+							x,y = pickTileEmpty(block)
 						end
 						
 						spawnInfos:insert{
@@ -719,14 +789,14 @@ for _,itemConstraint in ipairs(itemConstraints) do
 end
 
 -- color blocks accordingly
-for i,itemConstraint in ipairs(itemConstraints) do
-	for _,room in ipairs(itemConstraint.roomChain or {}) do
+for i,goal in ipairs(goals) do
+	for _,room in ipairs(goal.roomChain or {}) do
 		for _,block in ipairs(room.blocks) do
 			for y=0,level.mapTileSize[2]-1 do
 				for x=0,level.mapTileSize[1]-1 do
 					local rx = x + level.mapTileSize[1] * block.pos[1]
 					local ry = y + level.mapTileSize[2] * block.pos[2]
-					if level.fgTileMap[rx + level.size[1]*ry] == baseFgTile then
+					if level.fgTileMap[rx + level.size[1]*ry] == solidFgTile then
 						level.fgTileMap[rx + level.size[1]*ry] = 1+256*i
 					end
 					level.backgroundMap[rx+level.size[1]*ry] = i

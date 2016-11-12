@@ -35,7 +35,7 @@ end
 Turret.searchDist = 15
 Turret.shootDist = 10
 Turret.shootAngleThreshold = 30	-- degrees
-Turret.rotationSpeed = 50 	-- degrees per second
+Turret.rotationSpeed = 90 	-- degrees per second
 function Turret:update(dt)
 	Turret.super.update(self, dt)
 	if self.health == 0 then return end
