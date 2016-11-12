@@ -5,7 +5,7 @@ local Goomba = behaviors(
 Goomba.sprite = 'goomba'
 Goomba.seq = 'walk'
 Goomba.touchDamage = 1
-Goomba.health = 2
+Goomba.maxHealth = 2
 Goomba.turnsAtLedge = true	-- false, I know
 
 return Goomba

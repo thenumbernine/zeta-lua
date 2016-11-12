@@ -240,11 +240,10 @@ local goals = {
 	{
 		color = vec3(0,0,0),
 		enemies = {
-			'zeta.script.obj.sawblade',
-			'zeta.script.obj.turret',
 			'mario.script.obj.goomba',
 			'mario.script.obj.koopa',
 			'mario.script.obj.ballnchain',
+			'mario.script.obj.thwomp',
 		},
 		hiddenItems = {
 			{spawn='zeta.script.obj.healthitem', duration=1e+9},
@@ -263,9 +262,10 @@ local goals = {
 	{
 		color = vec3(1,0,0),
 		enemies = {
+			'zeta.script.obj.sawblade',
+			'zeta.script.obj.turret',
 			'zeta.script.obj.geemer',
 			'zeta.script.obj.zoomer',
-			'zeta.script.obj.redgeemer',
 		},
 		hiddenItems = {
 			{spawn='zeta.script.obj.grenadeitem'},
@@ -281,9 +281,9 @@ local goals = {
 		color = vec3(0,1,0),
 		enemies = {
 			'zeta.script.obj.geemer',
+			'zeta.script.obj.redgeemer',
 			'zeta.script.obj.zoomer',
 			'zeta.script.obj.bat',
-			'zeta.script.obj.redgeemer',
 		},
 		hiddenItems = {
 			{spawn='zeta.script.obj.missileitem'},

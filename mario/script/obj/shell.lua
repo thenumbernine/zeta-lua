@@ -14,7 +14,7 @@ Shell.dir = 0
 Shell.canCarry = true
 Shell.spinJumpDestroys = true
 Shell.touchDamage = 1
-Shell.health = 1
+Shell.maxHealth = 10
 Shell.solidFlags = Shell.SOLID_NO
 
 function Shell:update(dt)
@@ -34,7 +34,8 @@ function Shell:update(dt)
 				if self.heldby then
 					self.heldby:setHeld(nil, false)
 				end
-				
+			
+				-- TODO keep track of what type we started as
 				local Koopa = require 'mario.script.obj.koopa'	-- no require loops
 				setmetatable(self, Koopa)
 				self.canCarry = false

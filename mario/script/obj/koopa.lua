@@ -13,6 +13,8 @@ Koopa.turnsAtLedge = true
 function Koopa:die()
 	local Shell = require 'mario.script.obj.shell'		-- do so here so we don't get a require() loop
 	setmetatable(self, Shell)
+	self.health = nil
+	self.health = self.maxHealth or self.health
 	self.seq = 'eyes'
 	self.enterShellTime = game.time
 	self.dir = 0
