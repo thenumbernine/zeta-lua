@@ -71,8 +71,8 @@ local negativeOffsetIndexForAxis = {3,4}
 
 
 local function getGenMaxExtraDoors() return 0 end --math.random(25) end
-local function getGenNumRoomsInChain() return math.random(10,20) end-- math.random(100,200) end
-local function getGenRoomSize() return math.random(3,10) end -- math.ceil(math.random() * math.random() * 20) end
+local function getGenNumRoomsInChain() return math.random(5,10) end -- math.random(10,20) end-- math.random(100,200) end
+local function getGenRoomSize() return math.random(2,6) end -- math.ceil(math.random() * math.random() * 20) end
 local probToRemoveInterRoomWalls = 0
 
 
@@ -259,6 +259,7 @@ local goals = {
 			'zeta.script.obj.skillsaw',
 		},
 	},
+	-- [[
 	{
 		color = vec3(1,0,0),
 		enemies = {
@@ -313,6 +314,10 @@ local goals = {
 			'zeta.script.obj.plasmarifle',
 			'zeta.script.obj.grapplinghook',
 		},
+	},
+	--]]
+	{
+		color = vec3(1,1,1),
 	},
 }
 for _,goal in ipairs(goals) do
@@ -390,6 +395,7 @@ for i=2,#goals do
 		color = table(goals[i].color):append{1},
 	})
 
+	-- TODO instead of breaking up the path, add new rooms to the sides!!
 	-- [[ pick out rooms along the way to be item rooms
 	for _,spawn in ipairs(goal.roomItems) do
 		local allBlocks = table()
@@ -407,7 +413,7 @@ for i=2,#goals do
 	--]]
 end
 
---[=[
+-- [=[
 print'merging neighbors...'
 for _,room in ipairs(rooms) do
 	for _,block in ipairs(room.blocks) do
@@ -443,13 +449,45 @@ for y=0,blocksHigh-1 do
 end
 --]=]
 
+--[=[
+print'carving out start room...'
+do
+	local wallSize = 3
+	for y=wallSize,level.mapTileSize[2]-1-wallSize do
+		for x=wallSize,level.mapTileSize[1]-1-wallSize do
+			local rx = x + level.mapTileSize[1] * startBlock.pos[1]
+			local ry = y + level.mapTileSize[2] * startBlock.pos[2]
+			level.tileMap[rx+level.size[1]*ry] = emptyTileType
+			level.fgTileMap[rx+level.size[1]*ry] = emptyFgTile
+		end
+	end
+end
+--]=]
 
 print'carving out rooms...'
 for _,room in ipairs(rooms) do
 	for _,block in ipairs(room.blocks) do
+		
+		--[[ background noise
 		for y=0,level.mapTileSize[2]-1 do
 			for x=0,level.mapTileSize[1]-1 do
-		
+				local rx = x + level.mapTileSize[1] * block.pos[1]
+				local ry = y + level.mapTileSize[2] * block.pos[2]
+
+				if level.bgTileMap[rx+level.size[1]*ry] == emptyFgTile then
+					local noise = simplexNoise(2*rx/level.mapTileSize[1], 2*ry/level.mapTileSize[2])
+					if noise*noise > .1 then
+						level.bgTileMap[rx+level.size[1]*ry] = 0x10f --solidFgTile
+					else
+						level.bgTileMap[rx+level.size[1]*ry] = emptyFgTile
+					end
+				end
+			end
+		end
+		--]]
+
+		for y=0,level.mapTileSize[2]-1 do
+			for x=0,level.mapTileSize[1]-1 do
 				local rx = x + level.mapTileSize[1] * block.pos[1]
 				local ry = y + level.mapTileSize[2] * block.pos[2]
 				
@@ -467,7 +505,7 @@ for _,room in ipairs(rooms) do
 				
 				local bv = vec2(x,y)
 			
-				--[=[ simplex noise based
+				-- [=[ simplex noise based
 				local lensq = 0
 				
 				-- single-influences
@@ -536,7 +574,7 @@ for _,room in ipairs(rooms) do
 			local n2 = 3-n
 			local doorType = block.wall[index]
 			if doorType ~= 'solid' 
-			--and doorType	-- simplex noise needs this
+			and doorType	-- simplex noise needs this
 			then	
 				local left = vec2(-offset[2], offset[1])
 				-- clear the whole column from center to edge
@@ -576,16 +614,18 @@ for _,room in ipairs(rooms) do
 				print('making sure wall is solid at '..block.pos)
 				-- somewherein here oob tiles are written 
 				for i=level.mapTileSize[n]/2,level.mapTileSize[n]/2 do
-					--for j=2,level.mapTileSize[n2]/2 do
 					for j=2,level.mapTileSize[n2]/2-1 do
-						
 						local pos = vec2(level.mapTileSize[1]/2, level.mapTileSize[2]/2) + offset * i + left * j
-						local x = pos[1] + level.mapTileSize[1] * block.pos[1]
-						local y = pos[2] + level.mapTileSize[2] * block.pos[2]
-						assert(x >= 0 and y >= 0 and x < level.size[1] and y < level.size[1], 
-							'solid check failed at '..x..','..y..' of '..level.size..'...')
-						level.tileMap[x+level.size[1]*y] = solidTileType
-						level.fgTileMap[x+level.size[1]*y] = solidFgTile
+						do --if pos[1] >= 0 and pos[2] >= 0 and pos[1] < level.mapTileSize[1] and pos[2] < level.mapTileSize[2] then
+							local x = pos[1] + level.mapTileSize[1] * block.pos[1]
+							local y = pos[2] + level.mapTileSize[2] * block.pos[2]
+							do --if x >= 0 and y >= 0 and x < level.size[1] and y < level.size[2] then
+								assert(x >= 0 and y >= 0 and x < level.size[1] and y < level.size[1], 
+									'solid check failed at '..x..','..y..' of '..level.size..'...')
+								level.tileMap[x+level.size[1]*y] = solidTileType
+								level.fgTileMap[x+level.size[1]*y] = solidFgTile
+							end
+						end
 					end
 				end
 				print'...done making sure wall is solid'
@@ -616,14 +656,13 @@ for _,room in ipairs(rooms) do
 				for x=0,level.mapTileSize[1]-1 do
 					local rx = x + level.mapTileSize[1] * block.pos[1]
 					local ry = y + level.mapTileSize[2] * block.pos[2]
-					print('if('..rx..','..ry..') of size '..level.size..'...')
+					assert(rx >= 0 and ry >= 0 and rx < level.size[1] and ry < level.size[2],
+						'if('..rx..','..ry..') of size '..level.size..'...')
 					if x == level.mapTileSize[1]/2
 					and level.tileMap[rx + level.size[1]*ry] == emptyTileType
 					then
-						print'...then...'
 						level.tileMap[rx + level.size[1]*ry] = ladderTileType
 						level.bgTileMap[rx + level.size[1]*ry] = ladderTile
-						print'...write succeeded!'
 					end
 				end
 			end
@@ -669,6 +708,7 @@ local platformSpawns = table{
 	'zeta.script.obj.missilemaxitem',
 	'zeta.script.obj.missilelauncher',
 	'zeta.script.obj.cellitem',
+	'zeta.script.obj.blaster',
 	'zeta.script.obj.cellmaxitem',
 	'zeta.script.obj.plasmarifle',
 	'zeta.script.obj.grapplinghook',
@@ -677,7 +717,7 @@ local platformSpawns = table{
 print'putting platforms under spawns...'
 for _,info in ipairs(spawnInfos) do
 	if platformSpawns[info.spawn] then
-		for ofs=3,3 do	-- 1,5
+		for ofs=1,5 do	-- 1,5
 			local x = info.pos[1]-4.5+ofs
 			local y = info.pos[2]-2
 			level.tileMap[x + level.size[1]*y] = solidTileType
@@ -687,7 +727,7 @@ for _,info in ipairs(spawnInfos) do
 end
 
 
---[=[ placing monsters and hidden items
+-- [=[ placing monsters and hidden items
 
 local function pickRandomTile(block)
 	local safeBorder = 4
@@ -743,49 +783,51 @@ end
 print'placing monsters and hidden items...'
 local hiddenItemsSoFar = table()
 for goalIndex,goal in ipairs(goals) do
-	local goalRoomChain = goal.roomChain or {}
-	local totalBlocks = table()
-	for _,room in ipairs(goalRoomChain) do totalBlocks:append(room.blocks) end
-	print('goal #'..goalIndex..' #roomChain '..#goalRoomChain..' #totalBlocks '..#totalBlocks)
-	for _,itemArgs in ipairs(goal.hiddenItems or {}) do
-		local block = pickRandom(totalBlocks)
-		if block then
-			local x,y = pickTileSolidOnEdge(block)
-			level.tileMap[x+level.size[1]*y] = blasterBreakTileType
-			level.fgTileMap[x+level.size[1]*y] = 36
-			print('placing goal '..goalIndex..' item '..itemArgs.spawn..' at '..vec2(x+1.5,y+1))
-			spawnInfos:insert(table(itemArgs, {pos = vec2(x+1.5,y+1)}))
-		else
-			print('unable to place hidden item '..itemArgs.spawn)
+	local roomChain = goal.roomChain
+	if roomChain then
+		local totalBlocks = table()
+		for _,room in ipairs(roomChain) do totalBlocks:append(room.blocks) end
+		print('goal #'..goalIndex..' #roomChain '..#roomChain..' #totalBlocks '..#totalBlocks)
+		for _,itemArgs in ipairs(goal.hiddenItems or {}) do
+			local block = pickRandom(totalBlocks)
+			if block then
+				local x,y = pickTileSolidOnEdge(block)
+				level.tileMap[x+level.size[1]*y] = blasterBreakTileType
+				level.fgTileMap[x+level.size[1]*y] = 36
+				print('placing goal '..goalIndex..' item '..itemArgs.spawn..' at '..vec2(x+1.5,y+1))
+				spawnInfos:insert(table(itemArgs, {pos = vec2(x+1.5,y+1)}))
+			else
+				print('unable to place hidden item '..itemArgs.spawn)
+			end
 		end
-	end
-	if #goal.enemies > 0  then
-		for _,room in ipairs(goal.roomChain or {}) do
-			if not room.noMonsters then
-				for _,block in ipairs(room.blocks) do
-					for i=1,5 do
-						local spawnType = assert(pickRandom(goal.enemies))
-						local x,y
-						if ({
-							['zeta.script.obj.teeth'] = 1,
-						})[spawnType] then
-							x,y = pickTileOnGround(block)
-						elseif ({
-							['zeta.script.obj.turret'] = 1,
-							['zeta.script.obj.geemer'] = 1,
-							['zeta.script.obj.redgeemer'] = 1,
-						})[spawnType] then
-							-- pick something on the wall
-							x,y = pickTileOnEdge(block)
-						else
-							-- anywhere
-							x,y = pickTileEmpty(block)
+		if goal.enemies and #goal.enemies > 0  then
+			for _,room in ipairs(roomChain) do
+				if not room.noMonsters then
+					for _,block in ipairs(room.blocks) do
+						for i=1,5 do
+							local spawnType = assert(pickRandom(goal.enemies))
+							local x,y
+							if ({
+								['zeta.script.obj.teeth'] = 1,
+							})[spawnType] then
+								x,y = pickTileOnGround(block)
+							elseif ({
+								['zeta.script.obj.turret'] = 1,
+								['zeta.script.obj.geemer'] = 1,
+								['zeta.script.obj.redgeemer'] = 1,
+							})[spawnType] then
+								-- pick something on the wall
+								x,y = pickTileOnEdge(block)
+							else
+								-- anywhere
+								x,y = pickTileEmpty(block)
+							end
+							
+							spawnInfos:insert{
+								spawn = spawnType,
+								pos = vec2(x+1.5,y+1),
+							}
 						end
-						
-						spawnInfos:insert{
-							spawn = spawnType,
-							pos = vec2(x+1.5,y+1),
-						}
 					end
 				end
 			end
@@ -822,8 +864,24 @@ for i,room in ipairs(rooms) do
 end
 
 print'smoothing map...'
-local editor = require 'base.script.singleton.editor'()
-editor.smoothBrush.paint(editor, level.size[1]/2, level.size[2]/2, math.max(level.size:unpack())+10)
+for _,room in ipairs(rooms) do
+	for _,block in ipairs(room.blocks) do
+	local editor = require 'base.script.singleton.editor'()
+		local cx = (block.pos[1] + .5) * level.mapTileSize[1]
+		local cy = (block.pos[2] + .5) * level.mapTileSize[2]
+		editor.smoothDiagLevel[0] = 0	--90'
+		editor.paintingTileType[0] = true
+		editor.paintingFgTile[0] = true
+		editor.paintingBgTile[0] = false
+		editor.smoothBrush.paint(editor, cx, cy, math.max(level.mapTileSize:unpack())/2+1)
+
+		editor.smoothDiagLevel[0] = 2	--27'
+		editor.paintingTileType[0] = false
+		editor.paintingFgTile[0] = false
+		editor.paintingBgTile[0] = true 
+		editor.smoothBrush.paint(editor, cx, cy, math.max(level.mapTileSize:unpack())/2+1)
+	end
+end
 
 print'processing spawnInfo args...'
 level:processSpawnInfoArgs(spawnInfos)
