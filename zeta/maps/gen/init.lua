@@ -72,7 +72,7 @@ local negativeOffsetIndexForAxis = {3,4}
 
 local function getGenMaxExtraDoors() return 0 end --math.random(25) end
 local function getGenNumRoomsInChain() return math.random(10,20) end-- math.random(100,200) end
-local function getGenRoomSize() return math.ceil(math.random() * math.random() * 20) end
+local function getGenRoomSize() return math.random(3,10) end -- math.ceil(math.random() * math.random() * 20) end
 local probToRemoveInterRoomWalls = 0
 
 
@@ -177,7 +177,7 @@ local function buildRoomChain(startRoom, startBlock, numRooms, extDoorType)
 				break
 			end
 			shuffle(emptyOptions)
-			--emptyOptions:sort(cmp)
+			emptyOptions:sort(cmp)
 			
 			local optionIndex = 1	--math.floor(math.random() * math.random() * #emptyOptions) + 1
 			local option = emptyOptions[optionIndex]
@@ -390,6 +390,7 @@ for i=2,#goals do
 		color = table(goals[i].color):append{1},
 	})
 
+	-- [[ pick out rooms along the way to be item rooms
 	for _,spawn in ipairs(goal.roomItems) do
 		local allBlocks = table()
 		for _,room in ipairs(roomChain) do
@@ -403,9 +404,11 @@ for i=2,#goals do
 		end
 		makeItemRoom(assert(pickRandom(allBlocks)), {spawn=spawn})
 	end
+	--]]
 end
 
--- merge neighbors 
+--[=[
+print'merging neighbors...'
 for _,room in ipairs(rooms) do
 	for _,block in ipairs(room.blocks) do
 		for offsetIndex,offset in ipairs(offsets) do
@@ -421,9 +424,10 @@ for _,room in ipairs(rooms) do
 		end
 	end
 end
+--]=]
 
--- fill in the tiles ...
-
+-- [=[ 
+print'filling in tiles...'
 for y=0,level.mapTileSize[2]*blocksHigh-1 do
 	for x=0,level.mapTileSize[1]*blocksWide-1 do
 		level.tileMap[x+level.size[1]*y] = solidTileType
@@ -437,8 +441,10 @@ for y=0,blocksHigh-1 do
 		level.roomMap[x+level.sizeInMapTiles[1]*y] = 0
 	end
 end
+--]=]
 
 
+print'carving out rooms...'
 for _,room in ipairs(rooms) do
 	for _,block in ipairs(room.blocks) do
 		for y=0,level.mapTileSize[2]-1 do
@@ -460,7 +466,8 @@ for _,room in ipairs(rooms) do
 				--]]	
 				
 				local bv = vec2(x,y)
-				
+			
+				--[=[ simplex noise based
 				local lensq = 0
 				
 				-- single-influences
@@ -482,7 +489,7 @@ for _,room in ipairs(rooms) do
 					end
 				end
 				local len = math.sqrt(lensq)
-				
+
 				local noise = simplexNoise(rx/level.mapTileSize[1], ry/level.mapTileSize[2])
 				noise = (noise + 1) * .5	-- [0,1]
 				noise = noise * .7	-- .7 leaves a 3x3 in the middle
@@ -521,36 +528,28 @@ for _,room in ipairs(rooms) do
 						end
 					end
 				end	
+				--]=]
 			end
 		end
 		for index,offset in ipairs(offsets) do
 			local n = axisForOffsetIndex[index]
 			local n2 = 3-n
 			local doorType = block.wall[index]
-			if doorType and doorType ~= 'solid' then
-			
-				-- consider the door type ...
-				--  if it's a legit door then set the clear color to 1,1,1 and the door spawn color to whatever
-				--  if it's a secret door then set the clear color to the block type color and the door spawn color to nil
-				local goal = goals[tostring(doorType)]
-				if not goal then
-					error("failed to find door type "..tostring(doorType))
-				end
-				-- TODO clearColor is being used to clear the whole column.
-				-- we should have it clear the whole column as empty
-				-- and then use clearColor for clearing the wall
-				local constraintClearTileType = goal.clearColor or emptyTileType
-				local constraintClearFgTile = goal.emptyFgTile or emptyFgTile
-			
+			if doorType ~= 'solid' 
+			--and doorType	-- simplex noise needs this
+			then	
 				local left = vec2(-offset[2], offset[1])
 				-- clear the whole column from center to edge
+				print('clearing whole column from center to edge at '..block.pos)
 				for i=0,level.mapTileSize[n]/2 do
 					for j=-1,1 do
 						local pos = vec2(level.mapTileSize[1]/2, level.mapTileSize[2]/2) + offset * i + left * j
 						local x, y = level.mapTileSize[1] * block.pos[1] + pos[1], level.mapTileSize[2] * block.pos[2] + pos[2]
+						assert(x >= 0 and y >= 0 and x < level.size[1] and y < level.size[2],
+							'checking at '..x..','..y..' of size '..level.size..'...')
 						if i >= level.mapTileSize[n]/2 - 1 then	-- at the end of the column make our 
-							level.tileMap[x+level.size[1]*y] = constraintClearTileType
-							level.fgTileMap[x+level.size[1]*y] = constraintClearFgTile
+							level.tileMap[x+level.size[1]*y] = emptyTileType 
+							level.fgTileMap[x+level.size[1]*y] = emptyFgTile 
 							--seamImg(x, y, 1,1,1)	-- make shootable blocks stand out, so give them a different seam color
 						else
 							level.tileMap[x+level.size[1]*y] = emptyTileType	-- up to then, clear the way
@@ -558,17 +557,42 @@ for _,room in ipairs(rooms) do
 						end
 					end
 				end
+				print'...done clearing whole column from center to edge'
+				local goal = goals[tostring(doorType)]
+				--[=[ TODO in the future - for shootable/breakable walls
+				-- consider the door type ...
+				--  if it's a legit door then set the clear color to 1,1,1 and the door spawn color to whatever
+				--  if it's a secret door then set the clear color to the block type color and the door spawn color to nil
+				if not goal then
+					error("failed to find door type "..tostring(doorType))
+				end
+				-- TODO clearColor is being used to clear the whole column.
+				-- we should have it clear the whole column as empty
+				-- and then use clearColor for clearing the wall
+				local constraintClearTileType = goal.clearColor or emptyTileType
+				local constraintClearFgTile = goal.emptyFgTile or emptyFgTile			
+				--]=]	
 				-- and while we're at it,  make sure the rest of the wall is solid
+				print('making sure wall is solid at '..block.pos)
+				-- somewherein here oob tiles are written 
 				for i=level.mapTileSize[n]/2,level.mapTileSize[n]/2 do
-					for j=2,level.mapTileSize[n2]/2 do
+					--for j=2,level.mapTileSize[n2]/2 do
+					for j=2,level.mapTileSize[n2]/2-1 do
+						
 						local pos = vec2(level.mapTileSize[1]/2, level.mapTileSize[2]/2) + offset * i + left * j
-						local x, y = level.mapTileSize[1] * block.pos[1] + pos[1], level.mapTileSize[2] * block.pos[2] + pos[2]
+						local x = pos[1] + level.mapTileSize[1] * block.pos[1]
+						local y = pos[2] + level.mapTileSize[2] * block.pos[2]
+						assert(x >= 0 and y >= 0 and x < level.size[1] and y < level.size[1], 
+							'solid check failed at '..x..','..y..' of '..level.size..'...')
 						level.tileMap[x+level.size[1]*y] = solidTileType
 						level.fgTileMap[x+level.size[1]*y] = solidFgTile
 					end
 				end
-				if true --goal.door 
+				print'...done making sure wall is solid'
+				if goal
+				--and goal.door 
 				then
+					print('adding goal door at '..block.pos)
 					local ofs = offset[n] == -1 and 0 or 1
 					spawnInfos:insert{
 						angle = n == 2 and 90 or nil,
@@ -583,28 +607,33 @@ for _,room in ipairs(rooms) do
 				end
 			end
 		end
-		
+	
 		if block.wall[sideForName.up] ~= 'solid'
 		or block.wall[sideForName.down] ~= 'solid'
 		then
+			print('carving out ladder at '..block.pos)
 			for y=0,level.mapTileSize[2]-1 do
 				for x=0,level.mapTileSize[1]-1 do
 					local rx = x + level.mapTileSize[1] * block.pos[1]
 					local ry = y + level.mapTileSize[2] * block.pos[2]
+					print('if('..rx..','..ry..') of size '..level.size..'...')
 					if x == level.mapTileSize[1]/2
 					and level.tileMap[rx + level.size[1]*ry] == emptyTileType
 					then
+						print'...then...'
 						level.tileMap[rx + level.size[1]*ry] = ladderTileType
 						level.bgTileMap[rx + level.size[1]*ry] = ladderTile
+						print'...write succeeded!'
 					end
 				end
 			end
+			print'...done carving out ladder'
 		end
 	end
 end
 
-
 -- start room spawn point
+print'inserting start spawn point...'
 spawnInfos:insert(1, {
 	spawn = 'base.script.obj.start',
 	pos = {
@@ -645,9 +674,10 @@ local platformSpawns = table{
 	'zeta.script.obj.grapplinghook',
 }:map(function(v,k) return true, v end)
 
+print'putting platforms under spawns...'
 for _,info in ipairs(spawnInfos) do
 	if platformSpawns[info.spawn] then
-		for ofs=1,5 do
+		for ofs=3,3 do	-- 1,5
 			local x = info.pos[1]-4.5+ofs
 			local y = info.pos[2]-2
 			level.tileMap[x + level.size[1]*y] = solidTileType
@@ -656,6 +686,8 @@ for _,info in ipairs(spawnInfos) do
 	end
 end
 
+
+--[=[ placing monsters and hidden items
 
 local function pickRandomTile(block)
 	local safeBorder = 4
@@ -708,6 +740,7 @@ local function pickTileSolidOnEdge(block)
 end
 
 -- add items 
+print'placing monsters and hidden items...'
 local hiddenItemsSoFar = table()
 for goalIndex,goal in ipairs(goals) do
 	local goalRoomChain = goal.roomChain or {}
@@ -760,7 +793,10 @@ for goalIndex,goal in ipairs(goals) do
 	end
 end
 
+--]=]
+
 -- color blocks accordingly
+print'coloring blocks accordingly...'
 for i,goal in ipairs(goals) do
 	for _,room in ipairs(goal.roomChain or {}) do
 		for _,block in ipairs(room.blocks) do
@@ -778,19 +814,27 @@ for i,goal in ipairs(goals) do
 	end
 end
 
+print'assigning rooms...'
 for i,room in ipairs(rooms) do
 	for _,block in ipairs(room.blocks) do
 		level.roomMap[block.pos[1]+block.pos[2]*level.sizeInMapTiles[1]] = i
 	end
 end
 
+print'smoothing map...'
 local editor = require 'base.script.singleton.editor'()
 editor.smoothBrush.paint(editor, level.size[1]/2, level.size[2]/2, math.max(level.size:unpack())+10)
 
+print'processing spawnInfo args...'
 level:processSpawnInfoArgs(spawnInfos)
+
+print'writing modifications to original tiles...'
 level:backupTiles()
+
+print'saving map...'
 editor:saveMap()
 
+print'reporting used blocks...'
 local usedBlocks = 0
 for _,room in ipairs(rooms) do
 	usedBlocks = usedBlocks + #room.blocks

@@ -3,6 +3,7 @@ local Player = require 'base.script.obj.player'
 
 local Shell = behaviors(
 	require 'base.script.obj.object',
+	require 'zeta.script.behavior.takesdamage',
 	require 'zeta.script.behavior.hurtstotouch')
 
 Shell.sprite = 'shell'
@@ -13,6 +14,7 @@ Shell.dir = 0
 Shell.canCarry = true
 Shell.spinJumpDestroys = true
 Shell.touchDamage = 1
+Shell.health = 1
 Shell.solidFlags = Shell.SOLID_NO
 
 function Shell:update(dt)
