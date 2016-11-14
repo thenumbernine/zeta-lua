@@ -82,4 +82,14 @@ function Thwomp:update(dt)
 	end
 end
 
+function Thwomp:touch(other, side, ...)
+	if side == 'down' and self.vel[2] < 0 then
+		return Thwomp.super.touch(self, other, side, ...)
+	else
+		if Thwomp.super.super.touch then
+			Thwomp.super.super.touch(self, other, side, ...)
+		end
+	end
+end
+
 return Thwomp

@@ -141,9 +141,14 @@ function Shell:touch(other, side)
 		end
 	end
 end
+	
+function Shell:takeDamage(damage, attacker, inflicter, side)
+	self.heldBy = nil
+	self:playerKick(attacker, 0, 0)
+	Shell.super.takeDamage(self, damage, attacker, inflicter, side)
+end
 
 function Shell:playerKick(other, dx, dy)
-	Shell.super.playerKick(self, other, dx, dy)
 	if dy == 0 then	-- ordinary kick
 		local posDeltaX = other.pos[1] - self.pos[1]
 		if posDeltaX < 0 then

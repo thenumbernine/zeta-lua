@@ -240,10 +240,12 @@ local goals = {
 	{
 		color = vec3(0,0,0),
 		enemies = {
+			--[[
 			'mario.script.obj.goomba',
 			'mario.script.obj.koopa',
 			'mario.script.obj.ballnchain',
 			'mario.script.obj.thwomp',
+			--]]
 		},
 		hiddenItems = {
 			{spawn='zeta.script.obj.healthitem', duration=1e+9},
@@ -506,7 +508,9 @@ for _,room in ipairs(rooms) do
 				local bv = vec2(x,y)
 			
 				-- [=[ simplex noise based
-				local lensq = 0
+				local lenNorm = 0
+				-- 1 for diamond, 2 for round, inf for square
+				local normPower = 100
 				
 				-- single-influences
 				for n=1,2 do
@@ -515,22 +519,26 @@ for _,room in ipairs(rooms) do
 					if bv[n] >= level.mapTileSize[n]/2 then
 						local ofsblock = getBlockAt(block.pos + ofspos)
 						if not ofsblock or ofsblock.room ~= room or block.wall[positiveOffsetIndexForAxis[n]] then
-							local infl = square((bv[n] - level.mapTileSize[n]/2) / (level.mapTileSize[n]/2))
-							lensq = lensq + infl
+							local infl = math.abs((bv[n] - level.mapTileSize[n]/2) / (level.mapTileSize[n]/2))^normPower
+							lenNorm = lenNorm + infl
 						end
 					else
 						local ofsblock = getBlockAt(block.pos - ofspos)
 						if not ofsblock or ofsblock.room ~= room or block.wall[negativeOffsetIndexForAxis[n]] then
-							local infl = square((bv[n] - level.mapTileSize[n]/2) / (level.mapTileSize[n]/2))
-							lensq = lensq + infl
+							local infl = math.abs((bv[n] - level.mapTileSize[n]/2) / (level.mapTileSize[n]/2))^normPower
+							lenNorm = lenNorm + infl
 						end
 					end
 				end
-				local len = math.sqrt(lensq)
+				local len = lenNorm^(1/normPower)
 
-				local noise = simplexNoise(rx/level.mapTileSize[1], ry/level.mapTileSize[2])
-				noise = (noise + 1) * .5	-- [0,1]
-				noise = noise * .7	-- .7 leaves a 3x3 in the middle
+				local freq = 4
+				local noise = simplexNoise(
+					(vec2(rx / level.mapTileSize[1], ry / level.mapTileSize[2]) * freq)
+					:unpack())
+				noise = (noise + 1) * .5	-- from [-1,1] to [0,1]
+				noise = noise / freq
+				noise = noise * .7	-- .7 leaves a 3x3 in the middle of the walls
 				len = len + noise
 
 				-- len in [0, .1] is tiered jump platforms
@@ -740,7 +748,10 @@ end
 -- pick something on the floor
 local function pickTileOnGround(block)
 	local x,y
+	local try = 0
 	repeat
+		try = try + 1
+		if try == 100 then return end
 		x,y = pickRandomTile(block)
 	until level.tileMap[x+level.size[1]*y] == emptyTileType
 	and level.tileMap[x+level.size[1]*(y-1)] == solidTileType
@@ -749,7 +760,10 @@ end
 
 local function pickTileOnEdge(block)
 	local x,y
+	local try = 0
 	repeat
+		try = try + 1
+		if try == 100 then return end
 		x,y = pickRandomTile(block)
 	until level.tileMap[x+level.size[1]*y] == emptyTileType
 	and (level.tileMap[x+level.size[1]*(y-1)] == solidTileType
@@ -761,7 +775,10 @@ end
 
 local function pickTileEmpty(block)
 	local x,y
+	local try = 0
 	repeat
+		try = try + 1
+		if try == 100 then return end
 		x,y = pickRandomTile(block)
 	until level.tileMap[x+level.size[1]*y] == emptyTileType
 	return x,y
@@ -769,7 +786,10 @@ end
 
 local function pickTileSolidOnEdge(block)
 	local x,y
+	local try = 0
 	repeat
+		try = try + 1
+		if try == 100 then return end
 		x,y = pickRandomTile(block)
 	until level.tileMap[x+level.size[1]*y] == solidTileType
 	and (level.tileMap[x+level.size[1]*(y-1)] == emptyTileType
@@ -792,10 +812,14 @@ for goalIndex,goal in ipairs(goals) do
 			local block = pickRandom(totalBlocks)
 			if block then
 				local x,y = pickTileSolidOnEdge(block)
-				level.tileMap[x+level.size[1]*y] = blasterBreakTileType
-				level.fgTileMap[x+level.size[1]*y] = 36
-				print('placing goal '..goalIndex..' item '..itemArgs.spawn..' at '..vec2(x+1.5,y+1))
-				spawnInfos:insert(table(itemArgs, {pos = vec2(x+1.5,y+1)}))
+				if not x then
+					print('failed to find tile to place item')
+				else
+					level.tileMap[x+level.size[1]*y] = blasterBreakTileType
+					level.fgTileMap[x+level.size[1]*y] = 36
+					print('placing goal '..goalIndex..' item '..itemArgs.spawn..' at '..vec2(x+1.5,y+1))
+					spawnInfos:insert(table(itemArgs, {pos = vec2(x+1.5,y+1)}))
+				end
 			else
 				print('unable to place hidden item '..itemArgs.spawn)
 			end
@@ -822,11 +846,15 @@ for goalIndex,goal in ipairs(goals) do
 								-- anywhere
 								x,y = pickTileEmpty(block)
 							end
-							
-							spawnInfos:insert{
-								spawn = spawnType,
-								pos = vec2(x+1.5,y+1),
-							}
+				
+							if not x then
+								print('failed to find tile to place enemy')
+							else
+								spawnInfos:insert{
+									spawn = spawnType,
+									pos = vec2(x+1.5,y+1),
+								}
+							end
 						end
 					end
 				end
