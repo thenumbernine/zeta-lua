@@ -149,13 +149,23 @@ function Door:draw(R, viewBBox)
 		local tex = animsys:getTex('keycard', 'stand') 
 		tex:bind()
 		local cr,cg,cb,ca = table.unpack(self.color)
-		R:quad(
-			self.pos[1]-.25, self.pos[2]+1,
-			.5,.5,
-			0,1,
-			1,-1,
-			0,
-			cr,cg,cb,ca)
+		if self.angle == 90 then
+			R:quad(
+				self.pos[1]+.75, self.pos[2]+.5,
+				.5,.5,
+				0,1,
+				1,-1,
+				0,
+				cr,cg,cb,ca)	
+		else
+			R:quad(
+				self.pos[1]-.25, self.pos[2]+1,
+				.5,.5,
+				0,1,
+				1,-1,
+				0,
+				cr,cg,cb,ca)
+		end
 	end
 end
 
