@@ -36,6 +36,7 @@ local function takesDamageBehavior(parentClass)
 	TakesDamageTemplate.showDamageDelay = .25
 	function TakesDamageTemplate:takeDamage(damage, attacker, inflicter, side)
 		if self.invincibleEndTime >= game.time then return end
+		if self.dead then return end
 
 		if attacker.modifyDamageGiven then
 			damage = attacker:modifyDamageGiven(damage, self, inflicter, side) or damage
@@ -73,6 +74,7 @@ local function takesDamageBehavior(parentClass)
 	TakesDamageTemplate.deathSound = 'explode2'
 	TakesDamageTemplate.removeOnDie = true
 	function TakesDamageTemplate:die(damage, attacker, inflicter, side)
+		self.dead = true
 		if self.onDie then
 			local sandbox = require 'base.script.singleton.sandbox'
 			sandbox(self.onDie,

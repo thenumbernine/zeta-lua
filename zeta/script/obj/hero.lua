@@ -340,7 +340,7 @@ function Hero:update(dt)
 		self.viewPos[2] = self.fixedViewPos[2]
 	else
 		local targetPosX = self.pos[1]
-		local targetPosY = self.pos[2]
+		local targetPosY = self.pos[2] + .15 * level.mapTileSize[2]
 			
 		if not (editor and editor.active) then
 			local viewSizeX = (self.viewBBox.max[1] - self.viewBBox.min[1]) / 2 

@@ -71,8 +71,8 @@ local negativeOffsetIndexForAxis = {3,4}
 
 
 local function getGenMaxExtraDoors() return 0 end --math.random(25) end
-local function getGenNumRoomsInChain() return math.random(5,10) end -- math.random(10,20) end-- math.random(100,200) end
-local function getGenRoomSize() return math.random(2,6) end -- math.ceil(math.random() * math.random() * 20) end
+local function getGenNumRoomsInChain() return math.random(2,4) end -- math.random(10,20) end-- math.random(100,200) end
+local function getGenRoomSize() return math.random(1,3) end -- math.ceil(math.random() * math.random() * 20) end
 local probToRemoveInterRoomWalls = 0
 
 
@@ -115,7 +115,12 @@ local function getNeighborOptions(rooms, criteria)
 			for offsetIndex,offset in ipairs(offsets) do
 				local candidateblock = getBlockAt(block.pos + offset)
 				if candidateblock and criteria(candidateblock, block, offset, offsetIndex) then
-					options:insert{src=block, offset=vec2(offset), offsetIndex=offsetIndex, neighbor=candidateblock}
+					options:insert{
+						src = block,
+						offset = vec2(offset),
+						offsetIndex = offsetIndex,
+						neighbor = candidateblock,
+					}
 				end
 			end
 		end
@@ -239,13 +244,14 @@ game.session.defensesActive_Main = true
 local goals = {
 	{
 		color = vec3(0,0,0),
+		
+		-- I think I need enemies per-room
+		-- and then sets of enemies for each room to pick from per-chain
 		enemies = {
-			--[[
 			'mario.script.obj.goomba',
+			--'mario.script.obj.goomba-flying',
 			'mario.script.obj.koopa',
-			'mario.script.obj.ballnchain',
-			'mario.script.obj.thwomp',
-			--]]
+			--'mario.script.obj.koopa-flying',
 		},
 		hiddenItems = {
 			{spawn='zeta.script.obj.healthitem', duration=1e+9},
@@ -264,9 +270,13 @@ local goals = {
 	{
 		color = vec3(1,0,0),
 		enemies = {
+			'mario.script.obj.ballnchain',
+			'mario.script.obj.thwomp',
+			--'mario.script.obj.thwimp',
+			
 			'zeta.script.obj.sawblade',
 			'zeta.script.obj.turret',
-			'zeta.script.obj.geemer',
+			'zeta.script.obj.geemer',	-- rename to 'jumper' ?
 			'zeta.script.obj.zoomer',
 		},
 		hiddenItems = {
@@ -349,16 +359,54 @@ for i=2,#goals do
 	roomChain, lastBlock = buildRoomChain(srcRoom, lastBlock, getGenNumRoomsInChain(), goal.color)
 	goal.roomChain = roomChain
 
-	local otherOptions = getNeighborOptions(roomChain, function(dstblock, srcblock, offset, offsetIndex)
-		if not dstblock.room then return false end	-- make sure there's a room
-		--if not table.find(roomChain, dstblock.room) then return false end	-- make sure it's not part of this chain ... ?  not necessary.
-		if srcblock.wall[offsetIndex] then	-- make sure there's no door here
-			assert(dstblock.wall[oppositeOffsetIndex[offsetIndex]])	-- that means there shouldn't be a door on the opposite side too
-			return false
+	local function makeItemRoom(option, item)
+		local neighbor = assert(option.neighbor)
+		print('making room at '..neighbor.pos)
+		assert(not neighbor.room)
+		local room = Room()
+		roomChain:insert(room)
+		room:addBlock(neighbor)
+		local src = option.src
+		
+		local offset = option.offsetIndex
+		local opposite = oppositeOffsetIndex[offset]
+		
+		assert(neighbor.wall[opposite] == 'solid') 
+		assert(src.wall[offset] == 'solid')
+		neighbor.wall[opposite] = vec3(0,0,0)
+		src.wall[offset] = vec3(0,0,0)
+		
+		room.noMonsters = true
+		item.pos = {
+			(neighbor.pos[1] + .5) * level.mapTileSize[1] + 1.5, 
+			(neighbor.pos[2] + .5) * level.mapTileSize[2],
+		}
+		spawnInfos:insert(item)
+	end
+
+	for _,spawn in ipairs(goal.roomItems) do
+		local options = getEmptyNeighborOptions(roomChain)
+		local option = pickRandom(options)
+		if not option then
+			error("couldn't find room to place item")
+		else
+			makeItemRoom(option, {spawn=spawn})
 		end
-		return true
-	end)
-	shuffle(otherOptions)
+	end
+
+	-- TODO make a room out of this?
+	spawnInfos:insert{
+		pos = {
+			(lastBlock.pos[1] + .5) * level.mapTileSize[1] + 1.5,
+			(lastBlock.pos[2] + .5) * level.mapTileSize[2],
+		},
+		spawn = 'zeta.script.obj.keycard',
+		color = table(goals[i].color):append{1},
+	}
+
+
+
+	--[=[
 	local numExtraDoors = math.min(getGenMaxExtraDoors(), #otherOptions)
 	for j=1,numExtraDoors do
 		local option = otherOptions[j]
@@ -366,53 +414,7 @@ for i=2,#goals do
 		option.neighbor.wall[oppositeOffsetIndex[option.offsetIndex]] = goal.color
 	end
 
-
-	local function makeItemRoom(block, item)
-		if #block.room.blocks > 1 then
-			block.room.blocks:removeObject(block)
-			block.room = nil
-			local room = Room()
-			roomChain:insert(room)
-			room:addBlock(block)
-			for i,offset in ipairs(offsets) do
-				local neighbor = getBlockAt(block.pos+offset)
-				if neighbor and not block.wall[i] then
-					assert(not neighbor.wall[oppositeOffsetIndex[i]])
-					block.wall[i] = vec3(0,0,0)
-					neighbor.wall[oppositeOffsetIndex[i]] = vec3(0,0,0)
-				end
-			end
-		end
-		block.room.noMonsters = true
-		item.pos = {
-			(block.pos[1] + .5) * level.mapTileSize[1] + 1.5, 
-			(block.pos[2] + .5) * level.mapTileSize[2],
-		}
-		spawnInfos:insert(item)
-		
-	end
-
-	makeItemRoom(lastBlock, {
-		spawn='zeta.script.obj.keycard',
-		color = table(goals[i].color):append{1},
-	})
-
-	-- TODO instead of breaking up the path, add new rooms to the sides!!
-	-- [[ pick out rooms along the way to be item rooms
-	for _,spawn in ipairs(goal.roomItems) do
-		local allBlocks = table()
-		for _,room in ipairs(roomChain) do
-			for _,block in ipairs(room.blocks) do
-				if not allBlocks:find(block)
-				and not block.noMonsters
-				then
-					allBlocks:insert(block)
-				end
-			end
-		end
-		makeItemRoom(assert(pickRandom(allBlocks)), {spawn=spawn})
-	end
-	--]]
+	--]=]
 end
 
 -- [=[
@@ -506,11 +508,11 @@ for _,room in ipairs(rooms) do
 				--]]	
 				
 				local bv = vec2(x,y)
-			
+				
 				-- [=[ simplex noise based
 				local lenNorm = 0
 				-- 1 for diamond, 2 for round, inf for square
-				local normPower = 100
+				local normPower = 10
 				
 				-- single-influences
 				for n=1,2 do
@@ -519,13 +521,17 @@ for _,room in ipairs(rooms) do
 					if bv[n] >= level.mapTileSize[n]/2 then
 						local ofsblock = getBlockAt(block.pos + ofspos)
 						if not ofsblock or ofsblock.room ~= room or block.wall[positiveOffsetIndexForAxis[n]] then
-							local infl = math.abs((bv[n] - level.mapTileSize[n]/2) / (level.mapTileSize[n]/2))^normPower
+							local infl = (bv[n] - level.mapTileSize[n]/2) / (level.mapTileSize[n]/2)
+							if n == 2 then infl = infl * 2 end
+							infl = math.abs(infl)^normPower
 							lenNorm = lenNorm + infl
 						end
 					else
 						local ofsblock = getBlockAt(block.pos - ofspos)
 						if not ofsblock or ofsblock.room ~= room or block.wall[negativeOffsetIndexForAxis[n]] then
-							local infl = math.abs((bv[n] - level.mapTileSize[n]/2) / (level.mapTileSize[n]/2))^normPower
+							local infl = (bv[n] - level.mapTileSize[n]/2) / (level.mapTileSize[n]/2)
+							if n == 2 then infl = infl * 2 end
+							infl = math.abs(infl)^normPower
 							lenNorm = lenNorm + infl
 						end
 					end
@@ -725,11 +731,13 @@ local platformSpawns = table{
 print'putting platforms under spawns...'
 for _,info in ipairs(spawnInfos) do
 	if platformSpawns[info.spawn] then
-		for ofs=1,5 do	-- 1,5
-			local x = info.pos[1]-4.5+ofs
-			local y = info.pos[2]-2
-			level.tileMap[x + level.size[1]*y] = solidTileType
-			level.fgTileMap[x + level.size[1]*y] = solidFgTile 
+		for j=0,1 do	
+			for i=1,5 do
+				local x = info.pos[1]-4.5+i
+				local y = info.pos[2]-2-j
+				level.tileMap[x + level.size[1]*y] = solidTileType
+				level.fgTileMap[x + level.size[1]*y] = solidFgTile 
+			end
 		end
 	end
 end
@@ -833,6 +841,8 @@ for goalIndex,goal in ipairs(goals) do
 							local x,y
 							if ({
 								['zeta.script.obj.teeth'] = 1,
+								['mario.script.obj.goomba'] = 1,
+								['mario.script.obj.koopa'] = 1,
 							})[spawnType] then
 								x,y = pickTileOnGround(block)
 							elseif ({
@@ -846,6 +856,8 @@ for goalIndex,goal in ipairs(goals) do
 								-- anywhere
 								x,y = pickTileEmpty(block)
 							end
+							-- TODO thwomp goes on the top
+							-- 'mario.script.obj.thwomp',
 				
 							if not x then
 								print('failed to find tile to place enemy')
