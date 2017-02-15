@@ -67,7 +67,7 @@ do
 			gl.glUseProgram(shader.id)
 			if uniforms then
 				for k,v in pairs(uniforms) do
-					local loc = shader.uniforms[k]
+					local loc = shader.uniforms[k].loc
 					if not loc then
 						error('tried to set unknown uniform '..k)
 					end
@@ -181,7 +181,7 @@ void main() {
 } 
 ]],
 			attributes={'pos'},
-			uniforms={'vtxmat','texmat','color','tex'},
+			uniforms={tex=0},
 		}
 	end
 	function GLES2Renderer:createTex2D(args)
@@ -224,13 +224,13 @@ void main() {
 		gl.glUseProgram(shader.id)
 		gl.glVertexAttribPointer(shader.attributes.pos, 3, gl.GL_FLOAT, false, 12, vertexes)
 		gl.glEnableVertexAttribArray(shader.attributes.pos)
-		gl.glUniform1i(shader.uniforms.tex, 0);
-		gl.glUniform4fv(shader.uniforms.color, 1, color)
-		gl.glUniformMatrix4fv(shader.uniforms.vtxmat, 1, false, pmvmat.v)
-		gl.glUniformMatrix4fv(shader.uniforms.texmat, 1, false, texmat.v)
+		gl.glUniform1i(shader.uniforms.tex.loc, 0);
+		gl.glUniform4fv(shader.uniforms.color.loc, 1, color)
+		gl.glUniformMatrix4fv(shader.uniforms.vtxmat.loc, 1, false, pmvmat.v)
+		gl.glUniformMatrix4fv(shader.uniforms.texmat.loc, 1, false, texmat.v)
  		if uniforms then
 			for k,v in pairs(uniforms) do
-				local loc = shader.uniforms[k]
+				local loc = shader.uniforms[k].loc
 				if not loc then
 					error('tried to set unknown uniform '..k)
 				end

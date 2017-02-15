@@ -35,10 +35,10 @@ modio.search = table{'base'}
 modio.search:insert(1, 'zeta')
 modio.search:insert'mario'
 modio.levelcfg = {
-	blocksWide = 16, blocksHigh = 16,
+	--blocksWide = 16, blocksHigh = 16,
 	--path = 'gen',
 	--path = 'reboot',
-	--path = 'start',
+	path = 'start',
 	--path = 'start original',
 }
 --]]

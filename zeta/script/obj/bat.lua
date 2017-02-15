@@ -2,7 +2,7 @@ local game = require 'base.script.singleton.game'
 local Bat = behaviors(require 'zeta.script.obj.enemy', 
 	require 'zeta.script.behavior.statemachine',
 	require 'zeta.script.behavior.hurtstotouch'
-	--,require 'zeta.script.behavior.deathtopieces'
+	,require 'zeta.script.behavior.deathtopieces'
 )
 Bat.sprite = 'bat'
 Bat.useGravity = false
