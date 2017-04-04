@@ -25,11 +25,7 @@ end
 
 local function exec(cmd)
 	print(cmd)
-	if _VERSION == 'Lua 5.1' and not ffi then
-		assert(os.execute(cmd)==0)
-	else
-		assert(os.execute(cmd))
-	end
+	assert(os.execute(cmd))
 end
 
 -- TODO replace all exec(cp) and exec(rsync) with my own copy

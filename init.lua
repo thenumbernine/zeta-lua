@@ -44,5 +44,5 @@ modio.levelcfg = {
 --]]
 
 -- run main
-local main = require 'base.script.main'
+local main = modio:require 'script.main'
 main()
