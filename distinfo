@@ -1,0 +1,59 @@
+-- TODO make sure name has no spaces/symbols, or is properly escaped for all these cp commands: 
+name = 'DumpWorld'	-- or whatever you want to call the .app
+
+-- uncomment one
+luaDistVer = 'luajit'
+--local luaDistVer = 'lua5.3'
+
+
+-- args to pass the lua engine, including the filename to run
+luaArgs = {
+	'init.lua',	-- default
+	win = 'init.lua editor=nil audio=null',	-- win override
+	--osx = ... osx override
+}
+
+-- filenames are provided relative to the package base
+-- categories are relative to the filename source
+-- so ['..'] = 'ext' means copy from ../ext to package/ext
+files = {
+	['.'] = {
+		'init.lua',
+		-- internal project folders
+		-- TODO enable according to which is used init.lua & its deps
+		'base',
+		'zeta',
+	}
+	-- external project folders
+	-- only copy *.lua files? ... or at least don't copy .git files
+	['..'] = table{
+			'ext',
+			'ffi',
+			'glapp',
+			'vec',
+			'parser',
+			'image',
+			'audio',
+			'netrefl',
+			'resourcecache',
+			'threadmanager',
+			'simplexnoise',
+			'gui',
+		}:append(
+			ffi.os == 'Windows' and {} or {'imguiapp'}	-- not for windows
+		):append(
+			ffi.os == 'Android' and {'gles2'} or {'gl'}
+		)
+}
+
+-- binary libs needed for luajit
+luajitLibs = {
+	win = {
+		'luajit',
+		'sdl',
+		'png',
+		'z',	-- needed by png
+		'regal',	-- I thought I commented out my OpenGL loading of regal ...
+	},
+	osx = {'sdl','libpng','libalut','libimgui'},
+}
