@@ -23,7 +23,7 @@ files = {
 		-- TODO enable according to which is used init.lua & its deps
 		'base',
 		'zeta',
-	}
+	},
 	-- external project folders
 	-- only copy *.lua files? ... or at least don't copy .git files
 	['..'] = table{
@@ -43,7 +43,7 @@ files = {
 			ffi.os == 'Windows' and {} or {'imguiapp'}	-- not for windows
 		):append(
 			ffi.os == 'Android' and {'gles2'} or {'gl'}
-		)
+		),
 }
 
 -- binary libs needed for luajit
@@ -55,5 +55,10 @@ luajitLibs = {
 		'z',	-- needed by png
 		'regal',	-- I thought I commented out my OpenGL loading of regal ...
 	},
-	osx = {'sdl','libpng','libalut','libimgui'},
+	osx = {
+		'sdl',
+		'libpng',
+		'libalut',
+		'libimgui',
+	},
 }

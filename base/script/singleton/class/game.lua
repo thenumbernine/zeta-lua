@@ -163,7 +163,7 @@ function Game:reset()
 		-- so I'll have the self keep track of it, and block the thread here
 		if self.levelInitThread then
 			-- wait for it to finish
-			repeat until not threads:updateThread(self.levelInitThread)
+			repeat until not self.levelInitThread:assertresume()
 			self.levelInitThread = nil
 		end
 	end
@@ -277,7 +277,7 @@ function Game:loadFromSavePoint()
 	-- (since spawn is room-driven)
 	if self.respawnThread then
 		-- wait for it to finish
-		repeat until not threads:updateThread(self.respawnThread)
+		repeat until not self.respawnThread:assertresume()
 		self.respawnThread = nil
 	end
 	
