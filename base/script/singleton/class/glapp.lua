@@ -297,7 +297,70 @@ return ]]..file[savefile]
 	
 	R:report('init end')
 end
-	
+
+local inputKeyNames = table{
+	'Up',
+	'Down',
+	'Left',
+	'Right',
+	'Jump',
+	'JumpAux',
+	'Shoot',
+	'ShootAux',
+	'PageUp',
+	'PageDown',
+	'Pause',
+}
+
+local configFileName = 'config'
+local config
+if io.fileexists(configFileName) then
+	config = assert(load('return '..file[configFileName]))()
+end
+if type(config) ~= 'table' then config = {} end
+if type(config.playerKeys) ~= 'table' then 
+	config.playerKeys = {}
+end
+for i=#config.playerKeys+1,numPlayers do
+	config.playerKeys[i] = {}
+end
+
+local mainOpened = ffi.new('bool[1]', false)
+local waitingForEvent
+
+-- not a SDL event
+local function processEvent(press, ...)
+	if waitingForEvent then
+		if press then
+			print('got', ...)
+			waitingForEvent.callback(...)
+			waitingForEvent = nil
+		end
+	else
+		local descLen = select('#', ...)
+		for playerIndex, playerConfig in ipairs(config.playerKeys) do
+			for buttonName, buttonDesc in pairs(playerConfig) do
+				if descLen == #buttonDesc then
+					local match = true
+					for i=1,descLen do
+						if select(i, ...) ~= buttonDesc[i] then
+							match = false
+							break
+						end
+					end
+					if match then
+						local player = game.players[playerIndex]
+						if player then
+							player['input'..buttonName] = press
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
+
 function App:event(event, ...)
 	App.super.event(self, event, ...)
 	
@@ -307,98 +370,44 @@ function App:event(event, ...)
 
 	if editor and editor.active and editor.isHandlingKeyboard then return end
 
-	if #game.clientConn.players >= 2 then
-		local player = game.clientConn.players[2]
-
-		if event.type == sdl.SDL_JOYHATMOTION then
-			player.inputUpDown = 0
-			player.inputLeftRight = 0
-			
-			if bit.band(event.jhat.value, sdl.SDL_HAT_UP) ~= 0 then player.inputUpDown = player.inputUpDown + 1 end
-			if bit.band(event.jhat.value, sdl.SDL_HAT_DOWN) ~= 0 then player.inputUpDown = player.inputUpDown - 1 end
-			if bit.band(event.jhat.value, sdl.SDL_HAT_RIGHT) ~= 0 then player.inputLeftRight = player.inputLeftRight + 1 end
-			if bit.band(event.jhat.value, sdl.SDL_HAT_LEFT) ~= 0 then player.inputLeftRight = player.inputLeftRight - 1 end
-		
-		elseif event.type == sdl.SDL_JOYAXISMOTION then
-			if event.jaxis.axis == 0 then
-				if event.jaxis.value < -10000 then
-					player.inputLeftRight = -1
-				elseif event.jaxis.value > 10000 then
-					player.inputLeftRight = 1
-				else
-					player.inputLeftRight = 0
-				end
-			elseif event.jaxis.axis == 1 then
-				-- my 'y' is negative typical screenspace 'y'	
-				-- instead it matches GL / graph space 'y'
-				if event.jaxis.value < -10000 then
-					player.inputUpDown = 1
-				elseif event.jaxis.value > 10000 then
-					player.inputUpDown = -1
-				else
-					player.inputUpDown = 0
-				end
+	if event.type == sdl.SDL_JOYHATMOTION then
+		if event.jhat.value ~= 0 then
+			-- TODO make sure all hat value bits are cleared
+			-- or keep track of press/release
+			for i=0,3 do
+				local dirbit = bit.lshift(1,i)
+				local press = bit.band(dirbit, event.jhat.value) ~= 0
+				processEvent(press, sdl.SDL_JOYHATMTION, event.jhat.which, event.jhat.hat, dirbit)
 			end
-			
-		elseif event.type == sdl.SDL_JOYBUTTONDOWN or event.type == sdl.SDL_JOYBUTTONUP then
-			local press = event.jbutton.state == 1
-			if event.jbutton.button == 0 then player.inputShoot = press end
-			if event.jbutton.button == 1 then player.inputJump = press end
-			if event.jbutton.button == 2 then player.inputJumpAux = press end
-			if event.jbutton.button == 3 then player.inputShootAux = press end
-			if event.jbutton.button == 6 then timescale = 1 - 4/5 * event.jbutton.state end
 		end
+	elseif event.type == sdl.SDL_JOYAXISMOTION then
+		-- -1,0,1 depend on the axis press
+		local lr = math.floor(3 * (tonumber(event.jaxis.value) + 32768) / 65536) - 1
+		local press = lr ~= 0
+		if not press then
+			-- clear both left and right movement
+			processEvent(press, sdl.SDL_JOYAXISMOTION, event.jaxis.which, event.jaxis.axis, -1)
+			processEvent(press, sdl.SDL_JOYAXISMOTION, event.jaxis.which, event.jaxis.axis, 1)
+		else
+			-- set movement for the lr direction
+			processEvent(press, sdl.SDL_JOYAXISMOTION, event.jaxis.which, event.jaxis.axis, lr)
+		end
+	elseif event.type == sdl.SDL_JOYBUTTONDOWN or event.type == sdl.SDL_JOYBUTTONUP then
+		-- event.jbutton.state is 0/1 for up/down, right? 
+		local press = event.type == sdl.SDL_JOYBUTTONDOWN
+		processEvent(press, sdl.SDL_JOYBUTTONDOWN, event.jbutton.which, event.jbutton.button)
+	elseif event.type == sdl.SDL_KEYDOWN or event.type == sdl.SDL_KEYUP then
+		local press = event.type == sdl.SDL_KEYDOWN
+		processEvent(press, sdl.SDL_KEYDOWN, event.key.keysym.sym)
+	-- else mouse buttons?
+	-- else mouse motion / position?
 	end
 	
-	if #game.clientConn.players >= 1 then
+	if event.type == sdl.SDL_MOUSEMOTION then
 		local player = game.clientConn.players[1]
-		
-		if event.type == sdl.SDL_KEYDOWN or event.type == sdl.SDL_KEYUP then
-			local press = event.type == sdl.SDL_KEYDOWN
-			if event.key.keysym.sym == sdl.SDLK_UP or event.key.keysym.sym == sdl.SDLK_DOWN then
-				if event.key.keysym.sym == sdl.SDLK_UP then
-					player.inputUp = press
-				elseif event.key.keysym.sym == sdl.SDLK_DOWN then
-					player.inputDown = press
-				end
-				player.inputUpDown = 0
-				if player.inputUp then player.inputUpDown = player.inputUpDown + 1 end
-				if player.inputDown then player.inputUpDown = player.inputUpDown - 1 end
-			elseif event.key.keysym.sym == sdl.SDLK_LEFT or event.key.keysym.sym == sdl.SDLK_RIGHT then
-				if event.key.keysym.sym == sdl.SDLK_LEFT then
-					player.inputLeft = press
-				elseif event.key.keysym.sym == sdl.SDLK_RIGHT then
-					player.inputRight = press
-				end
-				player.inputLeftRight = 0
-				if player.inputRight then player.inputLeftRight = player.inputLeftRight + 1 end
-				if player.inputLeft then player.inputLeftRight = player.inputLeftRight - 1 end
-			elseif event.key.keysym.sym == sdl.SDLK_s then	-- run2
-				player.inputShootAux = press
-			elseif event.key.keysym.sym == sdl.SDLK_x then	-- run1
-				player.inputShoot = press
-			elseif event.key.keysym.sym == sdl.SDLK_c then	-- jump
-				player.inputJump = press
-			elseif event.key.keysym.sym == sdl.SDLK_d then	-- spinjump
-				player.inputJumpAux = press
-			elseif event.key.keysym.sym == sdl.SDLK_a then	-- inventory up
-				player.inputPageUp = press
-			elseif event.key.keysym.sym == sdl.SDLK_z then	-- inventory down
-				player.inputPageDown = press
-			elseif event.key.keysym.sym == sdl.SDLK_RETURN then
-				player.inputPause = press
-		
-				-- has to be done here, because game.pause keeps the player loop from updating
-				if player.inputPause and not player.inputPauseLast then
-					game.paused = not game.paused
-				end
-				player.inputPauseLast = player.inputPause
-			end
-		elseif event.type == sdl.SDL_MOUSEMOTION then
-			local wx, wy = self:size()
-			player.mouseScreenPos[1] = event.button.x / wx
-			player.mouseScreenPos[2] = 1 - event.button.y / wy
-		end
+		local wx, wy = self:size()
+		player.mouseScreenPos[1] = event.button.x / wx
+		player.mouseScreenPos[2] = 1 - event.button.y / wy
 	end
 
 	--[[ slowdown effect
@@ -406,18 +415,36 @@ function App:event(event, ...)
 		timescale = 1 - 4/5 * (press and 1 or 0)
 	end
 	--]]
+
+	if event.type == sdl.SDL_KEYDOWN 
+	and event.key.keysym.sym == sdl.SDLK_ESCAPE
+	then
+		mainOpened[0] = not mainOpened[0]
+	end
 end
 	
-function App:updateGUI(...)
-	editor:updateGUI(...)
-
-
-end
-
 local fpsTime = 0
 local fpsFrames = 0
 function App:update(...)
 	R:report('update begin')
+
+	for _,player in ipairs(game.players) do
+		local x = 0
+		if player.inputUp then x=x+1 end 
+		if player.inputDown then x=x-1 end 
+		player.inputUpDown = x
+		
+		local x = 0
+		if player.inputLeft then x=x-1 end 
+		if player.inputRight then x=x+1 end 
+		player.inputLeftRight = x
+	
+		-- has to be done here, because game.pause keeps the player loop from updating
+		if player.inputPause and not player.inputPauseLast then
+			game.paused = not game.paused
+		end
+		player.inputPauseLast = player.inputPause
+	end
 
 	--[[ show fps
 	fpsFrames = fpsFrames + 1
@@ -482,6 +509,81 @@ function App:update(...)
 	App.super.update(self, ...)
 	
 	R:report('update end')
+end
+
+local ig = require 'ffi.imgui'
+local function modalBegin(title, flag)
+	return ig.igBegin(title, flag, bit.bor(
+			ig.ImGuiWindowFlags_NoTitleBar,
+			ig.ImGuiWindowFlags_NoResize,
+			ig.ImGuiWindowFlags_NoCollapse,
+			ig.ImGuiWindowFlags_AlwaysAutoResize,
+			ig.ImGuiWindowFlags_Modal,
+		0))
+end
+
+local controlsOpened = ffi.new('bool[1]', false)
+local playerInputOpened = ffi.new('bool['..numPlayers..']', false)
+function App:updateGUI(...)
+	editor:updateGUI(...)
+	
+	if mainOpened[0] then 
+		modalBegin('Main', mainOpened)
+		if ig.igButton'Controls...' then
+			controlsOpened[0] = true
+		end
+		if ig.igButton'Return To Game' then
+			mainOpened[0] = false
+		end
+		if ig.igButton'Quit' then
+			self:requestExit()
+		end
+		ig.igEnd()
+
+		if controlsOpened[0] then
+			modalBegin('Controls', nil)
+			for playerIndex=1,numPlayers do
+				if ig.igButton('Player '..playerIndex) then
+					playerInputOpened[playerIndex-1] = true
+				end
+			end
+			if ig.igButton'Done' then
+				controlsOpened[0] = false
+			end
+			ig.igEnd()
+		end
+
+		for playerIndex=1,numPlayers do
+			if playerInputOpened[playerIndex-1] then
+				modalBegin('Player '..playerIndex..' Input', playerInputOpened+playerIndex-1)
+					for _,inputKeyName in ipairs(inputKeyNames) do
+						ig.igText(inputKeyName)
+						ig.igSameLine()
+						local ev = config.playerKeys[playerIndex][inputKeyName]
+						local evName = tolua(ev)
+						if ig.igButton(
+							waitingForEvent 
+							and waitingForEvent.key == inputKeyName
+							and waitingForEvent.playerIndex == playerIndex
+							and 'Press Button...' or evName) 
+						then
+							waitingForEvent = {
+								key = inputKeyName,
+								playerIndex = playerIndex,
+								callback = function(...)
+									config.playerKeys[playerIndex][inputKeyName] = {...}
+									file[configFileName] = tolua(config, {indent=true})
+								end,
+							}
+						end
+					end
+					if ig.igButton'Done' then
+						playerInputOpened[playerIndex-1] = false
+					end
+				ig.igEnd()
+			end
+		end
+	end
 end
 
 function App:exit()

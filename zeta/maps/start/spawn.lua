@@ -295,7 +295,6 @@
 	{pos={416.5,787},spawn="zeta.script.obj.door"},
 	{pos={417.5,787},spawn="zeta.script.obj.door"},
 	{pos={419.5,941},spawn="zeta.script.obj.sawblade",travel={4,0}},
-	{pos={423.5,937},spawn="zeta.script.obj.sawblade",travel={-4,0}},
 	{pos={419.5,933},spawn="zeta.script.obj.sawblade",travel={4,0}},
 	{pos={418.5,923},spawn="zeta.script.obj.sawblade",travel={6,6}},
 	{pos={424.5,919},spawn="zeta.script.obj.sawblade",travel={-6,6}},
@@ -1000,4 +999,8 @@
 	{pos={458.5,914},spawn="zeta.script.obj.sawblade",timeOffset=0.10000000149012,travel={6,0},travelTime=2},
 	{pos={458.5,913},spawn="zeta.script.obj.sawblade",timeOffset=0.20000000298023,travel={6,0},travelTime=2},
 	{pos={394.5,908},spawn="zeta.script.obj.grapplinghook"},
+	{pos={434.5,949},spawn="zeta.script.obj.turret"},
+	{pos={435.5,958},spawn="zeta.script.obj.turret"},
+	{pos={452.5,958},spawn="zeta.script.obj.turret"},
+	{pos={450.5,949},spawn="zeta.script.obj.turret"},
 }
