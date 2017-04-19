@@ -287,7 +287,6 @@ function Level:init(args)
 	if mappath then initFile = mappath..'/init.lua' end
 	if args.initFile then initFile = args.initFile end
 	self.initFile = initFile
-	print('initFile',self.initFile)
 end
 
 function Level:processSpawnInfoArgs(spawnInfos)
@@ -379,10 +378,6 @@ function Level:initialize()
 			return sandbox(assert(file[initFile]))
 		end
 	end
-end
-
-function Level:runInitFile(initFile)
-	assert(load((assert(file[initFile]))))()
 end
 
 function Level:initialSpawn()

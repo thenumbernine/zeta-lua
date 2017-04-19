@@ -2,6 +2,7 @@ session['defensesActive_Main'] = true
 session['defensesActive_Mine Exit Corridor'] = false
 session['defensesActive_Mineral Processing'] = true
 
+print('init.lua session',tolua(session))
 --[[
 args:
 	circuit = what circuit to toggle on/off.  nil means Main circuit.

@@ -154,8 +154,10 @@ function Game:reset()
 	-- init spawns separate after game.level is assigned (in case they want to reference it)
 	self.levelInitThread = self.level:initialize()
 
-	if not self.savePoint then
-		local threads = require 'base.script.singleton.threads'
+	-- why was this set to run unless we're using a save point?
+	-- if it's a save point then we definitely want htis to finish
+	-- .. before loading the save data
+	do--if not self.savePoint then
 		-- after loading, self:reset is called, which calls level:initialize
 		--  which sandbox calls the level initFile
 		-- sandbox is a thread, it's delayed one frame
@@ -269,8 +271,6 @@ function Game:loadFromSavePoint()
 	local save = self.savePoint
 	if not save then return end
 
-	local threads = require 'base.script.singleton.threads'
-
 	-- NOTICE Game:respawn() uses setTimeout to create objs the next frame
 	-- that would mess this up
 	-- luckily zeta overrides that to do nothing
@@ -280,7 +280,7 @@ function Game:loadFromSavePoint()
 		repeat until not self.respawnThread:assertresume()
 		self.respawnThread = nil
 	end
-	
+
 	for k in pairs(self.objs) do
 		self.objs[k] = nil
 	end

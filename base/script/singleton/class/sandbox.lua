@@ -1,3 +1,5 @@
+local showcode = require 'template.showcode'
+
 local Sandbox = class()
 
 Sandbox.prefixCode = [[
@@ -75,7 +77,7 @@ function Sandbox:__call(f, argstr, ...)
 	if not f then
 		-- TODO imgui popup?
 		print('sandbox failed for code')
-		print(tostring(code):split'\n':map(function(line,i) return i..': '..line end):concat'\n')
+		print(showcode(code))
 		print(tostring(reason))
 		print(debug.traceback())
 	else
@@ -85,7 +87,7 @@ function Sandbox:__call(f, argstr, ...)
 			coroutine.yield()
 			xpcall(f, function(err)
 				print('sandbox error while executing code')
-				print(tostring(code):split'\n':map(function(line,i) return i..': '..line end):concat'\n')
+				print(showcode(code))
 				print(tostring(err))
 				print(debug.traceback())
 			end, ...)

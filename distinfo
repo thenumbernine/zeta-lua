@@ -29,7 +29,9 @@ files = {
 	['..'] = table{
 			'ext',
 			'ffi',
+			'template',
 			'glapp',
+			'imguiapp',
 			'vec',
 			'parser',
 			'image',
@@ -40,8 +42,6 @@ files = {
 			'simplexnoise',
 			'gui',
 		}:append(
-			ffi.os == 'Windows' and {} or {'imguiapp'}	-- not for windows
-		):append(
 			ffi.os == 'Android' and {'gles2'} or {'gl'}
 		),
 }
