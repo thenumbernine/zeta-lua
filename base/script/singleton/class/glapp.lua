@@ -1,4 +1,4 @@
-local GLApp = require 'glapp'
+local ImGuiApp = require 'imguiapp'
 local sdl = require 'ffi.sdl'
 
 local NetCom = require 'netrefl.netcom'
@@ -88,15 +88,16 @@ local timescale = 1
 
 
 local R
-local GLApp = class(GLApp) 
-local ImGuiApp
+local App = class(ImGuiApp)
 	-- closest resolution:
-GLApp.width = 1024
-GLApp.height = 768
-GLApp.title = 'Dump World'
-GLApp.sdlInitFlags = bit.bor(sdl.SDL_INIT_VIDEO, sdl.SDL_INIT_JOYSTICK)
+App.width = 1024
+App.height = 768
+App.title = 'Dump World'
+App.sdlInitFlags = bit.bor(sdl.SDL_INIT_VIDEO, sdl.SDL_INIT_JOYSTICK)
 
-function GLApp:initGL(gl, glname)
+function App:initGL(gl, glname)
+	App.super.initGL(self, gl, glname)
+	
 	local Renderer = modio:require 'script.singleton.class.renderer'
 	local rendererClass = Renderer.requireClasses[glname]
 	if not rendererClass then error("don't have support for "..tostring(glname)) end
@@ -105,8 +106,9 @@ function GLApp:initGL(gl, glname)
 	
 	sdl.SDL_ShowCursor(sdl.SDL_DISABLE)
 
+	sdl.SDL_JoystickEventState(sdl.SDL_ENABLE)
 	for i=0,sdl.SDL_NumJoysticks()-1 do
-		print('Joystick '..i..': '..ffi.string(sdl.SDL_JoystickName(i)))
+		print('Joystick '..i..': '..ffi.string(sdl.SDL_JoystickNameForIndex(i)))
 		joysticks[i] = sdl.SDL_JoystickOpen(i)
 	end
 
@@ -292,20 +294,14 @@ return ]]..file[savefile]
 			bgAudioSource:play()
 		end
 	end
-
-	if editor then
-		ImGuiApp = require 'imguiapp'
-		ImGuiApp.initGL(self, gl, glname)
-	end
 	
 	R:report('init end')
 end
 	
-function GLApp:event(event, ...)
+function App:event(event, ...)
+	App.super.event(self, event, ...)
+	
 	if editor then
-		if editor.active then
-			ImGuiApp.event(self, event, ...)
-		end
 		if editor:event(event) then return end
 	end
 
@@ -412,13 +408,15 @@ function GLApp:event(event, ...)
 	--]]
 end
 	
-function GLApp:updateGUI(...)
-	return editor:updateGUI(...)
+function App:updateGUI(...)
+	editor:updateGUI(...)
+
+
 end
 
 local fpsTime = 0
 local fpsFrames = 0
-function GLApp:update(...)
+function App:update(...)
 	R:report('update begin')
 
 	--[[ show fps
@@ -481,18 +479,14 @@ function GLApp:update(...)
 	gui:update()
 	threads:update()
 	
+	App.super.update(self, ...)
+	
 	R:report('update end')
-
-	if editor and editor.active then
-		ImGuiApp.update(self, ...)
-	end
 end
 
-function GLApp:exit()
+function App:exit()
 	audio:shutdown()
-	if editor then
-		ImGuiApp.exit(self)
-	end
+	App.super.exit(self)
 end
 
-return GLApp
+return App

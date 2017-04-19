@@ -1277,6 +1277,7 @@ function Editor:editProperties(editorPropsField, selectedField, createNew, reser
 end
 
 function Editor:updateGUI()
+	if not self.active then return end
 	local level = game.level
 
 	local function alert(str)
