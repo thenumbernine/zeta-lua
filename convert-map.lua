@@ -154,14 +154,14 @@ for y=0,h-1 do
 			if origTileType.spawn then
 				foundSpawn = true
 				spawnInfos:insert{
-					pos = {x+.5, y+.5},
+					pos = {x+.5, h-y},
 					spawn = origTileType.spawn,
 				}
 			end
 			if origTileType.startPos then
 				foundSpawn = true
 				spawnInfos:insert{
-					pos = {x+.5, y+.5},
+					pos = {x+.5, h-y},
 					spawn = 'base.script.obj.start',
 				}
 			end

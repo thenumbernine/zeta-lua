@@ -36,21 +36,9 @@ modio.levelcfg = {
 	music = 'music/cave.wav',
 	--music = 'music/overworld.wav',
 	
-	--template = 'bluestone',
-	--template = 'cave',
-	--template = 'cloud',
-	--template = 'green',
-	--template = 'ice',
-	--template = 'metal',
-	--template = 'stone',
-	--template = 'underwater',
-	-- these are used for tiles and it's weird if you use them 
-	--template = 'fence',
-	--template = 'spike',
-		
 	--path = 'doors',
-	path = 'fight',
-	--path = 'mine',
+	--path = 'fight',
+	path = 'mine',
 	--path = 'mine2',
 	--path = 'pswitch-fluids',
 	--path = 'pswitch-platform',

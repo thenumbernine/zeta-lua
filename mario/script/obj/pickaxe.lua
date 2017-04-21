@@ -22,8 +22,8 @@ function PickaxeItem:checkPickAt(x,y,player)
 			end
 		end
 		if tile.solid then
-			tile:makeEmpty()
-			level:alignTileTemplates(x,y,x,y)
+			level:makeEmpty(x,y)
+			--level:alignTileTemplates(x,y,x,y)
 			SpinParticle.breakAt(x+.5, y+.5)
 			return true
 		end

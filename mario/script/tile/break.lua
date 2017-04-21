@@ -6,6 +6,7 @@ local vec2 = require 'vec.vec2'
 local BreakTile = class(Tile)
 BreakTile.solid = true
 BreakTile.sprite = 'breakblock'
+BreakTile.name = 'breakblock'
 BreakTile.seq = 'stand'
 
 function BreakTile:onHit(other)

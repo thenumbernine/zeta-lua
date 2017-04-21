@@ -3,6 +3,7 @@ local Tile = require 'base.script.tile.tile'
 local game = require 'base.script.singleton.game'
 
 local SpinTile = class(Tile)
+SpinTile.name = 'spinblock'
 SpinTile.sprite = 'spinblock'
 SpinTile.seq = 'stand'
 SpinTile.solid = true

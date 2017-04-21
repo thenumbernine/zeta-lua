@@ -3,6 +3,7 @@ local Tile = require 'base.script.tile.tile'
 
 local SpikeTile = class(Tile)
 SpikeTile.usesTemplate = true
+SpikeTile.name = 'spike'
 SpikeTile.template = 'spike'
 SpikeTile.solid = true
 

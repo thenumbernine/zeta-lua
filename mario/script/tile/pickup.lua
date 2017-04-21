@@ -5,13 +5,14 @@ local game = require 'base.script.singleton.game'
 
 local PickUpTile = class(Tile)
 PickUpTile.solid = true
+PickUpTile.name = 'pickupblock'
 PickUpTile.sprite = 'pickupblock'
 PickUpTile.seq = 'stand'
 
-function PickUpTile:onCarry(player)
-	local block = PickUpBlock{pos=self.pos + game.level.pos + vec2(.5,0)}
+function PickUpTile:onCarry(player,x,y)
+	local block = PickUpBlock{pos=vec2(x+.5,y)}
 	player:setHeld(block)
-	self:makeEmpty()
+	game.level:makeEmpty(x,y)
 end
 
 return PickUpTile

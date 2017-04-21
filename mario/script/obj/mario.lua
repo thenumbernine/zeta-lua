@@ -1,6 +1,5 @@
 local PlayerObject = require 'base.script.obj.player'
 local game = require 'base.script.singleton.game'
-local SpinTile = require 'mario.script.tile.spin'
 local CoinTile = require 'mario.script.tile.coin'
 
 local Mario = class(PlayerObject)
@@ -66,8 +65,12 @@ function Mario:setHeld(other, kick)
 		end
 
 		self.holding.heldby = nil
-		--self.holding.collidesWithObjects = nil
-		self.holding.collidesWithWorld = nil
+		
+		-- revert to class originals
+		rawset(self.holding, 'solidFlags', self.holdingLastSolidFlags)
+		rawset(self.holding, 'touchFlags', self.holdingLastTouchFlags)
+		rawset(self.holding, 'blockFlags', self.holdingLastBlockFlags)
+		
 		self.holding = nil
 	end
 	
@@ -83,8 +86,17 @@ function Mario:setHeld(other, kick)
 		if other.playerGrab then other:playerGrab(self) end
 		self.holding = other
 		self.holding.heldby = self
-		--self.holding.collidesWithObjects = false
-		self.holding.collidesWithWorld = false
+	
+		-- clear collision flags 
+		-- this assumes only classes set flags and not objects
+		-- TODO getters and setters for custom behavior per-object
+		self.holdingLastSolidFlags = rawget(self.holding, 'solidFlags')
+		self.holdingLastTouchFlags = rawget(self.holding, 'touchFlags')
+		self.holdingLastBlockFlags = rawget(self.holding, 'blockFlags')
+		self.holding.solidFlags = 0
+		self.holding.touchFlags = 0
+		self.holding.blockFlags = 0
+	
 	end
 end
 
@@ -137,8 +149,8 @@ function Mario:tryToStand()
 		self.ducking = false
 	else
 		local cantStand = false
-		local y = self.pos[2] + self.bbox.max[2] + .5 - level.pos[2]
-		for x=math.floor(self.pos[1] + self.bbox.min[1] - level.pos[1]),math.floor(self.pos[1] + self.bbox.max[1] - level.pos[1]) do
+		local y = self.pos[2] + self.bbox.max[2] + .5
+		for x=math.floor(self.pos[1] + self.bbox.min[1]),math.floor(self.pos[1] + self.bbox.max[1]) do
 			local tile = level:getTile(x,y)
 			if tile and tile.solid then
 				cantStand = true
@@ -153,12 +165,16 @@ function Mario:tryToStand()
 end
 
 function Mario:beginWarp()
-	self.solid = false
+	self.solidFlags = 0
+	self.touchFlags = 0
+	self.blockFlags = 0
 	self.warping = true
 end
 
 function Mario:endWarp(destX, destY, canCarryThru)
-	self.solid = true
+	self.solidFlags = nil
+	self.touchFlags = nil
+	self.blockFlags = nil
 	self.warping = false
 	if not canCarryThru then	-- by default don't allow folks to carry things through warps
 		self:setHeld(nil, false)
@@ -237,42 +253,42 @@ function Mario:update(dt)
 		-- try to pick something up ...
 		
 		if not self.holding and self.collidedLeft and not self.touchEntLeft then
-			local x = self.pos[1] + self.bbox.min[1] - .5 - level.pos[1]
-			for y=math.floor(self.pos[2] + self.bbox.min[2] - level.pos[2]),math.floor(self.pos[2] + self.bbox.max[2] - level.pos[2]) do
+			local x = self.pos[1] + self.bbox.min[1] - .5
+			for y=math.floor(self.pos[2] + self.bbox.min[2]),math.floor(self.pos[2] + self.bbox.max[2]) do
 				local tile = level:getTile(x,y)
 				if tile and tile.onCarry then
-					tile:onCarry(self)
+					tile:onCarry(self,x,y)
 					if self.holding then break end
 				end
 			end
 		end
 		if not self.holding and self.collidedRight and not self.touchEntRight then
-			local x = self.pos[1] + self.bbox.max[1] + .5 - level.pos[1]
-			for y=math.floor(self.pos[2] + self.bbox.min[2] - level.pos[2]),math.floor(self.pos[2] + self.bbox.max[2] - level.pos[2]) do
+			local x = self.pos[1] + self.bbox.max[1] + .5
+			for y=math.floor(self.pos[2] + self.bbox.min[2]),math.floor(self.pos[2] + self.bbox.max[2]) do
 				local tile = level:getTile(x,y)
 				if tile and tile.onCarry then
-					tile:onCarry(self)
+					tile:onCarry(self,x,y)
 					if self.holding then break end
 				end
 			end
 		end
 		-- TODO evaluate from center outwards? rather than left to right
 		if not self.holding and self.collidedDown and not self.touchEntDown then
-			local y = self.pos[2] + self.bbox.min[1] - .5 - level.pos[1]
-			for x=math.floor(self.pos[1] + self.bbox.min[1] - level.pos[2]),math.floor(self.pos[1] + self.bbox.max[1] - level.pos[2]) do
+			local y = self.pos[2] + self.bbox.min[1] - .5
+			for x=math.floor(self.pos[1] + self.bbox.min[1]),math.floor(self.pos[1] + self.bbox.max[1]) do
 				local tile = level:getTile(x,y)
 				if tile and tile.onCarry then
-					tile:onCarry(self)
+					tile:onCarry(self,x,y)
 					if self.holding then break end
 				end
 			end
 		end
 		if not self.holding and self.collidedUp and not self.touchEntUp then
-			local y = self.pos[2] + self.bbox.max[1] + .5 - level.pos[2]
-			for x=math.floor(self.pos[1] + self.bbox.min[1] - level.pos[1]),math.floor(self.pos[1] + self.bbox.max[1] - level.pos[1]) do
+			local y = self.pos[2] + self.bbox.max[1] + .5
+			for x=math.floor(self.pos[1] + self.bbox.min[1]),math.floor(self.pos[1] + self.bbox.max[1]) do
 				local tile = level:getTile(x,y)
 				if tile and tile.onCarry then
-					tile:onCarry(self)
+					tile:onCarry(self,x,y)
 					if self.holding then break end
 				end
 			end
@@ -293,13 +309,13 @@ function Mario:update(dt)
 	-- general touch with all non-solid tiles
 	do
 		local canClimb
-		for x=math.floor(self.pos[1] + self.bbox.min[1] - level.pos[1]),math.floor(self.pos[1] + self.bbox.max[1] - level.pos[1]) do
-			for y=math.floor(self.pos[2] + self.bbox.min[2] - level.pos[2]),math.floor(self.pos[2] + self.bbox.max[2] - level.pos[2]) do
+		for x=math.floor(self.pos[1] + self.bbox.min[1]),math.floor(self.pos[1] + self.bbox.max[1]) do
+			for y=math.floor(self.pos[2] + self.bbox.min[2]),math.floor(self.pos[2] + self.bbox.max[2]) do
 				local tile = level:getTile(x,y)
 				if tile then
-					if getmetatable(tile) == CoinTile then
+					if CoinTile.is(tile) then
 						self:playSound('coin')
-						tile:makeEmpty()
+						level:makeEmpty(x,y)
 					end
 					canClimb = canClimb or tile.canClimb
 				end
@@ -319,8 +335,8 @@ function Mario:update(dt)
 		
 	if self.collidedUp then
 		self.inputJumpTime = nil
-		local y = self.pos[2] + self.bbox.max[2] + .5 - level.pos[2]
-		for x=math.floor(self.pos[1] + self.bbox.min[1] - level.pos[1]),math.floor(self.pos[1] + self.bbox.max[1] - level.pos[1]) do
+		local y = self.pos[2] + self.bbox.max[2] + .5
+		for x=math.floor(self.pos[1] + self.bbox.min[1]),math.floor(self.pos[1] + self.bbox.max[1]) do
 			local tile = level:getTile(x,y)
 			if tile and tile.solid and tile.onHit then
 				tile:onHit(self)
@@ -332,7 +348,7 @@ function Mario:update(dt)
 	
 	--[[ check squish
 	do
-		local tile = level:getTile(self.pos[1] - level.pos[1], self.pos[2] - level.pos[2])
+		local tile = level:getTile(self.pos[1], self.pos[2])
 		if tile
 		and tile.solid
 		and not tile.diag		-- objects can walk through solid tiles if they are flagged diagonal.  in that case, collision with the side is special (and buggy) and I don't know what I'll do for squishing
@@ -436,8 +452,8 @@ function Mario:update(dt)
 		if self.spinjumping and self.big then
 			-- check ground collision tile for SpinTile block
 			-- if so then destroy it
-			local y = self.pos[2] - .5 - level.pos[2]
-			for x=math.floor(self.pos[1] + self.bbox.min[1] - level.pos[1]),math.floor(self.pos[1] + self.bbox.max[1] - level.pos[1]) do
+			local y = self.pos[2] - .5
+			for x=math.floor(self.pos[1] + self.bbox.min[1]),math.floor(self.pos[1] + self.bbox.max[1]) do
 				local tile = level:getTile(x,y)
 				if tile and tile.solid and tile.onSpinJump then
 					tile:onSpinJump(self)
@@ -461,7 +477,7 @@ function Mario:update(dt)
 
 
 	do
-		local tile = level:getTile(self.pos[1] - level.pos[1], self.pos[2] - level.pos[2])
+		local tile = level:getTile(self.pos[1], self.pos[2])
 		self.swimming = tile and tile.fluid and #tile.fluid > 0
 	end
 		
@@ -524,7 +540,7 @@ function Mario:update(dt)
 	
 	-- test doors
 	if self.onground and self.inputUpDown > 0 and self.inputUpDownLast <= 0 and self.vel[1] == 0 then
-		local tile = level:getTile(self.pos[1] - level.pos[1], self.pos[2] - level.pos[2])
+		local tile = level:getTile(self.pos[1], self.pos[2])
 		if tile and tile.objs then
 			for _,obj in ipairs(tile.objs) do
 				if obj.playerLook then
@@ -582,11 +598,11 @@ function Mario:die()
 	self.climbing = false
 	self.spinjumping = false
 	self.ducking = false
-	self.solid = false
 	self.big = false
 	self.item = nil
-	self.collidesWithWorld = false
-	self.collidesWithObjects = false
+	self.lookingUp = false
+	self.solidFlags = 0
+	self.touchFlags = 0
 	self.dead = true
 	self.respawnTime = game.time + 1
 	self.vel[1], self.vel[2] = 0, 20
@@ -594,9 +610,9 @@ end
 
 function Mario:respawn()
 	self.respawnTime = nil
-	self.solid = nil
-	self.collidesWithWorld = nil
-	self.collidesWithObjects = nil
+	self.solidFlags = nil
+	self.touchFlags = nil
+	self.blockFlags = nil
 	self.dead = nil
 	self.vel[1], self.vel[2] = 0,0
 	self:setPos(unpack(game:getStartPos()))

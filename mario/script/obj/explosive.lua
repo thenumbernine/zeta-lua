@@ -1,6 +1,5 @@
 local class = require 'ext.class'
 local GameObject = require 'base.script.obj.object'
-local EmptyTile = require 'base.script.tile.empty'
 local SpinParticle = require 'mario.script.obj.spinparticle'
 local game = require 'base.script.singleton.game'
 
@@ -27,9 +26,9 @@ function Explosive:update(dt)
 			local tick = GameObject{
 				pos = self.pos,
 			}
-			tick.solid = false
-			tick.collidesWithWorld = false
-			tick.collidesWithObjects = false
+			tick.solidFlags = 0
+			tick.touchFlags = 0
+			tick.blockFlags = 0
 			tick.removeTime = game.time + 3
 			tick.vel[2] = 1
 			tick.useGravity = false
@@ -43,14 +42,14 @@ function Explosive:update(dt)
 	
 		if self.detonateTime < 0 then
 			if self.heldby then self.heldby:setHeld(nil, false) end
-			self.solid = false
+			self.solidFlags = 0
+			self.touchFlags = 0
+			self.blockFlags = 0
 			self.removeTime = game.time + 1
 			self.sprite = 'blast'
 			self.drawMirror = false
 			self.seq = 'blast'
 			self.canCarry = false
-			self.collidesWithWorld = false
-			self.collidesWithObjects = false
 			self.useGravity = false
 			self.vel[1], self.vel[2] = 0, 0
 			
@@ -60,7 +59,6 @@ function Explosive:update(dt)
 			local centerx, centery = self.pos[1] - level.pos[1], self.pos[2] - level.pos[2]
 			local xmin, xmax = math.floor(centerx - blastRange), math.floor(centerx + blastRange)
 			local ymin, ymax = math.floor(centery - blastRange), math.floor(centery + blastRange)
-			local testedObjs = {[self] = true}
 			for x=xmin, xmax do
 				for y=ymin, ymax do
 					local dx = x - math.floor(centerx)
@@ -69,17 +67,16 @@ function Explosive:update(dt)
 					if distSq <= blastRange * blastRange then	-- circular radius
 						local tile = level:getTile(x,y)
 						if tile then
-							if tile.objs then
-								for _,obj in ipairs(tile.objs) do
-									if not testedObjs[obj] then
-										testedObjs[obj] = true
-										if obj.hitByBlast then
-											local div = math.max(distSq, .1)
-											obj.vel[1] = obj.vel[1] + (obj.pos[1] - self.pos[1]) * 20 / div
-											obj.vel[2] = obj.vel[2] + (obj.pos[2] - self.pos[2]) * 20 / div
-											obj:hitByBlast(self)
-										end
-									end
+							for _,obj in ipairs(game.objs) do
+								if obj ~= self
+								and math.floor(obj.pos[1]) == x 
+								and math.floor(obj.pos[2]) == y 
+								and obj.hitByBlast
+								then
+									local div = math.max(distSq, .1)
+									obj.vel[1] = obj.vel[1] + (obj.pos[1] - self.pos[1]) * 20 / div
+									obj.vel[2] = obj.vel[2] + (obj.pos[2] - self.pos[2]) * 20 / div
+									obj:hitByBlast(self)
 								end
 							end
 							
@@ -87,17 +84,16 @@ function Explosive:update(dt)
 							if tile.onHit then tile:onHit(self) end
 							--]]
 							-- [[ destroy tiles!
-							if getmetatable(tile) ~= EmptyTile then
-								SpinParticle.breakAt(level.pos[1] + tile.pos[1] + .5, level.pos[2] + tile.pos[2] + .5)
-								tile:makeEmpty()
-							end
+							SpinParticle.breakAt(x + .5, y + .5)
+							level:makeEmpty(x,y)
 							--]]
 						end
 					end
 				end
 			end
 			-- [[ destroy tiles!
-			level:alignTileTemplates(xmin, ymin, xmax, ymax)
+			print'TODO smooth'
+			--level:alignTileTemplates(xmin, ymin, xmax, ymax)
 			--]]
 			
 			-- don't run this twice!

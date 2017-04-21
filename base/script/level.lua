@@ -403,6 +403,16 @@ function Level:getTileWithOffset(x,y)
 	return self:getTile(x,y)
 end
 
+function Level:makeEmpty(x,y)
+	x = math.floor(x)
+	y = math.floor(y)
+	if x<1 or y<1 or x>self.size[1] or y>self.size[2] then return 0 end
+	local index = (x-1)+self.size[1]*(y-1)
+	self.tileMap[index] = 0
+	self.fgTileMap[index] = 0
+	self.bgTileMap[index] = 0
+end
+
 function Level:update(dt)
 	self.pos[1] = self.pos[1] + self.vel[1] * dt
 	self.pos[2] = self.pos[2] + self.vel[2] * dt
