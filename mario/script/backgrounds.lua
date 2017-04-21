@@ -1,0 +1,10 @@
+{
+	{name="bluestone",scaleX=32,scaleY=32,scrollX=.25,scrollY=.25},
+	{name="cave",scaleX=32,scaleY=32,scrollX=.25,scrollY=.25},
+	{name="cloud",scaleX=32,scaleY=32,scrollX=.25,scrollY=.25},
+	{name="green",scaleX=32,scaleY=32,scrollX=.25,scrollY=.25},
+	{name="ice",scaleX=32,scaleY=32,scrollX=.25,scrollY=.25},
+	{name="metal",scaleX=32,scaleY=32,scrollX=.25,scrollY=.25},
+	{name="stone",scaleX=32,scaleY=32,scrollX=.25,scrollY=.25},
+	{name="underwater",scaleX=32,scaleY=32,scrollX=.25,scrollY=.25},
+}

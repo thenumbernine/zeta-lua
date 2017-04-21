@@ -82,7 +82,7 @@ local server, remoteClientConn
 
 local joysticks = {}
 
-local numPlayers = 1
+local numPlayers = numPlayers or 1
 
 local timescale = 1
 
@@ -165,14 +165,14 @@ function App:initGL(gl, glname)
 	
 	-- needs tob e done outside game atm because it modifies levelcfg ...
 	-- ... which is passed to game
-	local savefile = 'zeta/save/save.txt'
+	local savefile = modio:find 'save/save.txt'
 	local arrayRef = class()
 	function arrayRef:init(args)
 		self.index = assert(args.index)
 		self.src = assert(args.src)
 	end
 	local save
-	if io.fileexists(savefile) then
+	if savefile and io.fileexists(savefile) then
 		local code = [[
 local arrayRef = ...
 return ]]..file[savefile]
@@ -181,35 +181,8 @@ return ]]..file[savefile]
 		game:setSavePoint(save)
 	end
 
-
-	-- set load level info
-		-- first get it from the modio
-	local levelcfg = 
-		(save and save.levelcfg)
-		or modio.levelcfg
-		or (io.fileexists'levelcfg.lua' and assert(load('return '..file['levelcfg.lua']))())
-	assert(levelcfg, "failed to find levelcfg info in save file, modio, or levelcfg.lua file")
-
+	local levelcfg = self:loadLevelConfig(save)
 	
-	-- zetatron-specific
-	if not levelcfg.path then
-		local seed = os.time()
-		print('generating seed '..seed)
-		levelcfg.path = 'gen'..seed
-		os.execute('mkdir zeta/maps/'..levelcfg.path)
-		local Level = require 'base.script.level'
-		require 'image'(
-			Level.mapTileSize[1] * levelcfg.blocksWide,
-			Level.mapTileSize[2] * levelcfg.blocksHigh,
-			3,
-			'unsigned char'):save('zeta/maps/'..levelcfg.path..'/tile.png')
-		
-		file['zeta/maps/'..levelcfg.path..'/init.lua'] = file['zeta/maps/gen/init.lua']
-		--file['zeta/maps/'..levelcfg.path..'/init.lua'] = file['zeta/maps/gen/gen2.lua']
-		file['zeta/maps/'..levelcfg.path..'/texpack.png'] = file['zeta/maps/gen/texpack.png']
-	end
-	
-
 	local tileTypes = table()
 	local spawnTypes = table()
 	local serializeTypes = table()
@@ -296,6 +269,17 @@ return ]]..file[savefile]
 	end
 	
 	R:report('init end')
+end
+
+function App:loadLevelConfig(save)
+	-- set load level info
+		-- first get it from the modio
+	local levelcfg = 
+		(save and save.levelcfg)
+		or modio.levelcfg
+		or (io.fileexists'levelcfg.lua' and assert(load('return '..file['levelcfg.lua']))())
+	assert(levelcfg, "failed to find levelcfg info in save file, modio, or levelcfg.lua file")
+	return levelcfg
 end
 
 local inputKeyNames = table{

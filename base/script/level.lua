@@ -58,6 +58,7 @@ local Level = class()
 Level.tileSize = 16
 
 -- how many tiles in a 'maptile'
+-- i.e. room size
 Level.mapTileSize = vec2(32, 32)
 
 local function rgbAt(image, x, y)
@@ -116,8 +117,21 @@ function Level:init(args)
 	if mappath then mappath = 'maps/' .. mappath end
 
 	local tileFile = args.tileFile or (mappath and (mappath..'/tile.png'))
-	if tileFile then tileFile = modio:find(tileFile) end
-	assert(tileFile, "couldn't find tile file")
+	if not mappath and not args.tileFile then	
+		error("didn't specify an args.tileFile or a mappath")
+	end
+	if tileFile then 
+		local searchTileFile = modio:find(tileFile) 
+		if not searchTileFile then
+			for _,dir in ipairs(modio.search) do
+				print('\tlooking in '..dir..'/'..tileFile)
+			end
+		end
+		tileFile = searchTileFile
+	end
+	if not tileFile then
+		error("couldn't find file at "..mappath.."/tile.png")
+	end
 	local tileImage = Image(tileFile)
 	self.size = vec2(tileImage:size())
 
@@ -180,19 +194,7 @@ function Level:init(args)
 	end
 
 	-- load backgrounds here
-	self.backgrounds = table(
-		assert(
-			assert(
-				load('return '..
-					assert(
-						file[
-							assert(modio:find('script/backgrounds.lua'))
-						]
-					)
-				)
-			)()
-		)
-	)
+	self.backgrounds = table(assert(assert(load('return '..assert(file[assert(modio:find('script/backgrounds.lua'))])))()))
 	for i,background in ipairs(self.backgrounds) do
 		local fn = modio:find('backgrounds/'..background.name..'.png')
 		if fn then
@@ -228,7 +230,7 @@ function Level:init(args)
 	do
 		self.texpackFilename = modio:find(mappath..'/texpack.png')
 		if not self.texpackFilename then
-			self.texpackFilename = modio:find('texpack.png')
+			self.texpackFilename = modio:find 'texpack.png'
 			assert(self.texpackFilename, "better put your textures in a texpack")
 		end
 		self.texpackImage = Image(self.texpackFilename)

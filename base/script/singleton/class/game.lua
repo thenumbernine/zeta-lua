@@ -58,7 +58,11 @@ function Game:getStartPos()
 	end):map(function(spawnInfo)
 		return spawnInfo.pos
 	end)
-	assert(#startPositions > 0, "failed to find any starting positions")
+	if #startPositions == 0 then
+		print("failed to find any starting positions -- inserting default starting position")
+		local SpawnInfo = require 'base.script.spawninfo'
+		startPositions:insert(self.level.size/2)
+	end
 	self.startPosIndex = self.startPosIndex % #startPositions + 1
 	return startPositions[self.startPosIndex] + self.level.pos
 end
@@ -259,7 +263,9 @@ function Game:render(preDrawCallback)
 		end
 	
 		-- draw player hud
-		player:drawHUD(R, player.viewBBox)
+		if player.drawHUD then
+			player:drawHUD(R, player.viewBBox)
+		end
 	end
 end
 

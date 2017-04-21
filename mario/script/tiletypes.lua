@@ -1,0 +1,15 @@
+return {
+	require 'mario.script.tile.notsolid'(),
+	require 'mario.script.tile.fence'(),
+	require 'mario.script.tile.stone'(),
+	require 'mario.script.tile.spin'(),
+	require 'mario.script.tile.coin'(),
+	require 'mario.script.tile.anticoin'(),
+	require 'mario.script.tile.pickup'(),
+	require 'mario.script.tile.vine'(),
+	require 'mario.script.tile.spike'(),
+	require 'mario.script.tile.question'(),
+	require 'mario.script.tile.break'(),
+	require 'mario.script.tile.exclaim'(),
+	require 'mario.script.tile.exclaimoutline'(),
+}

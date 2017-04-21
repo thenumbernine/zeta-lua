@@ -6,7 +6,6 @@ bit = require 'bit'
 require 'ext'
 require 'vec'
 
-
 --[[
 cmdline args for tweaking the environment / packages to get things working
 --]]
@@ -26,12 +25,53 @@ for i=1,select('#',...) do
 	end
 end
 
-
 -- setup mod order  (todo store dependencies and add them accordingly?)
 local modio = require 'base.script.singleton.modio'
 modio.search = table{'base'}
 
--- [[ zeta
+-- [[ mario
+modio.search:insert(1, 'mario')
+modio.levelcfg = {
+
+	music = 'music/cave.wav',
+	--music = 'music/overworld.wav',
+	
+	--template = 'bluestone',
+	--template = 'cave',
+	--template = 'cloud',
+	--template = 'green',
+	--template = 'ice',
+	--template = 'metal',
+	--template = 'stone',
+	--template = 'underwater',
+	-- these are used for tiles and it's weird if you use them 
+	--template = 'fence',
+	--template = 'spike',
+		
+	--path = 'doors',
+	path = 'fight',
+	--path = 'mine',
+	--path = 'mine2',
+	--path = 'pswitch-fluids',
+	--path = 'pswitch-platform',
+	--path = 'race',
+	
+	-- this path has a template.png file in it (mario/maps/level1/template.png) 
+	--  so it doesn't need a "template = ..." to be uncommented
+	--path = 'level1',	
+}
+--]]
+
+--[[ metroid
+modio.search:insert(1, 'metroid')
+modio.levelcfg = {
+	path = 'gen',
+	template = 'sea',
+	music = 'music/maridia.wav',
+}
+--]]
+
+--[[ zeta
 modio.search:insert(1, 'zeta')
 modio.search:insert'mario'
 modio.levelcfg = {
@@ -40,6 +80,14 @@ modio.levelcfg = {
 	--path = 'reboot',
 	path = 'start',
 	--path = 'start original',
+}
+--]]
+
+--[[
+modio.search:insert(1, 'brightmoon')
+modio.levelcfg = {
+	path = 'start',
+	startPositions = {{25,25}},
 }
 --]]
 
