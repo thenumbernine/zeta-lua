@@ -1,5 +1,3 @@
-local class = require 'ext.class'
-local GameObject = require 'base.script.obj.object'
 local SpinParticle = require 'mario.script.obj.spinparticle'
 local game = require 'base.script.singleton.game'
 local Mario = require 'mario.script.obj.mario'
@@ -11,7 +9,8 @@ release Y : drop in front of you
 left/right + release Y : kick like a shell, but break rather than bounce
 --]]
 
-local PickUpBlock = class(GameObject)
+local PickUpBlock = behaviors(require 'base.script.obj.object',
+	require 'mario.script.behavior.kickable')
 
 PickUpBlock.solid = true
 PickUpBlock.canCarry = true

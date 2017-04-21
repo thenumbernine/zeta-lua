@@ -51,8 +51,9 @@ function WalkEnemy:update(dt)
 end
 
 function WalkEnemy:die(other)
-	self.collidesWithObjects = false
-	self.collidesWithWorld = false
+	self.solidFlags = 0
+	self.touchFlags = 0
+	self.blockFlags = 0
 	self.drawFlipped = true
 	self.vel[1] = 0
 	self.vel[2] = 0

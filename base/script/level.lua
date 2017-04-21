@@ -403,14 +403,20 @@ function Level:getTileWithOffset(x,y)
 	return self:getTile(x,y)
 end
 
-function Level:makeEmpty(x,y)
+-- nil means don't set that particular layer
+function Level:setTile(x,y, tileIndex, fgTileIndex, bgTileIndex, backgroundIndex)
 	x = math.floor(x)
 	y = math.floor(y)
 	if x<1 or y<1 or x>self.size[1] or y>self.size[2] then return 0 end
 	local index = (x-1)+self.size[1]*(y-1)
-	self.tileMap[index] = 0
-	self.fgTileMap[index] = 0
-	self.bgTileMap[index] = 0
+	if tileIndex then self.tileMap[index] = tileIndex end
+	if fgTileIndex then self.fgTileMap[index] = fgTileIndex end
+	if bgTileIndex then self.bgTileMap[index] = bgTileIndex end
+	if backgroundIndex then self.backgroundMap[index] = backgroundIndex end
+end
+
+function Level:makeEmpty(x,y)
+	self:setTile(x,y,0,0,0)
 end
 
 function Level:update(dt)
@@ -419,8 +425,8 @@ function Level:update(dt)
 end
 
 local vec4f = require 'ffi.vec.vec4f'
-local patch = require 'base.script.patch'
 function Level:draw(R, viewBBox)
+	local patch = require 'base.script.patch'
 
 	-- [[ testing lighting
 if useLighting then

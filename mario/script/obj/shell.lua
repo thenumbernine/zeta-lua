@@ -4,11 +4,11 @@ local Player = require 'base.script.obj.player'
 local Shell = behaviors(
 	require 'base.script.obj.object',
 	require 'zeta.script.behavior.takesdamage',
-	require 'zeta.script.behavior.hurtstotouch')
+	require 'zeta.script.behavior.hurtstotouch',
+	require 'mario.script.behavior.kickable')
 
 Shell.sprite = 'shell'
 Shell.seq = 'stand'
-Shell.kickHandicapTime = -2
 Shell.speed = 10
 Shell.dir = 0
 Shell.canCarry = true
@@ -92,10 +92,6 @@ if a shell touches something when the shell has nonzero velocity
 --]]
 
 function Shell:touch(other, side)
-	if other == self.kickedBy and self.kickHandicapTime >= game.time then
-		return false	-- 'false' is for playerBounce, which calls this
-	end
-
 	if not self.heldby then
 		if self.dir == 0 then -- stationary
 			if other:isa(Player) then
@@ -166,8 +162,9 @@ function Shell:die()
 	if self.heldby then self.heldby:setHeld(nil) end
 	
 	-- WalkEnemy:die() ... consider super'ing
-	self.collidesWithObjects = false
-	self.collidesWithWorld = false
+	self.solidFlags = 0
+	self.touchFlags = 0
+	self.blockFlags = 0
 	self.drawFlipped = true
 	self.vel[1] = 0
 	self.vel[2] = 0

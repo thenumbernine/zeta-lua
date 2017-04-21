@@ -112,9 +112,9 @@ end
 
 local tw = 64	-- width of texpack, in tiles
 local newIndexForTile = {
-	['base.script.tile.solid'] = {1,1},
-	['base.script.tile.slope45'] = {1,1},
-	['base.script.tile.slope27'] = {1,1},
+	['base.script.tile.solid'] = {1+4*tw,1},
+	['base.script.tile.slope45'] = {1+4*tw,1},
+	['base.script.tile.slope27'] = {1+4*tw,1},
 	['base.script.tile.water'] = {1+8,1},
 	['mario.script.tile.notsolid'] = {1+8,1},
 	['mario.script.tile.fence'] = {0,1+12*tw},
@@ -128,6 +128,7 @@ local newIndexForTile = {
 	['mario.script.tile.question'] = {1+4+1*tw,1},
 	['mario.script.tile.break'] = {1+4+3*tw,1},
 	['mario.script.tile.exclaim'] = {1+11,1},
+	['mario.script.tile.exclaimoutline'] = {1+14,1},
 }
 
 for y=0,h-1 do
@@ -160,7 +161,6 @@ for y=0,h-1 do
 		if not origTileType then
 			print("failed to find origTileType for origTileIndex "..('%x'):format(origTileIndex))
 		else
-		
 			local newTileType
 			if origTileIndex == 0xffffff then -- empty
 			else

@@ -6,10 +6,10 @@ local vec2 = require 'vec.vec2'
 local SpinBlock = class(GameObject)
 SpinBlock.sprite = 'spinblock'
 SpinBlock.seq = 'spin'
-SpinBlock.solid = false
 SpinBlock.useGravity = false
-SpinBlock.collidesWithWorld = false
-SpinBlock.collidesWithObjects = false
+SpinBlock.solidFlags = 0
+SpinBlock.touchFlags = 0
+SpinBlock.blockFlags = 0
 
 function SpinBlock:init(args)
 	SpinBlock.super.init(self, args)
@@ -24,9 +24,16 @@ function SpinBlock:update(dt)
 		local tile = game.level:getTile(self.tilePos[1], self.tilePos[2])
 
 		local foundsolid
-		if tile.objs then
-			for _,obj in ipairs(tile.objs) do
-				if obj.solid then
+		local x, y = self.tilePos:unpack()
+		for _,obj in ipairs(game.objs) do
+			if obj.solid then
+				local ixmin = math.floor(obj.pos[1] + obj.bbox.min[1])
+				local ixmax = math.ceil(obj.pos[1] + obj.bbox.max[1])
+				local iymin = math.floor(obj.pos[2] + obj.bbox.min[2])
+				local iymax = math.ceil(obj.pos[2] + obj.bbox.max[2])
+				if ixmin <= x and x <= ixmax
+				and iymin <= y and y <= iymax
+				then
 					foundsolid = true
 					break
 				end
@@ -38,8 +45,10 @@ function SpinBlock:update(dt)
 		else
 			self.spinEndTime = nil
 			self.remove = true
-			local SpinTile = require 'mario.script.tile.spin'
-			setmetatable(tile, SpinTile)
+			local spinTileType = assert(game.levelcfg.tileTypes:find(nil, function(tileType)
+				return require 'mario.script.tile.spin'.is(tileType)
+			end))
+			game.level:setTile(self.tilePos[1], self.tilePos[2], spinTileType, 5)
 		end
 	end
 end

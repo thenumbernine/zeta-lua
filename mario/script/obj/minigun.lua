@@ -39,7 +39,7 @@ function MinigunItem:onShoot(shooter)
 		if tile.objs then
 			for _,obj in ipairs(tile.objs) do
 				if obj ~= shooter and obj.hitByShell then
-					if obj.solid and obj.collidesWithObjects then hit = true end
+					if obj.solidFlags ~= 0 and obj.touchFlags ~= 0 then hit = true end
 					obj:hitByShell(self)
 				end
 			end

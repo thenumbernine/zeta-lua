@@ -170,12 +170,13 @@ Editor.fillBrush = {
 	end,
 }
 
-local patch = require 'base.script.patch'
-local patchTilesWide = #patch.template[1]
-local patchTilesHigh = #patch.template
 
 do
 	local function isSelectedTemplate(map,x,y)
+		local patch = modio:require 'script.patch'
+		local patchTilesWide = #patch.template[1]
+		local patchTilesHigh = #patch.template
+		
 		local level = game.level
 		local texpack = level.texpackTex
 		local tilesWide = texpack.width / level.tileSize
@@ -241,6 +242,11 @@ do
 		name = 'Smooth',
 		-- names in the neighbor table of where the patch tiles are
 		paint = function(self, cx, cy, extraBorder)
+			
+			local patch = modio:require 'script.patch'
+			local patchTilesWide = #patch.template[1]
+			local patchTilesHigh = #patch.template
+			
 			extraBorder = extraBorder or 0
 			local level = game.level
 

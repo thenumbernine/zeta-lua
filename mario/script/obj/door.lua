@@ -7,8 +7,9 @@ local vec2 = require 'vec.vec2'
 local Door = class(GameObject)
 
 Door.sprite = 'door'
-Door.solid = false
-Door.collidesWithWorld = false
+Door.solidFlags = 0
+Door.touchFlags = 0
+Door.blockFlags = 0
 Door.useGravity = false
 Door.canCarryThru = false	-- can we carry objects through this door?
 

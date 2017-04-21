@@ -1,4 +1,3 @@
-local class = require 'ext.class'
 local GameObject = require 'base.script.obj.object'
 local Mario = require 'mario.script.obj.mario'
 local game = require 'base.script.singleton.game'
@@ -40,9 +39,9 @@ function Flag:update(dt)
 				if obj:isa(Mario) then
 					local gui = require 'base.script.singleton.gui'
 					local showWinner = GameObject{pos = winner.pos}
-					showWinner.solid = false
-					showWinner.collidesWithWorld = false
-					showWinner.collidesWithObjects = false
+					showWinner.solidFlags = 0
+					showWinner.touchFlags = 0
+					showWinner.blockFlags = 0
 					showWinner.useGravity = false
 					showWinner.text = 'LOSER!'
 					showWinner.track = obj

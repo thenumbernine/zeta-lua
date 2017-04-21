@@ -456,7 +456,7 @@ function Mario:update(dt)
 			for x=math.floor(self.pos[1] + self.bbox.min[1]),math.floor(self.pos[1] + self.bbox.max[1]) do
 				local tile = level:getTile(x,y)
 				if tile and tile.solid and tile.onSpinJump then
-					tile:onSpinJump(self)
+					tile:onSpinJump(self, x, y)
 					jumpingOnSomething = true
 					if self.inputJumpAux then
 						self.vel[2] = 20

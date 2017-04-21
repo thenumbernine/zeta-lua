@@ -7,7 +7,12 @@ local game = require 'base.script.singleton.game'
 
 local BazookaShot = class(GameObject)
 BazookaShot.sprite = 'supermissile'
-BazookaShot.solid = false
+BazookaShot.solidFlags = BazookaShot.SOLID_GRENADE
+BazookaShot.touchFlags = BazookaShot.SOLID_WORLD 
+					+ BazookaShot.SOLID_YES 
+					+ BazookaShot.SOLID_NO 
+					+ BazookaShot.SOLID_GRENADE
+BazookaShot.blockFlags = BazookaShot.SOLID_WORLD
 BazookaShot.useGravity = false
 BazookaShot.speed = 50
 
@@ -55,8 +60,9 @@ function BazookaShot:blast()
 	self.angle = nil
 
 	-- TODO reset frame counter...
-	self.collidesWithWorld = false
-	self.colldiesWithObjects = false
+	self.solidFlags = 0
+	self.touchFLags = 0
+	self.blockFlags = 0
 	self.vel[1], self.vel[2] = 0, 0
 	
 	self.removeTime = game.time + 1.25

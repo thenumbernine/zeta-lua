@@ -12,8 +12,9 @@ function SpinParticle:init(args)
 	self.removeTime = game.time + 2
 end
 
-SpinParticle.collidesWithWorld = false
-SpinParticle.collidesWithObjects = false
+SpinParticle.solidFlags = 0
+SpinParticle.touchFlags = 0
+SpinParticle.blockFlags = 0
 
 -- static function
 function SpinParticle.breakAt(i,j)

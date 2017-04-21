@@ -7,9 +7,9 @@ local vec4 = require 'vec.vec4'
 local Puff = class(GameObject)
 
 Puff.sprite = 'puff'
-Puff.solid = false
-Puff.collidesWithWorld = false
-Puff.collidesWithObjects = false
+Puff.solidFlags = 0
+Puff.touchFlags = 0
+Puff.blockFlags = 0
 Puff.useGravity = false
 Puff.baseLiveTime = 1
 

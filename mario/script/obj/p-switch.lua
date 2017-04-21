@@ -39,7 +39,7 @@ function PSwitch:update(dt)
 		else
 			self.resetTime = nil
 			self.seq = nil
-			self.solid = nil
+			self.solidFlags = 0
 		end
 	end
 end
@@ -48,7 +48,9 @@ local PushBlock = class(GameObject)
 PushBlock.pushPriority = 2	--pushes mario
 PushBlock.useGravity = false
 PushBlock.sprite = 'exclaimblock'	-- make sure shader and color match too!
-PushBlock.collidesWithWorld = false
+PushBlock.solidFlags = PushBlock.SOLID_WORLD 
+PushBlock.touchFlags = 0
+PushBlock.blockFlags = 0
 PushBlock.bbox = box2(-.52, .52, -.02, 1.02)
 
 function PushBlock:update(dt)
@@ -67,19 +69,27 @@ end
 local findTile = function(x,y)
 	local tile = game.level:getTile(x,y)
 	if tile then
-		return getmetatable(tile) == ExclaimTile 
-			or getmetatable(tile) == ExclaimOutlineTile
+		return ExclaimTile.is(tile)
+			or ExclaimOutlineTile.is(tile)
 	end
 end
 
 local flipTile = function(x,y)
 	local tile = game.level:getTile(x,y)
 	if tile then
-		if getmetatable(tile) == ExclaimTile then
-			setmetatable(tile, ExclaimOutlineTile)
+		if ExclaimTile.is(tile) then
+			-- TODO shaders ...
+			-- on tiles nonetheless ...
+			local exclaimOutlineTileType = assert(game.levelcfg.tileTypes:find(nil, function(tileType)
+				return ExclaimOutlineTile.is(tileType)
+			end))
+			game.level:setTile(x,y, exclaimOutlineTileType, 14)
 			return true
-		elseif getmetatable(tile) == ExclaimOutlineTile then
-			setmetatable(tile, ExclaimTile)
+		elseif ExclaimOutlineTile.is(tile) then
+			local exclaimTileType = assert(game.levelcfg.tileTypes:find(nil, function(tileType)
+				return ExclaimTile.is(tileType)
+			end))
+			game.level:setTile(x,y, exclaimTileType, 11)
 			return true
 		end
 	end
@@ -174,7 +184,7 @@ function PSwitch:playerBounce(player)
 	threads:add(self.floodFill, self, self.pos[1], self.pos[2])
 	
 	self.seq = 'hit'
-	self.solid = false
+	self.solidFlags = 0
 	self.resetTime = game.time + self.resetDuration
 end
 
