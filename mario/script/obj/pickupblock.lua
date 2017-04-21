@@ -99,7 +99,7 @@ function PickUpBlock:update(...)
 			for y=math.floor(self.pos[2] + self.bbox.min[2] - level.pos[1]),math.floor(self.pos[2] + self.bbox.max[2] - level.pos[1]) do
 				local tile = level:getTile(x,y)
 				if tile and tile.solid then
-					if tile.onHit then tile:onHit(self) end
+					if tile.onHit then tile:onHit(self, x, y) end
 					didhit = true
 					break
 				end
@@ -110,7 +110,7 @@ function PickUpBlock:update(...)
 			for y=math.floor(self.pos[2] + self.bbox.min[2] - level.pos[2]),math.floor(self.pos[2] + self.bbox.max[2] - level.pos[2]) do
 				local tile = level:getTile(x,y)
 				if tile and tile.solid then
-					if tile.onHit then tile:onHit(self) end
+					if tile.onHit then tile:onHit(self, x, y) end
 					didhit = true
 					break
 				end

@@ -40,9 +40,9 @@ function BazookaShot:activeTouch(other, side)
 	self:blast()
 end
 
-function BazookaShot:touchTile(tile, side)
+function BazookaShot:touchTile(tile, side, normal, x, y)
 	if tile and tile.solid and tile.onHit then
-		tile:onHit(self)
+		tile:onHit(self, x, y)
 	end
 	self:blast()
 end

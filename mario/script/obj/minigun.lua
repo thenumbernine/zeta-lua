@@ -30,7 +30,8 @@ function MinigunItem:onShoot(shooter)
 	local hit
 	local level = game.level
 	for i=1,20 do
-		local tile = level:getTile(math.floor(x),math.floor(y))
+		local ix, iy = math.floor(x),math.floor(y)
+		local tile = level:getTile(ix,iy)
 		if not tile then break end
 		
 		-- (3) hurt anything we hit
@@ -47,9 +48,9 @@ function MinigunItem:onShoot(shooter)
 		if tile.solid then
 			hit = true
 			if tile.onSpinJump then
-				tile:onSpinJump(self)
+				tile:onSpinJump(self, ix, iy)
 			elseif tile.onHit then
-				tile:onHit(self)
+				tile:onHit(self, ix, iy)
 			end
 		end
 		

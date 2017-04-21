@@ -10,7 +10,8 @@ end
 function gcmem.free() end
 --]]
 
-local dir = ... or 'mario/maps/fight'
+local mapName = ... or 'fight'
+local dir = 'mario/maps/'..mapName
 os.execute('mkdir '..dir)
 require 'ext'
 box2 = require 'vec.box2'
@@ -54,6 +55,25 @@ for _,origTileType in ipairs(origTileTypes) do
 end
 print('got',#origTileTypes,'origTileTypes')
 
+local backgrounds = assert(load('return '..file['mario/script/backgrounds.lua']))()
+local backgroundName = assert(({
+	doors = 'cave',
+	fight = 'cave',
+	gen = 'cave',
+	level1 = 'cave',	-- technically this has a template layer, which should be used for backgrounds
+	lifttest = 'cave',
+	mine = 'cave',
+	mine2 = 'cave',
+	['pswitch-fluids'] = 'cave',
+	['pswitch-platform'] = 'cave',
+	race = 'cave',
+})[mapName])
+local backgroundIndex = assert(table.find(backgrounds, nil, function(background)
+	print('searching ',tolua(background))
+	return background.name == backgroundName
+end), "failed to find background "..backgroundName)
+print('backgroundIndex',backgroundIndex)
+
 local newTileTypes = table()
 for i=#newSearchPath,1,-1 do
 	local ls = file[newSearchPath[i]..'/script/tiletypes.lua']
@@ -92,21 +112,22 @@ end
 
 local tw = 64	-- width of texpack, in tiles
 local newIndexForTile = {
-	['base.script.tile.solid'] = {1,0},
-	['base.script.tile.slope45'] = {1,0},
-	['base.script.tile.slope27'] = {1,0},
-	['base.script.tile.water'] = {1+8,0},
-	['mario.script.tile.notsolid'] = {1+8,0},
+	['base.script.tile.solid'] = {1,1},
+	['base.script.tile.slope45'] = {1,1},
+	['base.script.tile.slope27'] = {1,1},
+	['base.script.tile.water'] = {1+8,1},
+	['mario.script.tile.notsolid'] = {1+8,1},
 	['mario.script.tile.fence'] = {0,1+12*tw},
-	['mario.script.tile.stone'] = {1+9,0},
-	['mario.script.tile.coin'] = {1+4+2*tw,0},
-	['mario.script.tile.anticoin'] = {1+12,0},
-	['mario.script.tile.pickup'] = {1+13,0},
-	['mario.script.tile.vine'] = {1+10,0},
-	['mario.script.tile.spike'] = {1+28*tw,0},
-	['mario.script.tile.question'] = {1+4+1*tw,0},
-	['mario.script.tile.break'] = {1+4+3*tw,0},
-	['mario.script.tile.exclaim'] = {1+11,0},
+	['mario.script.tile.stone'] = {1+9,1},
+	['mario.script.tile.spin'] = {1+4,1},
+	['mario.script.tile.coin'] = {1+4+2*tw,1},
+	['mario.script.tile.anticoin'] = {1+12,1},
+	['mario.script.tile.pickup'] = {1+13,1},
+	['mario.script.tile.vine'] = {1+10,1},
+	['mario.script.tile.spike'] = {1+28*tw,1},
+	['mario.script.tile.question'] = {1+4+1*tw,1},
+	['mario.script.tile.break'] = {1+4+3*tw,1},
+	['mario.script.tile.exclaim'] = {1+11,1},
 }
 
 for y=0,h-1 do
@@ -128,7 +149,6 @@ for y=0,h-1 do
 		
 		local fgTileIndex = 0
 		local bgTileIndex = 0
-		local backgroundIndex = 0
 
 		if origTileType then
 			local nf, nb = table.unpack(newIndexForTile[origTileType and origTileType.tile or nil] or {})

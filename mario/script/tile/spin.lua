@@ -8,22 +8,22 @@ SpinTile.sprite = 'spinblock'
 SpinTile.seq = 'stand'
 SpinTile.solid = true
 
-function SpinTile:onHit(other)
+function SpinTile:onHit(other, x, y)
 	-- hit everything above this tile	
-	game:hitAllOnTile(self.pos[1], self.pos[2]+1, other)
+	game:hitAllOnTile(x, y+1, other)
 	
 	local SpinBlock = require 'mario.script.obj.spinblock'
 	SpinBlock{
-		pos = self.pos + game.level.pos + vec2(.5, 0),
-		tilePos = self.pos,
+		pos = vec2(x+.5, y),
+		tilePos = vec2(x,y),
 	}
-	self:makeEmpty()
+	game.level:makeEmpty(x,y)
 end
 
-function SpinTile:onSpinJump(other)
+function SpinTile:onSpinJump(other, x,y)
 	local SpinParticle = require 'mario.script.obj.spinparticle'
-	SpinParticle.breakAt(self.pos[1] + .5, self.pos[2] + .5)
-	self:makeEmpty()
+	SpinParticle.breakAt(x + .5, y + .5)
+	game.level:makeEmpty(x,y)
 end
 
 return SpinTile

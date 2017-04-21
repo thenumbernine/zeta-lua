@@ -56,7 +56,7 @@ function Shell:update(dt)
 			for y=math.floor(self.pos[2] + self.bbox.min[2] - level.pos[2]),math.floor(self.pos[2] + self.bbox.max[2] - level.pos[2]) do
 				local tile = level:getTile(x,y)
 				if tile and tile.solid and tile.onHit then
-					tile:onHit(self)
+					tile:onHit(self, x, y)
 				end
 			end
 			
@@ -68,7 +68,7 @@ function Shell:update(dt)
 			for y=math.floor(self.pos[2] + self.bbox.min[2] - level.pos[2]),math.floor(self.pos[2] + self.bbox.max[2] - level.pos[2]) do
 				local tile = level:getTile(x,y)
 				if tile and tile.solid and tile.onHit then
-					tile:onHit(self)
+					tile:onHit(self, x, y)
 				end
 			end
 		end
