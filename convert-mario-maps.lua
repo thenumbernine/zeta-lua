@@ -10,7 +10,7 @@ end
 function gcmem.free() end
 --]]
 
-local mapName = ... or 'fight'
+local mapName = ... or 'mine'
 local dir = 'mario/maps/'..mapName
 os.execute('mkdir '..dir)
 require 'ext'
