@@ -13,7 +13,6 @@ Object.seq = 'stand'
 Object.drawMirror = false
 
 -- used to evaluate whose touch function to run first
-Object.preTouchPriority = 0
 Object.touchPriority = 0
 
 -- used to evaluate who gets priority when pushing

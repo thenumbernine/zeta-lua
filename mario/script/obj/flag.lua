@@ -1,13 +1,13 @@
-local GameObject = require 'base.script.obj.object'
+local Object = require 'base.script.obj.object'
 local Mario = require 'mario.script.obj.mario'
 local game = require 'base.script.singleton.game'
 local threads = require 'base.script.singleton.threads'
 local Puff = require 'mario.script.obj.puff'
 
-local Flag = class(GameObject)
+local Flag = behaviors(Object,
+	require 'mario.script.behavior.kickable')
 
 Flag.sprite = 'exitball'
-Flag.canCarry = true
 
 function Flag:init(...)
 	Flag.super.init(self, ...)
@@ -38,7 +38,7 @@ function Flag:update(dt)
 			for _,obj in ipairs(game.objs) do
 				if obj:isa(Mario) then
 					local gui = require 'base.script.singleton.gui'
-					local showWinner = GameObject{pos = winner.pos}
+					local showWinner = Object{pos = winner.pos}
 					showWinner.solidFlags = 0
 					showWinner.touchFlags = 0
 					showWinner.blockFlags = 0

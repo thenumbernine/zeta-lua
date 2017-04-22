@@ -1,12 +1,15 @@
-local GameObject = require 'base.script.obj.object'
-local VineTile = require 'mario.script.tile.vine'
 local game = require 'base.script.singleton.game'
 
-local VineEgg = class(GameObject)
+local VineEgg = behaviors(require 'base.script.obj.object',
+	require 'mario.script.behavior.kickable')
 
 VineEgg.sprite = 'egg'
-VineEgg.canCarry = true
 
+local VineTile = require 'mario.script.tile.vine'
+local vineTileType = game.levelcfg.tileTypes:find(nil, function(tileType)
+	return VineTile.is(tileType)
+end)
+	
 function VineEgg:update(...)
 	local level = game.level
 	
@@ -21,20 +24,16 @@ function VineEgg:update(...)
 
 	VineEgg.super.update(self, ...)
 	
-	local vineTileType = game.levelcfg.tileTypes:find(nil, function(tileType)
-		return require 'mario.script.tile.vine'.is(tileType)
-	end)
-	
 	if self.chomping then
 		local x, y = self.pos[1] - level.pos[1], self.pos[2] - level.pos[2]
 		local tile = level:getTile(x, y)
-		if tile and not tile.solid then
-			local index = (x-1) + level.size[1] * (y-1)
-			level.tileMap[index] = vineTileType 
-			level.fgTileMap[index] = 1+10 
-			--TODO level:alignTileTemplates(x, y, x, y)
-		else
+		if (tile and tile.solid)
+		or y > level.size[2]
+		then
 			self.remove = true
+		else
+			level:setTile(x,y, vineTileType, 0, 1+10)
+			--TODO level:alignTileTemplates(x, y, x, y)
 		end
 	end
 end
@@ -52,6 +51,7 @@ function VineEgg:hit()
 	self.blockFlags = 0
 	self.pos[2] = self.pos[2] + .5	-- in case we're on a slope ...
 	self:playSound('sprout')	-- egghatch too?
+	print'start chomping'
 end
 
 -- TODO hit precedences: hitA (block hit), hitB (shell hit), hitC (spin jump hit) ... and dif attacks use dif precedences

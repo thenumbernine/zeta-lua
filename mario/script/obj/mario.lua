@@ -14,7 +14,6 @@ Mario.inputMaxSpeedTime = 0
 Mario.maxRunVel = 10
 Mario.timeToMaxSpeed = 1
 
-Mario.preTouchPriority = 10
 Mario.touchPriority = 10
 Mario.pushPriority = 1
 

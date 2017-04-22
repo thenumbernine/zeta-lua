@@ -41,7 +41,6 @@ Hero.inputRun = false
 Hero.inputJumpTime = -1
 Hero.canCarry = true
 
-Hero.preTouchPriority = 10
 Hero.touchPriority = 10
 Hero.pushPriority = 1
 

@@ -66,20 +66,7 @@ function Explosive:update(dt)
 					local distSq = dx * dx + dy * dy
 					if distSq <= blastRange * blastRange then	-- circular radius
 						local tile = level:getTile(x,y)
-						if tile then
-							for _,obj in ipairs(game.objs) do
-								if obj ~= self
-								and math.floor(obj.pos[1]) == x 
-								and math.floor(obj.pos[2]) == y 
-								and obj.hitByBlast
-								then
-									local div = math.max(distSq, .1)
-									obj.vel[1] = obj.vel[1] + (obj.pos[1] - self.pos[1]) * 20 / div
-									obj.vel[2] = obj.vel[2] + (obj.pos[2] - self.pos[2]) * 20 / div
-									obj:hitByBlast(self)
-								end
-							end
-							
+						if tile then						
 							--[[ hit tiles
 							if tile.onHit then tile:onHit(self) end
 							--]]
@@ -91,6 +78,24 @@ function Explosive:update(dt)
 					end
 				end
 			end
+			for _,obj in ipairs(game.objs) do
+				if obj ~= self 
+				and obj.solidFlags ~= 0
+				and obj.hitByBlast
+				then
+					local dx = obj.pos[1] - self.pos[1]
+					local dy = obj.pos[2] - self.pos[2]
+					local distSq = dx*dx + dy*dy
+					if distSq <= blastRange * blastRange
+					then
+						local force = 20 --/ math.max(distSq, .1)
+						obj.vel[1] = obj.vel[1] + dx * force
+						obj.vel[2] = math.max(obj.vel[2] + dy * force, 3)
+						obj:hitByBlast(self)
+					end
+				end
+			end
+			
 			-- [[ destroy tiles!
 			print'TODO smooth'
 			--level:alignTileTemplates(xmin, ymin, xmax, ymax)
@@ -103,9 +108,6 @@ function Explosive:update(dt)
 end
 
 function Explosive:hit()
-	self.vel[1] = 0
-	self.vel[2] = 0
-
 	-- if we have been hit then don't delay again
 	if self.detonateTime then return end
 	-- if we're an explosion then return 

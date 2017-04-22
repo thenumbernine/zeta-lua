@@ -9,6 +9,9 @@ MarioGame.name = 'MarioGame'
 MarioGame.viewSize = 20
 
 function MarioGame:respawn(spawnInfo)
+	-- no respawning the player start (right?)
+	if spawnInfo.spawn == 'base.script.obj.start' then return end
+
 	MarioGame.super.respawn(self, spawnInfo)
 	-- mario-specific
 	setTimeout(self.respawnTime-.5, function()

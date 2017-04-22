@@ -10,7 +10,7 @@ return function(parentClass)
 	function KickableTemplate:touch(other, side)
 		-- kick ignore 
 		if other == self.kickedBy and self.kickHandicapTime >= game.time then
-			return false
+			return true
 		end
 		if KickableTemplate.super.touch then
 			return KickableTemplate.super.touch(self, other, side)
@@ -29,6 +29,7 @@ return function(parentClass)
 		else
 			holderLookDir = 1
 		end
+		--self.pos[1] = other.pos[1] + holderLookDir
 		if dy > 0 then	-- kick up
 			self.vel[2] = self.vel[2] + 40
 		elseif dy >= 0 and dx ~= 0	then	-- kicking and not setting down

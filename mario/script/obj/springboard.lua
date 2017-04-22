@@ -1,5 +1,3 @@
-local class = require 'ext.class'
-local GameObject = require 'base.script.obj.object'
 local game = require 'base.script.singleton.game'
 
 --[[
@@ -8,9 +6,9 @@ TODO:
 - land on spring, fix player and do spring animation, then do small/big bounce based on whether the jump button is held down
 --]]
 
-local Springboard = class(GameObject)
+local Springboard = behaviors(require 'base.script.obj.object',
+	require 'mario.script.behavior.kickable')
 Springboard.sprite = 'springboard'
-Springboard.canCarry = true
 
 --[[
 TODO

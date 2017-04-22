@@ -1,18 +1,14 @@
-local class = require 'ext.class'
 local game = require 'base.script.singleton.game'
 local threads = require 'base.script.singleton.threads'
-local GameObject = require 'base.script.obj.object'
+local Object = require 'base.script.obj.object'
 local ExclaimTile = require 'mario.script.tile.exclaim'
 local ExclaimOutlineTile = require 'mario.script.tile.exclaimoutline'
-local vec2 = require 'vec.vec2'
-local box2 = require 'vec.box2'
 local teamColors = require 'base.script.teamcolors'
 
-
-local PSwitch = class(GameObject)
+local PSwitch = behaviors(Object,
+	require 'mario.script.behavior.kickable')
 
 PSwitch.sprite = 'p-switch'
-PSwitch.canCarry = true
 PSwitch.resetDuration = 1
 PSwitch.floodStepDuration = .1
 PSwitch.colorIndex = 1
@@ -44,7 +40,7 @@ function PSwitch:update(dt)
 	end
 end
 
-local PushBlock = class(GameObject)
+local PushBlock = class(Object)
 PushBlock.pushPriority = 2	--pushes mario
 PushBlock.useGravity = false
 PushBlock.sprite = 'exclaimblock'	-- make sure shader and color match too!

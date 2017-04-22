@@ -22,7 +22,7 @@ function Shell:update(dt)
 	
 	if self.dead then return end
 	
-	self.canCarry = self.dir == 0
+	--self.canCarry = self.dir == 0
 	
 	-- special for koopas
 	if self.enterShellTime then
@@ -37,7 +37,7 @@ function Shell:update(dt)
 				-- TODO keep track of what type we started as
 				local Koopa = require 'mario.script.obj.koopa'	-- no require loops
 				setmetatable(self, Koopa)
-				self.canCarry = false
+				--self.canCarry = false
 				self.seq = nil
 				self.dir = 1
 				self.drawMirror = false

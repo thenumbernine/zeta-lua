@@ -28,7 +28,7 @@ end
 function PickUpBlock:kick(other, dx)
 print('PickUpBlock:kick(',other,dx,')')	
 	if dx < 0 then self.dir = -1 else self.dir = 1 end
-	self.canCarry = false
+	--self.canCarry = false
 	self:hasBeenKicked(other)
 end
 
