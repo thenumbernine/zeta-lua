@@ -1,5 +1,6 @@
 local game = require 'base.script.singleton.game'
 local CoinTile = require 'mario.script.tile.coin'
+local SpikeTile = require 'mario.script.tile.spike'
 
 local Mario = behaviors(require 'base.script.obj.player',
 	require 'mario.script.behavior.kickable')
@@ -139,6 +140,12 @@ function Mario:touch(other, side)
 	end
 	
 	if other == self.holding then return true end	-- skip push collisions
+end
+
+function Mario:touchTile(tileType, side, n, x, y)
+	if tileType.damage then
+		self:hit()
+	end
 end
 
 function Mario:tryToStand()
