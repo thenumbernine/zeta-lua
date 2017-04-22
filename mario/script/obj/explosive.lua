@@ -4,10 +4,9 @@ local SpinParticle = require 'mario.script.obj.spinparticle'
 local game = require 'base.script.singleton.game'
 
 local Explosive = behaviors(Object,
-					require 'mario.script.behavior.kickable')
+	require 'mario.script.behavior.kickable')
 
 Explosive.sprite = 'explosive'
-Explosive.canCarry = true
 
 function Explosive:playerBounce(player)
 	self:hit()

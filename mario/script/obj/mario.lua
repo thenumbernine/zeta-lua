@@ -1,8 +1,8 @@
-local PlayerObject = require 'base.script.obj.player'
 local game = require 'base.script.singleton.game'
 local CoinTile = require 'mario.script.tile.coin'
 
-local Mario = class(PlayerObject)
+local Mario = behaviors(require 'base.script.obj.player',
+	require 'mario.script.behavior.kickable')
 
 Mario.sprite = 'small-mario'
 
@@ -10,7 +10,6 @@ Mario.inputUpDownLast = 0
 Mario.inputRun = false
 Mario.inputJumpTime = -1
 Mario.inputMaxSpeedTime = 0
-Mario.canCarry = true
 
 Mario.maxRunVel = 10
 Mario.timeToMaxSpeed = 1
@@ -129,8 +128,8 @@ end
 Mario.extraBounceVel = 40
 Mario.idleBounceVel = 10
 
-function Mario:pretouch(other, side)
-	if Mario.super.pretouch(self, other, side) then return true end
+function Mario:touch(other, side)
+	if Mario.super.touch(self, other, side) then return true end
 	
 	if self.inputRun	-- if we're holding the grab button
 	and not self.holding	-- and we're not holding anything atm

@@ -13,7 +13,6 @@ local PickUpBlock = behaviors(require 'base.script.obj.object',
 	require 'mario.script.behavior.kickable')
 
 PickUpBlock.solid = true
-PickUpBlock.canCarry = true
 PickUpBlock.sprite = 'pickupblock'
 PickUpBlock.seq = 'pickedup'
 PickUpBlock.speed = 10	-- when kicked

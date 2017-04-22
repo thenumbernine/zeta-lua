@@ -11,7 +11,6 @@ Shell.sprite = 'shell'
 Shell.seq = 'stand'
 Shell.speed = 10
 Shell.dir = 0
-Shell.canCarry = true
 Shell.spinJumpDestroys = true
 Shell.touchDamage = 1
 Shell.maxHealth = 10
