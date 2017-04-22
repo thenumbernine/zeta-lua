@@ -52,7 +52,7 @@ function Shell:update(dt)
 			self.dir = 1
 			self.drawMirror = false
 			
-			local x = self.pos[1] + self.bbox.min[1] - .5 - level.pos[1]
+			local x = math.floor(self.pos[1] + self.bbox.min[1] - .5 - level.pos[1])
 			for y=math.floor(self.pos[2] + self.bbox.min[2] - level.pos[2]),math.floor(self.pos[2] + self.bbox.max[2] - level.pos[2]) do
 				local tile = level:getTile(x,y)
 				if tile and tile.solid and tile.onHit then
@@ -64,7 +64,7 @@ function Shell:update(dt)
 			self.dir = -1
 			self.drawMirror = true
 			
-			local x = self.pos[1] + self.bbox.max[1] + .5 - level.pos[1]
+			local x = math.floor(self.pos[1] + self.bbox.max[1] + .5 - level.pos[1])
 			for y=math.floor(self.pos[2] + self.bbox.min[2] - level.pos[2]),math.floor(self.pos[2] + self.bbox.max[2] - level.pos[2]) do
 				local tile = level:getTile(x,y)
 				if tile and tile.solid and tile.onHit then

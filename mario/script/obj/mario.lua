@@ -335,7 +335,7 @@ function Mario:update(dt)
 		
 	if self.collidedUp then
 		self.inputJumpTime = nil
-		local y = self.pos[2] + self.bbox.max[2] + .5
+		local y = math.floor(self.pos[2] + self.bbox.max[2] + .5)
 		for x=math.floor(self.pos[1] + self.bbox.min[1]),math.floor(self.pos[1] + self.bbox.max[1]) do
 			local tile = level:getTile(x,y)
 			if tile and tile.solid and tile.onHit then

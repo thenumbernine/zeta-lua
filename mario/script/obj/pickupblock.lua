@@ -27,6 +27,7 @@ end
 
 -- TODO like shells, blocks will hit player during the first few frames ...
 function PickUpBlock:kick(other, dx)
+print('PickUpBlock:kick(',other,dx,')')	
 	if dx < 0 then self.dir = -1 else self.dir = 1 end
 	self.canCarry = false
 	self:hasBeenKicked(other)
@@ -74,7 +75,7 @@ function PickUpBlock:touch(other, side)
 	end
 end
 
--- TODO have player drop the object even if they're not holding down
+-- have player drop the object even if they're not holding down?
 function PickUpBlock:playerKick(other, dx, dy)
 	PickUpBlock.super.playerKick(self, other, dx, dy)
 	if dy == 0 and dx ~= 0 then
@@ -94,7 +95,7 @@ function PickUpBlock:update(...)
 
 		local didhit = false
 		if self.collidedLeft and not self.touchEntLeft then	-- world collision
-			local x = self.pos[1] + self.bbox.min[1] - .5 - level.pos[2]
+			local x = math.floor(self.pos[1] + self.bbox.min[1] - .5 - level.pos[2])
 			for y=math.floor(self.pos[2] + self.bbox.min[2] - level.pos[1]),math.floor(self.pos[2] + self.bbox.max[2] - level.pos[1]) do
 				local tile = level:getTile(x,y)
 				if tile and tile.solid then
@@ -105,7 +106,7 @@ function PickUpBlock:update(...)
 			end
 			
 		elseif self.collidedRight and not self.touchEntRight then
-			local x = self.pos[1] + self.bbox.max[1] + .5 - level.pos[1]
+			local x = math.floor(self.pos[1] + self.bbox.max[1] + .5 - level.pos[1])
 			for y=math.floor(self.pos[2] + self.bbox.min[2] - level.pos[2]),math.floor(self.pos[2] + self.bbox.max[2] - level.pos[2]) do
 				local tile = level:getTile(x,y)
 				if tile and tile.solid then

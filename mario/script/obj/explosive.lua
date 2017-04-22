@@ -1,9 +1,10 @@
 local class = require 'ext.class'
-local GameObject = require 'base.script.obj.object'
+local Object = require 'base.script.obj.object'
 local SpinParticle = require 'mario.script.obj.spinparticle'
 local game = require 'base.script.singleton.game'
 
-local Explosive = class(GameObject)
+local Explosive = behaviors(Object,
+					require 'mario.script.behavior.kickable')
 
 Explosive.sprite = 'explosive'
 Explosive.canCarry = true
@@ -23,7 +24,7 @@ function Explosive:update(dt)
 		if oldTick ~= newTick and oldTick > 0 then
 			local gui = require 'base.script.singleton.gui'
 			-- show the 'oldTick'
-			local tick = GameObject{
+			local tick = Object{
 				pos = self.pos,
 			}
 			tick.solidFlags = 0
