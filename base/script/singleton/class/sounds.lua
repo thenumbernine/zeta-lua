@@ -11,7 +11,7 @@ end
 function SoundSystem:load(filename)
 	local searchfilename = 'sound/'..filename
 	filename = modio:find(searchfilename)
-	if not filename then error("couldn't find sound file "..searchfilename) end
+	if not filename then error("warning: couldn't find sound file "..searchfilename) end
 	
 	local sound = self.sounds[filename]
 	if not sound then

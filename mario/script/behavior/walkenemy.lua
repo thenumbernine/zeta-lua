@@ -4,8 +4,9 @@ local function walkEnemyBehavior(parentClass)
 
 	local WalkEnemyTemplate = behaviors(
 		parentClass,
-		require 'zeta.script.behavior.takesdamage',
-		require 'zeta.script.behavior.hurtstotouch')
+		require 'mario.script.behavior.hurtstotouch'
+--		require 'zeta.script.behavior.takesdamage',
+	)
 
 	WalkEnemyTemplate.dir = -1
 	WalkEnemyTemplate.drawMirror = true	-- by default, to match initial dir
@@ -58,7 +59,10 @@ local function walkEnemyBehavior(parentClass)
 		self.removeTime = game.time + 1
 		self.solidFlags = 0	--WalkEnemyTemplate.SOLID_NO
 		self.touchFlags = 0
-		WalkEnemyTemplate.super.die(self, damage, attacker, inflicter, side)
+		local superDie = WalkEnemyTemplate.super.die
+		if superDie then
+			superDie(self, damage, attacker, inflicter, side)
+		end
 	end
 
 	function WalkEnemyTemplate:playerBounce(other) self:die(other) end

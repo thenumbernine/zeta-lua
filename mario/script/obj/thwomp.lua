@@ -2,7 +2,7 @@ local game = require 'base.script.singleton.game'
 
 local Thwomp = behaviors(
 	require 'base.script.obj.object',
-	require 'zeta.script.behavior.hurtstotouch')
+	require 'mario.script.behavior.hurtstotouch')
 
 Thwomp.sprite = 'thwomp'
 Thwomp.useGravity = false

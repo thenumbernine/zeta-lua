@@ -3,7 +3,7 @@ local game = require 'base.script.singleton.game'
 
 local BallnChain = behaviors(
 	require 'base.script.obj.object',
-	require 'zeta.script.behavior.hurtstotouch')
+	require 'mario.script.behavior.hurtstotouch')
 BallnChain.sprite = 'ballnchain'
 BallnChain.pushPriority = 10
 BallnChain.useGravity = false

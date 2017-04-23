@@ -28,7 +28,6 @@ function Door:init(args)
 			and Door.is(obj) 
 			and obj.name == self.name 
 			then
-				print('obj',i,'is a door')
 				self.dests:insert(vec2(obj.pos[1], obj.pos[2]))
 			end
 		end

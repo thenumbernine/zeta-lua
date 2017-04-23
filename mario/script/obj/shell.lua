@@ -4,7 +4,7 @@ local Player = require 'base.script.obj.player'
 local Shell = behaviors(
 	require 'base.script.obj.object',
 --	require 'zeta.script.behavior.takesdamage',
---	require 'zeta.script.behavior.hurtstotouch',
+	require 'mario.script.behavior.hurtstotouch',
 	require 'mario.script.behavior.kickable')
 
 Shell.sprite = 'shell'

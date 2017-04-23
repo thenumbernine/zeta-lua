@@ -51,7 +51,6 @@ function VineEgg:hit()
 	self.blockFlags = 0
 	self.pos[2] = self.pos[2] + .5	-- in case we're on a slope ...
 	self:playSound('sprout')	-- egghatch too?
-	print'start chomping'
 end
 
 -- TODO hit precedences: hitA (block hit), hitB (shell hit), hitC (spin jump hit) ... and dif attacks use dif precedences
