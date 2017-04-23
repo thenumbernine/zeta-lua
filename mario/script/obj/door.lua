@@ -11,7 +11,8 @@ Door.solidFlags = 0
 Door.touchFlags = 0
 Door.blockFlags = 0
 Door.useGravity = false
-Door.canCarryThru = false	-- can we carry objects through this door?
+--Door.canCarryThru = false	-- can we carry objects through this door?
+Door.canCarryThru = true	-- can we carry objects through this door?
 
 function Door:init(args)
 	Door.super.init(self, args)
@@ -22,35 +23,13 @@ function Door:init(args)
 	-- wait for all objects to be linked before testing what tiles have and what don't have doors on them
 	threads:add(function()
 		coroutine.yield()
-
-		local level = game.level
-		
-		local doorTile = level:getTile(self.pos[1], self.pos[2]+.5)
-		if not doorTile then
-			print("door is not on a tile!")
-			return
-		end
-		
-		for i=1,level.size[1] do
-			local tilecol = level.tile[i]
-			for j=1,level.size[2] do
-				local tile = tilecol[j]
-				
-				if tile.warp == doorTile.warp then
-					local hasDoor = false
-					if tile.objs then
-						for _,obj in ipairs(tile.objs) do
-							if obj:isa(Door) then
-								hasDoor = true
-								break
-							end
-						end
-					end
-					if not hasDoor then
-						-- add it to the list of destinations
-						self.dests:insert(vec2(i+.5,j))
-					end
-				end
+		for i,obj in ipairs(game.objs) do
+			if obj ~= self
+			and Door.is(obj) 
+			and obj.name == self.name 
+			then
+				print('obj',i,'is a door')
+				self.dests:insert(vec2(obj.pos[1], obj.pos[2]))
 			end
 		end
 	end)

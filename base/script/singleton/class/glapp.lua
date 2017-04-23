@@ -90,8 +90,8 @@ local timescale = 1
 local R
 local App = class(ImGuiApp)
 	-- closest resolution:
-App.width = 1024
-App.height = 768
+App.width = winWidth or 1024
+App.height = winHeight or 768
 App.title = 'Dump World'
 App.sdlInitFlags = bit.bor(sdl.SDL_INIT_VIDEO, sdl.SDL_INIT_JOYSTICK)
 
@@ -361,7 +361,7 @@ function App:event(event, ...)
 			for i=0,3 do
 				local dirbit = bit.lshift(1,i)
 				local press = bit.band(dirbit, event.jhat.value) ~= 0
-				processEvent(press, sdl.SDL_JOYHATMTION, event.jhat.which, event.jhat.hat, dirbit)
+				processEvent(press, sdl.SDL_JOYHATMOTION, event.jhat.which, event.jhat.hat, dirbit)
 			end
 		end
 	elseif event.type == sdl.SDL_JOYAXISMOTION then
@@ -400,10 +400,12 @@ function App:event(event, ...)
 	end
 	--]]
 
-	if event.type == sdl.SDL_KEYDOWN 
-	and event.key.keysym.sym == sdl.SDLK_ESCAPE
-	then
-		mainOpened[0] = not mainOpened[0]
+	if event.type == sdl.SDL_KEYDOWN then
+		if event.key.keysym.sym == sdl.SDLK_ESCAPE then
+			mainOpened[0] = not mainOpened[0]
+		elseif event.key.keysym.sym == sdl.SDLK_F2 then
+			game:reset()
+		end
 	end
 end
 	

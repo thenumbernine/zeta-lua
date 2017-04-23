@@ -26,7 +26,7 @@ function SpinBlock:update(dt)
 		local foundsolid
 		local x, y = self.tilePos:unpack()
 		for _,obj in ipairs(game.objs) do
-			if obj.solid then
+			if obj.solidFlags ~= 0 then
 				local ixmin = math.floor(obj.pos[1] + obj.bbox.min[1])
 				local ixmax = math.ceil(obj.pos[1] + obj.bbox.max[1])
 				local iymin = math.floor(obj.pos[2] + obj.bbox.min[2])

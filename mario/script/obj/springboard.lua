@@ -9,6 +9,10 @@ TODO:
 local Springboard = behaviors(require 'base.script.obj.object',
 	require 'mario.script.behavior.kickable')
 Springboard.sprite = 'springboard'
+-- SOLID_NO means things fall through it, 
+-- including the player when the player goes to jump on it ...
+-- but SOLID_YES means it blocks things, including other shells and springboards, etc
+--Springboard.solidFlags = Springboard.SOLID_NO
 
 --[[
 TODO

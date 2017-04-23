@@ -6,7 +6,7 @@ MarioGame.maxFallVel = 20
 MarioGame.name = 'MarioGame'
 
 -- TODO base by max(tilesWide,tilesHigh)
-MarioGame.viewSize = 20
+MarioGame.viewSize = viewSize or 20
 
 function MarioGame:respawn(spawnInfo)
 	-- no respawning the player start (right?)

@@ -172,7 +172,7 @@ end
 function Mario:beginWarp()
 	self.solidFlags = 0
 	self.touchFlags = 0
-	self.blockFlags = 0
+	--self.blockFlags = 0
 	self.warping = true
 end
 
@@ -193,8 +193,8 @@ Mario.swimDelay = .5
 function Mario:update(dt)
 	local level = game.level
 
-	self.viewPos[1] = self.viewPos[1] + .5 *  (self.pos[1] - self.viewPos[1])
-	self.viewPos[2] = self.viewPos[2] + .9 *  (self.pos[2] - self.viewPos[2])
+	self.viewPos[1] = self.viewPos[1] + .25 *  (self.pos[1] - self.viewPos[1])
+	self.viewPos[2] = self.viewPos[2] + .25 *  (self.pos[2] - self.viewPos[2])
 
 	self.inputRun = self.inputShoot or self.inputShootAux
 
@@ -222,6 +222,8 @@ function Mario:update(dt)
 		self.useGravity = true
 	end
 	--]]
+	
+	if self.isClipping then return end
 	
 	-- reattach to world
 	Mario.super.update(self, dt)
@@ -545,12 +547,13 @@ function Mario:update(dt)
 	
 	-- test doors
 	if self.onground and self.inputUpDown > 0 and self.inputUpDownLast <= 0 and self.vel[1] == 0 then
-		local tile = level:getTile(self.pos[1], self.pos[2])
-		if tile and tile.objs then
-			for _,obj in ipairs(tile.objs) do
-				if obj.playerLook then
-					obj:playerLook(self)
-				end
+		for _,obj in ipairs(game.objs) do
+			if obj ~= self
+			and math.floor(self.pos[1]) == math.floor(obj.pos[1])
+			and math.floor(self.pos[2]) == math.floor(obj.pos[2])
+			and obj.playerLook
+			then
+				obj:playerLook(self)
 			end
 		end
 	end

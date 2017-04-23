@@ -1,16 +1,15 @@
-local class = require 'ext.class'
-local GameObject = require 'base.script.obj.object'
+local Object = require 'base.script.obj.object'
 local Mario = require 'mario.script.obj.mario'
 
 --[[
 itemClass is the class of the MarioItem that touching this gives you
 --]]
 
-local ItemObject = class(GameObject)
-ItemObject.solid = false
+local Item = class(Object)
+Item.solidFlags = Item.SOLID_NO
 
-function ItemObject:touch(other, side)
-	if other:isa(Mario) then
+function Item:touch(other, side)
+	if Mario.is(other) then
 		other:growBig()
 		if self.itemClass then other.item = self:itemClass() end
 		self.remove = true
@@ -18,4 +17,4 @@ function ItemObject:touch(other, side)
 end
 
 
-return ItemObject
+return Item

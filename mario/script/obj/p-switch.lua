@@ -12,6 +12,7 @@ PSwitch.sprite = 'p-switch'
 PSwitch.resetDuration = 1
 PSwitch.floodStepDuration = .1
 PSwitch.colorIndex = 1
+--PSwitch.solidFlags = PSwitch.SOLID_NO
 
 --[[
 TODO add spawn params: what color does this p-switch represent?
@@ -35,7 +36,7 @@ function PSwitch:update(dt)
 		else
 			self.resetTime = nil
 			self.seq = nil
-			self.solidFlags = 0
+			self.solidFlags = nil
 		end
 	end
 end

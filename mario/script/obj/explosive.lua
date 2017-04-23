@@ -7,6 +7,7 @@ local Explosive = behaviors(Object,
 	require 'mario.script.behavior.kickable')
 
 Explosive.sprite = 'explosive'
+--Explosive.solidFlags = Explosive.SOLID_NO
 
 function Explosive:playerBounce(player)
 	self:hit()
