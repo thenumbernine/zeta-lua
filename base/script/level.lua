@@ -154,7 +154,9 @@ function Level:init(args)
 	if not fgTileImage then
 		ffi.fill(self.fgTileMap, ffi.sizeof('unsigned short') * self.size[1] * self.size[2])
 	else
-		assert(vec2(fgTileImage:size()) == self.size)
+		if vec2(fgTileImage:size()) ~= self.size then
+			print('expected tile-fg.png size '..vec2(fgTileImage:size())..' to match tile.png size '..self.size)
+		end
 		for j=0,self.size[2]-1 do
 			for i=0,self.size[1]-1 do
 				self.fgTileMap[i+self.size[1]*j] = rgbAt(fgTileImage,i,self.size[2]-j-1)

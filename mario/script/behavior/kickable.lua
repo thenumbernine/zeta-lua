@@ -9,6 +9,7 @@ return function(parentClass)
 	-- default touch routine: player precedence
 	function KickableTemplate:touch(other, side)
 		-- kick ignore 
+		if other.holding == self then return true end
 		if other == self.kickedBy and self.kickHandicapTime >= game.time then
 			return true
 		end

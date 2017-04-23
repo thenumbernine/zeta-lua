@@ -84,7 +84,9 @@ end
 
 function Thwomp:touch(other, side, ...)
 	if side == 'down' and self.vel[2] < 0 then
-		return Thwomp.super.touch(self, other, side, ...)
+		if Thwomp.super.touch then
+			return Thwomp.super.touch(self, other, side, ...)
+		end
 	else
 		if Thwomp.super.super.touch then
 			Thwomp.super.super.touch(self, other, side, ...)

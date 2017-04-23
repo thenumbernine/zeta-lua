@@ -50,9 +50,9 @@ end
 
 function Mario:refreshSize()
 	if self.big and not self.ducking then
-		self.bbox = box2(-.4, 0, .4, 1.8)
+		self.bbox = box2(-.4, 0, .4, 1.7)
 	else
-		self.bbox = box2(-.4, 0, .4, .8)
+		self.bbox = box2(-.4, 0, .4, .7)
 	end
 end
 
@@ -66,9 +66,9 @@ function Mario:setHeld(other, kick)
 		self.holding.heldby = nil
 		
 		-- revert to class originals
-		rawset(self.holding, 'solidFlags', self.holdingLastSolidFlags)
-		rawset(self.holding, 'touchFlags', self.holdingLastTouchFlags)
-		rawset(self.holding, 'blockFlags', self.holdingLastBlockFlags)
+--		rawset(self.holding, 'solidFlags', self.holdingLastSolidFlags)
+--		rawset(self.holding, 'touchFlags', self.holdingLastTouchFlags)
+--		rawset(self.holding, 'blockFlags', self.holdingLastBlockFlags)
 		
 		self.holding = nil
 	end
@@ -89,12 +89,12 @@ function Mario:setHeld(other, kick)
 		-- clear collision flags 
 		-- this assumes only classes set flags and not objects
 		-- TODO getters and setters for custom behavior per-object
-		self.holdingLastSolidFlags = rawget(self.holding, 'solidFlags')
-		self.holdingLastTouchFlags = rawget(self.holding, 'touchFlags')
-		self.holdingLastBlockFlags = rawget(self.holding, 'blockFlags')
-		self.holding.solidFlags = 0
-		self.holding.touchFlags = 0
-		self.holding.blockFlags = 0
+--		self.holdingLastSolidFlags = rawget(self.holding, 'solidFlags')
+--		self.holdingLastTouchFlags = rawget(self.holding, 'touchFlags')
+--		self.holdingLastBlockFlags = rawget(self.holding, 'blockFlags')
+--		self.holding.solidFlags = 0
+--		self.holding.touchFlags = 0
+--		self.holding.blockFlags = 0
 	
 	end
 end
@@ -130,7 +130,8 @@ Mario.idleBounceVel = 10
 
 function Mario:touch(other, side)
 	if Mario.super.touch(self, other, side) then return true end
-	
+
+	-- TODO kick handicap time, so shells thrown up can't be immediately caught?
 	if self.inputRun	-- if we're holding the grab button
 	and not self.holding	-- and we're not holding anything atm
 	and other.canCarry		-- and we can carry the other object
@@ -442,10 +443,10 @@ function Mario:update(dt)
 				end
 
 				if self.inputLeftRight < 0 then
-					self.vel[1] = self.vel[1] - (self.friction + .25)
+					self.vel[1] = self.vel[1] - (self.friction + 1)
 					if self.vel[1] < -moveVel then self.vel[1] = -moveVel end
 				elseif self.inputLeftRight > 0 then
-					self.vel[1] = self.vel[1] + (self.friction + .25)
+					self.vel[1] = self.vel[1] + (self.friction + 1)
 					if self.vel[1] > moveVel then self.vel[1] = moveVel end
 				end
 				

@@ -1,7 +1,6 @@
-local class = require 'ext.class'
 local Tile = require 'base.script.tile.tile'
+local Mario = require 'mario.script.obj.mario'
 local game = require 'base.script.singleton.game'
-local vec2 = require 'vec.vec2'
 
 local BreakTile = class(Tile)
 BreakTile.solid = true
@@ -9,17 +8,18 @@ BreakTile.sprite = 'breakblock'
 BreakTile.name = 'breakblock'
 BreakTile.seq = 'stand'
 
-function BreakTile:onHit(other)
+function BreakTile:onHit(other, x, y)
+print('BreakTile:onHit',other,x,y)
 	-- hit everything above this tile	
-	game:hitAllOnTile(self.pos[1], self.pos[2]+1, other)
+	game:hitAllOnTile(x, y+1, other)
 
-	local Mario = require 'mario.script.obj.mario'
-	if other:isa(Mario) and not other.big then return end
-	
+	-- TODO hit things within the tile
+
+	--if Mario.is(other) and other.big then 
 	local SpinParticle = require 'mario.script.obj.spinparticle'
-	SpinParticle.breakAt(self.pos[1] + .5, self.pos[2] + .5)
-
-	self:makeEmpty()
+	SpinParticle.breakAt(x + .5, y)
+	game.level:makeEmpty(x,y)
+	--end
 end
 
 return BreakTile

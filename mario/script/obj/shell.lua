@@ -15,6 +15,9 @@ Shell.spinJumpDestroys = true
 Shell.touchDamage = 1
 Shell.maxHealth = 10
 
+-- all these .7 bbox's are only to fix the run-up-slopes physics issues ...
+Shell.bbox = box2(-.35, 0, .35, .7)
+
 function Shell:update(dt)
 	local level = game.level
 	Shell.super.update(self, dt)
@@ -120,8 +123,13 @@ function Shell:touch(other, side)
 end
 
 function Shell:touchTile(tileType, side, normal, x, y)
-	if not self.heldby and self.dir ~= 0 then
-		if tileType and tileType.solid and tileType.onHit then
+	if not self.heldby 
+	and ((self.dir ~= 0 and math.floor(self.pos[2]) == y) or side == 'up')
+	then
+		if tileType 
+		and tileType.solid 
+		and tileType.onHit 
+		then
 			tileType:onHit(self, x, y)
 		end
 		if side == 'right' then

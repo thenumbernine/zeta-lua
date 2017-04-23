@@ -20,6 +20,24 @@ function MarioGame:respawn(spawnInfo)
 	end)
 end
 
+function MarioGame:hitAllOnTile(x,y,hitter)
+	for _,obj in ipairs(self.objs) do
+		if obj ~= hitter then
+			local ixmin = math.floor(obj.pos[1] + obj.bbox.min[1])
+			local ixmax = math.ceil(obj.pos[1] + obj.bbox.max[1])
+			local iymin = math.floor(obj.pos[2] + obj.bbox.min[2])
+			local iymax = math.ceil(obj.pos[2] + obj.bbox.max[2])
+			if ixmin <= x and x <= ixmax
+			and iymin <= y and y <= iymax
+			then
+				if obj.playerBounce then
+					obj:playerBounce(hitter)
+				end
+			end
+		end
+	end
+end
+
 function MarioGame:getPlayerClass()
 	return require 'mario.script.obj.mario'
 end

@@ -12,11 +12,14 @@ left/right + release Y : kick like a shell, but break rather than bounce
 local PickUpBlock = behaviors(require 'base.script.obj.object',
 	require 'mario.script.behavior.kickable')
 
-PickUpBlock.solid = true
+PickUpBlock.solidFlags = PickUpBlock.SOLID_YES
 PickUpBlock.sprite = 'pickupblock'
 PickUpBlock.seq = 'pickedup'
 PickUpBlock.speed = 10	-- when kicked
 PickUpBlock.dir = 0	-- kick dir.  parallels shell.
+
+-- all these .7 bbox's are only to fix the run-up-slopes physics issues ...
+PickUpBlock.bbox = box2(-.35, 0, .35, .7)
 
 function PickUpBlock:init(args, ...)
 	PickUpBlock.super.init(self, args, ...)
@@ -26,16 +29,13 @@ end
 
 -- TODO like shells, blocks will hit player during the first few frames ...
 function PickUpBlock:kick(other, dx)
-print('PickUpBlock:kick(',other,dx,')')	
 	if dx < 0 then self.dir = -1 else self.dir = 1 end
 	--self.canCarry = false
 	self:hasBeenKicked(other)
 end
 
-function PickUpBlock:touch(other, side)
-	if other == self.kickedBy and self.kickHandicapTime >= game.time then
-		return
-	end
+function PickUpBlock:touch(other, side, ...)
+	if PickUpBlock.super.touch(self, other, side, ...) then return true end
 	
 	if not self.heldby then
 		if self.dir == 0 then 
@@ -70,6 +70,18 @@ function PickUpBlock:touch(other, side)
 		if other.hitByShell then
 			other:hitByShell(self)
 			return true
+		end
+	end
+end
+
+function PickUpBlock:touchTile(tileType, side, normal, x, y)
+	-- matches shell
+	if not self.heldby
+	and ((self.dir ~= 0 and math.floor(self.pos[2]) == y) or side == 'up')
+	then
+		if tileType and tileType.solid and tileType.onHit then
+			tileType:onHit(self, x, y)
+			self:die()
 		end
 	end
 end
