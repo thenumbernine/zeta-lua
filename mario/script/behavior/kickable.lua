@@ -30,7 +30,14 @@ return function(parentClass)
 		else
 			holderLookDir = 1
 		end
+		
 		--self.pos[1] = other.pos[1] + holderLookDir
+		local kickedTile = game.level:getTile(self.pos[1], self.pos[2])
+		if kickedTile and kickedTile.solid then
+			self.pos[1] = other.pos[1]
+			self.pos[2] = other.pos[2]
+		end
+
 		if dy > 0 then	-- kick up
 			self.vel[2] = self.vel[2] + 40
 		elseif dy >= 0 and dx ~= 0	then	-- kicking and not setting down

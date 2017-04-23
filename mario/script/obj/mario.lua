@@ -18,7 +18,6 @@ Mario.timeToMaxSpeed = 1
 Mario.touchPriority = 10
 Mario.pushPriority = 1
 
-
 function Mario:init(args)
 	Mario.super.init(self, args)
 	
@@ -226,6 +225,9 @@ function Mario:update(dt)
 	
 	if self.isClipping then return end
 	
+	-- duck to slide (TODO still need downhill sliding) 
+	self.friction = self.ducking and .5 or nil
+	
 	-- reattach to world
 	Mario.super.update(self, dt)
 
@@ -421,9 +423,11 @@ function Mario:update(dt)
 		self.vel[2] = self.inputUpDown * climbVel
 	else
 		-- friction when on ground and when not walking ... or when looking up or down
-		if self.onground and (self.inputLeftRight == 0 or self.inputUpDown < 0 or self.ducking) then
+		if self.onground 
+		and (self.inputLeftRight == 0 or self.inputUpDown < 0 or self.ducking) 
+		then
 			self.inputMaxSpeedTime = nil
-			-- friction used to be here but I moved it to GameObject for everyone
+			-- friction used to be here but I moved it to Object for everyone
 		else
 			-- movement in air or when walking
 			if self.inputLeftRight ~= 0 then
@@ -442,11 +446,12 @@ function Mario:update(dt)
 					end
 				end
 
+				local accel = 1
 				if self.inputLeftRight < 0 then
-					self.vel[1] = self.vel[1] - (self.friction + 1)
+					self.vel[1] = self.vel[1] - (self.friction + accel)
 					if self.vel[1] < -moveVel then self.vel[1] = -moveVel end
 				elseif self.inputLeftRight > 0 then
-					self.vel[1] = self.vel[1] + (self.friction + 1)
+					self.vel[1] = self.vel[1] + (self.friction + accel)
 					if self.vel[1] > moveVel then self.vel[1] = moveVel end
 				end
 				
@@ -456,8 +461,12 @@ function Mario:update(dt)
 	end
 	
 	-- if we just hit the ground then see if we're at max vel.  if not then reset the run meter
-	if self.onground and not self.ongroundLast then
-		if self.spinjumping and self.big then
+	if self.onground 
+	and not self.ongroundLast 
+	then
+		if self.spinjumping 
+		and self.big 
+		then
 			-- check ground collision tile for SpinTile block
 			-- if so then destroy it
 			local y = self.pos[2] - .5
@@ -486,7 +495,7 @@ function Mario:update(dt)
 
 	do
 		local tile = level:getTile(self.pos[1], self.pos[2])
-		self.swimming = tile and tile.fluid and #tile.fluid > 0
+		self.swimming = tile and tile.canSwim
 	end
 		
 	--[[
@@ -503,7 +512,7 @@ function Mario:update(dt)
 				self.onground = false
 				self.climbing = nil
 				self.inputJumpTime = game.time
-				self.jumpVel = -10
+				self.jumpVel = -15	-- counteract the jump yvel below
 				self.inputSwimTime = game.time
 			end
 		
