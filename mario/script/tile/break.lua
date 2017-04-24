@@ -9,7 +9,6 @@ BreakTile.name = 'breakblock'
 BreakTile.seq = 'stand'
 
 function BreakTile:onHit(other, x, y)
-print('BreakTile:onHit',other,x,y)
 	-- hit everything above this tile	
 	game:hitAllOnTile(x, y+1, other)
 
