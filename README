@@ -1,0 +1,36 @@
+Dump World
+
+I'm dumping a whole bunch of random stuff into a platformer engine.
+
+Features
+	- multiplayer split-screen and netplay (albeit very unoptimized)
+	- built-in editor
+
+Dependencies
+	ImGuiApp Lua lib
+		cimgui + ImGui
+	GLApp Lua lib
+		Malkia's UFO bindings
+		SDL
+	audio Lua lib
+		options for:
+		- SDL_mixer
+		- OpenAL
+	image Lua lib
+		- SDL_image
+		- pure luajit
+			- png
+			- bmp
+			- jpeg
+			- tiff
+	gl / gles2 Lua lib
+	Lua libs:
+		ext
+		template
+		vec
+		parser
+		netrefl
+		resourcecache
+		threadmanager
+		simplexnoise
+		gui
