@@ -1,5 +1,5 @@
 local sdl = require 'ffi.sdl'
-local gl = require 'ffi.OpenGL'
+local gl = require 'gl'
 local ig = require 'ffi.imgui'
 local Tex2D = require 'gl.tex2d'
 local Image = require 'image'

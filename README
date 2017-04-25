@@ -34,3 +34,6 @@ Dependencies
 		threadmanager
 		simplexnoise
 		gui
+
+Uses my lua-dist project to create cross-platform distributables.
+I've got this ported to Android and Wii before, but still need to integrate the changes. 
