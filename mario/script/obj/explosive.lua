@@ -68,10 +68,10 @@ function Explosive:update(dt)
 					if distSq <= blastRange * blastRange then	-- circular radius
 						local tile = level:getTile(x,y)
 						if tile then						
-							--[[ hit tiles
+							-- [[ hit tiles
 							if tile.onHit then tile:onHit(self) end
 							--]]
-							-- [[ destroy tiles!
+							--[[ destroy tiles!
 							SpinParticle.breakAt(x + .5, y + .5)
 							level:makeEmpty(x,y)
 							--]]

@@ -542,6 +542,30 @@ function App:updateGUI(...)
 		for playerIndex=1,numPlayers do
 			if playerInputOpened[playerIndex-1] then
 				modalBegin('Player '..playerIndex..' Input', playerInputOpened+playerIndex-1)
+					
+					if ig.igButton'Set All' then
+						local thread
+						thread = coroutine.create(function()
+							for _,inputKeyName in ipairs(inputKeyNames) do
+								waitingForEvent = {
+									key = inputKeyName,
+									playerIndex = playerIndex,
+									callback = function(...)
+										config.playerKeys[playerIndex][inputKeyName] = {...}
+										file[configFileName] = tolua(config, {indent=true})
+										-- next resume
+										threads:add(function()
+											coroutine.yield()
+											thread:resume()
+										end)
+									end,
+								}
+									-- wait til next resume
+								coroutine.yield()
+							end
+						end)
+						thread:resume()
+					end
 					for _,inputKeyName in ipairs(inputKeyNames) do
 						ig.igText(inputKeyName)
 						ig.igSameLine()
