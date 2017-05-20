@@ -543,8 +543,8 @@ function App:updateGUI(...)
 			if playerInputOpened[playerIndex-1] then
 				modalBegin('Player '..playerIndex..' Input', playerInputOpened+playerIndex-1)
 					
+					local thread
 					if ig.igButton'Set All' then
-						local thread
 						thread = coroutine.create(function()
 							for _,inputKeyName in ipairs(inputKeyNames) do
 								waitingForEvent = {
