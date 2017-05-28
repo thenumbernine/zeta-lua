@@ -9,7 +9,7 @@ require 'base.script.util'	-- common things used by everyone
 local AudioSource = require 'audio.source'
 local AudioBuffer = require 'audio.buffer'
 
-
+local template = require 'template'
 local audio = require 'base.script.singleton.audio'
 local threads = require 'base.script.singleton.threads'
 local game = require 'base.script.singleton.game'
@@ -312,12 +312,40 @@ end
 local mainOpened = ffi.new('bool[1]', false)
 local waitingForEvent
 
+function getEventName(event, a,b,c)
+	local function dir(d)
+		local s = table()
+		local ds = 'udlr'
+		for i=1,4 do
+			if 0 ~= bit.band(d,bit.lshift(1,i-1)) then 
+				s:insert(ds:sub(i,i))
+			end
+		end
+		return s:concat()
+	end
+	local function key(k)
+		return string.char(k)
+	end
+	return template(({
+		[sdl.SDL_JOYHATMOTION] = 'joy<?=a?> hat<?=b?> <?=dir(c)?>',
+		[sdl.SDL_JOYAXISMOTION] = 'joy<?=a?> axis<?=b?> <?=c?>',
+		[sdl.SDL_JOYBUTTONDOWN] = 'joy<?=a?> button<?=b?>',
+		[sdl.SDL_KEYDOWN] = 'key<?=key(b)?>',
+	})[event], {
+		a=a, b=b, c=c,
+		dir=dir, key=key,
+	})
+end
+
 -- not a SDL event
 local function processEvent(press, ...)
 	if waitingForEvent then
 		if press then
-			print('got', ...)
-			waitingForEvent.callback(...)
+			local ev = {...}
+			ev.name = getEventName(...)
+			-- give the event a name 
+			print('got', ev.name)
+			waitingForEvent.callback(ev)
 			waitingForEvent = nil
 		end
 	else
@@ -550,8 +578,8 @@ function App:updateGUI(...)
 								waitingForEvent = {
 									key = inputKeyName,
 									playerIndex = playerIndex,
-									callback = function(...)
-										config.playerKeys[playerIndex][inputKeyName] = {...}
+									callback = function(ev)
+										config.playerKeys[playerIndex][inputKeyName] = ev 
 										file[configFileName] = tolua(config, {indent=true})
 										-- next resume
 										threads:add(function()
@@ -570,18 +598,17 @@ function App:updateGUI(...)
 						ig.igText(inputKeyName)
 						ig.igSameLine()
 						local ev = config.playerKeys[playerIndex][inputKeyName]
-						local evName = tolua(ev)
 						if ig.igButton(
 							waitingForEvent 
 							and waitingForEvent.key == inputKeyName
 							and waitingForEvent.playerIndex == playerIndex
-							and 'Press Button...' or evName) 
+							and 'Press Button...' or ev.name or '?') 
 						then
 							waitingForEvent = {
 								key = inputKeyName,
 								playerIndex = playerIndex,
-								callback = function(...)
-									config.playerKeys[playerIndex][inputKeyName] = {...}
+								callback = function(ev)
+									config.playerKeys[playerIndex][inputKeyName] = ev
 									file[configFileName] = tolua(config, {indent=true})
 								end,
 							}

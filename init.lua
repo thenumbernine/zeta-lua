@@ -6,6 +6,8 @@ bit = require 'bit'
 require 'ext'
 require 'vec'
 
+numPlayers=2
+
 --[[
 cmdline args for tweaking the environment / packages to get things working
 --]]

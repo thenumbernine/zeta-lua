@@ -97,9 +97,9 @@ function Explosive:update(dt)
 				end
 			end
 			
-			-- [[ destroy tiles!
+			--[[ destroy tiles!
 			print'TODO smooth'
-			--level:alignTileTemplates(xmin, ymin, xmax, ymax)
+			level:alignTileTemplates(xmin, ymin, xmax, ymax)
 			--]]
 			
 			-- don't run this twice!
