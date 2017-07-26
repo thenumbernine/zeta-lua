@@ -6,7 +6,7 @@ bit = require 'bit'
 require 'ext'
 require 'vec'
 
-numPlayers=2
+numPlayers=numPlayers or 1
 
 --[[
 cmdline args for tweaking the environment / packages to get things working
@@ -38,7 +38,8 @@ modio.levelcfg = {
 	music = 'music/cave.wav',
 	--music = 'music/overworld.wav',
 
-	path = 'test',
+	--path = 'test',
+	path = 'test2',
 	--path = 'doors',
 	--path = 'fight',
 	--path = 'mine',

@@ -9,10 +9,21 @@ local PSwitch = behaviors(Object,
 	require 'mario.script.behavior.kickable')
 
 PSwitch.sprite = 'p-switch'
+
+-- how long until the switch resets
 PSwitch.resetDuration = 1
+
+-- how long it takes one block to propagate to a neighbor 
 PSwitch.floodStepDuration = .1
+
+-- only works with matching colors
 PSwitch.colorIndex = 1
---PSwitch.solidFlags = PSwitch.SOLID_NO
+
+-- hmm I want it to touch
+PSwitch.solidFlags = PSwitch.SOLID_YES
+
+-- comma-separated list of delays to trigger at the position where the p-switch is activated.
+PSwitch.delays = '0'
 
 --[[
 TODO add spawn params: what color does this p-switch represent?
@@ -22,8 +33,11 @@ or just have a final n bits denote that -- and of the like coin & anticoin block
 
 function PSwitch:init(args)
 	PSwitch.super.init(self, args)
-	
-	-- TODO how to determine p-switch and !-block color?
+
+	self.delays = self.delays:split','
+
+	-- TODO how to determine p-switch and !-block color when we are using bitmap tiles?
+	-- solution: store several ! and !-outline tile types
 	self.color = teamColors[(self.colorIndex-1) % #teamColors + 1]
 end
 
@@ -93,7 +107,7 @@ local flipTile = function(x,y)
 	end
 end
 
--- static function (coroutine)
+-- coroutine function
 function PSwitch:floodFill(cx,cy)
 	coroutine.yield()
 
@@ -175,11 +189,24 @@ function PSwitch:floodFill(cx,cy)
 	until #thisTiles == 0
 end
 
+-- coroutine function
+function PSwitch:trigger(x, y)
+	coroutine.yield()
+	local delays = table(self.delays)
+	local startTime = game.time
+	while #delays > 0 do
+		-- TODO timer resume coroutine, not just sleep()-based blocking
+		while game.time < startTime + delays[1] do coroutine.yield() end
+		delays:remove(1)
+		-- flood fill from current position
+		threads:add(self.floodFill, self, self.pos[1], self.pos[2])
+	end
+end
+
 function PSwitch:playerBounce(player)
 	if self.seq ~= 'stand' then return false end
 
-	-- TODO flood fill from current position
-	threads:add(self.floodFill, self, self.pos[1], self.pos[2])
+	threads:add(self.trigger, self, self.pos[1], self.pos[2])
 	
 	self.seq = 'hit'
 	self.solidFlags = 0

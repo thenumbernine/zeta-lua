@@ -384,6 +384,7 @@ function Mario:update(dt)
 	do
 		local groundEnt = self.touchEntDown
 		if groundEnt then
+print'here'			
 			if self.spinjumping then
 				if groundEnt.spinJumpDestroys then
 					self:playSound('spinjump-stomp')
