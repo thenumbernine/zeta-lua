@@ -7,6 +7,9 @@
 ![](docs/images/pic5.png)
 ![](docs/images/pic6.png)
 ![](docs/images/pic7.png)
+![](docs/images/pic8.png)
+![](docs/images/pic-editor-1.png)
+![](docs/images/pic-editor-2.png)
 
 I'm dumping a whole bunch of random stuff into a platformer engine.
 

@@ -324,13 +324,13 @@ function getEventName(event, a,b,c)
 		return s:concat()
 	end
 	local function key(k)
-		return string.char(k)
+		return a	--string.char(k)
 	end
 	return template(({
 		[sdl.SDL_JOYHATMOTION] = 'joy<?=a?> hat<?=b?> <?=dir(c)?>',
 		[sdl.SDL_JOYAXISMOTION] = 'joy<?=a?> axis<?=b?> <?=c?>',
 		[sdl.SDL_JOYBUTTONDOWN] = 'joy<?=a?> button<?=b?>',
-		[sdl.SDL_KEYDOWN] = 'key<?=key(b)?>',
+		[sdl.SDL_KEYDOWN] = 'key<?=key(a)?>',
 	})[event], {
 		a=a, b=b, c=c,
 		dir=dir, key=key,
