@@ -376,7 +376,7 @@ do
 end
 
 local function hoverTooltip(name)
-	if ig.igIsItemHovered() then
+	if ig.igIsItemHovered(ig.ImGuiHoveredFlags_None) then
 		ig.igBeginTooltip()
 		ig.igText(name)
 		ig.igEndTooltip()
@@ -385,24 +385,24 @@ end
 
 local function checkboxTooltip(name, ptr)
 	assert(ptr, "forgot to pass a ptr for "..name)
-	ig.igPushIdStr(name)
+	ig.igPushIDStr(name)
 	ig.igCheckbox('', ptr)
 	hoverTooltip(name)
-	ig.igPopId()
+	ig.igPopID()
 end
 
 local function radioTooltip(name, ptr, value)
-	ig.igPushIdStr(name)
-	ig.igRadioButton('', ptr, value)
+	ig.igPushIDStr(name)
+	ig.igRadioButtonIntPtr('', ptr, value)
 	hoverTooltip(name)
-	ig.igPopId()
+	ig.igPopID()
 end
 
 local function buttonTooltip(name, ptr)
-	ig.igPushIdStr(name)
+	ig.igPushIDStr(name)
 	local result = ig.igButton('', ig.ImVec2(16,16))
 	hoverTooltip(name)
-	ig.igPopId()
+	ig.igPopID()
 	return result
 end
 
@@ -431,7 +431,7 @@ function PickTileTypeWindow:radioButton(selected, index, callback)
 	then
 		callback(index)
 	end
-	if ig.igIsItemHovered() then
+	if ig.igIsItemHovered(ig.ImGuiHoveredFlags_None) then
 		ig.igBeginTooltip()
 		ig.igText('tile type: '..tileTypeOption.tileType.name)
 		ig.igEndTooltip()
@@ -444,7 +444,7 @@ function PickTileTypeWindow:update()
 	ig.igBegin('Choose Tile Type...', self.opened)
 	
 	for i=0,#editor.tileOptions do
-		ig.igPushIdStr('PickTileTypeWindow:update '..i)
+		ig.igPushIDStr('PickTileTypeWindow:update '..i)
 		self:radioButton(self.index, i, function(i)
 			self.callback(i)
 			self.opened[0] = false
@@ -455,7 +455,7 @@ function PickTileTypeWindow:update()
 		if (i+1) % tileOptionsWide > 0 and i < #editor.tileOptions then 
 			ig.igSameLine()
 		end
-		ig.igPopId()
+		ig.igPopID()
 	end
 
 	ig.igEnd()
@@ -469,11 +469,11 @@ end
 
 function PickTileTypeWindow:openButton(index, callback)
 	local editor = self.editor
-	ig.igPushIdStr('PickTileTypeWindow:openButton')
+	ig.igPushIDStr('PickTileTypeWindow:openButton')
 	self:radioButton(-1, index, function()
 		self:open(index, callback)
 	end)
-	ig.igPopId()
+	ig.igPopID()
 end
 
 
@@ -515,7 +515,7 @@ function PickTileWindow:update()
 		self.callback(1+x+tilesWide*y)
 		self.opened[0] = false
 	end
-	if ig.igIsItemHovered() then
+	if ig.igIsItemHovered(ig.ImGuiHoveredFlags_None) then
 		ig.igBeginTooltip()
 		ig.igImage(
 			texIDPtr, -- tex
@@ -552,7 +552,7 @@ function PickTileWindow:openButton(hoverText, tileIndex, callback)
 	then
 		self:open(callback)
 	end
-	if hoverText and ig.igIsItemHovered() then
+	if hoverText and ig.igIsItemHovered(ig.ImGuiHoveredFlags_None) then
 		ig.igBeginTooltip()
 		ig.igText(hoverText..': '..tileIndex)
 		ig.igEndTooltip()
@@ -679,7 +679,7 @@ function TileExchangeWindow:update()
 	local level = game.level
 	local editor = self.editor
 	
-	ig.igPushIdStr('Tile Exchange Window')
+	ig.igPushIDStr('Tile Exchange Window')
 	ig.igBegin('Tile Exchange', self.opened)
 	
 	checkboxTooltip('Tile Type', editor.paintingTileType)
@@ -691,26 +691,26 @@ function TileExchangeWindow:update()
 	ig.igSeparator()
 
 	--[[ here we're going to need a button that shows a popup that lets you choose
-	ig.igPushIdStr('Tile Type From')
+	ig.igPushIDStr('Tile Type From')
 	editor:tileTypeButton(self.tileTypeFrom
-	ig.igPopId()
-	ig.igPushIdStr('Tile Type To')
-	ig.igPopId()
+	ig.igPopID()
+	ig.igPushIDStr('Tile Type To')
+	ig.igPopID()
 	--]]
 
-	ig.igPushIdStr('Tile From')
+	ig.igPushIDStr('Tile From')
 	editor.pickTileWindow:openButton('from', self.tileFrom, function(i)
 		self.tileFrom = i
 	end)
 	
-	ig.igPopId()
+	ig.igPopID()
 	ig.igSameLine()
 	
-	ig.igPushIdStr('Tile To')
+	ig.igPushIDStr('Tile To')
 	editor.pickTileWindow:openButton('to', self.tileTo, function(i)
 		self.tileTo = i
 	end)
-	ig.igPopId()
+	ig.igPopID()
 	
 	ig.igSliderInt('width', self.widthPtr, 1, 64)
 	ig.igSliderInt('height', self.heightPtr, 1, 64)
@@ -777,7 +777,7 @@ function TileExchangeWindow:update()
 				format = gl.GL_RGBA,
 			}
 		end
-		if ig.igIsItemHovered() then
+		if ig.igIsItemHovered(ig.ImGuiHoveredFlags_None) then
 			ig.igBeginTooltip()
 			ig.igText('Exchange two tile ranges within the texpack.\n'
 					..'The map will retain its tile indexes, so\n'
@@ -822,7 +822,7 @@ function TileExchangeWindow:update()
 			level:refreshTiles()
 		end
 		
-		if ig.igIsItemHovered() then
+		if ig.igIsItemHovered(ig.ImGuiHoveredFlags_None) then
 			ig.igBeginTooltip()
 			ig.igText('Exchange two tile ranges of indexes within the map.')
 			ig.igEndTooltip()
@@ -830,7 +830,7 @@ function TileExchangeWindow:update()
 	end
 
 	ig.igEnd()
-	ig.igPopId()
+	ig.igPopID()
 end
 
 local ConsoleWindow = class()
@@ -1161,23 +1161,23 @@ function Editor:editProperties(editorPropsField, selectedField, createNew, reser
 		local prop = self[editorPropsField][i]
 		local propTitle = prop.k
 	
-		ig.igPushIdStr('prop #'..i)
+		ig.igPushIDStr('prop #'..i)
 					
 		if prop.fieldType[0] == fieldTypeEnum.string then
 			local done
 			if prop.multiLineVisible then
-				ig.igPushIdStr('multiline')
+				ig.igPushIDStr('multiline')
 				-- ctrl+enter returns by default?
 				done = ig.igInputTextMultiline(propTitle, prop.vptr, textBufferSize,
 					ig.ImVec2(0,0),
 					ig.ImGuiInputTextFlags_EnterReturnsTrue
 					+ ig.ImGuiInputTextFlags_AllowTabInput)
 				done = done or ig.igButton('done editing')
-				ig.igPopId()
+				ig.igPopID()
 			else
-				ig.igPushIdStr('singleline')
+				ig.igPushIDStr('singleline')
 				done = ig.igInputText(propTitle, prop.vptr, textBufferSize, ig.ImGuiInputTextFlags_EnterReturnsTrue + ig.ImGuiInputTextFlags_AllowTabInput)
-				ig.igPopId()
+				ig.igPopID()
 			end
 			if done then
 				-- save changes
@@ -1242,7 +1242,7 @@ function Editor:editProperties(editorPropsField, selectedField, createNew, reser
 			end
 		end
 		
-		ig.igPopId()
+		ig.igPopID()
 	end
 	
 	ig.igSeparator()
@@ -1433,7 +1433,7 @@ function Editor:updateGUI()
 				-- why do I have to explicitly specify this child's size?
 				ig.igBeginChild('side '..side, ig.ImVec2(40, 64))
 				
-				ig.igPushIdStr(side)
+				ig.igPushIDStr(side)
 				local lc = side:lower()	
 				self.pickTileWindow:openButton(side:lower()..' tile', self['selected'..side..'TileIndex'], function(i)
 					self['selected'..side..'TileIndex'] = i
@@ -1442,7 +1442,7 @@ function Editor:updateGUI()
 				if ig.igButton('Clear') then
 					self['selected'..side..'TileIndex'] = 0
 				end
-				ig.igPopId()
+				ig.igPopID()
 			
 				ig.igEndChild()
 			end
@@ -1489,7 +1489,7 @@ function Editor:updateGUI()
 		--and ig.igCollapsingHeader('Background Options:')
 		then
 			for i=0,#self.backgroundOptions do
-				ig.igPushIdStr('background '..i)
+				ig.igPushIDStr('background '..i)
 				local background = self.backgroundOptions[i].background
 				
 				local tex = background.tex
@@ -1504,21 +1504,21 @@ function Editor:updateGUI()
 				then
 					self.selectedBackgroundIndex[0] = i
 				end
-				if ig.igIsItemHovered() then
+				if ig.igIsItemHovered(ig.ImGuiHoveredFlags_None) then
 					ig.igBeginTooltip()
 					ig.igText(background.name)
 					ig.igEndTooltip()
 				end
 				
 				ig.igSameLine()
-				ig.igPushIdStr('radio')
-				ig.igRadioButton('', self.selectedBackgroundIndex, i)
-				ig.igPopId()
+				ig.igPushIDStr('radio')
+				ig.igRadioButtonIntPtr('', self.selectedBackgroundIndex, i)
+				ig.igPopID()
 
 				if i > 0 then
 					ig.igSameLine()
-					ig.igPushIdStr('tree')
-					if ig.igTreeNode('') then
+					ig.igPushIDStr('tree')
+					if ig.igTreeNodeStr('') then
 						local float = ffi.new('float[1]')
 						for _,field in ipairs{'scaleX', 'scaleY', 'scrollX', 'scrollY'} do
 							float[0] = background[field] or 0
@@ -1527,16 +1527,16 @@ function Editor:updateGUI()
 						end
 						ig.igTreePop()
 					end
-					ig.igPopId()
+					ig.igPopID()
 				end
-				ig.igPopId()
+				ig.igPopID()
 			end
 		end
 	
 	elseif self.editMode[0] == editModeObjects then
 		do --if ig.igCollapsingHeader('Object Type:', ig.ImGuiTreeNodeFlags_DefaultOpen) then
 			for i,spawnOption in ipairs(self.spawnOptions) do
-				ig.igPushIdStr('spawnOption #'..i)
+				ig.igPushIDStr('spawnOption #'..i)
 				local spawnType = spawnOption.spawnType
 				local spawnClass = require(spawnType.spawn)
 				local sprite = spawnClass.sprite
@@ -1558,12 +1558,12 @@ function Editor:updateGUI()
 				if i % tilesWide > 0 and i < #self.spawnOptions then
 					ig.igSameLine()	
 				end
-				if ig.igIsItemHovered() then
+				if ig.igIsItemHovered(ig.ImGuiHoveredFlags_None) then
 					ig.igBeginTooltip()
 					ig.igText(spawnType.spawn)
 					ig.igEndTooltip()
 				end
-				ig.igPopId()
+				ig.igPopID()
 			end
 		end
 		if self.selectedSpawnInfo then

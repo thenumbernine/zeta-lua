@@ -90,8 +90,8 @@ local timescale = 1
 local R
 local App = class(ImGuiApp)
 	-- closest resolution:
-App.width = winWidth or 1024
-App.height = winHeight or 768
+App.width = winWidth or 768
+App.height = winHeight or 512
 App.title = 'Dump World'
 App.sdlInitFlags = bit.bor(sdl.SDL_INIT_VIDEO, sdl.SDL_INIT_JOYSTICK)
 

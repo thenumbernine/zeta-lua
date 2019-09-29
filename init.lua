@@ -38,8 +38,8 @@ modio.levelcfg = {
 	music = 'music/cave.wav',
 	--music = 'music/overworld.wav',
 
-	--path = 'test',
-	path = 'test2',
+	path = 'test',
+	--path = 'test2',
 	--path = 'doors',
 	--path = 'fight',
 	--path = 'mine',
