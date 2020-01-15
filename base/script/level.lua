@@ -11,9 +11,10 @@ level is going to contain ...
 local ffi = require 'ffi'
 local bit = require 'bit'
 local modio = require 'base.script.singleton.modio'
-local texsys = require 'base.script.singleton.texsys'
 local game = require 'base.script.singleton.game'	-- this should exist by now, right?
 local Image = require 'image'
+local glapp = require 'base.script.singleton.glapp'
+local vec4f = require 'ffi.vec.vec4f'
 local SpawnInfo = require 'base.script.spawninfo'
 
 -- tile in the map system
@@ -61,6 +62,9 @@ Level.tileSize = 16
 -- i.e. room size
 Level.mapTileSize = vec2(32, 32)
 
+-- pixel width of a tile for the renderer to switch to overworld map
+Level.overmapZoomLevel = 16
+
 local function rgbAt(image, x, y)
 	local r = image.buffer[0 + image.channels * (x + image.width * y)]
 	local g = image.buffer[1 + image.channels * (x + image.width * y)]
@@ -70,6 +74,8 @@ local function rgbAt(image, x, y)
 		bit.lshift(g, 8),
 		bit.lshift(b, 16))
 end
+
+local blackPixel = ffi.new('unsigned char[3]', 0,0,0)
 
 --[[
 args:
@@ -194,6 +200,9 @@ function Level:init(args)
 			end
 		end
 	end
+		
+	local texsys = modio:require 'script.singleton.texsys'
+	local Tex2D = texsys.GLTex2D
 
 	-- load backgrounds here
 	self.backgrounds = table(assert(assert(load('return '..assert(file[assert(modio:find('script/backgrounds.lua'))])))()))
@@ -236,14 +245,54 @@ function Level:init(args)
 			assert(self.texpackFilename, "better put your textures in a texpack")
 		end
 		self.texpackImage = Image(self.texpackFilename)
-		local Tex2D = require 'gl.tex2d'	-- TODO use R
 		local gl = game.R.gl
 		self.texpackTex = Tex2D{
 			image = self.texpackImage,
-			minFilter = gl.GL_NEAREST,
+			minFilter = gl.GL_LINEAR,
 			magFilter = gl.GL_NEAREST,
 			internalFormat = gl.GL_RGBA,
 			format = gl.GL_RGBA,
+			generateMipmap = true,	-- only used for the overworld texture
+		}
+	end
+
+	do	-- for editor's sake, and maybe for overworld view's sake, keep a texture with each pixel equal to a tile
+		local gl = game.R.gl
+	
+		local tilesWide = self.texpackTex.width / self.tileSize
+		local tilesHigh = self.texpackTex.height / self.tileSize
+		local tilesInTexpack = tilesWide * tilesHigh
+
+		-- this is the texpack, but scaled down to 1 pixel per tile
+		self.texpackDownsampleImage = Image(tilesWide, tilesHigh, 3, 'unsigned char')
+		local log2tileSize = math.floor(math.log(self.tileSize + .5, 2))
+		
+		self.texpackTex:bind()
+		gl.glGetTexImage(self.texpackTex.target, log2tileSize, gl.GL_RGB, gl.GL_UNSIGNED_BYTE, self.texpackDownsampleImage.buffer)
+		self.texpackTex:unbind()
+
+		-- this is the fg tex image
+		local fgTexImage = fgTileImage:clone()
+
+		for i=0,fgTexImage.height*fgTexImage.width-1 do
+			local fgTileIndex = self.fgTileMap[i]
+			local rgb
+			if fgTileIndex > 0 and fgTileIndex <= tilesInTexpack then
+				rgb = self.texpackDownsampleImage.buffer + 3 * (fgTileIndex-1)
+			else
+				rgb = blackPixel
+			end
+			fgTexImage.buffer[0+fgTexImage.channels*i] = rgb[0]
+			fgTexImage.buffer[1+fgTexImage.channels*i] = rgb[1]
+			fgTexImage.buffer[2+fgTexImage.channels*i] = rgb[2]
+		end
+
+		self.fgTileTex = Tex2D{
+			image = fgTexImage,
+			minFilter = gl.GL_NEAREST,
+			magFilter = gl.GL_NEAREST,
+			internalFormat = gl.GL_RGB,
+			format = gl.GL_RGB,
 		}
 	end
 
@@ -412,8 +461,28 @@ function Level:setTile(x,y, tileIndex, fgTileIndex, bgTileIndex, backgroundIndex
 	if x<1 or y<1 or x>self.size[1] or y>self.size[2] then return 0 end
 	local index = (x-1)+self.size[1]*(y-1)
 	if tileIndex then self.tileMap[index] = tileIndex end
-	if fgTileIndex then self.fgTileMap[index] = fgTileIndex end
+	if fgTileIndex then 
+		self.fgTileMap[index] = fgTileIndex 
+
+		-- update downsampled texture of the whole map
+		
+		local tilesWide = self.texpackTex.width / self.tileSize
+		local tilesHigh = self.texpackTex.height / self.tileSize
+		local tilesInTexpack = tilesWide * tilesHigh
+		
+		local rgb
+		if fgTileIndex > 0 and fgTileIndex <= tilesInTexpack then
+			rgb = self.texpackDownsampleImage.buffer + 3 * (fgTileIndex-1)
+		else
+			rgb = blackPixel
+		end
+		self.fgTileTex:bind()
+		gl.glTexSubImage2D(self.fgTileTex.target, 0, x, y, 1, 1, gl.GL_RGB, gl.GL_UNSIGNED_BYTE, rgb)
+		self.fgTileTex:unbind()
+	end
+	
 	if bgTileIndex then self.bgTileMap[index] = bgTileIndex end
+	
 	if backgroundIndex then self.backgroundMap[index] = backgroundIndex end
 end
 
@@ -426,7 +495,6 @@ function Level:update(dt)
 	self.pos[2] = self.pos[2] + self.vel[2] * dt
 end
 
-local vec4f = require 'ffi.vec.vec4f'
 function Level:draw(R, viewBBox)
 	local patch = require 'base.script.patch'
 
@@ -484,6 +552,20 @@ end
 	if ymin < 1 then ymin = 1 end
 	if ymax > self.size[2] then ymax = self.size[2] end
 
+	-- if we are too far zoomed out, use a lighter render
+	if ibbox.max[1] - ibbox.min[1] > glapp.width / self.overmapZoomLevel then
+		self.fgTileTex:bind()
+		R:quad(
+			.5,.5,
+			.5+self.fgTileTex.width,
+			.5+self.fgTileTex.height,
+			0,0,
+			1,1,
+			0,
+			1,1,1,1)
+		return
+	end
+
 	for y=ymin,ymax do
 		for x=xmin,xmax do
 			local offset = x-1+self.size[1]*(y-1)
@@ -512,14 +594,15 @@ end
 	
 	local tilesWide = self.texpackTex.width / self.tileSize
 	local tilesHigh = self.texpackTex.height / self.tileSize
-	
+	local tilesInTexpack = tilesWide * tilesHigh
+
 	self.texpackTex:bind()
 	for y=ymin,ymax do
 		for x=xmin,xmax do
 			local offset = x-1+self.size[1]*(y-1)
 			-- draw bg tile
 			local bgtileindex = self.bgTileMap[offset]
-			if bgtileindex > 0 then
+			if bgtileindex > 0 and bgtileindex <= tilesInTexpack then
 				bgtileindex = bgtileindex - 1
 				local ti = bgtileindex % tilesWide
 				local tj = (bgtileindex - ti) / tilesWide
@@ -595,7 +678,7 @@ end
 			local offset = x-1+self.size[1]*(y-1)
 			-- draw fg tile
 			local fgtileindex = self.fgTileMap[offset]
-			if fgtileindex > 0 then
+			if fgtileindex > 0 and fgtileindex <= tilesInTexpack then
 				fgtileindex = fgtileindex - 1
 				local ti = fgtileindex % tilesWide
 				local tj = (fgtileindex - ti) / tilesWide

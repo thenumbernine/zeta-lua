@@ -10,6 +10,7 @@ local modio = require 'base.script.singleton.modio'
 local game = require 'base.script.singleton.game'
 local SpawnInfo = require 'base.script.spawninfo'
 local Object = require'base.script.obj.object'
+local glapp = require 'base.script.singleton.glapp'
 
 local Editor = class()
 
@@ -2104,20 +2105,23 @@ function Editor:draw(R, viewBBox)
 	if ymax > game.level.size[2] then ymax = game.level.size[2] end
 
 	if self.showTileTypes[0] then
-		for y=ymin,ymax do
-			for x=xmin,xmax do
-				local tiletype = game.level.tileMapOriginal[(x-1)+game.level.size[1]*(y-1)]
-				if tiletype ~= 0 then
-					local option = self.tileOptions[tiletype]
-					local tex = option and option.tex
-					if tex then tex:bind() end
-					R:quad(
-						x, y,
-						1, 1,
-						0, 0, 
-						1, 1,
-						0,
-						1,1,1,.5)
+		-- if we are too far zoomed out, use a lighter render
+		if itileBBox.max[1] - itileBBox.min[1] <= glapp.width / game.level.overmapZoomLevel then
+			for y=ymin,ymax do
+				for x=xmin,xmax do
+					local tiletype = game.level.tileMapOriginal[(x-1)+game.level.size[1]*(y-1)]
+					if tiletype ~= 0 then
+						local option = self.tileOptions[tiletype]
+						local tex = option and option.tex
+						if tex then tex:bind() end
+						R:quad(
+							x, y,
+							1, 1,
+							0, 0,
+							1, 1,
+							0,
+							1,1,1,.5)
+					end
 				end
 			end
 		end
