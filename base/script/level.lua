@@ -461,29 +461,48 @@ function Level:setTile(x,y, tileIndex, fgTileIndex, bgTileIndex, backgroundIndex
 	if x<1 or y<1 or x>self.size[1] or y>self.size[2] then return 0 end
 	local index = (x-1)+self.size[1]*(y-1)
 	if tileIndex then self.tileMap[index] = tileIndex end
-	if fgTileIndex then 
-		self.fgTileMap[index] = fgTileIndex 
-
-		-- update downsampled texture of the whole map
-		
-		local tilesWide = self.texpackTex.width / self.tileSize
-		local tilesHigh = self.texpackTex.height / self.tileSize
-		local tilesInTexpack = tilesWide * tilesHigh
-		
-		local rgb
-		if fgTileIndex > 0 and fgTileIndex <= tilesInTexpack then
-			rgb = self.texpackDownsampleImage.buffer + 3 * (fgTileIndex-1)
-		else
-			rgb = blackPixel
-		end
-		self.fgTileTex:bind()
-		gl.glTexSubImage2D(self.fgTileTex.target, 0, x, y, 1, 1, gl.GL_RGB, gl.GL_UNSIGNED_BYTE, rgb)
-		self.fgTileTex:unbind()
-	end
-	
+	if fgTileIndex then self.fgTileMap[index] = fgTileIndex end
 	if bgTileIndex then self.bgTileMap[index] = bgTileIndex end
-	
 	if backgroundIndex then self.backgroundMap[index] = backgroundIndex end
+end
+
+-- update downsampled texture of the whole map
+-- if you call level:setTile then you have to manually call this
+-- assumes that x1,y1,x2,y2 are integers in range [1,size] 
+local gl
+function Level:refreshFgTileTexels(x1,y1,x2,y2)
+	local tilesWide = self.texpackTex.width / self.tileSize
+	local tilesHigh = self.texpackTex.height / self.tileSize
+	local tilesInTexpack = tilesWide * tilesHigh
+
+	if x2<1 or y2<1 or x1>self.size[1] or y1>self.size[2] then return end
+	x1 = math.max(x1, 1)
+	y1 = math.max(y1, 1)
+	x2 = math.min(x2, self.size[1])
+	y2 = math.min(y2, self.size[2])
+	
+	self.fgTileTex:bind()
+	for y=y1,y2 do
+		for x=x1,x2 do
+			local index = (x-1)+self.size[1]*(y-1)
+			local fgTileIndex = self.fgTileMap[index]
+			
+			local rgb
+			if fgTileIndex > 0 and fgTileIndex <= tilesInTexpack then
+				rgb = self.texpackDownsampleImage.buffer + 3 * (fgTileIndex-1)
+			else
+				rgb = blackPixel
+			end
+	
+			--[[ TODO use fgTexImage.  but what about the row skip?  use this as a temp buffer and just leave the contents garbage?
+			fgTexImage.buffer[0+fgTexImage.channels*i] = rgb[0]
+			fgTexImage.buffer[1+fgTexImage.channels*i] = rgb[1]
+			fgTexImage.buffer[2+fgTexImage.channels*i] = rgb[2]
+			--]]
+			gl.glTexSubImage2D(self.fgTileTex.target, 0, x-1, y-1, 1, 1, gl.GL_RGB, gl.GL_UNSIGNED_BYTE, rgb)
+		end
+	end
+	self.fgTileTex:unbind()
 end
 
 function Level:makeEmpty(x,y)
@@ -496,6 +515,7 @@ function Level:update(dt)
 end
 
 function Level:draw(R, viewBBox)
+	gl = R.gl -- save externally for refreshFgTileTexels
 	local patch = require 'base.script.patch'
 
 	-- [[ testing lighting

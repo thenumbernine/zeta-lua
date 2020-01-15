@@ -77,9 +77,14 @@ Editor.paintBrush = {
 				end
 			end
 		end
-	
+		
 		if self.smoothWhilePainting[0] then
 			Editor.smoothBrush.paint(self, cx, cy, self.smoothBorder[0])
+		end
+	
+		-- if we changed the fgTileMap then update the texels of the overmap
+		if self.paintingFgTile[0] then
+			level:refreshFgTileTexels(xmin,ymin,xmax,ymax)
 		end
 	end,
 }
@@ -126,12 +131,21 @@ Editor.fillBrush = {
 				end
 			end
 			if not different then return end
+			
+			local xmin, xmax = x, x
+			local ymin, ymax = y, y
 		
 			local iter = 0
 			while #check > 0 do
 				iter = iter + 1
 				if iter%100 == 0 then coroutine.yield() end
 				local pt = check:remove(1)
+				
+				xmin = math.min(xmin, pt[1])
+				xmax = math.max(xmax, pt[1])
+				ymin = math.min(ymin, pt[2])
+				ymax = math.max(ymax, pt[2])
+				
 				local offset = (pt[1]-1) + level.size[1] * (pt[2]-1)
 				for _,info in ipairs(infos) do
 					if info.mask then
@@ -165,6 +179,11 @@ Editor.fillBrush = {
 						end
 					end
 				end
+			end
+		
+			-- if we changed the fgTileMap then update the texels of the overmap
+			if infos[2].mask then --self.paintingFgTile[0] then
+				level:refreshFgTileTexels(xmin,ymin,xmax,ymax)
 			end
 		end
 		threads:add(thread)
@@ -371,6 +390,11 @@ do
 						end
 					end
 				end
+			end
+		
+			-- if we changed the fgTileMap then update the texels of the overmap
+			if self.paintingFgTile[0] then
+				level:refreshFgTileTexels(xmin,ymin,xmax,ymax)
 			end
 		end,
 	}
@@ -592,6 +616,7 @@ local function doMoveWorld(dx, dy)
 		end
 	end
 	level:refreshTiles()	-- copy original into current buffer
+	level:refreshFgTileTexels(1,1, level.size[1], level.size[2])
 	-- move rooms?
 	do
 		local map = level.roomMap
@@ -1806,11 +1831,21 @@ function Editor:update()
 													= level[info.map][(srcx-1)+level.size[1]*(srcy-1)] 
 												level[info.map..'Original'][(dstx-1)+level.size[1]*(dsty-1)]
 													= level[info.map..'Original'][(srcx-1)+level.size[1]*(srcy-1)] 
+											
 											end
 										end
 									end
 								end
 							end
+						end
+						
+						-- if we changed the fgTileMap then update the texels of the overmap
+						if self.paintingFgTile[0] then
+							level:refreshFgTileTexels(
+								math.floor(x - tonumber(brushWidth-1)/2),
+								math.floor(y - tonumber(brushHeight-1)/2),
+								self.moveBBox.max[1] - self.moveBBox.min[1] + math.floor(x - tonumber(brushWidth-1)/2),
+								self.moveBBox.max[2] - self.moveBBox.min[2] + math.floor(y - tonumber(brushHeight-1)/2))
 						end
 					else
 						self.isMoving = false
@@ -1856,7 +1891,16 @@ function Editor:update()
 								end
 							end
 						end
-					
+
+						-- if we changed the fgTileMap then update the texels of the overmap
+						if self.paintingFgTile[0] then
+							level:refreshFgTileTexels(
+								math.min(x1,x2),
+								math.min(y1,y2),
+								math.max(x1,x2),
+								math.max(y1,y2))
+						end
+
 						if self.paintingObjects[0] then
 							for _,spawnInfo in ipairs(level.spawnInfos) do
 								if spawnInfo.pos[1]-.5 >= self.moveBBox.min[1]
