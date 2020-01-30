@@ -14,7 +14,7 @@ local modio = require 'base.script.singleton.modio'
 local game = require 'base.script.singleton.game'	-- this should exist by now, right?
 local Image = require 'image'
 local glapp = require 'base.script.singleton.glapp'
-local vec4f = require 'ffi.vec.vec4f'
+local vec4f = require 'vec-ffi.vec4f'
 local SpawnInfo = require 'base.script.spawninfo'
 
 -- tile in the map system
