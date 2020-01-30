@@ -40,6 +40,8 @@ I'm dumping a whole bunch of random stuff into a platformer engine.
 	* threadmanager
 	* simplexnoise
 	* gui
+	* vec-ffi
+	* lua-ffi-bindings
 
 Uses my lua-dist project to create cross-platform distributables.
-I've ported this to Android and Wii before, but still need to integrate the changes. 
+I've ported this manually to Android and Wii before, but still need to integrate the changes. 
