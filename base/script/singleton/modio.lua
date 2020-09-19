@@ -11,7 +11,7 @@ ModIO.search = table{'base'}
 function ModIO:find(fn)
 	for _,dir in ipairs(self.search) do
 		local fullfn = dir .. '/' .. fn
-		if io.fileexists(fullfn) then return fullfn end
+		if os.fileexists(fullfn) then return fullfn end
 	end
 end
 
@@ -21,7 +21,7 @@ function ModIO:require(includename)
 	for _,dir in ipairs(self.search) do
 		local filename = dir..'/'.. includename:gsub('%.', '/') .. '.lua'
 		--print('checking '..filename..'...')
-		if io.fileexists(filename) then
+		if os.fileexists(filename) then
 			--print('...found!')
 			return require(dir..'.'..includename)
 		end

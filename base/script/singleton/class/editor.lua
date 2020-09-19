@@ -2272,7 +2272,7 @@ function Editor:saveMap()
 		end
 		local dest = dir..'/' .. info.dst
 		-- backup
-		if io.fileexists(dest) then
+		if os.fileexists(dest) then
 			file[dir..'/~' .. info.dst] = file[dest]
 		end
 		image:save(dest)
@@ -2298,7 +2298,7 @@ end
 function Editor:saveBackgrounds()
 	local dir = modio.search[1]..'/script/'
 	local dest = dir..'backgrounds.lua'
-	if io.fileexists(dest) then
+	if os.fileexists(dest) then
 		file[dir..'/~backgrounds.lua'] = file[dest]
 	end
 	file[dest] = 

@@ -129,7 +129,7 @@ function App:initGL(gl, glname)
 	end
 
 	for _,mod in ipairs(modio.search) do
-		if io.fileexists(mod..'/script/sprites.lua') then
+		if os.fileexists(mod..'/script/sprites.lua') then
 			local spriteTable = require(mod..'.script.sprites')
 			for _,sprite in ipairs(spriteTable) do
 				animsys:load(sprite)
@@ -138,7 +138,7 @@ function App:initGL(gl, glname)
 	end
 	
 	for _,mod in ipairs(modio.search) do
-		if io.fileexists(mod..'/script/sounds.lua') then
+		if os.fileexists(mod..'/script/sounds.lua') then
 			local soundTable = require(mod..'.script.sounds')
 			for _,sound in ipairs(soundTable) do
 				sounds:load(sound)
@@ -172,7 +172,7 @@ function App:initGL(gl, glname)
 		self.src = assert(args.src)
 	end
 	local save
-	if savefile and io.fileexists(savefile) then
+	if savefile and os.fileexists(savefile) then
 		local code = [[
 local arrayRef = ...
 return ]]..file[savefile]
@@ -188,10 +188,10 @@ return ]]..file[savefile]
 	local serializeTypes = table()
 	for i=#modio.search,1,-1 do	-- start with lowest (base) first, for sequence sake
 		local mod = modio.search[i]
-		if io.fileexists(mod..'/script/tiletypes.lua') then
+		if os.fileexists(mod..'/script/tiletypes.lua') then
 			tileTypes:append(require(mod..'.script.tiletypes'))
 		end
-		if io.fileexists(mod..'/script/spawntypes.lua') then
+		if os.fileexists(mod..'/script/spawntypes.lua') then
 			local modSpawnTypes = require(mod..'.script.spawntypes')
 			spawnTypes:append(modSpawnTypes.spawn)
 			serializeTypes:append(modSpawnTypes.spawn)
@@ -277,7 +277,7 @@ function App:loadLevelConfig(save)
 	local levelcfg = 
 		(save and save.levelcfg)
 		or modio.levelcfg
-		or (io.fileexists'levelcfg.lua' and assert(load('return '..file['levelcfg.lua']))())
+		or (os.fileexists'levelcfg.lua' and assert(load('return '..file['levelcfg.lua']))())
 	assert(levelcfg, "failed to find levelcfg info in save file, modio, or levelcfg.lua file")
 	return levelcfg
 end
@@ -298,7 +298,7 @@ local inputKeyNames = table{
 
 local configFileName = 'config'
 local config
-if io.fileexists(configFileName) then
+if os.fileexists(configFileName) then
 	config = assert(load('return '..file[configFileName]))()
 end
 if type(config) ~= 'table' then config = {} end

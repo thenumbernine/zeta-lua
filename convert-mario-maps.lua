@@ -20,7 +20,7 @@ local parser = require 'parser'
 
 local tilePath = dir..'/tile.png'
 local origTilePath = '../dumpworld-original/'..dir..'/tile.png'
-assert(io.fileexists(origTilePath), "couldn't find the original tile file")
+assert(os.fileexists(origTilePath), "couldn't find the original tile file")
 
 local oldSearchPath = table{'mario', 'base'}
 local newSearchPath = table{'mario', 'base'}
