@@ -182,7 +182,7 @@ function Geemer:touch(other, side)
 	-- this makes collision run incredibly slow in crowds
 	-- give this its own flags?
 	-- make it non-solid?
-	if other:isa(Geemer) then
+	if Geemer:isa(other) then
 		self.avoiding = other
 		return true
 	end
@@ -230,7 +230,7 @@ function Geemer:die(damage, attacker, inflicter, side)
 	
 	-- piss off the geemers around you
 	for _,other in ipairs(game.objs) do
-		if other:isa(Geemer) then
+		if Geemer:isa(other) then
 			local delta = other.pos - self.pos
 			if delta:length() < 2.5 then
 				other.madAt = attacker

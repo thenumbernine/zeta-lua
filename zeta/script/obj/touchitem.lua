@@ -11,7 +11,7 @@ end
 
 function TouchItem:touch(other)
 	if self.remove then return end
-	if not other:isa(require 'zeta.script.obj.hero') then return true end
+	if not require 'zeta.script.obj.hero':isa(other) then return true end
 	self:playSound('powerup')
 	self.remove = true
 	

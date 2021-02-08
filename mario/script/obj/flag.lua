@@ -36,7 +36,7 @@ function Flag:update(dt)
 			-- TODO show it in the client view as an overlay 
 			local winner = self.heldby
 			for _,obj in ipairs(game.objs) do
-				if obj:isa(Mario) then
+				if Mario:isa(obj) then
 					local gui = require 'base.script.singleton.gui'
 					local showWinner = Object{pos = winner.pos}
 					showWinner.solidFlags = 0
@@ -52,7 +52,7 @@ function Flag:update(dt)
 						local gl = R.gl
 						gl.glEnable(gl.GL_TEXTURE_2D)
 					end
-				elseif obj:isa(Flag) then
+				elseif Flag:isa(obj) then
 					obj.gameHasEnded = true
 				end
 			end

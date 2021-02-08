@@ -33,9 +33,9 @@ function Zoomer:modifyDamageTaken(damage, attacker, inflicter, side)
 	local Missile = require 'zeta.script.obj.missile'
 	local Grenade = require 'zeta.script.obj.grenade'
 	local Hero = require 'zeta.script.obj.hero'
-	if not (inflicter:isa(Missile)
-		or inflicter:isa(Grenade)
-		or inflicter:isa(Hero))
+	if not (Missile:isa(inflicter)
+		or Grenade:isa(inflicter)
+		or Hero:isa(inflicter))
 	then
 		return 0
 	end

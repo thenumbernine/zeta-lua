@@ -279,7 +279,7 @@ local function testBoxBox(self, testStuck, bxmin, bymin, bxmax, bymax, dt, dx, d
 	
 	local side
 
---local print = self:isa(require 'zeta.script.obj.hero') and print or function() end
+--local print = require 'zeta.script.obj.hero':isa(self) and print or function() end
 
 --print('  ========================')
 --print('  == BEGIN BOX/BOX TEST ==')
@@ -629,7 +629,7 @@ local function testBoxSlope(self, testStuck, x, y, tileType, dt, dx, dy)
 	-- and at the moment there are no non-blocking tiles, nor tile touch callbacks
 	if dt == 0 then return dt end
 
---local print = self:isa(require 'zeta.script.obj.hero') and print or function() end
+--local print = require 'zeta.script.obj.hero':isa(self) and print or function() end
 
 --print('  ==========================')
 --print('  == BEGIN BOX/SLOPE TEST ==')
@@ -865,7 +865,7 @@ end
 
 function Object:move_sub(dx,dy)
 
---local print = self:isa(require 'zeta.script.obj.hero') and print or function() end
+--local print = require 'zeta.script.obj.hero':isa(self) and print or function() end
 	
 	-- make sure you can't hit an object twice in the same movement
 	-- needed for movements that start inside non-solid objects

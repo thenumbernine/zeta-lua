@@ -37,6 +37,6 @@ function removeGeemersIfBossNotKilled()
 	if session.geemerBossKilled then return end
 	local Geemer = require 'zeta.script.obj.geemer'
 	for _,obj in ipairs(game.objs) do
-		if obj:isa(Geemer) then obj.remove = true end
+		if Geemer:isa(obj) then obj.remove = true end
 	end
 end

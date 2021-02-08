@@ -16,7 +16,7 @@ Trigger.blockFlags = 0
 function Trigger:touch(other, side)
 	-- by default, triggers only operate when players touch them
 	-- maybe later I'll have a flag for enemies too
-	if not other:isa(Player) then return true end
+	if not Player:isa(other) then return true end
 	
 	if game.time < self.nextTriggerTime then return end
 	self.nextTriggerTime = game.time + self.wait

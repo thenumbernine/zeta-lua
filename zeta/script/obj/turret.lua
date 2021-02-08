@@ -57,8 +57,8 @@ function Turret:update(dt)
 		--for obj in game:objsInRange(self.searchDist) do
 		--for _,obj in ipairs(game.objs) do
 		for _,obj in ipairs(game.players) do
-			if obj:isa(Hero)
-			--or obj:isa(Geemer)
+			if Hero:isa(obj)
+			--or Geemer:isa(obj)
 			then
 				local delta = obj.pos - self.pos
 				if delta:length() < self.searchDist then

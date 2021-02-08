@@ -39,7 +39,7 @@ function PickUpBlock:touch(other, side, ...)
 	
 	if not self.heldby then
 		if self.dir == 0 then 
-			if other:isa(Mario) then
+			if Mario:isa(other) then
 				local dx = self.pos[1] - other.pos[1]
 				self:kick(other, dx)
 			else

@@ -32,7 +32,7 @@ function Door:init(...)
 	-- if there's a door next to this, and it's open, then open this door too
 	for _,obj in ipairs(game.objs) do
 		if obj ~= self
-		and obj:isa(Door)
+		and Door:isa(obj)
 		and math.abs(obj.startPos[1] - self.startPos[1]) == 1
 		and obj.startPos[2] == self.startPos[2]
 		and obj.solidFlags == 0
@@ -46,7 +46,7 @@ Door.solidFlags = Door.SOLID_WORLD
 Door.touchFlags = Door.SOLID_YES	-- player, specifically
 Door.blockFlags = 0
 function Door:touch(other, side)
-	if not other:isa(Hero) then return end
+	if not Hero:isa(other) then return end
 	self.blockTime = game.time + .1
 	if self.solidFlags == 0 then return end
 
@@ -57,7 +57,7 @@ function Door:touch(other, side)
 		if other.items then
 			for _,items in ipairs(other.items) do
 				for _,item in ipairs(items) do
-					if item:isa(KeyCard)
+					if KeyCard:isa(item)
 					and item.color
 					and vec4.__eq(item.color, self.color)
 					then

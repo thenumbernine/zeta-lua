@@ -269,7 +269,7 @@ Hero.speedBoostCharge = 0
 function Hero:getMaxRunVel()
 	local SpeedBooster = require 'zeta.script.obj.speedbooster'
 	for _,items in ipairs(self.items) do
-		if items[1]:isa(SpeedBooster) then
+		if SpeedBooster:isa(items[1]) then
 			return self.speedBoostMaxRunVel
 		end
 	end
@@ -795,7 +795,7 @@ function Hero:update(dt)
 				break
 			else
 				local item = self.items[itemIndex][1]
-				if item:isa(Weapon) then
+				if Weapon:isa(item) then
 					newWeapon = item
 					break
 				end

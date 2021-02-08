@@ -1,6 +1,6 @@
 local game = require 'base.script.singleton.game'
 local itemDropBehavior = function(parentClass)
-	--assert(parentClass.isa({class=parentClass}, require 'zeta.script.obj.takesdamage'))
+	--assert(require 'zeta.script.obj.takesdamage':isa(parentClass))
 	
 	local ItemDropTemplate = class(parentClass)
 
