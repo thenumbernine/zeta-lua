@@ -18,8 +18,13 @@ return function(parentClass)
 	local viewport = vec4i()
 	local drawbuffer = ffi.new'int[1]'
 
-	function PostFBOTemplate:render(preDrawCallback, postRenderCallback, ...)
+	function PostFBOTemplate:render(preDrawCallback, postDrawCallback, ...)
 		
+		local editor = require 'base.script.singleton.editor'()
+		if editor.active then
+			return parentClass.render(self, preDrawCallback, postDrawCallback, ...)
+		end
+
 		local R = self.R
 		local gl = R.gl
 		
@@ -68,8 +73,8 @@ varying vec4 color;
 uniform sampler2D tex;
 uniform vec2 texSize;
 
-vec2 cplxmul(vec2 a, vec2 b) {
-	return vec2(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
+float lenSq(vec3 a) {
+	return dot(a, a);
 }
 
 void main() {
@@ -77,38 +82,92 @@ void main() {
 	// to 'tc'
 
 	vec3 grey = vec3(.3, .6, .1);
-	vec2 du = vec2(1. / texSize.x, 0.);
-	vec2 dv = vec2(0., 1. / texSize.y);
+	vec2 duv = 1. / texSize;
+	vec2 du = vec2(duv.x, 0.);
+	vec2 dv = vec2(0., duv.y);
 
 	vec2 origin = vec2(.5, .55);
-	float numSteps = 100.;
 	
 	vec2 raypos = origin;
-	vec2 rayvel = (tc - origin) / numSteps;
+	vec2 rayvel = tc - origin;
 	float raylength = length(rayvel);
 	vec2 raydir = rayvel / raylength;
+
+	//you should set this to the number of texels wide that half the screen is.
+	//but 100 is fast & good on my card
+	float numSteps = 100.;// * raylength * 3.;
 	
 	vec4 color = vec4(1.);
 
+	float dlen = raylength / numSteps;
 	for (float i = 0; i < numSteps; ++i) {
-		raypos += raydir * raylength;
+		vec2 oldraypos = raypos;
+		raypos += raydir * dlen;
+
+		vec4 sampleColor = texture2D(tex, raypos);
 	
+		
+/* TODO 
+add some extra render info into the buffer on how to transform the rays at each point
+
+- transform ray direction (reflection/refraction effects)
+- transform ray position (portals)
+- transparency
+*/
+
+		//opacity==1 means ordinary rendering, no smearing
+		//opacity==0 means fully smeared
+		//float opacity = 1.;
+
+		vec3 effectSrcColor = vec3(0., 0., 1.);
+		//vec3 effectSrcColor = vec3(160., 75., 132.) / 255.;
+
+		vec3 reflectEffectSrcColor = vec3(0., 1., 0.);
+		
+		float opacity = lenSq(sampleColor.rgb - effectSrcColor)
+		//+ lenSq(sampleColor.rgb - reflectEffectSrcColor)
+		;
+		
+		opacity -= .1;
+		opacity *= 3.;
+		opacity = clamp(opacity, 0., 1.);
+		//opacity = smoothstep(.1, .8, opacity);
+		
+		//float refractivity = 0.;
+		float refractivity = .05 * (1. - opacity);
+		
+		//opacity = 1. - sqrt(1. - opacity);	//pulls down, more at the bottom
+		//opacity *= opacity;					//pulls down, more at the top
+		//opacity = 1. - pow(1. - opacity, 1. / 8.);
+		//opacity = pow(opacity, 8.);
+		//opacity *= .1;
+		//opacity = 1.;
+
 		//now add color slope to raydir and normalize
 		vec2 dl = vec2(
 			.5 * (dot(grey, texture2D(tex, raypos + du)) - dot(grey, texture2D(tex, raypos - du))),
 			.5 * (dot(grey, texture2D(tex, raypos + dv)) - dot(grey, texture2D(tex, raypos - dv)))
 		);
 		dl = normalize(dl);
-		raydir = normalize(mix(raydir, cplxmul(raydir, dl), .01));
+		//cheap I know
+		raydir = normalize(mix(raydir, raydir + dl, refractivity));
 
-		vec4 sampleColor = texture2D(tex, raypos);
-		float opacity = dot(grey, sampleColor);
-		opacity = 1. - pow(1. - opacity, 1. / 8.);
-		color *= 1. - opacity;
-		color += opacity * sampleColor;
+
+		//cheap reflections
+		if (lenSq(sampleColor.rgb - reflectEffectSrcColor) < .15) {
+			raydir = normalize(raydir - 2. * dl * dot(raydir, dl));
+			raypos = oldraypos + raydir * 2. * duv;
+		}
+
+		//color.a = opacity;
+		color.a *= opacity;
+		//color.a = 1. - color.a * (1. - opacity);
+		
+		color.rgb *= 1. - color.a;
+		color.rgb += color.a * sampleColor;
 	}
-
-	gl_FragColor = color;
+	
+	gl_FragColor = vec4(color.rgb, 1.);
 }
 ]],
 					uniforms = {
@@ -168,7 +227,7 @@ void main() {
 			gl.glMatrixMode(gl.GL_MODELVIEW)
 			gl.glPopMatrix()
 
-			if postRenderCallback then postRenderCallback(...) end
+			if postDrawCallback then postDrawCallback(...) end
 		
 			glreport'here'
 		end, ...)

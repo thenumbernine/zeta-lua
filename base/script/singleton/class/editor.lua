@@ -1706,8 +1706,8 @@ function Editor:update()
 	local level = game.level
 	local mouse = gui.mouse
 	if mouse.leftDown then
-		local xf = self.viewBBox.min[1] + (self.viewBBox.max[1] - self.viewBBox.min[1]) * mouse.pos[1]
-		local yf = self.viewBBox.min[2] + (self.viewBBox.max[2] - self.viewBBox.min[2]) * mouse.pos[2]
+		local xf = self.viewBBox.min[1] + (self.viewBBox.max[1] - self.viewBBox.min[1]) * mouse.pos.x
+		local yf = self.viewBBox.min[2] + (self.viewBBox.max[2] - self.viewBBox.min[2]) * mouse.pos.y
 		local x = math.floor(xf)
 		local y = math.floor(yf)
 		if self.editMode[0] == editModePaintTiles
@@ -2177,8 +2177,9 @@ function Editor:draw(R, viewBBox)
 		gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
 		gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
 		gl.glLineWidth(3)
-		local cx = math.floor(self.viewBBox.min[1] + (self.viewBBox.max[1] - self.viewBBox.min[1]) * mouse.pos[1])
-		local cy = math.floor(self.viewBBox.min[2] + (self.viewBBox.max[2] - self.viewBBox.min[2]) * mouse.pos[2])
+
+		local cx = math.floor(self.viewBBox.min[1] + (self.viewBBox.max[1] - self.viewBBox.min[1]) * mouse.pos.x)
+		local cy = math.floor(self.viewBBox.min[2] + (self.viewBBox.max[2] - self.viewBBox.min[2]) * mouse.pos.y)
 		local brushWidth, brushHeight = 1, 1
 		if self.editMode[0] == editModePaintTiles
 		or self.editMode[0] == editModeFillTiles

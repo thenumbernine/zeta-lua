@@ -1,8 +1,9 @@
 local Game = require 'base.script.singleton.class.game'
 local teamColors = require 'base.script.teamcolors'
 
-local MarioGame = behaviors(Game,
-	require 'base.script.behavior.postfbo')
+local MarioGame = behaviors(Game
+	, require 'base.script.behavior.postfbo'
+)
 
 MarioGame.maxFallVel = 20
 MarioGame.name = 'MarioGame'
