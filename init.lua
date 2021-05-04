@@ -31,7 +31,7 @@ end
 local modio = require 'base.script.singleton.modio'
 modio.search = table{'base'}
 
---[[ mario
+-- [[ mario
 modio.search:insert(1, 'mario')
 modio.levelcfg = {
 
@@ -63,7 +63,7 @@ modio.levelcfg = {
 }
 --]]
 
--- [[ zeta
+--[[ zeta
 modio.search:insert(1, 'zeta')
 --modio.search:insert'mario'	-- don't add this, it messes up the block types.
 modio.levelcfg = {

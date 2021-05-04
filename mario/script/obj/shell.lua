@@ -78,7 +78,7 @@ function Shell:touch(other, side)
 	
 	if not self.heldby then
 		if self.dir == 0 then -- stationary
-			if Player.is(other) then
+			if Player:isa(other) then
 				local dx = other.pos[1] - self.pos[1]
 				if dx < 0 then
 					self.dir = 1
@@ -98,7 +98,7 @@ function Shell:touch(other, side)
 			end
 		else -- the shell is kicked and moving
 			-- be generous to the player -- let him bounce
-			if Player.is(other) and other.pos[2] > self.pos[2] then 
+			if Player:isa(other) and other.pos[2] > self.pos[2] then 
 				return false
 			end	
 			-- moving collision

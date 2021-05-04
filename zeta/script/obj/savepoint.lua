@@ -68,9 +68,9 @@ function SavePoint:playerUse(player)
 							then
 								return serialize(v, tab..'\t')
 							--]]
-							elseif Object.is(v) then 
+							elseif Object:isa(v) then 
 								return arrayNamed(v, game.objs, 'game.objs', 'Object')
-							elseif SpawnInfo.is(v) then
+							elseif SpawnInfo:isa(v) then
 								return arrayNamed(v, game.level.spawnInfos, 'game.level.spawnInfos', 'SpawnInfo')
 							elseif k == 'playerServerObj' then
 								return arrayNamed(v, game.server.playerServerObjs, 'game.server.playerServerObjs', 'PlayerServerObj')

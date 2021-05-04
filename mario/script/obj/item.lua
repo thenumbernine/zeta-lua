@@ -9,7 +9,7 @@ local Item = class(Object)
 Item.solidFlags = Item.SOLID_NO
 
 function Item:touch(other, side)
-	if Mario.is(other) then
+	if Mario:isa(other) then
 		other:growBig()
 		if self.itemClass then other.item = self:itemClass() end
 		self.remove = true

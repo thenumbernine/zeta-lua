@@ -7,7 +7,7 @@ VineEgg.sprite = 'egg'
 
 local VineTile = require 'mario.script.tile.vine'
 local vineTileType = game.levelcfg.tileTypes:find(nil, function(tileType)
-	return VineTile.is(tileType)
+	return VineTile:isa(tileType)
 end)
 	
 function VineEgg:update(...)

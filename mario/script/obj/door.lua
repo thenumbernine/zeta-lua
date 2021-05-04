@@ -25,7 +25,7 @@ function Door:init(args)
 		coroutine.yield()
 		for i,obj in ipairs(game.objs) do
 			if obj ~= self
-			and Door.is(obj) 
+			and Door:isa(obj) 
 			and obj.name == self.name 
 			then
 				self.dests:insert(vec2(obj.pos[1], obj.pos[2]))

@@ -323,7 +323,7 @@ function Mario:update(dt)
 			for y=math.floor(self.pos[2] + self.bbox.min[2]),math.floor(self.pos[2] + self.bbox.max[2]) do
 				local tile = level:getTile(x,y)
 				if tile then
-					if CoinTile.is(tile) then
+					if CoinTile:isa(tile) then
 						self:playSound('coin')
 						level:makeEmpty(x,y)
 					end

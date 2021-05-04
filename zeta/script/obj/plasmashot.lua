@@ -31,7 +31,7 @@ PlasmaShot.touchFlags = PlasmaShot.SOLID_WORLD + PlasmaShot.SOLID_YES + PlasmaSh
 PlasmaShot.blockFlags = PlasmaShot.SOLID_WORLD + PlasmaShot.SOLID_YES
 
 function PlasmaShot:touchTile(tileType, side, plane, x, y)
-	if require 'zeta.script.tile.plasmabreak'.is(tileType) then
+	if require 'zeta.script.tile.plasmabreak':isa(tileType) then
 		game.level:clearTileAndBreak(x, y, self)
 	end
 	self:blast()

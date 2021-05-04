@@ -46,7 +46,7 @@ function SpinBlock:update(dt)
 			self.spinEndTime = nil
 			self.remove = true
 			local spinTileType = assert(game.levelcfg.tileTypes:find(nil, function(tileType)
-				return require 'mario.script.tile.spin'.is(tileType)
+				return require 'mario.script.tile.spin':isa(tileType)
 			end))
 			game.level:setTile(self.tilePos[1], self.tilePos[2], spinTileType, 5)
 		end

@@ -14,7 +14,7 @@ function BreakTile:onHit(other, x, y)
 
 	-- TODO hit things within the tile
 
-	--if Mario.is(other) and other.big then 
+	--if Mario:isa(other) and other.big then 
 	local SpinParticle = require 'mario.script.obj.spinparticle'
 	SpinParticle.breakAt(x + .5, y)
 	game.level:makeEmpty(x,y)

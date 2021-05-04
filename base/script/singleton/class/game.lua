@@ -196,7 +196,7 @@ function Game:getNextAudioSource()
 	until self.audioSourceIndex == startIndex
 end
 
-function Game:render(preDrawCallback)
+function Game:render(preDrawCallback, postRenderCallback)
 	local glapp = require 'base.script.singleton.glapp'
 	local editor = require 'base.script.singleton.editor'()
 	local R = self.R
@@ -261,6 +261,8 @@ function Game:render(preDrawCallback)
 				objs[i].drawn = false
 			end
 		end
+
+		if postRenderCallback then postRenderCallback() end
 	
 		-- draw player hud
 		if player.drawHUD then

@@ -3,7 +3,7 @@ local function hurtsToTouchBehavior(parentClass)
 --[[	
 	local Mario = require 'mario.script.obj.mario'
 	function HurtsToTouchTemplate:makesMeAngry(other)
-		return Mario.is(other)
+		return Mario:isa(other)
 	end
 
 	function HurtsToTouchTemplate:touch(other, ...)
