@@ -1,6 +1,7 @@
 -- behavior for game singleton class
 
 local vec4i = require 'vec-ffi.vec4i'
+local vec2i = require 'vec-ffi.vec2i'
 local FBO = require 'gl.fbo'
 local GLTex2D = require 'gl.tex2d'
 local GLProgram = require 'gl.program'
@@ -11,8 +12,7 @@ return function(parentClass)
 
 	local fbo
 	local tex
-	local texWidth = 1024
-	local texHeight = 1024
+	local texSize = vec2i(768, 768)
 	local renderShader
 
 	local viewport = vec4i()
@@ -30,28 +30,48 @@ return function(parentClass)
 		
 		local glapp = require 'base.script.singleton.glapp'
 		local windowWidth, windowHeight = glapp:size()
+		local aspectRatio = windowWidth / windowHeight
 		
 		PostFBOTemplate.super.render(self, function(...)
 			
 			gl.glGetIntegerv(gl.GL_VIEWPORT, viewport.s)
 			gl.glGetIntegerv(gl.GL_DRAW_BUFFER, drawbuffer)
 
-			if not fbo then
-				assert(not tex)
+			--[[ use window size in case the individual viewport sizes vary
+			-- the downside? right now most of the raytrace shader assumes the texture sampling region is [0,1]^2
+			local targetFBOWidth = windowWidth
+			local targetFBOHeight = windowHeight
+			--]]
+			--[[ use the viewport width/height
+			local targetFBOWidth = tonumber(viewport.s[2])
+			local targetFBOHeight  = tonumber(viewport.s[3])
+			--]]
+			-- [[ use the fixed width originally specified and for rendering we just upscale it
+			-- and use the aspect ratio to determine our height
+			-- however, to do this, you need to fake app:size() for the duration of the render
+			-- looks like no one's using it, so just resetting the ortho should be good enough
+			local targetFBOWidth = texSize.x
+			local targetFBOHeight = math.floor(texSize.x / aspectRatio)
+			--]]
+
+			if not fbo 
+			or texSize.x ~= targetFBOWidth
+			or texSize.y ~= targetFBOHeight
+			then
+				print('resizing post-processing fbo from '..texSize..' to '..targetFBOWidth..', '..targetFBOHeight..' for viewport '..viewport)
 				
-				--texWidth = tonumber(viewport.s[2])
-				--texHeight = tonumber(viewport.s[3])
-				--texWidth = windowWidth
-				--texHeight = windowHeight
+				texSize.x = targetFBOWidth
+				texSize.y = targetFBOHeight
 
 				tex = GLTex2D{
-					width = texWidth,
-					height = texHeight,
+					width = texSize.x,
+					height = texSize.y,
 					type = gl.GL_UNSIGNED_BYTE,
 					format = gl.GL_RGB,
 					internalFormat = gl.GL_RGB,
 					minFilter = gl.GL_NEAREST,
-					magFilter = gl.GL_LINEAR,
+					--magFilter = gl.GL_LINEAR,
+					magFilter = gl.GL_NEAREST,
 				}
 				fbo = FBO()
 				fbo:setColorAttachmentTex2D(0, tex.id, tex.target, 0)
@@ -60,18 +80,28 @@ return function(parentClass)
 				renderShader = R:createShader{
 					vertexCode = [[
 varying vec4 color;
-varying vec2 tc;
+varying vec2 tc;	//in pixels
 void main() {
-	tc = gl_MultiTexCoord0.xy;
+	tc = gl_MultiTexCoord0.xy;	//in pixels
 	color = gl_Color;
 	gl_Position = ftransform();
 }
 ]],
 					fragmentCode = [[
-varying vec2 tc;
+varying vec2 tc;	// in pixels
 varying vec4 color;
 uniform sampler2D tex;
+
+/*
+ortho is (-viewSize, viewSize, -viewSize / aspectRatio, viewSize / aspectRatio, -100, 100)
+so the screen is (tilesWide = 2 * viewSize tiles) wide and (tilesTall = 2 * viewSize / aspectRatio tiles) tall
+and one tile is (2 * viewSize tiles = viewport.z pixels <=> 1 tile = .5 * viewport.z / viewSize pixels)
+(maybe write that as a uniform to save calculations?)
+*/
+uniform float viewSize;	
+
 uniform vec2 texSize;
+uniform vec4 viewport;	//xy=xy, zw=wh
 
 float lenSq(vec3 a) {
 	return dot(a, a);
@@ -81,30 +111,38 @@ void main() {
 	//now march from the view origin (pass this as a uniform ... pass bounds too)
 	// to 'tc'
 
-	vec3 grey = vec3(.3, .6, .1);
-	vec2 duv = 1. / texSize;
-	vec2 du = vec2(duv.x, 0.);
-	vec2 dv = vec2(0., duv.y);
+	//how big is 1 tile, in pixels
+	float tileSizeInPixels = .5 * viewport.z / viewSize;
 
-	vec2 origin = vec2(.5, .55);
+	//assuming a tile is 16 texels, how many pixels in a texel?
+	//float sizeOfATexelForTex16 = max(1., tileSizeInPixels / 16.);
+
+	vec3 grey = vec3(.3, .6, .1);
+
+	vec2 origin = viewport.xy + .5 * viewport.zw;
+	origin.y += tileSizeInPixels;
 	
 	vec2 raypos = origin;
 	vec2 rayvel = tc - origin;
 	float raylength = length(rayvel);
+	float rayLInfLength = max(abs(rayvel.x), abs(rayvel.y));
 	vec2 raydir = rayvel / raylength;
 
-	//you should set this to the number of texels wide that half the screen is.
-	//but 100 is fast & good on my card
-	float numSteps = 100.;// * raylength * 3.;
+	//float numSteps = 100.;
+	float numSteps = max(1, rayLInfLength);
+	//numSteps = min(numSteps, 100.);	
+	//if I have to cap the raytrace steps, then that means there are samples I'm missing, so how about I scale my step randomly to make up for it?
 	
 	vec4 color = vec4(1.);
 
+//TODO numSteps should be l-inf dist of pixels covered
+// TODO sampling below - esp transparency - should be step-independent
 	float dlen = raylength / numSteps;
 	for (float i = 0; i < numSteps; ++i) {
 		vec2 oldraypos = raypos;
 		raypos += raydir * dlen;
 
-		vec4 sampleColor = texture2D(tex, raypos);
+		vec4 sampleColor = texture2D(tex, (raypos + viewport.xy) / viewport.zw);
 	
 		
 /* TODO 
@@ -119,10 +157,16 @@ add some extra render info into the buffer on how to transform the rays at each 
 		//opacity==0 means fully smeared
 		//float opacity = 1.;
 
-		vec3 effectSrcColor = vec3(0., 0., 1.);
-		//vec3 effectSrcColor = vec3(160., 75., 132.) / 255.;
+		vec3 translateColor = vec3(248., 216., 32.) / 255.;		//yellow block color
 
-		vec3 reflectEffectSrcColor = vec3(0., 1., 0.);
+		// this is for the transparency and refraction effect
+		vec3 effectSrcColor = vec3(0., 0., 1.);
+		//vec3 effectSrcColor = vec3(104., 104., 176.) / 255.;	// blue block color
+		//vec3 effectSrcColor = vec3(34., 208., 56.) / 255.;	// which color was this?
+		//vec3 effectSrcColor = vec3(0., 1., .5);
+
+		//vec3 reflectEffectSrcColor = vec3(0., 1., 0.);
+		vec3 reflectEffectSrcColor = vec3(0., 200., 0.) / 255.;
 		
 		float opacity = lenSq(sampleColor.rgb - effectSrcColor)
 		//+ lenSq(sampleColor.rgb - reflectEffectSrcColor)
@@ -144,10 +188,21 @@ add some extra render info into the buffer on how to transform the rays at each 
 		//opacity = 1.;
 
 		//now add color slope to raydir and normalize
-		vec2 dl = vec2(
-			.5 * (dot(grey, texture2D(tex, raypos + du)) - dot(grey, texture2D(tex, raypos - du))),
-			.5 * (dot(grey, texture2D(tex, raypos + dv)) - dot(grey, texture2D(tex, raypos - dv)))
-		);
+		float l0m = dot(grey, texture2D(tex, (raypos + vec2( 0., -1.) + viewport.xy) / viewport.zw));
+		float lm0 = dot(grey, texture2D(tex, (raypos + vec2(-1.,  0.) + viewport.xy) / viewport.zw));
+		float lp0 = dot(grey, texture2D(tex, (raypos + vec2( 1.,  0.) + viewport.xy) / viewport.zw));
+		float l0p = dot(grey, texture2D(tex, (raypos + vec2( 0.,  1.) + viewport.xy) / viewport.zw));
+		//float lmm = dot(grey, texture2D(tex, (raypos + vec2(-1., -1.) + viewport.xy) / viewport.zw));
+		//float lpm = dot(grey, texture2D(tex, (raypos + vec2( 1., -1.) + viewport.xy) / viewport.zw));
+		//float lmp = dot(grey, texture2D(tex, (raypos + vec2(-1.,  1.) + viewport.xy) / viewport.zw));
+		//float lpp = dot(grey, texture2D(tex, (raypos + vec2( 1.,  1.) + viewport.xy) / viewport.zw));
+		//float l00 = dot(grey, texture2D(tex, (raypos + vec2( 0.,  0.) + viewport.xy) / viewport.zw));
+
+		// 1st order dx,dy
+		vec2 dl = vec2(.5 * (lp0 - lm0), .5 * (l0p - l0m));
+		// Sobel
+		//vec2 dl = vec2(.25 * (lpp - lmp + 2. * (lp0 -lm0) + lpm - lmm), .25 * (lpp - lpm + 2. * (l0p -l0m) + lmp - lmm));
+		
 		dl = normalize(dl);
 		//cheap I know
 		raydir = normalize(mix(raydir, raydir + dl, refractivity));
@@ -156,7 +211,12 @@ add some extra render info into the buffer on how to transform the rays at each 
 		//cheap reflections
 		if (lenSq(sampleColor.rgb - reflectEffectSrcColor) < .15) {
 			raydir = normalize(raydir - 2. * dl * dot(raydir, dl));
-			raypos = oldraypos + raydir * 2. * duv;
+			raypos = oldraypos + raydir * 2.;
+		}
+
+		//cheap portal translations
+		if (lenSq(sampleColor.rgb - translateColor) < .01) {
+			raypos.y += tileSizeInPixels * 5.;
 		}
 
 		//color.a = opacity;
@@ -172,7 +232,7 @@ add some extra render info into the buffer on how to transform the rays at each 
 ]],
 					uniforms = {
 						tex = 0,
-						texSize = {texWidth, texHeight},
+						texSize = {texSize.x, texSize.y},
 					},
 				}
 			end
@@ -182,10 +242,16 @@ add some extra render info into the buffer on how to transform the rays at each 
 			-- setup FBO
 
 			--gl.glViewport(0, 0, viewport.s[2], viewport.s[3])
-			gl.glViewport(0, 0, texWidth, texHeight)
+			gl.glViewport(0, 0, texSize.x, texSize.y)
 			fbo:bind()
 			gl.glDrawBuffer(gl.GL_COLOR_ATTACHMENT0)
 			gl.glClear(gl.GL_COLOR_BUFFER_BIT)
+		
+			-- [[ if our viewport size is not the original then reset our matrixes here:
+			local viewSize = self.viewSize
+			R:ortho(-viewSize, viewSize, -viewSize / aspectRatio, viewSize / aspectRatio, -100, 100)
+			gl.glMatrixMode(gl.GL_MODELVIEW)
+			--]]
 		end, function(...)
 			fbo:unbind()
 			gl.glDrawBuffer(drawbuffer[0])
@@ -201,23 +267,38 @@ add some extra render info into the buffer on how to transform the rays at each 
 			R:ortho(0, 1, 0, 1, -1, 1)
 			R:viewPos(0, 0)
 
+			-- where to find the render region in the fbo's texture, in pixels:
 			--[[
-			local x = math.min(1, tonumber(viewport.s[0]) / texWidth)
-			local y = math.min(1, tonumber(viewport.s[1]) / texHeight)
-			local w = math.min(1, tonumber(viewport.s[2]) / texWidth)
-			local h = math.min(1, tonumber(viewport.s[3]) / texHeight)
+			local x = math.min(1, tonumber(viewport.s[0]) / texSize.x)
+			local y = math.min(1, tonumber(viewport.s[1]) / texSize.y)
+			local w = math.min(1, tonumber(viewport.s[2]) / texSize.x)
+			local h = math.min(1, tonumber(viewport.s[3]) / texSize.y)
+			--]]
+			--[[
+			local x, y, w, h = viewport:unpack()
+			--]]
+			--[[
+			local x = 0
+			local y = 0
+			local w = tonumber(viewport.s[2])
+			local h = tonumber(viewport.s[3])
 			--]]
 			-- [[
-			local x,y,w,h = 0,0,1,1
+			local x, y, w, h = 0, 0, texSize.x, texSize.y
+			--]]
+			--[[
+			local x, y, w, h = 0, 0, 1, 1
 			--]]
 
 			renderShader:use()
+			gl.glUniform1f(renderShader.uniforms.viewSize.loc, self.viewSize)
+			gl.glUniform4f(renderShader.uniforms.viewport.loc, x, y, w, h)
 			tex:bind()
 			gl.glBegin(gl.GL_TRIANGLE_STRIP)
-			gl.glTexCoord2f(x, y)		gl.glVertex2f(0, 0)
-			gl.glTexCoord2f(x+w, y)     gl.glVertex2f(1, 0)
-			gl.glTexCoord2f(x, y+h)     gl.glVertex2f(0, 1)
-			gl.glTexCoord2f(x+w, y+h)   gl.glVertex2f(1, 1)
+			gl.glTexCoord2f(x + .5, y + .5)				gl.glVertex2f(0, 0)
+			gl.glTexCoord2f(x + w + .5, y + .5)			gl.glVertex2f(1, 0)
+			gl.glTexCoord2f(x + .5, y + h + .5)			gl.glVertex2f(0, 1)
+			gl.glTexCoord2f(x + w + .5, y + h + .5)		gl.glVertex2f(1, 1)
 			gl.glEnd()
 			tex:unbind()
 			renderShader:useNone()
