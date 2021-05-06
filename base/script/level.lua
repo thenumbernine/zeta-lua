@@ -75,8 +75,6 @@ local function rgbAt(image, x, y)
 		bit.lshift(b, 16))
 end
 
-local blackPixel = ffi.new('unsigned char[3]', 0,0,0)
-
 --[[
 args:
 	path = (optional) path where to find the map, excluding the prefix of "<mod>/maps/"
@@ -276,15 +274,16 @@ function Level:init(args)
 
 		for i=0,fgTexImage.height*fgTexImage.width-1 do
 			local fgTileIndex = self.fgTileMap[i]
-			local rgb
 			if fgTileIndex > 0 and fgTileIndex <= tilesInTexpack then
-				rgb = self.texpackDownsampleImage.buffer + 3 * (fgTileIndex-1)
+				local rgb = self.texpackDownsampleImage.buffer + 3 * (fgTileIndex-1)
+				fgTexImage.buffer[0+fgTexImage.channels*i] = rgb[0]
+				fgTexImage.buffer[1+fgTexImage.channels*i] = rgb[1]
+				fgTexImage.buffer[2+fgTexImage.channels*i] = rgb[2]
 			else
-				rgb = blackPixel
+				fgTexImage.buffer[0+fgTexImage.channels*i] = 0
+				fgTexImage.buffer[1+fgTexImage.channels*i] = 0
+				fgTexImage.buffer[2+fgTexImage.channels*i] = 0
 			end
-			fgTexImage.buffer[0+fgTexImage.channels*i] = rgb[0]
-			fgTexImage.buffer[1+fgTexImage.channels*i] = rgb[1]
-			fgTexImage.buffer[2+fgTexImage.channels*i] = rgb[2]
 		end
 
 		self.fgTileTex = Tex2D{
@@ -470,6 +469,8 @@ end
 -- if you call level:setTile then you have to manually call this
 -- assumes that x1,y1,x2,y2 are integers in range [1,size] 
 local gl
+local vector = require 'ffi.cpp.vector'
+local tmpbuf = vector'unsigned char'
 function Level:refreshFgTileTexels(x1,y1,x2,y2)
 	local tilesWide = self.texpackTex.width / self.tileSize
 	local tilesHigh = self.texpackTex.height / self.tileSize
@@ -480,18 +481,25 @@ function Level:refreshFgTileTexels(x1,y1,x2,y2)
 	y1 = math.max(y1, 1)
 	x2 = math.min(x2, self.size[1])
 	y2 = math.min(y2, self.size[2])
-	
-	self.fgTileTex:bind()
+	if x1 == x2 or y1 == y1 then return end
+
+	tmpbuf:resize(3*(x2-x1-1)*(y2-y1-1))
+
+	local dstp = tmpbuf.v
 	for y=y1,y2 do
 		for x=x1,x2 do
 			local index = (x-1)+self.size[1]*(y-1)
 			local fgTileIndex = self.fgTileMap[index]
 			
-			local rgb
 			if fgTileIndex > 0 and fgTileIndex <= tilesInTexpack then
-				rgb = self.texpackDownsampleImage.buffer + 3 * (fgTileIndex-1)
+				local srcp = self.texpackDownsampleImage.buffer + 3 * (fgTileIndex-1)
+				dstp[0] = srcp[0]	srcp = srcp + 1	dstp = dstp + 1
+				dstp[0] = srcp[0]	srcp = srcp + 1	dstp = dstp + 1
+				dstp[0] = srcp[0]	srcp = srcp + 1	dstp = dstp + 1
 			else
-				rgb = blackPixel
+				dstp[0] = 0	dstp = dstp + 1
+				dstp[0] = 0	dstp = dstp + 1
+				dstp[0] = 0	dstp = dstp + 1
 			end
 	
 			--[[ TODO use fgTexImage.  but what about the row skip?  use this as a temp buffer and just leave the contents garbage?
@@ -499,9 +507,13 @@ function Level:refreshFgTileTexels(x1,y1,x2,y2)
 			fgTexImage.buffer[1+fgTexImage.channels*i] = rgb[1]
 			fgTexImage.buffer[2+fgTexImage.channels*i] = rgb[2]
 			--]]
+			--[[
 			gl.glTexSubImage2D(self.fgTileTex.target, 0, x-1, y-1, 1, 1, gl.GL_RGB, gl.GL_UNSIGNED_BYTE, rgb)
+			--]]
 		end
 	end
+	self.fgTileTex:bind()
+	gl.glTexSubImage2D(self.fgTileTex.target, 0, x-1, y-1, 1, 1, gl.GL_RGB, gl.GL_UNSIGNED_BYTE, tmpbuf.v)
 	self.fgTileTex:unbind()
 end
 
