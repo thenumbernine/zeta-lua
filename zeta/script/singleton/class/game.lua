@@ -1,5 +1,9 @@
 local Game = require 'base.script.singleton.class.game'
-local ZetaGame = class(Game)
+
+local ZetaGame = behaviors(Game
+	, require 'base.script.behavior.postfbo'
+)
+
 ZetaGame.name = 'ZetaGame'
 ZetaGame.gravity = -50
 ZetaGame.maxVel = 1000

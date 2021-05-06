@@ -31,18 +31,18 @@ end
 local modio = require 'base.script.singleton.modio'
 modio.search = table{'base'}
 
--- [[ mario
+--[[ mario
 modio.search:insert(1, 'mario')
 modio.levelcfg = {
 
 	music = 'music/cave.wav',
 	--music = 'music/overworld.wav',
 
-	path = 'test',
+	--path = 'test',
 	--path = 'test2',
-	--path = 'doors',
+	--path = 'doors',		-- FIXME
 	--path = 'fight',
-	--path = 'mine',
+	path = 'mine',
 	--path = 'mine2',
 	--path = 'pswitch-fluids',
 	--path = 'pswitch-platform',
@@ -63,7 +63,7 @@ modio.levelcfg = {
 }
 --]]
 
---[[ zeta
+-- [[ zeta
 modio.search:insert(1, 'zeta')
 --modio.search:insert'mario'	-- don't add this, it messes up the block types.
 modio.levelcfg = {

@@ -223,7 +223,7 @@ function Game:render(preDrawCallback, postDrawCallback)
 		R:ortho(-viewSize, viewSize, -viewSize / aspectRatio, viewSize / aspectRatio, -100, 100)
 		R:viewPos(player.viewPos[1], player.viewPos[2])
 		
-		if preDrawCallback then preDrawCallback() end
+		if preDrawCallback then preDrawCallback(playerIndex) end
 		
 		-- assuming no scaling ...
 		player.viewBBox = box2(
@@ -262,7 +262,7 @@ function Game:render(preDrawCallback, postDrawCallback)
 			end
 		end
 
-		if postDrawCallback then postDrawCallback() end
+		if postDrawCallback then postDrawCallback(playerIndex) end
 	
 		-- draw player hud
 		if player.drawHUD then

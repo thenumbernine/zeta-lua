@@ -35,6 +35,7 @@ BreakBlock.states['break'] = {
 		
 		level.tileMap[index] = 0
 		level.fgTileMap[index] = 0
+		level:refreshFgTileTexels(x,y,x,y)
 	
 		local tileType = assert(level.tileTypes[self.tileIndex])
 		self.regen = tileType.regen
@@ -66,6 +67,7 @@ BreakBlock.states.unbreak = {
 			local index = self.index
 			level.tileMap[index] = self.tileIndex
 			level.fgTileMap[index] = self.fgTileIndex
+			level:refreshFgTileTexels(x,y,x,y)
 			self.remove = true
 		end
 	end

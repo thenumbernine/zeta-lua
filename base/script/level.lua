@@ -674,15 +674,30 @@ function Level:getTileWithOffset(x,y)
 end
 
 -- nil means don't set that particular layer
-function Level:setTile(x,y, tileIndex, fgTileIndex, bgTileIndex, backgroundIndex)
+function Level:setTile(x,y, tileIndex, fgTileIndex, bgTileIndex, backgroundIndex, dontUpdateTexs)
 	x = math.floor(x)
 	y = math.floor(y)
 	if x<1 or y<1 or x>self.size[1] or y>self.size[2] then return 0 end
 	local index = (x-1)+self.size[1]*(y-1)
 	if tileIndex then self.tileMap[index] = tileIndex end
-	if fgTileIndex then self.fgTileMap[index] = fgTileIndex end
-	if bgTileIndex then self.bgTileMap[index] = bgTileIndex end
-	if backgroundIndex then self.backgroundMap[index] = backgroundIndex end
+	if fgTileIndex then 
+		self.fgTileMap[index] = fgTileIndex 
+		if not dontUpdateTexs then
+			self:refreshFgTileTexels(x,y,x,y)
+		end
+	end
+	if bgTileIndex then 
+		self.bgTileMap[index] = bgTileIndex 
+		if not dontUpdateTexs then
+			self:refreshBgTileTexels(x,y,x,y)
+		end
+	end
+	if backgroundIndex then 
+		self.backgroundMap[index] = backgroundIndex 
+		if not dontUpdateTexs then
+			self:refreshBackgroundTexels(x,y,x,y)
+		end
+	end
 end
 
 -- update downsampled texture of the whole map
@@ -718,15 +733,7 @@ function Level:refreshBackgroundTexels(x1,y1,x2,y2)
 end
 
 function Level:makeEmpty(x,y)
-	-- setTile calls floor()
-	self:setTile(x,y,0,0,0)
-	-- but refreshTileTexels does not ...
-	x = math.floor(x)
-	y = math.floor(y)
-	-- assume the game is calling it ,not the editor, so i have to refresh stuff again
-	self:refreshFgTileTexels(x,y,x,y)
-	self:refreshBgTileTexels(x,y,x,y)
-	self:refreshBackgroundTexels(x,y,x,y)
+	self:setTile(x,y,0,0,0, true)
 end
 
 function Level:update(dt)

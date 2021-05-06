@@ -32,7 +32,10 @@ return function(parentClass)
 		local windowWidth, windowHeight = glapp:size()
 		local aspectRatio = windowWidth / windowHeight
 		
-		PostFBOTemplate.super.render(self, function(...)
+		PostFBOTemplate.super.render(self, 
+
+		-- preDrawCallback
+		function(playerIndex, ...)
 			
 			gl.glGetIntegerv(gl.GL_VIEWPORT, viewport.s)
 			gl.glGetIntegerv(gl.GL_DRAW_BUFFER, drawbuffer)
@@ -102,14 +105,14 @@ uniform float viewSize;
 
 uniform vec2 texSize;
 uniform vec4 viewport;	//xy=xy, zw=wh
+uniform vec2 eyePos;
 
 float lenSq(vec3 a) {
 	return dot(a, a);
 }
 
 void main() {
-	//now march from the view origin (pass this as a uniform ... pass bounds too)
-	// to 'tc'
+	//now march from the view origin (pass this as a uniform ... pass bounds too) to 'tc'
 
 	//how big is 1 tile, in pixels
 	float tileSizeInPixels = .5 * viewport.z / viewSize;
@@ -119,8 +122,9 @@ void main() {
 
 	vec3 grey = vec3(.3, .6, .1);
 
-	vec2 origin = viewport.xy + .5 * viewport.zw;
-	origin.y += tileSizeInPixels;
+	//vec2 origin = viewport.xy + .5 * viewport.zw;
+	//origin.y += tileSizeInPixels;
+	vec2 origin = viewport.xy + eyePos * viewport.zw;
 	
 	vec2 raypos = origin;
 	vec2 rayvel = tc - origin;
@@ -243,7 +247,7 @@ add some extra render info into the buffer on how to transform the rays at each 
 				}
 			end
 
-			if preDrawCallback then preDrawCallback(...) end
+			if preDrawCallback then preDrawCallback(playerIndex, ...) end
 
 			-- setup FBO
 
@@ -258,7 +262,10 @@ add some extra render info into the buffer on how to transform the rays at each 
 			R:ortho(-viewSize, viewSize, -viewSize / aspectRatio, viewSize / aspectRatio, -100, 100)
 			gl.glMatrixMode(gl.GL_MODELVIEW)
 			--]]
-		end, function(...)
+		end, 
+
+		-- postDrawCallback
+		function(playerIndex, ...)
 			fbo:unbind()
 			gl.glDrawBuffer(drawbuffer[0])
 			gl.glViewport(viewport:unpack())
@@ -295,10 +302,16 @@ add some extra render info into the buffer on how to transform the rays at each 
 			--[[
 			local x, y, w, h = 0, 0, 1, 1
 			--]]
+		
+			local player = self.clientConn.players[playerIndex]
+			local playerClientObj = self.playerClientObjs[playerIndex]
 
 			renderShader:use()
 			gl.glUniform1f(renderShader.uniforms.viewSize.loc, self.viewSize)
 			gl.glUniform4f(renderShader.uniforms.viewport.loc, x, y, w, h)
+			gl.glUniform2f(renderShader.uniforms.eyePos.loc,
+				(player.pos[1] - player.viewBBox.min[1]) / (player.viewBBox.max[1] - player.viewBBox.min[1]),
+				(player.pos[2] + 1.5 - player.viewBBox.min[2]) / (player.viewBBox.max[2] - player.viewBBox.min[2]))
 			tex:bind()
 			gl.glBegin(gl.GL_TRIANGLE_STRIP)
 			gl.glTexCoord2f(x + .5, y + .5)				gl.glVertex2f(0, 0)
@@ -314,7 +327,7 @@ add some extra render info into the buffer on how to transform the rays at each 
 			gl.glMatrixMode(gl.GL_MODELVIEW)
 			gl.glPopMatrix()
 
-			if postDrawCallback then postDrawCallback(...) end
+			if postDrawCallback then postDrawCallback(playerIndex, ...) end
 		
 			glreport'here'
 		end, ...)

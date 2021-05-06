@@ -69,7 +69,7 @@ function Explosive:update(dt)
 						local tile = level:getTile(x,y)
 						if tile then						
 							-- [[ hit tiles
-							if tile.onHit then tile:onHit(self) end
+							if tile.onHit then tile:onHit(self, x, y) end
 							--]]
 							--[[ destroy tiles!
 							SpinParticle.breakAt(x + .5, y + .5)
