@@ -269,29 +269,114 @@ function Level:init(args)
 		gl.glGetTexImage(self.texpackTex.target, log2tileSize, gl.GL_RGB, gl.GL_UNSIGNED_BYTE, self.texpackDownsampleImage.buffer)
 		self.texpackTex:unbind()
 
-		-- this is the fg tex image
-		local fgTexImage = fgTileImage:clone()
-
-		for i=0,fgTexImage.height*fgTexImage.width-1 do
-			local fgTileIndex = self.fgTileMap[i]
-			if fgTileIndex > 0 and fgTileIndex <= tilesInTexpack then
-				local rgb = self.texpackDownsampleImage.buffer + 3 * (fgTileIndex-1)
-				fgTexImage.buffer[0+fgTexImage.channels*i] = rgb[0]
-				fgTexImage.buffer[1+fgTexImage.channels*i] = rgb[1]
-				fgTexImage.buffer[2+fgTexImage.channels*i] = rgb[2]
-			else
-				fgTexImage.buffer[0+fgTexImage.channels*i] = 0
-				fgTexImage.buffer[1+fgTexImage.channels*i] = 0
-				fgTexImage.buffer[2+fgTexImage.channels*i] = 0
-			end
-		end
-
+		
+		-- LUMINANCE16 is more appropriate but not always supported, esp not always with 16 whole bits.  lum_alpha is more supported
 		self.fgTileTex = Tex2D{
-			image = fgTexImage,
+			internalFormat = gl.GL_LUMINANCE_ALPHA,
+			width = self.size[1],
+			height = self.size[2],
+			format = gl.GL_LUMINANCE_ALPHA,
+			type = gl.GL_UNSIGNED_BYTE,
+			data = self.fgTileMap,
 			minFilter = gl.GL_NEAREST,
 			magFilter = gl.GL_NEAREST,
-			internalFormat = gl.GL_RGB,
-			format = gl.GL_RGB,
+		}
+
+		self.bgTileTex = Tex2D{
+			internalFormat = gl.GL_LUMINANCE_ALPHA,
+			width = self.size[1],
+			height = self.size[2],
+			format = gl.GL_LUMINANCE_ALPHA,
+			type = gl.GL_UNSIGNED_BYTE,
+			data = self.bgTileMap,
+			minFilter = gl.GL_NEAREST,
+			magFilter = gl.GL_NEAREST,
+		}
+
+		local GLProgram = require 'gl.program'
+		self.mapShader = GLProgram{
+			vertexCode = [[
+varying vec2 pos;
+varying vec2 tc;
+void main() {
+	pos = gl_Vertex.xy;
+	tc = gl_MultiTexCoord0.xy;
+	gl_Position = ftransform();
+}
+]],
+			fragmentCode = [[
+varying vec2 pos;
+varying vec2 tc;
+
+uniform sampler2D fgTileTex;
+//uniform sampler2D bgTileTex;
+uniform sampler2D texpackTex;
+
+uniform vec2 levelSize;
+uniform float tileSize;
+uniform vec2 texpackTexSize;
+
+void main() {
+	float tilesWide = texpackTexSize.x / tileSize;
+	float tilesHigh = texpackTexSize.y / tileSize;
+
+	// tc is in [0,1]^2 space
+	vec2 tilepos = tc * levelSize;	// tilepos is the tile
+	vec2 posInTile = pos - floor(pos);
+	posInTile.y = 1. - posInTile.y;
+
+#if 0	//debugging
+	// verify UV is working
+	//gl_FragColor = vec4(posInTile, .5, 1.);	
+#else
+
+	//TODO background here!
+	gl_FragColor = vec4(0.);
+
+#if 0
+	// background color?
+	vec2 bgTileIndexV = texture2D(fgTileTex, tc).zw;
+	float bgTileIndex = 255. * (bgTileIndexV.x + 256. * bgTileIndexV.y);
+	if (bgTileIndex > 0.) {
+		bgTileIndex = bgTileIndex - 1;
+		float ti = mod(bgTileIndex, tilesWide);
+		float tj = (bgTileIndex - ti) / tilesWide;
+		
+		// hmm, stamp stuff goes here, do I want to keep it?
+		
+		vec4 bgColor = texture2D(texpackTex, (vec2(ti, tj) + posInTile) / vec2(tilesWide, tilesHigh));
+		gl_FragColor.rgb = mix(gl_FragColor.rgb, bgColor.rgb, 1. - gl_FragColor.a);
+		gl_FragColor.a = bgColor.a;
+	}
+#endif
+
+	// foreground color?
+	vec2 fgTileIndexV = texture2D(fgTileTex, tc).zw;	// z = lum = lo byte, w = alpha = hi byte
+	float fgTileIndex = 255. * (fgTileIndexV.x + 256. * fgTileIndexV.y);	// this looks too horrible to be correct
+	if (fgTileIndex > 0.) {	//0 = transparent
+		fgTileIndex = fgTileIndex - 1;
+		float ti = mod(fgTileIndex, tilesWide);
+		float tj = (fgTileIndex - ti) / tilesWide;
+		
+		ti = floor(ti + .5);
+		tj = floor(tj + .5);
+
+		// hmm, stamp stuff goes here, do I want to keep it?
+		
+		vec4 fgColor = texture2D(texpackTex, (vec2(ti, tj) + posInTile) / vec2(tilesWide, tilesHigh));
+		gl_FragColor.rgb = mix(gl_FragColor.rgb, fgColor.rgb, 1. - gl_FragColor.a);
+		gl_FragColor.a = fgColor.a;
+	}
+#endif
+}
+]],
+			uniforms = {
+				fgTileTex = 0,
+				--bgTileTex = 1,
+				texpackTex = 1,
+				levelSize = self.size,
+				texpackTexSize = {self.texpackTex.width, self.texpackTex.height},
+			},
 		}
 	end
 
@@ -469,52 +554,29 @@ end
 -- if you call level:setTile then you have to manually call this
 -- assumes that x1,y1,x2,y2 are integers in range [1,size] 
 local gl
-local vector = require 'ffi.cpp.vector'
-local tmpbuf = vector'unsigned char'
-function Level:refreshFgTileTexels(x1,y1,x2,y2)
+function Level:refreshTileTexelsForLayer(x1,y1,x2,y2, tileMap, tileTex)
 	local tilesWide = self.texpackTex.width / self.tileSize
 	local tilesHigh = self.texpackTex.height / self.tileSize
 	local tilesInTexpack = tilesWide * tilesHigh
 
-	if x2<1 or y2<1 or x1>self.size[1] or y1>self.size[2] then return end
+	if x2 < 1 or y2 < 1 or x1 > self.size[1] or y1 > self.size[2] then return end
 	x1 = math.max(x1, 1)
 	y1 = math.max(y1, 1)
 	x2 = math.min(x2, self.size[1])
 	y2 = math.min(y2, self.size[2])
 	if x1 == x2 or y1 == y1 then return end
 
-	tmpbuf:resize(3*(x2-x1-1)*(y2-y1-1))
-
-	local dstp = tmpbuf.v
-	for y=y1,y2 do
-		for x=x1,x2 do
-			local index = (x-1)+self.size[1]*(y-1)
-			local fgTileIndex = self.fgTileMap[index]
-			
-			if fgTileIndex > 0 and fgTileIndex <= tilesInTexpack then
-				local srcp = self.texpackDownsampleImage.buffer + 3 * (fgTileIndex-1)
-				dstp[0] = srcp[0]	srcp = srcp + 1	dstp = dstp + 1
-				dstp[0] = srcp[0]	srcp = srcp + 1	dstp = dstp + 1
-				dstp[0] = srcp[0]	srcp = srcp + 1	dstp = dstp + 1
-			else
-				dstp[0] = 0	dstp = dstp + 1
-				dstp[0] = 0	dstp = dstp + 1
-				dstp[0] = 0	dstp = dstp + 1
-			end
-	
-			--[[ TODO use fgTexImage.  but what about the row skip?  use this as a temp buffer and just leave the contents garbage?
-			fgTexImage.buffer[0+fgTexImage.channels*i] = rgb[0]
-			fgTexImage.buffer[1+fgTexImage.channels*i] = rgb[1]
-			fgTexImage.buffer[2+fgTexImage.channels*i] = rgb[2]
-			--]]
-			--[[
-			gl.glTexSubImage2D(self.fgTileTex.target, 0, x-1, y-1, 1, 1, gl.GL_RGB, gl.GL_UNSIGNED_BYTE, rgb)
-			--]]
-		end
+	tileTex:bind()
+	for y = y1,y2 do
+		gl.glTexSubImage2D(tileTex.target, 0, x - 1, y - 1, x2 - x1 + 1, 1, gl.GL_LUMINANCE_ALPHA, gl.GL_UNSIGNED_BYTE, tileMap + (x1 - 1) + self.size[1] * (y-1))
 	end
-	self.fgTileTex:bind()
-	gl.glTexSubImage2D(self.fgTileTex.target, 0, x-1, y-1, 1, 1, gl.GL_RGB, gl.GL_UNSIGNED_BYTE, tmpbuf.v)
-	self.fgTileTex:unbind()
+	tileTex:unbind()
+end
+function Level:refreshFgTileTexels(x1,y1,x2,y2)
+	return self:refreshTileTexelsForLayer(x1, y1, x2, y2, self.fgTileMap, self.fgTileTex)
+end
+function Level:refreshBgTileTexels(x1,y1,x2,y2)
+	return self:refreshTileTexelsForLayer(x1, y1, x2, y2, self.bgTileMap, self.bgTileTex)
 end
 
 function Level:makeEmpty(x,y)
@@ -584,20 +646,6 @@ end
 	if ymin < 1 then ymin = 1 end
 	if ymax > self.size[2] then ymax = self.size[2] end
 
-	-- if we are too far zoomed out, use a lighter render
-	if ibbox.max[1] - ibbox.min[1] > glapp.width / self.overmapZoomLevel then
-		self.fgTileTex:bind()
-		R:quad(
-			.5,.5,
-			.5+self.fgTileTex.width,
-			.5+self.fgTileTex.height,
-			0,0,
-			1,1,
-			0,
-			1,1,1,1)
-		return
-	end
-
 	for y=ymin,ymax do
 		for x=xmin,xmax do
 			local offset = x-1+self.size[1]*(y-1)
@@ -628,49 +676,28 @@ end
 	local tilesHigh = self.texpackTex.height / self.tileSize
 	local tilesInTexpack = tilesWide * tilesHigh
 
-	self.texpackTex:bind()
-	for y=ymin,ymax do
-		for x=xmin,xmax do
-			local offset = x-1+self.size[1]*(y-1)
-			-- draw bg tile
-			local bgtileindex = self.bgTileMap[offset]
-			if bgtileindex > 0 and bgtileindex <= tilesInTexpack then
-				bgtileindex = bgtileindex - 1
-				local ti = bgtileindex % tilesWide
-				local tj = (bgtileindex - ti) / tilesWide
-			
-				-- [[ begin ugliness
-				local px = math.floor(ti / patch.width)
-				local locCol = patch.locs[px]
-				if locCol then
-					local py = math.floor(tj / patch.height)
-					if locCol[py] then
-						local ox = ti - px * patch.width
-						local stampCol = patch.stamps[ox]
-						if stampCol then
-							local oy = tj - py * patch.height
-							local stampRow = stampCol[oy]
-							if stampRow then
-								local sw, sh = stampRow[1], stampRow[2]
-								ti = ti + x % sw
-								tj = tj + y % sh
-								--ti = ti + math.random(sw)-1
-								--tj = tj + math.random(sh)-1
-							end
-						end
-					end
-				end
-				--]]
-
-				R:quad(
-					x, y,
-					1, 1,
-					ti/tilesWide, (tj+1)/tilesHigh,
-					1/tilesWide, -1/tilesHigh,
-					0,
-					1,1,1,1)
-			end
+	-- if we are too far zoomed out, use a lighter render
+	-- TODO always use this one
+	do	 --if ibbox.max[1] - ibbox.min[1] > glapp.width / self.overmapZoomLevel then
+		self.mapShader:use()	-- I could use the shader param but then I'd have to set uniforms as a table, which is slower
+		if self.mapShader.uniforms.tileSize then
+			gl.glUniform1f(self.mapShader.uniforms.tileSize.loc, self.tileSize)
 		end
+		--self.fgTileTex:bind(0)
+		self.bgTileTex:bind(0)
+		self.texpackTex:bind(1)
+		R:quad(
+			1, 1,
+			self.size[1],
+			self.size[2],
+			0,0,
+			1,1,
+			0,
+			1,1,1,1)
+		self.texpackTex:unbind(1)
+		self.bgTileTex:unbind(0)
+		--self.fgTileTex:unbind(0)
+		self.mapShader:useNone()
 	end
 
 	-- draw objects
@@ -704,51 +731,24 @@ end
 	end
 	--]]
 
-	self.texpackTex:bind()
-	for y=ymin,ymax do
-		for x=xmin,xmax do
-			local offset = x-1+self.size[1]*(y-1)
-			-- draw fg tile
-			local fgtileindex = self.fgTileMap[offset]
-			if fgtileindex > 0 and fgtileindex <= tilesInTexpack then
-				fgtileindex = fgtileindex - 1
-				local ti = fgtileindex % tilesWide
-				local tj = (fgtileindex - ti) / tilesWide
-
-				-- [[ begin ugliness
-				-- TODO give level a setter for fg and bg tiles (not the 'Original' buffer, but the dynamic one)
-				-- and, upon setting, bake this into the texels there
-				local px = math.floor(ti / patch.width)
-				local locCol = patch.locs[px]
-				if locCol then
-					local py = math.floor(tj / patch.height)
-					if locCol[py] then
-						local ox = ti - px * patch.width
-						local stampCol = patch.stamps[ox]
-						if stampCol then
-							local oy = tj - py * patch.height
-							local stampRow = stampCol[oy]
-							if stampRow then
-								local sw, sh = stampRow[1], stampRow[2]
-								ti = ti + x % sw
-								tj = tj + y % sh
-								--ti = ti + math.random(sw)-1
-								--tj = tj + math.random(sh)-1
-							end
-						end
-					end
-				end
-				--]]
-
-				R:quad(
-					x, y,
-					1, 1,
-					ti/tilesWide, (tj+1)/tilesHigh,
-					1/tilesWide, -1/tilesHigh,
-					0,
-					1,1,1,1)
-			end
+	do	 --if ibbox.max[1] - ibbox.min[1] > glapp.width / self.overmapZoomLevel then
+		self.mapShader:use()	-- I could use the shader param but then I'd have to set uniforms as a table, which is slower
+		if self.mapShader.uniforms.tileSize then
+			gl.glUniform1f(self.mapShader.uniforms.tileSize.loc, self.tileSize)
 		end
+		self.fgTileTex:bind(0)
+		self.texpackTex:bind(1)
+		R:quad(
+			1, 1,
+			self.size[1],
+			self.size[2],
+			0,0,
+			1,1,
+			0,
+			1,1,1,1)
+		self.texpackTex:unbind(1)
+		self.fgTileTex:unbind(0)
+		self.mapShader:useNone()
 	end
 
 	-- [[ testing lighting
