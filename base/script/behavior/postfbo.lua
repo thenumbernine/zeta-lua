@@ -212,7 +212,6 @@ add some extra render info into the buffer on how to transform the rays at each 
 		if (lenSq(sampleColor.rgb - translateColor) < .01) {
 			raypos.y += tileSizeInPixels * 5.;
 		}
-
 		
 		//cheap reflections
 		if (lenSq(sampleColor.rgb - reflectEffectSrcColor) < .15) {

@@ -564,11 +564,11 @@ function Level:refreshTileTexelsForLayer(x1,y1,x2,y2, tileMap, tileTex)
 	y1 = math.max(y1, 1)
 	x2 = math.min(x2, self.size[1])
 	y2 = math.min(y2, self.size[2])
-	if x1 == x2 or y1 == y1 then return end
+	if x1 < x2 or y1 < y1 then return end
 
 	tileTex:bind()
 	for y = y1,y2 do
-		gl.glTexSubImage2D(tileTex.target, 0, x - 1, y - 1, x2 - x1 + 1, 1, gl.GL_LUMINANCE_ALPHA, gl.GL_UNSIGNED_BYTE, tileMap + (x1 - 1) + self.size[1] * (y-1))
+		gl.glTexSubImage2D(tileTex.target, 0, x1 - 1, y1 - 1, x2 - x1 + 1, 1, gl.GL_LUMINANCE_ALPHA, gl.GL_UNSIGNED_BYTE, tileMap + (x1 - 1) + self.size[1] * (y1 - 1))
 	end
 	tileTex:unbind()
 end
@@ -580,7 +580,14 @@ function Level:refreshBgTileTexels(x1,y1,x2,y2)
 end
 
 function Level:makeEmpty(x,y)
+	-- setTile calls floor()
 	self:setTile(x,y,0,0,0)
+	-- but refreshTileTexels does not ...
+	x = math.floor(x)
+	y = math.floor(y)
+	-- assume the game is calling it ,not the editor, so i have to refresh stuff again
+	self:refreshFgTileTexels(x,y,x,y)
+	self:refreshBgTileTexels(x,y,x,y)
 end
 
 function Level:update(dt)
