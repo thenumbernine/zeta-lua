@@ -1538,13 +1538,28 @@ function Editor:updateGUI()
 				ig.igPushIDStr('background '..i)
 				local background = self.backgroundOptions[i].background
 				
-				local tex = background.tex
+				local tex = level.bgtexpackTex
 				local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex and tex.id or 0))
+			
+				local bgx, bgy, bgw, bgh
+				if background.x and background.y and background.w and background.h then
+					bgx = background.x
+					bgy = background.y
+					bgw = background.w
+					bgh = background.h
+				else
+					texIDPtr = ffi.cast('void*', 0)
+					bgx = 0
+					bgy = 0
+					bgw = tex.width
+					bgh = tex.height
+				end
+
 				if ig.igImageButton(
 					texIDPtr,
 					ig.ImVec2(32, 32), --size
-					ig.ImVec2(0,0),	--uv0
-					ig.ImVec2(1,1),	--uv1
+					ig.ImVec2(bgx / tex.width, bgy / tex.height),	--uv0
+					ig.ImVec2((bgx + bgw) / tex.width, (bgy + bgh) / tex.height),	--uv1
 					-1,	-- frame_padding
 					i == self.selectedBackgroundIndex and ig.ImVec4(1,1,0,.25) or ig.ImVec4(0,0,0,0))	-- bg_col
 				then
