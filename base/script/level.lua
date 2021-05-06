@@ -17,6 +17,20 @@ local glapp = require 'base.script.singleton.glapp'
 local vec4f = require 'vec-ffi.vec4f'
 local SpawnInfo = require 'base.script.spawninfo'
 
+
+--[[
+float x, y, w, h;
+float scaleX, scaleY;
+float scrollX, scrollY;
+--]]
+ffi.cdef[[
+typedef struct {
+	float x, y, w, h;
+	float scaleX, scaleY;
+	float scrollX, scrollY;
+} background_t;
+]]
+
 -- tile in the map system
 local MapTile = class()
 
@@ -203,12 +217,23 @@ function Level:init(args)
 	local Tex2D = texsys.GLTex2D
 
 	-- load backgrounds here
-	self.backgrounds = table(assert(assert(load('return '..assert(file[assert(modio:find('script/backgrounds.lua'))])))()))
-	for i,background in ipairs(self.backgrounds) do
-		local fn = modio:find('backgrounds/'..background.name..'.png')
-		if fn then
-			background.tex = texsys:load(fn, true)
+	do
+		self.backgrounds = table(assert(assert(load('return '..assert(file[assert(modio:find('script/backgrounds.lua'))])))()))
+		self.bgtexpackFilename = modio:find(mappath..'/bgtexpack.png')
+		if not self.bgtexpackFilename then
+			self.bgtexpackFilename = modio:find'bgtexpack.png'
+			assert(self.bgtexpackFilename, "better put your background textures in a texpack, and define their regions in your mod's scripts/backgrounds.lua file")
 		end
+		self.bgtexpackImage = Image(self.bgtexpackFilename)
+		local gl = game.R.gl
+		self.bgtexpackTex = Tex2D{
+			image = self.bgtexpackImage,
+			minFilter = gl.GL_LINEAR,
+			magFilter = gl.GL_NEAREST,
+			internalFormat = gl.GL_RGBA,
+			format = gl.GL_RGBA,
+			generateMipmap = true,
+		}
 	end
 
 	local backgroundFile
@@ -242,7 +267,9 @@ function Level:init(args)
 			self.texpackFilename = modio:find 'texpack.png'
 			assert(self.texpackFilename, "better put your textures in a texpack")
 		end
+		-- save the Image for Editor
 		self.texpackImage = Image(self.texpackFilename)
+		assert(self.texpackImage.channels == 4)
 		local gl = game.R.gl
 		self.texpackTex = Tex2D{
 			image = self.texpackImage,
@@ -293,8 +320,51 @@ function Level:init(args)
 			magFilter = gl.GL_NEAREST,
 		}
 
+		self.backgroundTex = Tex2D{
+			internalFormat = gl.GL_LUMINANCE,
+			width = self.size[1],
+			height = self.size[2],
+			format = gl.GL_LUMINANCE,
+			type = gl.GL_UNSIGNED_BYTE,
+			data = self.backgroundMap,
+			minFilter = gl.GL_NEAREST,
+			magFilter = gl.GL_NEAREST,
+		}
+
+
+		-- TODO every time self.backgrounds changes, this has to be updated
+		-- but for now it looks like 'backgrounds' is static
+
+		-- another option: use vertex arrays and just set them constant across the poly
+		self.backgroundStructData = ffi.new('background_t[?]', #self.backgrounds)
+		assert(ffi.sizeof(self.backgroundStructData) == ffi.sizeof'float' * 8 * #self.backgrounds)
+		local ptr = self.backgroundStructData
+		for i,background in ipairs(self.backgrounds) do
+			ptr[0].x = background.x
+			ptr[0].y = background.y
+			ptr[0].w = background.w
+			ptr[0].h = background.h
+			ptr[0].scaleX = background.scaleX
+			ptr[0].scaleY = background.scaleY
+			ptr[0].scrollX = background.scrollX
+			ptr[0].scrollY = background.scrollY
+			ptr = ptr + 1
+		end
+		self.backgroundStructTex = Tex2D{
+			internalFormat = gl.GL_RGBA32F,
+			width = 2,
+			height = #self.backgrounds,
+			format = gl.GL_RGBA,
+			type = gl.GL_FLOAT,
+			data = ffi.cast('float*', self.backgroundStructData),
+			minFilter = gl.GL_NEAREST,
+			magFilter = gl.GL_NEAREST,
+		}
+
 		local GLProgram = require 'gl.program'
-		self.mapShader = GLProgram{
+	
+		-- render the background image (with scrolling effects) and the background tiles
+		self.levelBgShader = GLProgram{
 			vertexCode = [[
 varying vec2 pos;
 varying vec2 tc;
@@ -308,34 +378,56 @@ void main() {
 varying vec2 pos;
 varying vec2 tc;
 
-uniform sampler2D fgTileTex;
-//uniform sampler2D bgTileTex;
-uniform sampler2D texpackTex;
+uniform sampler2D backgroundTex;		// unsigned char
+uniform sampler2D bgTileTex;			// unsigned short <=> luminance_alpha
+uniform sampler2D bgtexpackTex;			//backgroundTex uses this
+uniform sampler2D texpackTex;			//bgTileTex uses this
+uniform sampler2D backgroundStructTex;
 
-uniform vec2 levelSize;
 uniform float tileSize;
 uniform vec2 texpackTexSize;
+uniform vec2 bgtexpackTexSize;
+uniform vec2 viewMin;
+uniform float backgroundStructTexSize;
 
 void main() {
-	float tilesWide = texpackTexSize.x / tileSize;
-	float tilesHigh = texpackTexSize.y / tileSize;
-
-	// tc is in [0,1]^2 space
-	vec2 tilepos = tc * levelSize;	// tilepos is the tile
 	vec2 posInTile = pos - floor(pos);
-	posInTile.y = 1. - posInTile.y;
-
-#if 0	//debugging
-	// verify UV is working
-	//gl_FragColor = vec4(posInTile, .5, 1.);	
-#else
+	posInTile.y = 1. - posInTile.y;		//because y is flipped in our image coordinate system
 
 	//TODO background here!
 	gl_FragColor = vec4(0.);
 
-#if 0
-	// background color?
-	vec2 bgTileIndexV = texture2D(fgTileTex, tc).zw;
+	// background color
+	float bgIndexV = texture2D(backgroundTex, tc).x;
+	float bgIndex = 255. * bgIndexV;
+	if (bgIndex > 0.) {
+		// lookup the background region from an array/texture somewhere ...
+		// it should specify x, y, w, h, scaleX, scaleY, scrollX, scrollY
+		// so 8 channels per background in all
+		float u = (bgIndex - .5) / backgroundStructTexSize;
+		vec4 xywh = texture2D(backgroundStructTex, vec2(.25, u));
+		vec2 xy = xywh.xy;
+		vec2 wh = xywh.zw;
+		vec4 scaleScroll = texture2D(backgroundStructTex, vec2(.75, u));
+		vec2 scale = scaleScroll.xy;
+		vec2 scroll = scaleScroll.zw;
+
+		vec2 uv = pos - viewMin * scroll;
+		uv.y = 1. - uv.y;
+		uv /= scale;
+		uv = mod(uv, 1.);
+		uv = (uv * wh + xy) / bgtexpackTexSize;
+		vec4 backgroundColor = texture2D(bgtexpackTex, uv);
+		
+		gl_FragColor.rgb = mix(gl_FragColor.rgb, backgroundColor.rgb, backgroundColor.a);
+	}
+
+	
+	float tilesWide = texpackTexSize.x / tileSize;
+	float tilesHigh = texpackTexSize.y / tileSize;
+	
+	// bg tile color
+	vec2 bgTileIndexV = texture2D(bgTileTex, tc).zw;
 	float bgTileIndex = 255. * (bgTileIndexV.x + 256. * bgTileIndexV.y);
 	if (bgTileIndex > 0.) {
 		bgTileIndex = bgTileIndex - 1;
@@ -345,12 +437,56 @@ void main() {
 		// hmm, stamp stuff goes here, do I want to keep it?
 		
 		vec4 bgColor = texture2D(texpackTex, (vec2(ti, tj) + posInTile) / vec2(tilesWide, tilesHigh));
-		gl_FragColor.rgb = mix(gl_FragColor.rgb, bgColor.rgb, 1. - gl_FragColor.a);
-		gl_FragColor.a = bgColor.a;
+		
+		gl_FragColor.rgb = mix(gl_FragColor.rgb, bgColor.rgb, bgColor.a);
 	}
-#endif
 
-	// foreground color?
+	//hmm, how to handle alpha, since this won't mix the same as applying these two layers separately
+	gl_FragColor.a = 1.;
+}
+]],	
+			uniforms = {
+				backgroundTex = 0,
+				bgTileTex = 1,
+				bgtexpackTex = 2,
+				texpackTex = 3,
+				backgroundStructTex = 4,
+				texpackTexSize = {self.texpackTex.width, self.texpackTex.height},
+				bgtexpackTexSize = {self.bgtexpackTex.width, self.bgtexpackTex.height},
+				backgroundStructTexSize = #self.backgrounds,
+			},
+		}
+
+		self.levelFgShader = GLProgram{
+			vertexCode = [[
+varying vec2 pos;
+varying vec2 tc;
+void main() {
+	pos = gl_Vertex.xy;
+	tc = gl_MultiTexCoord0.xy;
+	gl_Position = ftransform();
+}
+]],
+			fragmentCode = [[
+varying vec2 pos;	//world coordinates
+varying vec2 tc;	//in [0,1]^2
+
+uniform sampler2D fgTileTex;
+uniform sampler2D texpackTex;
+
+uniform float tileSize;
+uniform vec2 texpackTexSize;
+
+void main() {
+	vec2 posInTile = pos - floor(pos);
+	posInTile.y = 1. - posInTile.y;		//because y is flipped in our image coordinate system
+	
+	float tilesWide = texpackTexSize.x / tileSize;
+	float tilesHigh = texpackTexSize.y / tileSize;
+	
+	gl_FragColor = vec4(0.);
+
+	// fg tile color
 	vec2 fgTileIndexV = texture2D(fgTileTex, tc).zw;	// z = lum = lo byte, w = alpha = hi byte
 	float fgTileIndex = 255. * (fgTileIndexV.x + 256. * fgTileIndexV.y);	// this looks too horrible to be correct
 	if (fgTileIndex > 0.) {	//0 = transparent
@@ -364,17 +500,15 @@ void main() {
 		// hmm, stamp stuff goes here, do I want to keep it?
 		
 		vec4 fgColor = texture2D(texpackTex, (vec2(ti, tj) + posInTile) / vec2(tilesWide, tilesHigh));
+		
 		gl_FragColor.rgb = mix(gl_FragColor.rgb, fgColor.rgb, 1. - gl_FragColor.a);
 		gl_FragColor.a = fgColor.a;
 	}
-#endif
 }
 ]],
 			uniforms = {
 				fgTileTex = 0,
-				--bgTileTex = 1,
 				texpackTex = 1,
-				levelSize = self.size,
 				texpackTexSize = {self.texpackTex.width, self.texpackTex.height},
 			},
 		}
@@ -470,6 +604,7 @@ function Level:refreshTiles()
 	for _,field in ipairs{'tileMap', 'fgTileMap', 'bgTileMap', 'backgroundMap'} do
 		ffi.copy(self[field], self[field..'Original'], ffi.sizeof(self[field]))
 	end
+	-- TODO refreshTileTexelsForLayer also?
 end
 
 -- return mapTile x,y for tile x,y
@@ -578,6 +713,9 @@ end
 function Level:refreshBgTileTexels(x1,y1,x2,y2)
 	return self:refreshTileTexelsForLayer(x1, y1, x2, y2, self.bgTileMap, self.bgTileTex)
 end
+function Level:refreshBackgroundTexels(x1,y1,x2,y2)
+	return self:refreshTileTexelsForLayer(x1, y1, x2, y2, self.backgroundMap, self.backgroundTex)
+end
 
 function Level:makeEmpty(x,y)
 	-- setTile calls floor()
@@ -588,6 +726,7 @@ function Level:makeEmpty(x,y)
 	-- assume the game is calling it ,not the editor, so i have to refresh stuff again
 	self:refreshFgTileTexels(x,y,x,y)
 	self:refreshBgTileTexels(x,y,x,y)
+	self:refreshBackgroundTexels(x,y,x,y)
 end
 
 function Level:update(dt)
@@ -653,46 +792,19 @@ end
 	if ymin < 1 then ymin = 1 end
 	if ymax > self.size[2] then ymax = self.size[2] end
 
-	for y=ymin,ymax do
-		for x=xmin,xmax do
-			local offset = x-1+self.size[1]*(y-1)
-			local bgindex = self.backgroundMap[offset]
-			local background = self.backgrounds[bgindex]
-			local scaleX, scaleY = 32, 32
-			local scrollX, scrollY = 4, 4
-			if background then
-				scaleX, scaleY = background.scaleX, background.scaleY
-				scrollX, scrollY = background.scrollX, background.scrollY
-			end
-			local bgtex = background and background.tex
-			if bgtex then
-				bgtex:bind()
-				R:quad(
-					x, y,
-					1,1,
-					(x - bbox.min[1] * scrollX) / scaleX,
-					(1 - (y - bbox.min[2] * scrollY)) / scaleY,
-					1/scaleX, -1/scaleY,
-					0,
-					1,1,1,1)
-			end	
+	do	
+		self.levelBgShader:use()	-- I could use the shader param but then I'd have to set uniforms as a table, which is slower
+		if self.levelBgShader.uniforms.tileSize then
+			gl.glUniform1f(self.levelBgShader.uniforms.tileSize.loc, self.tileSize)
 		end
-	end
-	
-	local tilesWide = self.texpackTex.width / self.tileSize
-	local tilesHigh = self.texpackTex.height / self.tileSize
-	local tilesInTexpack = tilesWide * tilesHigh
-
-	-- if we are too far zoomed out, use a lighter render
-	-- TODO always use this one
-	do	 --if ibbox.max[1] - ibbox.min[1] > glapp.width / self.overmapZoomLevel then
-		self.mapShader:use()	-- I could use the shader param but then I'd have to set uniforms as a table, which is slower
-		if self.mapShader.uniforms.tileSize then
-			gl.glUniform1f(self.mapShader.uniforms.tileSize.loc, self.tileSize)
+		if self.levelBgShader.uniforms.viewMin then
+			gl.glUniform2f(self.levelBgShader.uniforms.viewMin.loc, bbox.min[1], bbox.min[2])
 		end
-		--self.fgTileTex:bind(0)
-		self.bgTileTex:bind(0)
-		self.texpackTex:bind(1)
+		self.backgroundTex:bind(0)
+		self.bgTileTex:bind(1)
+		self.bgtexpackTex:bind(2)
+		self.texpackTex:bind(3)
+		self.backgroundStructTex:bind(4)
 		R:quad(
 			1, 1,
 			self.size[1],
@@ -701,12 +813,14 @@ end
 			1,1,
 			0,
 			1,1,1,1)
-		self.texpackTex:unbind(1)
-		self.bgTileTex:unbind(0)
-		--self.fgTileTex:unbind(0)
-		self.mapShader:useNone()
+		self.backgroundStructTex:unbind(4)
+		self.texpackTex:unbind(3)
+		self.bgtexpackTex:unbind(2)
+		self.bgTileTex:unbind(1)
+		self.backgroundTex:unbind(0)
+		self.levelBgShader:useNone()
 	end
-
+	
 	-- draw objects
 	-- [[ all at once
 	for _,obj in ipairs(game.objs) do
@@ -739,9 +853,9 @@ end
 	--]]
 
 	do	 --if ibbox.max[1] - ibbox.min[1] > glapp.width / self.overmapZoomLevel then
-		self.mapShader:use()	-- I could use the shader param but then I'd have to set uniforms as a table, which is slower
-		if self.mapShader.uniforms.tileSize then
-			gl.glUniform1f(self.mapShader.uniforms.tileSize.loc, self.tileSize)
+		self.levelFgShader:use()	-- I could use the shader param but then I'd have to set uniforms as a table, which is slower
+		if self.levelFgShader.uniforms.tileSize then
+			gl.glUniform1f(self.levelFgShader.uniforms.tileSize.loc, self.tileSize)
 		end
 		self.fgTileTex:bind(0)
 		self.texpackTex:bind(1)
@@ -755,14 +869,13 @@ end
 			1,1,1,1)
 		self.texpackTex:unbind(1)
 		self.fgTileTex:unbind(0)
-		self.mapShader:useNone()
+		self.levelFgShader:useNone()
 	end
 
 	-- [[ testing lighting
 	local gl = R.gl
 	gl.glDisable(gl.GL_LIGHTING)
 	--]]
-
 end
 
 return Level

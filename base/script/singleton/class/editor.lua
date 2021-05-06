@@ -89,6 +89,9 @@ Editor.paintBrush = {
 		if self.paintingBgTile[0] then
 			level:refreshBgTileTexels(xmin,ymin,xmax,ymax)
 		end
+		if self.paintingBackground[0] then
+			level:refreshBackgroundTexels(xmin,ymin,xmax,ymax)
+		end
 	end,
 }
 
@@ -190,6 +193,9 @@ Editor.fillBrush = {
 			end
 			if infos[3].mask then --self.paintingBgTile[0] then
 				level:refreshBgTileTexels(xmin,ymin,xmax,ymax)
+			end
+			if infos[4].mask then --self.paintingBgTile[0] then
+				level:refreshBackgroundTexels(xmin,ymin,xmax,ymax)
 			end
 		end
 		threads:add(thread)
@@ -404,6 +410,9 @@ do
 			end
 			if self.paintingBgTile[0] then
 				level:refreshBgTileTexels(xmin,ymin,xmax,ymax)
+			end
+			if self.paintingBackground[0] then
+				level:refreshBackgroundTexels(xmin,ymin,xmax,ymax)
 			end
 		end,
 	}
@@ -627,6 +636,7 @@ local function doMoveWorld(dx, dy)
 	level:refreshTiles()	-- copy original into current buffer
 	level:refreshFgTileTexels(1,1, level.size[1], level.size[2])
 	level:refreshBgTileTexels(1,1, level.size[1], level.size[2])
+	level:refreshBackgroundTexels(1,1, level.size[1], level.size[2])
 	-- move rooms?
 	do
 		local map = level.roomMap
@@ -1864,6 +1874,13 @@ function Editor:update()
 								self.moveBBox.max[1] - self.moveBBox.min[1] + math.floor(x - tonumber(brushWidth-1)/2),
 								self.moveBBox.max[2] - self.moveBBox.min[2] + math.floor(y - tonumber(brushHeight-1)/2))
 						end
+						if self.paintingBackground[0] then
+							level:refreshBackgroundTexels(
+								math.floor(x - tonumber(brushWidth-1)/2),
+								math.floor(y - tonumber(brushHeight-1)/2),
+								self.moveBBox.max[1] - self.moveBBox.min[1] + math.floor(x - tonumber(brushWidth-1)/2),
+								self.moveBBox.max[2] - self.moveBBox.min[2] + math.floor(y - tonumber(brushHeight-1)/2))
+						end
 					else
 						self.isMoving = false
 						self.moveBBox = nil
@@ -1919,6 +1936,13 @@ function Editor:update()
 						end
 						if self.paintingBgTile[0] then
 							level:refreshBgTileTexels(
+								math.min(x1,x2),
+								math.min(y1,y2),
+								math.max(x1,x2),
+								math.max(y1,y2))
+						end
+						if self.paintingBackground[0] then
+							level:refreshBackgroundTexels(
 								math.min(x1,x2),
 								math.min(y1,y2),
 								math.max(x1,x2),
