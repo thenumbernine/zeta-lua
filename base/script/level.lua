@@ -689,7 +689,7 @@ end
 -- if you call level:setTile then you have to manually call this
 -- assumes that x1,y1,x2,y2 are integers in range [1,size] 
 local gl
-function Level:refreshTileTexelsForLayer(x1,y1,x2,y2, tileMap, tileTex)
+function Level:refreshTileTexelsForLayer(x1,y1,x2,y2, tileMap, tileTex, internalFormat)
 	local tilesWide = self.texpackTex.width / self.tileSize
 	local tilesHigh = self.texpackTex.height / self.tileSize
 	local tilesInTexpack = tilesWide * tilesHigh
@@ -699,22 +699,22 @@ function Level:refreshTileTexelsForLayer(x1,y1,x2,y2, tileMap, tileTex)
 	y1 = math.max(y1, 1)
 	x2 = math.min(x2, self.size[1])
 	y2 = math.min(y2, self.size[2])
-	if x1 < x2 or y1 < y1 then return end
+	if x2 < x1 or y2 < y1 then return end
 
 	tileTex:bind()
 	for y = y1,y2 do
-		gl.glTexSubImage2D(tileTex.target, 0, x1 - 1, y1 - 1, x2 - x1 + 1, 1, gl.GL_LUMINANCE_ALPHA, gl.GL_UNSIGNED_BYTE, tileMap + (x1 - 1) + self.size[1] * (y1 - 1))
+		gl.glTexSubImage2D(tileTex.target, 0, x1 - 1, y - 1, x2 - x1 + 1, 1, internalFormat, gl.GL_UNSIGNED_BYTE, tileMap + (x1 - 1) + self.size[1] * (y - 1))
 	end
 	tileTex:unbind()
 end
 function Level:refreshFgTileTexels(x1,y1,x2,y2)
-	return self:refreshTileTexelsForLayer(x1, y1, x2, y2, self.fgTileMap, self.fgTileTex)
+	return self:refreshTileTexelsForLayer(x1, y1, x2, y2, self.fgTileMap, self.fgTileTex, gl.GL_LUMINANCE_ALPHA)
 end
 function Level:refreshBgTileTexels(x1,y1,x2,y2)
-	return self:refreshTileTexelsForLayer(x1, y1, x2, y2, self.bgTileMap, self.bgTileTex)
+	return self:refreshTileTexelsForLayer(x1, y1, x2, y2, self.bgTileMap, self.bgTileTex, gl.GL_LUMINANCE_ALPHA)
 end
 function Level:refreshBackgroundTexels(x1,y1,x2,y2)
-	return self:refreshTileTexelsForLayer(x1, y1, x2, y2, self.backgroundMap, self.backgroundTex)
+	return self:refreshTileTexelsForLayer(x1, y1, x2, y2, self.backgroundMap, self.backgroundTex, gl.GL_LUMINANCE)
 end
 
 function Level:makeEmpty(x,y)
