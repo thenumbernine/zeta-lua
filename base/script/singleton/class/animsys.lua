@@ -92,13 +92,20 @@ function AnimationSystem:seqHasFinished(spriteName, seqName, startTime)
 	return frameNumber >= #seq+1
 end
 
-function AnimationSystem:getTex(spriteName, seqName, startTime)
+function AnimationSystem:getFrame(spriteName, seqName, startTime)
 	local sprite, seq, frameNumber = self:getInfo(spriteName, seqName, startTime)
 	frameNumber = (math.floor(frameNumber - 1) % #seq) + 1
 	local frameName = seq[frameNumber]
-	local frame = sprite.frames[frameName]
+	return sprite.frames[frameName]
+end
+
+function AnimationSystem:getTex(spriteName, seqName, startTime)
+	local frame = self:getFrame(spriteName, seqName, startTime)
 	if not frame then 
-		error("failed to find frame named "..tostring(frameName)..'\n'..tolua(sprite, {indent=true})) 
+		error("failed to find frame named "..tolua{
+			spriteName = spriteName,
+			seqName = seqName,
+		}) 
 	end
 	return frame.tex
 end

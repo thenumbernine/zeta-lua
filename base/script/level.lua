@@ -16,13 +16,18 @@ local Image = require 'image'
 local glapp = require 'base.script.singleton.glapp'
 local vec4f = require 'vec-ffi.vec4f'
 local SpawnInfo = require 'base.script.spawninfo'
+local glreport = require 'gl.report'
 
 
---[[
-float x, y, w, h;
-float scaleX, scaleY;
-float scrollX, scrollY;
---]]
+local gl
+
+local int = ffi.new'int[1]'
+local function glGetInteger(symbol)
+	gl.glGetIntegerv(symbol, int)
+	return tonumber(int[0])
+end
+
+-- here's the data that gets copied to the GPU
 ffi.cdef[[
 typedef struct {
 	float x, y, w, h;
@@ -30,6 +35,48 @@ typedef struct {
 	float scrollX, scrollY;
 } background_t;
 ]]
+
+
+--[[
+how the sprites will work?
+each tile already has a list of attached objects
+we just need to encode that in a texture.
+have a texture2D of shorts that contains offset and size of sprite lists at each tile
+	(null means no such list)
+then have a texture1D of shorts of offsets to the visSprite_t texture
+then have a texture2D for the visSprite_t data
+
+so how to quickly encode the list of all tile objects into a texture?
+we would have to keep track of a list of all tiles that do have objects
+--]]
+ffi.cdef[[
+typedef struct {
+	float x, y, w, h;		//vertexes
+	
+	float tx, ty, tw, th;	//texture coords
+	
+	float r, g, b, a;		//color
+	
+	float rcx, rcy, angle;	//rotation center, angle
+	
+	float padding;			//make things float[4] aligned
+	
+	/* 
+	TODO uniforms and shader, but that wouldn't go in here
+	maybe pre-register sets of shaders (and uniforms and textures?) at the beginning of a level
+	and give each object a lookup into that,
+	and those pre-registered shader codes can be inlined into the raytracer?
+	so that should be inlined as well, and constructed per level (pre-registered at level load)
+	float shaderIndex;
+	union {
+		shaderUniforms1_t u1;
+		shaderUniforms2_t u2;
+		...
+	};
+	*/
+} visSprite_t;
+]]
+
 
 -- tile in the map system
 local MapTile = class()
@@ -79,6 +126,9 @@ Level.mapTileSize = vec2(32, 32)
 -- pixel width of a tile for the renderer to switch to overworld map
 Level.overmapZoomLevel = 16
 
+-- max number of sprites visible (in the raytracer)
+Level.visSpriteMax = 512
+
 local function rgbAt(image, x, y)
 	local r = image.buffer[0 + image.channels * (x + image.width * y)]
 	local g = image.buffer[1 + image.channels * (x + image.width * y)]
@@ -120,6 +170,9 @@ spawnFile contents are as follows:
 --]]
 function Level:init(args)
 	self.objsAtTile = table()
+
+	-- store as a global
+	gl = game.R.gl
 
 	-- enum of tileMap values. 0 => nil 
 	self.tileTypes = assert(args.tileTypes)
@@ -225,7 +278,6 @@ function Level:init(args)
 			assert(self.bgtexpackFilename, "better put your background textures in a texpack, and define their regions in your mod's scripts/backgrounds.lua file")
 		end
 		self.bgtexpackImage = Image(self.bgtexpackFilename)
-		local gl = game.R.gl
 		self.bgtexpackTex = Tex2D{
 			image = self.bgtexpackImage,
 			minFilter = gl.GL_LINEAR,
@@ -270,34 +322,19 @@ function Level:init(args)
 		-- save the Image for Editor
 		self.texpackImage = Image(self.texpackFilename)
 		assert(self.texpackImage.channels == 4)
-		local gl = game.R.gl
 		self.texpackTex = Tex2D{
 			image = self.texpackImage,
-			minFilter = gl.GL_LINEAR,
-			magFilter = gl.GL_NEAREST,
 			internalFormat = gl.GL_RGBA,
 			format = gl.GL_RGBA,
 			generateMipmap = true,	-- only used for the overworld texture
+			minFilter = gl.GL_LINEAR,
+			magFilter = gl.GL_NEAREST,
 		}
 	end
 
-	do	-- for editor's sake, and maybe for overworld view's sake, keep a texture with each pixel equal to a tile
-		local gl = game.R.gl
-	
-		local tilesWide = self.texpackTex.width / self.tileSize
-		local tilesHigh = self.texpackTex.height / self.tileSize
-		local tilesInTexpack = tilesWide * tilesHigh
-
-		-- this is the texpack, but scaled down to 1 pixel per tile
-		self.texpackDownsampleImage = Image(tilesWide, tilesHigh, 3, 'unsigned char')
-		local log2tileSize = math.floor(math.log(self.tileSize + .5, 2))
-		
-		self.texpackTex:bind()
-		gl.glGetTexImage(self.texpackTex.target, log2tileSize, gl.GL_RGB, gl.GL_UNSIGNED_BYTE, self.texpackDownsampleImage.buffer)
-		self.texpackTex:unbind()
-
-		
-		-- LUMINANCE16 is more appropriate but not always supported, esp not always with 16 whole bits.  lum_alpha is more supported
+	do
+		-- GL_LUMINANCE16 is more appropriate but not always supported, esp not always with 16 whole bits.  
+		-- GL_LUMINANCE_ALPHA is more supported
 		self.fgTileTex = Tex2D{
 			internalFormat = gl.GL_LUMINANCE_ALPHA,
 			width = self.size[1],
@@ -352,7 +389,9 @@ function Level:init(args)
 		end
 		self.backgroundStructTex = Tex2D{
 			internalFormat = gl.GL_RGBA32F,
-			width = 2,
+			-- should I round this up to power of two, for accurate texel access?
+			-- or should I use some extension to access the texture using integer coordinates?
+			width = math.ceil(ffi.sizeof'background_t' / (4 * ffi.sizeof'float')),	-- should be 2
 			height = #self.backgrounds,
 			format = gl.GL_RGBA,
 			type = gl.GL_FLOAT,
@@ -360,6 +399,62 @@ function Level:init(args)
 			minFilter = gl.GL_NEAREST,
 			magFilter = gl.GL_NEAREST,
 		}
+		assert(self.backgroundStructTex.width == 2)		-- if it's not then change the lookups below
+
+
+-- TODO for some reason on the sprite scenegraph stuff, GL_LUMINANCE_ALPHA isn't cutting it
+-- even though it works fine for the tile info in the map
+-- so figure out why, or make a few pathways depending on the graphics card's support?
+require 'vec-ffi.vec4f'
+		
+		-- offset into the sprite table
+		self.spriteListOffsetTileMap = ffi.new('vec4f_t[?]', self.size[1] * self.size[2])
+		ffi.fill(self.spriteListOffsetTileMap, ffi.sizeof'vec4f_t' * self.size[1] * self.size[2])
+		
+		-- map from x,y to offset in spriteListData
+		self.spriteListOffsetTileTex = Tex2D{
+			internalFormat = gl.GL_RGBA32F,
+			width = self.size[1],
+			height = self.size[2],
+			format = gl.GL_RGBA,
+			type = gl.GL_FLOAT,
+			data = self.spriteListOffsetTileMap,
+			minFilter = gl.GL_NEAREST,
+			magFilter = gl.GL_NEAREST,
+		}
+	
+
+		-- map to each entry in the visSprite_t table
+		self.spriteListMax = 512
+		--self.spriteListMax = 16
+		self.spriteListData = ffi.new('vec4f_t[?]', self.spriteListMax)
+		self.spriteListTex = Tex2D{
+			internalFormat = gl.GL_RGBA32F,
+			width = 1,
+			height = self.spriteListMax,
+			format = gl.GL_RGBA,
+			type = gl.GL_FLOAT,
+			data = self.spriteListData,
+			minFilter = gl.GL_NEAREST,
+			magFilter = gl.GL_NEAREST,
+		}
+
+
+		-- the visSprite_t data
+		self.visSpriteData = ffi.new('visSprite_t[?]', self.visSpriteMax)
+
+		self.visSpriteTex = Tex2D{
+			internalFormat = gl.GL_RGBA32F,
+			width = math.ceil(ffi.sizeof'visSprite_t' / (4 * ffi.sizeof'float')),
+			height = self.visSpriteMax,
+			format = gl.GL_RGBA,
+			type = gl.GL_FLOAT,
+			data = ffi.cast('float*', self.visSpriteData),
+			minFilter = gl.GL_NEAREST,
+			magFilter = gl.GL_NEAREST,
+		}
+		assert(self.visSpriteTex.width == 4)
+
 
 		local GLProgram = require 'gl.program'
 	
@@ -378,23 +473,32 @@ void main() {
 varying vec2 pos;
 varying vec2 tc;
 
-uniform sampler2D backgroundTex;		// unsigned char
-uniform sampler2D bgTileTex;			// unsigned short <=> luminance_alpha
-uniform sampler2D bgtexpackTex;			//backgroundTex uses this
-uniform sampler2D texpackTex;			//bgTileTex uses this
-uniform sampler2D backgroundStructTex;
+uniform vec2 viewMin;	//used by bg for scrolling effect
 
 uniform float tileSize;
+
+uniform sampler2D backgroundTex;		// unsigned char, reference into backgroundStructTex
+uniform sampler2D bgTileTex;			// unsigned short <=> luminance_alpha, reference into texpackTex
+
+uniform sampler2D texpackTex;			//bgTileTex uses this
 uniform vec2 texpackTexSize;
-uniform vec2 bgtexpackTexSize;
-uniform vec2 viewMin;
+
+uniform sampler2D backgroundStructTex;	// reference into bgtexpackTex
 uniform float backgroundStructTexSize;
 
+uniform sampler2D bgtexpackTex;
+uniform vec2 bgtexpackTexSize;	// TODO bake this into the backgroundStruct data?
+
+
 void main() {
+	//TODO store this outside the shader and pass in as a uniform?
+	float tilesWide = texpackTexSize.x / tileSize;
+	float tilesHigh = texpackTexSize.y / tileSize;
+
+
 	vec2 posInTile = pos - floor(pos);
 	posInTile.y = 1. - posInTile.y;		//because y is flipped in our image coordinate system
 
-	//TODO background here!
 	gl_FragColor = vec4(0.);
 
 	// background color
@@ -421,10 +525,6 @@ void main() {
 		
 		gl_FragColor.rgb = mix(gl_FragColor.rgb, backgroundColor.rgb, backgroundColor.a);
 	}
-
-	
-	float tilesWide = texpackTexSize.x / tileSize;
-	float tilesHigh = texpackTexSize.y / tileSize;
 	
 	// bg tile color
 	vec2 bgTileIndexV = texture2D(bgTileTex, tc).zw;
@@ -512,6 +612,164 @@ void main() {
 				texpackTexSize = {self.texpackTex.width, self.texpackTex.height},
 			},
 		}
+
+		local shaderCode = assert(file['base/script/raytrace.shader'])
+		self.levelSceneGraphShader = GLProgram{
+			vertexCode = table{
+				'#define VERTEX_SHADER 1',
+				shaderCode,
+			}:concat'\n',
+
+			fragmentCode = table{
+				'#define FRAGMENT_SHADER 1',
+				shaderCode
+			}:concat'\n',
+
+			uniforms = {
+				
+				backgroundTex = 2,
+				fgTileTex = 0,
+				bgTileTex = 3,
+				spriteListOffsetTileTex = 6,
+				
+				texpackTex = 1,
+				texpackTexSizeInTiles = {self.texpackTex.width / self.tileSize, self.texpackTex.height / self.tileSize},
+			
+				backgroundStructTex = 4,
+				backgroundStructTexSize = #self.backgrounds,
+				
+				bgtexpackTex = 5,
+				bgtexpackTexSize = {self.bgtexpackTex.width, self.bgtexpackTex.height},
+
+				spriteListTex = 7,
+				spriteListMax = assert(self.spriteListMax),
+				
+				visSpriteTex = 8,
+				visSpriteMax = self.visSpriteMax,
+			
+				spriteSheetTex = 9,
+			},
+		}
+
+
+
+
+		-- animation system debugging
+		-- write out all unique sprite textures
+		local animsys = require 'base.script.singleton.animsys'
+		local rects = table()
+		local totalPixels = 0
+		for spriteName, sprite in pairs(animsys.sprites) do
+			for frameName,frame in pairs(sprite.frames) do
+				local tex = frame.tex
+				totalPixels = totalPixels + tex.width * tex.height
+				rects:insert{
+					sprite = spriteName,
+					frame = frameName,
+					tex = tex,
+					x = 0,
+					y = 0,
+					w = tex.width,
+					h = tex.height,
+				}
+			end
+		end
+		-- what percent error should we give it?
+		totalPixels = math.ceil(totalPixels * 1.5)
+		local spriteSheetWidth = math.ceil(math.sqrt(totalPixels))
+		
+		require 'base.script.rectpack'(rects, spriteSheetWidth, spriteSheetWidth, 512)
+		local spriteSheetImage = Image(spriteSheetWidth, spriteSheetWidth, 4, 'unsigned char')
+		for _,rect in ipairs(rects) do
+			--[[ color randomly
+			local vec3d = require 'vec-ffi.vec3d'
+			local r, g, b = (vec3d(math.random(), math.random(), math.random()):normalize() * 255):map(math.floor):unpack()
+			for y=rect.y,rect.y + rect.h-1 do
+				for x=rect.x,rect.x + rect.w-1 do
+					local index = spriteSheetImage.channels * (x + spriteSheetImage.width * y)
+					spriteSheetImage.buffer[0 + index] = r
+					spriteSheetImage.buffer[1 + index] = g
+					spriteSheetImage.buffer[2 + index] = b
+					if spriteSheetImage.channels == 4 then
+						spriteSheetImage.buffer[3 + index] = 255
+					end
+				end
+			end
+			--]]
+			-- [[ color with the sprites themselves
+			local srcTex = rect.tex
+			local srcData = ffi.new('unsigned char[?]', srcTex.width * srcTex.height * spriteSheetImage.channels)
+			srcTex:bind()
+			local format = assert(({
+				[3] = gl.GL_RGB,
+				[4] = gl.GL_RGBA,
+			})[spriteSheetImage.channels], "couldn't determine format from # channels "..spriteSheetImage.channels)
+			gl.glGetTexImage(srcTex.target, 0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, srcData)
+			srcTex:unbind()
+			for y=0,rect.h-1 do
+				local dstY = y + rect.y
+				for x=0,rect.w-1 do
+					local dstX = x + rect.x
+					if dstX >= 0 and dstX < spriteSheetImage.width 
+					and dstY >= 0 and dstY < spriteSheetImage.height
+					then
+						local srcIndex = spriteSheetImage.channels * (x + rect.w * y)
+						local dstIndex = spriteSheetImage.channels * (dstX + spriteSheetImage.width * dstY)
+						for ch=0,spriteSheetImage.channels-1 do
+							spriteSheetImage.buffer[ch + dstIndex] = srcData[ch + srcIndex]
+						end
+					else
+						error'here'
+					end
+				end
+			end		
+			--]]
+		end
+		
+		-- save the rect positions in animsys
+		for _,rect in ipairs(rects) do
+			local frame = animsys.sprites[rect.sprite].frames[rect.frame]
+			frame.x = rect.x
+			frame.y = rect.y
+			frame.w = rect.w
+			frame.h = rect.h
+		end
+
+		--[[ debug write it out
+		print(tolua(rects:mapi(function(rect)
+			rect = table(rect)
+			rect.tex = nil
+			return rect
+		end)))
+		--]]
+		-- [[ debug save it
+		spriteSheetImage:save'packedsprites.png'
+		--]]
+
+		assert(spriteSheetImage.channels == 4)
+		self.spriteSheetTex = Tex2D{
+			image = spriteSheetImage,
+			internalFormat = gl.GL_RGBA,
+			format = gl.GL_RGBA,
+			generateMipmap = true,
+			minFilter = gl.GL_LINEAR,
+			magFilter = gl.GL_NEAREST,	
+		}
+
+
+
+		local glmaxs = {}
+		for _,symbol in ipairs{
+			'GL_MAX_TEXTURE_UNITS',					-- deprecated
+			'GL_MAX_TEXTURE_IMAGE_UNITS',			-- fragment shader max textures
+			'GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS',	-- vertex shader max textures
+			'GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS',	-- v.s. + f.s. + g.s. max textures
+			'GL_MAX_TEXTURE_SIZE',					-- max texture width & height
+		} do
+			glmaxs[symbol] = glGetInteger(gl[symbol])
+			print(symbol..' = '..glmaxs[symbol])
+		end
+	
 	end
 
 	-- chop world up into 32x32 map tiles, for the sake of linking and spawning
@@ -674,7 +932,7 @@ function Level:getTileWithOffset(x,y)
 end
 
 -- nil means don't set that particular layer
-function Level:setTile(x,y, tileIndex, fgTileIndex, bgTileIndex, backgroundIndex, dontUpdateTexs)
+function Level:setTile(x, y, tileIndex, fgTileIndex, bgTileIndex, backgroundIndex, dontUpdateTexs)
 	x = math.floor(x)
 	y = math.floor(y)
 	if x<1 or y<1 or x>self.size[1] or y>self.size[2] then return 0 end
@@ -703,7 +961,6 @@ end
 -- update downsampled texture of the whole map
 -- if you call level:setTile then you have to manually call this
 -- assumes that x1,y1,x2,y2 are integers in range [1,size] 
-local gl
 function Level:refreshTileTexelsForLayer(x1,y1,x2,y2, tileMap, tileTex, internalFormat)
 	local tilesWide = self.texpackTex.width / self.tileSize
 	local tilesHigh = self.texpackTex.height / self.tileSize
@@ -733,7 +990,7 @@ function Level:refreshBackgroundTexels(x1,y1,x2,y2)
 end
 
 function Level:makeEmpty(x,y)
-	self:setTile(x,y,0,0,0, true)
+	self:setTile(x, y, 0, 0, 0, nil)
 end
 
 function Level:update(dt)
@@ -742,33 +999,38 @@ function Level:update(dt)
 end
 
 function Level:draw(R, viewBBox)
-	gl = R.gl -- save externally for refreshFgTileTexels
 	local patch = require 'base.script.patch'
 
-	-- [[ testing lighting
-if useLighting then
-	local player = game.players[1]
-	if player then
-		local gl = R.gl
-		gl.glEnable(gl.GL_LIGHTING)
-		gl.glEnable(gl.GL_LIGHT0)
-		gl.glLightModelfv(gl.GL_LIGHT_MODEL_AMBIENT, vec4f(0,0,0,0).s)
-		gl.glLightModelf(gl.GL_LIGHT_MODEL_LOCAL_VIEWER, 1)
-		local t = self.roomProps[player.room]
-		local l = t and t.lightAmbient or 0
-		gl.glLightfv(gl.GL_LIGHT0, gl.GL_AMBIENT, vec4f(l,l,l,1).s)
-		gl.glLightfv(gl.GL_LIGHT0, gl.GL_DIFFUSE, vec4f(1,1,1,1).s)
-		gl.glLightfv(gl.GL_LIGHT0, gl.GL_SPECULAR, vec4f(1,1,1,1).s)
-		gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, vec4f(player.pos[1], player.pos[2]+1, 1, 1).s)
-		gl.glLightf(gl.GL_LIGHT0, gl.GL_CONSTANT_ATTENUATION, 0)
-		--gl.glLightf(gl.GL_LIGHT0, gl.GL_LINEAR_ATTENUATION, 1/10)
-		gl.glLightf(gl.GL_LIGHT0, gl.GL_QUADRATIC_ATTENUATION, 1/10^2)
-		gl.glMaterialfv(gl.GL_FRONT_AND_BACK, gl.GL_AMBIENT, vec4f(1,1,1,1).s)
-		gl.glMaterialfv(gl.GL_FRONT_AND_BACK, gl.GL_DIFFUSE, vec4f(1,1,1,1).s)
-		gl.glMaterialfv(gl.GL_FRONT_AND_BACK, gl.GL_SPECULAR, vec4f(0,0,0,0).s)
-		gl.glNormal3f(0,0,1)
-	end
+local raytraceSprites = true
+local editor = require 'base.script.singleton.editor'()
+if editor.active then
+	raytraceSprites = false
 end
+
+	-- [[ raytracing
+	if raytraceSprites then
+		self:initQuadRenderer()
+
+		local pushQuad = R.quad
+		R.quad = function(r, ...)
+			return self:addQuad(...)
+		end
+
+		for _,obj in ipairs(game.objs) do
+			if not obj.drawn then
+				obj:draw(R, viewBBox)
+				obj.drawn = true
+			end
+		end
+		
+		R.quad = pushQuad
+
+		self:finalizeQuadRenderer()
+
+		-- and now the visSpriteTex should have all the visSprite_t data
+		-- spriteListTex should have lookups into visSpriteTex
+		-- and spriteListOffsetTileTex should have lookups into spriteListTex
+	end
 	--]]
 
 	-- clone & offset
@@ -799,73 +1061,94 @@ end
 	if ymin < 1 then ymin = 1 end
 	if ymax > self.size[2] then ymax = self.size[2] end
 
-	do	
-		self.levelBgShader:use()	-- I could use the shader param but then I'd have to set uniforms as a table, which is slower
-		if self.levelBgShader.uniforms.tileSize then
-			gl.glUniform1f(self.levelBgShader.uniforms.tileSize.loc, self.tileSize)
+	-- separate renderers for foreground and background, and for each sprite
+	if not raytraceSprites then
+		do	
+			self.levelBgShader:use()	-- I could use the shader param but then I'd have to set uniforms as a table, which is slower
+			if self.levelBgShader.uniforms.tileSize then
+				gl.glUniform1f(self.levelBgShader.uniforms.tileSize.loc, self.tileSize)
+			end
+			if self.levelBgShader.uniforms.viewMin then
+				gl.glUniform2f(self.levelBgShader.uniforms.viewMin.loc, bbox.min[1], bbox.min[2])
+			end
+			self.backgroundTex:bind(0)
+			self.bgTileTex:bind(1)
+			self.bgtexpackTex:bind(2)
+			self.texpackTex:bind(3)
+			self.backgroundStructTex:bind(4)
+			R:quad(
+				1, 1,
+				self.size[1],
+				self.size[2],
+				0,0,
+				1,1,
+				0,
+				1,1,1,1)
+			self.backgroundStructTex:unbind(4)
+			self.texpackTex:unbind(3)
+			self.bgtexpackTex:unbind(2)
+			self.bgTileTex:unbind(1)
+			self.backgroundTex:unbind(0)
+			self.levelBgShader:useNone()
 		end
-		if self.levelBgShader.uniforms.viewMin then
-			gl.glUniform2f(self.levelBgShader.uniforms.viewMin.loc, bbox.min[1], bbox.min[2])
-		end
-		self.backgroundTex:bind(0)
-		self.bgTileTex:bind(1)
-		self.bgtexpackTex:bind(2)
-		self.texpackTex:bind(3)
-		self.backgroundStructTex:bind(4)
-		R:quad(
-			1, 1,
-			self.size[1],
-			self.size[2],
-			0,0,
-			1,1,
-			0,
-			1,1,1,1)
-		self.backgroundStructTex:unbind(4)
-		self.texpackTex:unbind(3)
-		self.bgtexpackTex:unbind(2)
-		self.bgTileTex:unbind(1)
-		self.backgroundTex:unbind(0)
-		self.levelBgShader:useNone()
-	end
-	
-	-- draw objects
-	-- [[ all at once
-	for _,obj in ipairs(game.objs) do
-		if not obj.drawn then
-			obj:draw(R, viewBBox)
-			obj.drawn = true
-		end
-	end
-	--]]
-	--[[ only touching visible tiles
-	-- this doesn't render temp objects though ...
-	-- I wasn't attching them to tile.objs because they aren't collidable
-	-- should I be making two separate lists on tile?  one for collidable, one for drawable?
-	for x=xmin,xmax do
-		local col = self.objsAtTile[x]
-		if col then
-			for y=ymin,ymax do
-				local tile = col[y]
-				if tile then
-					for _,obj in ipairs(tile.objs) do
-						if not obj.drawn then
-							obj:draw(R, viewBBox)
-							obj.drawn = true
-						end
-					end
-				end
+
+		-- draw objects
+		for _,obj in ipairs(game.objs) do
+			if not obj.drawn then
+				obj:draw(R, viewBBox)
+				obj.drawn = true
 			end
 		end
-	end
-	--]]
 
-	do	 --if ibbox.max[1] - ibbox.min[1] > glapp.width / self.overmapZoomLevel then
-		self.levelFgShader:use()	-- I could use the shader param but then I'd have to set uniforms as a table, which is slower
-		if self.levelFgShader.uniforms.tileSize then
-			gl.glUniform1f(self.levelFgShader.uniforms.tileSize.loc, self.tileSize)
+		do	 --if ibbox.max[1] - ibbox.min[1] > glapp.width / self.overmapZoomLevel then
+			self.levelFgShader:use()	-- I could use the shader param but then I'd have to set uniforms as a table, which is slower
+			if self.levelFgShader.uniforms.tileSize then
+				gl.glUniform1f(self.levelFgShader.uniforms.tileSize.loc, self.tileSize)
+			end
+			self.fgTileTex:bind(0)
+			self.texpackTex:bind(1)
+			R:quad(
+				1, 1,
+				self.size[1],
+				self.size[2],
+				0,0,
+				1,1,
+				0,
+				1,1,1,1)
+			self.texpackTex:unbind(1)
+			self.fgTileTex:unbind(0)
+			self.levelFgShader:useNone()
 		end
-		self.fgTileTex:bind(0)
-		self.texpackTex:bind(1)
+	else
+		self.levelSceneGraphShader:use()
+		
+		if self.levelSceneGraphShader.uniforms.tileSize then
+			gl.glUniform1f(self.levelSceneGraphShader.uniforms.tileSize.loc, self.tileSize)
+		end
+		if self.levelSceneGraphShader.uniforms.viewMin then
+			gl.glUniform2f(self.levelSceneGraphShader.uniforms.viewMin.loc, bbox.min[1], bbox.min[2])
+		end
+		if self.levelSceneGraphShader.uniforms.texpackTexSizeInTiles then
+			gl.glUniform2f(
+				self.levelSceneGraphShader.uniforms.texpackTexSizeInTiles.loc,
+				self.texpackTex.width / self.tileSize,
+				self.texpackTex.height / self.tileSize)
+		end
+		
+		self.fgTileTex:bind(0)					-- map from tile to fg tex in texpack
+		self.texpackTex:bind(1)					-- bg/fg tile texture data
+		
+		self.backgroundTex:bind(2)				-- map from tile to backgroundStruct
+		self.bgTileTex:bind(3)					-- map from tile to bg tex in texpack
+		self.backgroundStructTex:bind(4)		-- backgroundStruct including map into bgtexpack
+		self.bgtexpackTex:bind(5)				-- background texture data
+
+		self.spriteListOffsetTileTex:bind(6)	-- map from tile to sprite list
+		self.spriteListTex:bind(7)				-- map from sprite list to visSprite_t list
+		self.visSpriteTex:bind(8)
+		
+		self.spriteSheetTex:bind(9)
+
 		R:quad(
 			1, 1,
 			self.size[1],
@@ -873,16 +1156,242 @@ end
 			0,0,
 			1,1,
 			0,
-			1,1,1,1)
-		self.texpackTex:unbind(1)
-		self.fgTileTex:unbind(0)
-		self.levelFgShader:useNone()
+			1,1,1,1,
+
+			-- set this, otherwise the fixed pipeline is used via glEnable(GL_TEXTURE_2D)
+			-- however the R:quad() function unsets the shader after drawing the poly
+			-- so TODO just do the gl calls here instead
+			self.levelSceneGraphShader
+		)
+
+		for i=9,0,-1 do
+			gl.glActiveTexture(gl.GL_TEXTURE0 + i)
+			gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
+		end
+
+		self.levelSceneGraphShader:useNone()
+	end
+end
+
+
+-- matches base/script/singleton/class/renderer
+local uvs = {
+	vec2(0,0),
+	vec2(1,0),
+	vec2(1,1),
+	vec2(0,1),
+}
+
+
+
+-- reset this every frame
+Level.visSpriteCount = 0
+
+function Level:initQuadRenderer()
+	-- current index in the visSprite_t table
+	self.visSpriteCount = 0
+
+	-- map from tile index to table of all sprites at this tile
+	self.spritesAtTile = {}
+
+	--have a map from each tile to an entry in the spriteListData table
+	-- TODO clear the whole thing?  or keep track of tiles and clear only them?
+	--  which is faster?
+	ffi.fill(self.spriteListOffsetTileMap, ffi.sizeof'vec4f_t' * self.size[1] * self.size[2])
+end
+
+-- very similar to Object:link()
+function Level:addQuad(
+		x,y,
+		w,h,
+		tx,ty,
+		tw,th,
+		angle,
+		r,g,b,a,
+		shader,		-- TODO
+		uniforms,	-- TODO
+		rcx, rcy
+)
+	if self.visSpriteCount > self.visSpriteMax then return end
+
+	angle = angle or 0
+	rcx = rcx or 0
+	rcy = rcy or 0
+
+
+	-- store in our sprite struct
+	local visSpriteIndex = self.visSpriteCount
+	self.visSpriteCount = self.visSpriteCount + 1
+	local s = self.visSpriteData[visSpriteIndex]
+	
+	s.x = x
+	s.y = y
+	s.w = w
+	s.h = h
+
+	--[[
+	s.tx = tx
+	s.ty = ty
+	s.tw = tw
+	s.th = th
+	--]]
+	-- [[ remap to sprite sheet unit coordinates
+	-- but that means we need to know the sprite/frame associated with the current R:quad being drawn ...
+	local frame = self.currentFrame
+	s.tx = (tx * frame.w + frame.x) / self.spriteSheetTex.width
+	s.ty = (ty * frame.h + frame.y) / self.spriteSheetTex.height
+	s.tw = (tw * frame.w) / self.spriteSheetTex.width
+	s.th = (th * frame.h) / self.spriteSheetTex.height
+	--]]
+
+	s.r = r
+	s.g = g
+	s.b = b
+	s.a = a
+	
+	s.angle = math.rad(angle)	-- convert from deg to rad.  maybe store cos(theta),sin(theat) as well?
+	s.rcx = rcx
+	s.rcy = rcy
+
+
+	local costh, sinth
+	if angle ~= 0 then
+		local radians = math.rad(angle)
+		costh = math.cos(radians)
+		sinth = math.sin(radians)
+	end
+	
+	-- quad min/max
+	local qminx, qminy, qmaxx, qmaxy
+	for i,uv in ipairs(uvs) do
+		local rx, ry = w * uv[1], h * uv[2]
+		if angle ~= 0 then
+			rx, ry = rx - rcx, ry - rcy
+			rx, ry = rx * costh - ry * sinth, rx * sinth + ry * costh
+			rx, ry = rx + rcx, ry + rcy
+		end
+		local vx, vy = x + rx, y + ry
+		if i == 1 then
+			qminx, qmaxx = vx, vx
+			qminy, qmaxy = vy, vy
+		else
+			qminx = math.min(qminx, vx)
+			qmaxx = math.max(qmaxx, vx)
+			qminy = math.min(qminy, vy)
+			qmaxy = math.max(qmaxy, vy)
+		end
 	end
 
-	-- [[ testing lighting
-	local gl = R.gl
-	gl.glDisable(gl.GL_LIGHTING)
-	--]]
+
+	local minx = qminx - self.pos[1]
+	local miny = qminy - self.pos[2]
+	local maxx = qmaxx - self.pos[1]
+	local maxy = qmaxy - self.pos[2]
+
+
+	if minx > self.size[1]
+	or miny > self.size[2]
+	or maxx < 1
+	or maxy < 1
+	then return end	-- no tiles to link to
+
+	if minx < 1 then minx = 1 end
+	if miny < 1 then miny = 1 end
+	if maxx > self.size[1] then maxx = self.size[1] end
+	if maxy > self.size[2] then maxy = self.size[2] end
+
+
+	for x=math.floor(minx),math.floor(maxx) do
+		for y=math.floor(miny),math.floor(maxy) do
+			local tileIndex = (x - 1) + self.size[1] * (y - 1)
+			local visSpriteIndexes = self.spritesAtTile[tileIndex]
+			if not visSpriteIndexes then
+				visSpriteIndexes = table()
+				self.spritesAtTile[tileIndex] = visSpriteIndexes
+			end
+			visSpriteIndexes:insert(visSpriteIndex)
+		end
+	end
 end
+
+function Level:finalizeQuadRenderer()
+--print'begin'
+
+	-- build per-tile lookup
+	local spriteListIndex = 0
+	for tileIndex,visSpriteIndexes in pairs(self.spritesAtTile) do
+		if spriteListIndex >= self.spriteListMax then break end
+
+		-- map from the tile location to the index in the spriteListData
+		self.spriteListOffsetTileMap[tileIndex].x = spriteListIndex + 1	-- reserve zero for no list.
+
+--local x = tileIndex % self.size[1]
+--local y = (tileIndex - x) / self.size[1]
+--print('sprite list offset tile['..x..','..y..'] = '..(spriteListIndex + 1))
+	
+		-- don't overflow the buffer
+		local numSpritesCanCopy = math.min(#visSpriteIndexes, self.spriteListMax - spriteListIndex - 1)
+--print('writing sprite list count '..numSpritesCanCopy)
+
+		-- first entry of the spriteListData is the number of visSprite_t references
+		self.spriteListData[spriteListIndex].x = numSpritesCanCopy
+		spriteListIndex = spriteListIndex + 1
+
+		-- each successive entry is a visSprite_t reference, 0-based
+		for i=1,numSpritesCanCopy do
+--print('writing sprite list value '..visSpriteIndexes[i])
+			self.spriteListData[spriteListIndex].x = visSpriteIndexes[i]
+			spriteListIndex = spriteListIndex + 1
+		end
+	end
+
+	-- upload the sprite list offset tile map to the GPU
+	self.spriteListOffsetTileTex:bind()
+	-- TODO only upload individual tiles that are modified?
+	-- or TODO only upload the subrectangle that is modified?
+	-- [[ or ... upload the whole thing?
+	--gl.glTexSubImage2D(self.spriteListOffsetTileTex.target, 0, 0, 0, self.size[1], self.size[2], gl.GL_LUMINANCE_ALPHA, gl.GL_UNSIGNED_BYTE, self.spriteListOffsetTileMap)
+	gl.glTexSubImage2D(self.spriteListOffsetTileTex.target, 0, 0, 0, self.size[1], self.size[2], gl.GL_RGBA, gl.GL_FLOAT, self.spriteListOffsetTileMap)
+	--]]
+	self.spriteListOffsetTileTex:unbind()
+
+--[[ upload looks correct
+print('uploading '..spriteListIndex..' values to sprite list')
+print('before upload: ')
+for i=0,spriteListIndex-1 do
+	io.write(' '..self.spriteListData[i].x)
+end
+print()
+--]]
+
+	-- now we upload sprite list to the GPU 
+	self.spriteListTex:bind()
+	--gl.glTexSubImage2D(self.spriteListTex.target, 0, 0, 0, 1, spriteListIndex, gl.GL_LUMINANCE_ALPHA, gl.GL_UNSIGNED_BYTE, self.spriteListData)
+	gl.glTexSubImage2D(self.spriteListTex.target, 0, 0, 0, 1, spriteListIndex, gl.GL_RGBA, gl.GL_FLOAT, self.spriteListData)
+	self.spriteListTex:unbind()
+
+--[[
+-- try to grab it again and see what comes out
+self.spriteListTex:bind()
+--gl.glGetTexImage(self.spriteListTex.target, 0, gl.GL_LUMINANCE_ALPHA, gl.GL_UNSIGNED_BYTE, self.spriteListData) 
+gl.glGetTexImage(self.spriteListTex.target, 0, gl.GL_RGBA, gl.GL_FLOAT, self.spriteListData) 
+self.spriteListTex:unbind()
+print('after upload: ')
+for i=0,spriteListIndex-1 do
+	io.write(' '..self.spriteListData[i])
+end
+print()
+-- ...and the data matches
+--]]
+
+
+-- [=[
+	-- and we upload visSpriteData to the GPU
+	self.visSpriteTex:bind()
+	gl.glTexSubImage2D(self.visSpriteTex.target, 0, 0, 0, self.visSpriteTex.width, self.visSpriteCount, gl.GL_RGBA, gl.GL_FLOAT, ffi.cast('float*', self.visSpriteData))
+	self.visSpriteTex:unbind()
+--]=]
+end
+
 
 return Level

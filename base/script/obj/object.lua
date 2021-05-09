@@ -1222,12 +1222,22 @@ function Object:draw(R, viewBBox, holdOverride)
 	
 	-- heldby means re-rendering the obj to keep it in frame sync with the player	
 	if self.heldby and not holdOverride then return end
+		
+	local level = game.level
+	if level then
+		level.currentFrame = nil
+	end
 	
 	local tex
 	if self.tex then
 		tex = self.tex
 	elseif self.sprite then
-		tex = animsys:getTex(self.sprite, self.seq or 'stand', self.seqStartTime)
+		local frame = animsys:getFrame(self.sprite, self.seq or 'stand', self.seqStartTime)
+		if level then
+			-- used by the raytracer / scene graph
+			level.currentFrame = frame
+		end
+		tex = frame.tex
 	end
 	if tex then tex:bind() end
 	local cr,cg,cb,ca
@@ -1253,7 +1263,6 @@ function Object:draw(R, viewBBox, holdOverride)
 
 	local sx, sy = 1, 1
 	if tex then
-		local level = game.level
 		sx = tex.width/level.tileSize
 		sy = tex.height/level.tileSize
 	end

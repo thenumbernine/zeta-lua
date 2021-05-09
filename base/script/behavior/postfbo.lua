@@ -112,6 +112,11 @@ float lenSq(vec3 a) {
 }
 
 void main() {
+#if 1	// debug: disable raytracing
+	gl_FragColor = texture2D(tex, (viewport.xy + tc) / viewport.zw);
+	return;
+#endif
+
 	//now march from the view origin (pass this as a uniform ... pass bounds too) to 'tc'
 
 	//how big is 1 tile, in pixels
@@ -136,7 +141,7 @@ void main() {
 	float numSteps = max(1, rayLInfLength);
 	//numSteps = min(numSteps, 100.);	
 	//if I have to cap the raytrace steps, then that means there are samples I'm missing, so how about I scale my step randomly to make up for it?
-	
+
 	vec4 color = vec4(1.);
 
 //TODO numSteps should be l-inf dist of pixels covered
@@ -307,11 +312,17 @@ add some extra render info into the buffer on how to transform the rays at each 
 			local playerClientObj = self.playerClientObjs[playerIndex]
 
 			renderShader:use()
-			gl.glUniform1f(renderShader.uniforms.viewSize.loc, self.viewSize)
-			gl.glUniform4f(renderShader.uniforms.viewport.loc, x, y, w, h)
-			gl.glUniform2f(renderShader.uniforms.eyePos.loc,
-				(player.pos[1] - player.viewBBox.min[1]) / (player.viewBBox.max[1] - player.viewBBox.min[1]),
-				(player.pos[2] + 1.5 - player.viewBBox.min[2]) / (player.viewBBox.max[2] - player.viewBBox.min[2]))
+			if renderShader.uniforms.viewSize then
+				gl.glUniform1f(renderShader.uniforms.viewSize.loc, self.viewSize)
+			end
+			if renderShader.uniforms.viewport then
+				gl.glUniform4f(renderShader.uniforms.viewport.loc, x, y, w, h)
+			end
+			if renderShader.uniforms.eyePos then
+				gl.glUniform2f(renderShader.uniforms.eyePos.loc,
+					(player.pos[1] - player.viewBBox.min[1]) / (player.viewBBox.max[1] - player.viewBBox.min[1]),
+					(player.pos[2] + 1.5 - player.viewBBox.min[2]) / (player.viewBBox.max[2] - player.viewBBox.min[2]))
+			end
 			tex:bind()
 			gl.glBegin(gl.GL_TRIANGLE_STRIP)
 			gl.glTexCoord2f(x + .5, y + .5)				gl.glVertex2f(0, 0)

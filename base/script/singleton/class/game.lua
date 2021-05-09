@@ -232,24 +232,8 @@ function Game:render(preDrawCallback, postDrawCallback)
 			player.viewPos[1] + viewSize,
 			player.viewPos[2] + viewSize / aspectRatio)
 		
-		if self.bgtex then
-			self.bgtex:bind()
-			local xmin = player.viewBBox.min[1]
-			local ymin = player.viewBBox.min[2]
-			local xsize = 2 * aspectRatio * viewSize
-			local ysize = 2 * viewSize
-			R:quad(
-				xmin,ymin,--xy
-				xsize,ysize,--wh
-				xmin/32,(ymin+ysize)/32,--txy
-				xsize/32,-ysize/32,--twh
-				0,--theta
-				1,1,1,1
-			)
-		end
-							
-		local level = self.level
-		level:draw(R, player.viewBBox)
+		
+		self.level:draw(R, player.viewBBox)
 		if editor and editor.active then
 			editor:draw(R, player.viewBBox)
 		end
