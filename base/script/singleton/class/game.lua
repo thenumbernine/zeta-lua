@@ -233,7 +233,7 @@ function Game:render(preDrawCallback, postDrawCallback)
 			player.viewPos[2] + viewSize / aspectRatio)
 		
 		
-		self.level:draw(R, player.viewBBox)
+		self.level:draw(R, player.viewBBox, player.pos)
 		if editor and editor.active then
 			editor:draw(R, player.viewBBox)
 		end

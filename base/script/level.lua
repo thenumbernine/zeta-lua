@@ -1003,7 +1003,8 @@ end
 local vec4i = require 'vec-ffi.vec4i'
 local viewport = vec4i()
 
-function Level:draw(R, viewBBox)
+-- TODO just pass the client index
+function Level:draw(R, viewBBox, playerPos)
 	local patch = require 'base.script.patch'
 
 local raytraceSprites = true
@@ -1126,31 +1127,31 @@ end
 		end
 	else
 		local shader = self.levelSceneGraphShader
+		local uniforms = shader.uniforms
 		shader:use()
-		
-		if shader.uniforms.tileSize then
-			gl.glUniform1f(shader.uniforms.tileSize.loc, self.tileSize)
+
+		if uniforms.viewBBox then
+			gl.glUniform4f(uniforms.viewBBox.loc, viewBBox.min[1], viewBBox.min[2], viewBBox.max[1], viewBBox.max[2])
 		end
-		if shader.uniforms.viewPos then
-			local viewPosX = .5 * (viewBBox.min[1] + viewBBox.max[1])
-			local viewPosY = .5 * (viewBBox.min[2] + viewBBox.max[2])
-			gl.glUniform2f(shader.uniforms.viewPos.loc, viewPosX, viewPosY)
-		end
-		if shader.uniforms.texpackTexSizeInTiles then
+		if uniforms.texpackTexSizeInTiles then
 			gl.glUniform2f(
-				shader.uniforms.texpackTexSizeInTiles.loc,
+				uniforms.texpackTexSizeInTiles.loc,
 				self.texpackTex.width / self.tileSize,
 				self.texpackTex.height / self.tileSize)
 		end
-		if shader.uniforms.viewSize then
-			gl.glUniform1f(shader.uniforms.viewSize.loc, game.viewSize)
+		if uniforms.viewSize then
+			gl.glUniform1f(uniforms.viewSize.loc, game.viewSize)
 		end
+		if uniforms.eyePos then
+			gl.glUniform2f(uniforms.eyePos.loc, playerPos[1], playerPos[2] + 1.5)
+		end
+	
 		gl.glGetIntegerv(gl.GL_VIEWPORT, viewport.s)
-		if shader.uniforms.viewport then
-			gl.glUniform4f(shader.uniforms.viewport.loc, viewport:unpack())
+		if uniforms.viewport then
+			gl.glUniform4f(uniforms.viewport.loc, viewport:unpack())
 		end
-		if shader.uniforms.aspectRatioH_W then
-			gl.glUniform1f(shader.uniforms.aspectRatioH_W.loc, tonumber(viewport.w) / tonumber(viewport.z))
+		if uniforms.aspectRatioH_W then
+			gl.glUniform1f(uniforms.aspectRatioH_W.loc, tonumber(viewport.w) / tonumber(viewport.z))
 		end
 		
 		self.fgTileTex:bind(0)					-- map from tile to fg tex in texpack

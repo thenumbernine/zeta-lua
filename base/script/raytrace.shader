@@ -13,14 +13,15 @@ void main() {
 varying vec2 unitScreenCoord;
 
 
-uniform vec2 viewPos;
-uniform float viewSize;		//half width of ortho
-uniform vec4 viewport;		//xy=xy, zw=wh
+uniform float viewSize;			//half width of ortho
+uniform vec4 viewport;			//xy=xy, zw=wh
 uniform float aspectRatioH_W;	//= h/w = viewport.w/viewport.z
 
-uniform vec2 levelSize;	// level size, in tiles
+uniform vec4 viewBBox;			//xy=min, zw=max, in world coords
 
-uniform float tileSize;
+uniform vec2 levelSize;			//level size, in tiles
+
+uniform vec2 eyePos;			//position of player's eyes, in world coordinates
 
 // per-tile in the map:
 uniform sampler2D backgroundTex;			// unsigned char, reference into backgroundStructTex
@@ -72,9 +73,7 @@ vec4 applyBackgroundTex(vec4 fragColor, vec2 pos, vec2 mapTC) {
 	vec2 scale = scaleScroll.xy;
 	vec2 scroll = scaleScroll.zw;
 
-	vec2 viewMin = viewPos - vec2(viewSize, viewSize * aspectRatioH_W);
-
-	vec2 uv = pos - viewMin * scroll;
+	vec2 uv = pos - viewBBox.xy * scroll;
 	uv.y = 1. - uv.y;
 	uv /= scale;
 	uv = mod(uv, 1.);
@@ -214,7 +213,7 @@ vec4 applySprite(vec4 fragColor, vec2 pos, vec2 posInTile, vec2 mapTC) {
 	return fragColor;
 }
 
-vec4 getColorAtPos(vec2 pos) {
+vec4 getColorAtWorldPos(vec2 pos) {
 	vec2 posInTile = pos - floor(pos);
 
 	//convert to texcoords in map texture
@@ -232,6 +231,32 @@ vec4 getColorAtPos(vec2 pos) {
 	return fragColor;
 }
 
+vec2 worldToUnitScreenPos(vec2 worldPos) {
+	return (worldPos - viewBBox.xy) / (viewBBox.zw - viewBBox.xy);
+}
+
+vec2 unitScreenToWorldPos(vec2 unitScreenPos) {
+	return unitScreenPos * (viewBBox.zw - viewBBox.xy) + viewBBox.xy;
+}
+
+vec2 worldToViewportPos(vec2 worldPos) {
+	vec2 unitScreenPos = worldToUnitScreenPos(worldPos);
+	return unitScreenPos * viewport.zw + viewport.xy;
+}
+
+vec2 viewportToWorldPos(vec2 viewportPos) {
+	vec2 unitScreenPos = viewportPos / viewport.zw - viewport.xy;
+	return unitScreenToWorldPos(unitScreenPos);
+}
+
+vec4 getColorAtViewportPos(vec2 viewportPos) {
+	return getColorAtWorldPos(viewportToWorldPos(viewportPos));
+}
+
+float lenSq(vec3 a) {
+	return dot(a, a);
+}
+
 void main() {
 	//gl_Vertex is in [-1,1]^2 unit screen space
 	vec2 pos = unitScreenCoord;
@@ -239,11 +264,145 @@ void main() {
 	pos.y *= aspectRatioH_W;
 	pos *= viewSize;
 	//inverse modelview transform
+	vec2 viewPos = .5 * (viewBBox.xy + viewBBox.zw);
 	pos += viewPos;
 	//and now we are in world-space
 
+#if 0	//single sample
 	//here's for a single sample:
-	gl_FragColor = getColorAtPos(pos);
+	gl_FragColor = getColorAtWorldPos(pos);
+#else	//raytrace
+
+
+	vec2 tc = (unitScreenCoord + 1.) * .5 * viewport.zw;
+	//now march from the view origin (pass this as a uniform ... pass bounds too) to 'tc'
+
+	//how big is 1 tile, in pixels
+	float tileSizeInPixels = .5 * viewport.z / viewSize;
+
+	//assuming a tile is 16 texels, how many pixels in a texel?
+	//float sizeOfATexelForTex16 = max(1., tileSizeInPixels / 16.);
+
+	vec3 grey = vec3(.3, .6, .1);
+
+	//vec2 origin = viewport.xy + .5 * viewport.zw;
+	//origin.y += tileSizeInPixels;
+	vec2 origin = worldToViewportPos(eyePos);
+	
+	vec2 raypos = origin;
+	vec2 rayvel = tc - origin;
+	float raylength = length(rayvel);
+	float rayLInfLength = max(abs(rayvel.x), abs(rayvel.y));
+	vec2 raydir = rayvel / raylength;
+
+	//float numSteps = 100.;
+	float numSteps = max(1, rayLInfLength);
+	//numSteps = min(numSteps, 100.);	
+	//if I have to cap the raytrace steps, then that means there are samples I'm missing, so how about I scale my step randomly to make up for it?
+
+	vec4 color = vec4(1.);
+
+//TODO numSteps should be l-inf dist of pixels covered
+// TODO sampling below - esp transparency - should be step-independent
+	float dlen = raylength / numSteps;
+	for (float i = 0; i < numSteps; ++i) {
+		vec2 oldraypos = raypos;
+		raypos += raydir * dlen;
+
+		vec4 sampleColor = getColorAtViewportPos(raypos);
+	
+		
+/* TODO 
+add some extra render info into the buffer on how to transform the rays at each point
+
+- transform ray direction (reflection/refraction effects)
+- transform ray position (portals)
+- transparency
+*/
+
+		//opacity==1 means ordinary rendering, no smearing
+		//opacity==0 means fully smeared
+		//float opacity = 1.;
+
+		vec3 translateColor = vec3(248., 216., 32.) / 255.;		//yellow block color
+
+		// this is for the transparency and refraction effect
+		vec3 effectSrcColor = vec3(0., 0., 1.);
+		//vec3 effectSrcColor = vec3(104., 104., 176.) / 255.;	// blue block color
+		//vec3 effectSrcColor = vec3(34., 208., 56.) / 255.;	// which color was this?
+		//vec3 effectSrcColor = vec3(0., 1., .5);
+
+		//vec3 reflectEffectSrcColor = vec3(0., 1., 0.);
+		vec3 reflectEffectSrcColor = vec3(0., 200., 0.) / 255.;
+		
+		float opacity = lenSq(sampleColor.rgb - effectSrcColor)
+		//+ lenSq(sampleColor.rgb - reflectEffectSrcColor)
+		;
+		
+		opacity -= .1;
+		opacity *= 3.;
+		opacity = clamp(opacity, 0., 1.);
+		//opacity = smoothstep(.1, .8, opacity);
+		
+		//float refractivity = 0.;
+		float refractivity = .05 * (1. - opacity);
+		
+		//opacity = 1. - sqrt(1. - opacity);	//pulls down, more at the bottom
+		//opacity *= opacity;					//pulls down, more at the top
+		//opacity = 1. - pow(1. - opacity, 1. / 8.);
+		//opacity = pow(opacity, 8.);
+		//opacity *= .1;
+		//opacity = 1.;
+
+		//now add color slope to raydir and normalize
+		float l0m = dot(grey, getColorAtViewportPos(raypos));
+		float lm0 = dot(grey, getColorAtViewportPos(raypos));
+		float lp0 = dot(grey, getColorAtViewportPos(raypos));
+		float l0p = dot(grey, getColorAtViewportPos(raypos));
+		//float lmm = dot(grey, getColorAtViewportPos(raypos));
+		//float lpm = dot(grey, getColorAtViewportPos(raypos));
+		//float lmp = dot(grey, getColorAtViewportPos(raypos));
+		//float lpp = dot(grey, getColorAtViewportPos(raypos));
+		//float l00 = dot(grey, getColorAtViewportPos(raypos));
+
+		// 1st order dx,dy
+		vec2 dl = vec2(.5 * (lp0 - lm0), .5 * (l0p - l0m));
+		// Sobel
+		//vec2 dl = vec2(.25 * (lpp - lmp + 2. * (lp0 -lm0) + lpm - lmm), .25 * (lpp - lpm + 2. * (l0p -l0m) + lmp - lmm));
+		
+		dl = normalize(dl);
+		//cheap I know
+		raydir = normalize(mix(raydir, raydir + dl, refractivity));
+
+
+		//cheap portal translations
+		if (lenSq(sampleColor.rgb - translateColor) < .01) {
+			raypos.y += tileSizeInPixels * 5.;
+		}
+		
+		//cheap reflections
+		if (lenSq(sampleColor.rgb - reflectEffectSrcColor) < .15) {
+			raydir = normalize(raydir - 2. * dl * dot(raydir, dl));
+			raypos = oldraypos + raydir * 2.;
+		
+			//and don't just reflect but also dim
+			opacity = .9;
+			sampleColor = vec4(0., 0., 0., 0.);
+		}
+
+
+
+		//color.a = opacity;
+		color.a *= opacity;
+		//color.a = 1. - color.a * (1. - opacity);
+		
+		color.rgb *= 1. - color.a;
+		color.rgb += color.a * sampleColor;
+	}
+	
+	gl_FragColor = vec4(color.rgb, 1.);
+
+#endif
 }
 
 #endif	//FRAGMENT_SHADER
