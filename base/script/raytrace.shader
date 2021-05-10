@@ -1,20 +1,47 @@
 #if defined(VERTEX_SHADER)
 
-varying vec2 pos;
 varying vec2 tc;
+
+uniform float viewSize;		//half width of ortho
+uniform vec4 viewport;		//xy=xy, zw=wh
+
+uniform vec2 viewPos;
+
+uniform vec2 levelSize;	// level size, in tiles
+
 void main() {
-	pos = gl_Vertex.xy;
-	tc = gl_MultiTexCoord0.xy;
+	float aspectRatio = viewport.z / viewport.w;
+
+	//gl_Vertex is in [0,1]^2 unit screen space
+	tc = gl_Vertex.xy;	
+	//convert to [-1,1]^2 unit screen space
+	tc *= 2.;
+	tc -= 1.;
+	//inverse ortho transform
+	tc.y /= aspectRatio;
+	tc *= viewSize;
+	//inverse modelview transform
+	tc += viewPos;
+	//convert to tile coordinates
+	tc -= 1.;
+	tc /= levelSize;
+	
 	gl_Position = ftransform();
 }
 
 #endif	//VERTEX_SHADER
 #if defined(FRAGMENT_SHADER)
 
-varying vec2 pos;
-varying vec2 tc;
+//[0,1] normalized-world coordinates 
+//use tc * levelSize + 1 to get the world coordinates
+varying vec2 tc;	
 
-uniform vec2 viewMin;						//used by bg for scrolling effect
+uniform vec2 levelSize;
+
+
+// min of the bbox of the viewport, in world coordinates
+//used by bg for scrolling effect
+uniform vec2 viewMin;
 
 uniform float tileSize;
 
@@ -49,13 +76,13 @@ float lumAlphaToUInt16(vec2 lumAlpha) {
 	return 255. * lumAlpha.x + 256. * 255. * lumAlpha.y;
 }
 
-void applyBackgroundTex() {
+vec4 applyBackgroundTex(vec4 fragColor, vec2 pos) {
 	
 	// background color
 	float bgIndexV = texture2D(backgroundTex, tc).x;
 	
 	float bgIndex = lumToUInt8(bgIndexV);
-	if (bgIndex == 0.) return;	//TODO epsilon?
+	if (bgIndex == 0.) return fragColor;	//TODO epsilon?
 
 	// lookup the background region from an array/texture somewhere ...
 	// it should specify x, y, w, h, scaleX, scaleY, scrollX, scrollY
@@ -73,14 +100,15 @@ void applyBackgroundTex() {
 	uv /= scale;
 	uv = mod(uv, 1.);
 	uv = (uv * wh + xy) / bgtexpackTexSize;
-	vec4 backgroundColor = texture2D(bgtexpackTex, uv);
 	
-	gl_FragColor.rgb = mix(gl_FragColor.rgb, backgroundColor.rgb, backgroundColor.a);
+	vec4 backgroundColor = texture2D(bgtexpackTex, uv);
+	fragColor.rgb = mix(fragColor.rgb, backgroundColor.rgb, backgroundColor.a);
+	return fragColor;
 }
 
-void applyTileForColor(vec2 posInTile, vec2 tileIndexV) {
+vec4 applyTileForColor(vec4 fragColor, vec2 posInTile, vec2 tileIndexV) {
 	float tileIndex = lumAlphaToUInt16(tileIndexV);
-	if (tileIndex == 0.) return;	//TODO epsilon?
+	if (tileIndex == 0.) return fragColor;	//TODO epsilon?
 
 	tileIndex = tileIndex - 1.;
 	float ti = mod(tileIndex, texpackTexSizeInTiles.x);
@@ -91,15 +119,16 @@ void applyTileForColor(vec2 posInTile, vec2 tileIndexV) {
 	// hmm, stamp stuff goes here, do I want to keep it?
 	
 	vec4 tileColor = texture2D(texpackTex, (vec2(ti, tj) + vec2(posInTile.x, 1. - posInTile.y)) / texpackTexSizeInTiles);
-	gl_FragColor.rgb = mix(gl_FragColor.rgb, tileColor.rgb, tileColor.a);
+	fragColor.rgb = mix(fragColor.rgb, tileColor.rgb, tileColor.a);
+	return fragColor;
 }
 
-void applyBgTileTex(vec2 posInTile) {
-	applyTileForColor(posInTile, texture2D(bgTileTex, tc).zw);
+vec4 applyBgTileTex(vec4 fragColor, vec2 posInTile) {
+	return applyTileForColor(fragColor, posInTile, texture2D(bgTileTex, tc).zw);
 }
 
-void applyFgTileTex(vec2 posInTile) {
-	applyTileForColor(posInTile, texture2D(fgTileTex, tc).zw);
+vec4 applyFgTileTex(vec4 fragColor, vec2 posInTile) {
+	return applyTileForColor(fragColor, posInTile, texture2D(fgTileTex, tc).zw);
 }
 
 vec2 rot2D(vec2 v, float angle) {
@@ -109,7 +138,7 @@ vec2 rot2D(vec2 v, float angle) {
 		v.x * a.y + v.y * a.x);
 }
 
-void applySprite(vec2 posInTile) {
+vec4 applySprite(vec4 fragColor, vec2 pos, vec2 posInTile) {
 	// raytrace through sprites at this tile
 	// 1-based, 0 == no sprites
 	//using GL_LUMINANCE_ALPHA:
@@ -120,34 +149,24 @@ void applySprite(vec2 posInTile) {
 	//how come other lumAlphaToUInt16 in the background can compare exactly to zero?
 	// but this one is near zero
 	//something is wrong with this buffer reading
-	if (spriteListOffset < .1) return;	// 0 means none
+	if (spriteListOffset < .1) return fragColor;	// 0 means none
 #if 0
-	gl_FragColor.rgb = vec3(
+	return vec4(
 		spriteListOffset,
 		spriteListOffset,
-		spriteListOffset
-	);
-	return;
+		spriteListOffset,
+		1.);
 #endif
 	spriteListOffset = spriteListOffset - 1.;	//change from 1-based to 0-based
 
 #if 0
-	if (spriteListOffset < .1) {
-		gl_FragColor.rgb = vec3(1., 1., 1.);
-	} else if (spriteListOffset < 1.1) {
-		gl_FragColor.rgb = vec3(1., 0., 0.);
-	} else if (spriteListOffset < 2.1) {
-		gl_FragColor.rgb = vec3(1., 1., 0.);
-	} else if (spriteListOffset < 3.1) {
-		gl_FragColor.rgb = vec3(0., 1., 0.);
-	} else if (spriteListOffset < 4.1) {
-		gl_FragColor.rgb = vec3(0., 1., 1.);
-	} else if (spriteListOffset < 5.1) {
-		gl_FragColor.rgb = vec3(0., 0., 1.);
-	} else {
-		gl_FragColor.rgb = vec3(1., 0., 1.);
-	}
-	return;
+	if (spriteListOffset < .1) return vec4(1., 1., 1., 1.);
+	if (spriteListOffset < 1.1) return vec4(1., 0., 0., 1.);
+	if (spriteListOffset < 2.1) return vec4(1., 1., 0., 1.);
+	if (spriteListOffset < 3.1) return vec4(0., 1., 0., 1.);
+	if (spriteListOffset < 4.1) return vec4(0., 1., 1., 1.);
+	if (spriteListOffset < 5.1) return vec4(0., 0., 1., 1.);
+	return vec4(1., 0., 1., 1.);
 #endif
 
 	//using GL_LUMINANCE_ALPHA:
@@ -157,22 +176,13 @@ void applySprite(vec2 posInTile) {
 	float spriteListCount = texture2D(spriteListTex, vec2(.5, (spriteListOffset + .5) / spriteListMax)).x;
 
 #if 0
-	if (spriteListCount < .1) {
-		gl_FragColor.rgb = vec3(1., 1., 1.);
-	} else if (spriteListCount < 1.1) {
-		gl_FragColor.rgb = vec3(1., 0., 0.);
-	} else if (spriteListCount < 2.1) {
-		gl_FragColor.rgb = vec3(1., 1., 0.);
-	} else if (spriteListCount < 3.1) {
-		gl_FragColor.rgb = vec3(0., 1., 0.);
-	} else if (spriteListCount < 4.1) {
-		gl_FragColor.rgb = vec3(0., 1., 1.);
-	} else if (spriteListCount < 5.1) {
-		gl_FragColor.rgb = vec3(0., 0., 1.);
-	} else {
-		gl_FragColor.rgb = vec3(1., 0., 1.);
-	}
-	return;
+	if (spriteListCount < .1) return vec4(1., 1., 1., 1.);
+	if (spriteListCount < 1.1) return vec4(1., 0., 0., 1.);
+	if (spriteListCount < 2.1) return vec4(1., 1., 0., 1.);
+	if (spriteListCount < 3.1) return vec4(0., 1., 0., 1.);
+	if (spriteListCount < 4.1) return vec4(0., 1., 1., 1.);
+	if (spriteListCount < 5.1) return vec4(0., 0., 1., 1.);
+	return vec4(1., 0., 1., 1.);
 #endif
 
 	//now cycle through the sprites on this tile
@@ -218,25 +228,28 @@ void applySprite(vec2 posInTile) {
 			// technically correct, but only used in the shaders that I haven't implemented in the raytracer yet.
 			//texColor *= rgba;
 			
-			gl_FragColor.rgb = mix(gl_FragColor.rgb, texColor.rgb, texColor.a);
+			fragColor.rgb = mix(fragColor.rgb, texColor.rgb, texColor.a);
 		}
 	}
+
+	return fragColor;
 }
 
 
 void main() {
+	vec2 pos = tc * levelSize + 1.;
 	vec2 posInTile = pos - floor(pos);
 
-	gl_FragColor = vec4(0.);
-
-	applyBackgroundTex();			//operates on gl_FragColor
-	
-	applyBgTileTex(posInTile);		//operates on gl_FragColor
-	applySprite(posInTile);			//operates on gl_FragColor
-	applyFgTileTex(posInTile);		//operates on gl_FragColor
+	vec4 fragColor = vec4(0.);
+	fragColor = applyBackgroundTex(fragColor, pos);			//operates on gl_FragColor	
+	fragColor = applyBgTileTex(fragColor, posInTile);		//operates on gl_FragColor
+	fragColor = applySprite(fragColor, pos, posInTile);			//operates on gl_FragColor
+	fragColor = applyFgTileTex(fragColor, posInTile);		//operates on gl_FragColor
 	
 	//hmm, how to handle alpha, since this won't mix the same as applying these two layers separately
-	gl_FragColor.a = 1.;
+	fragColor.a = 1.;
+
+	gl_FragColor = fragColor;
 }
 
 #endif	//FRAGMENT_SHADER

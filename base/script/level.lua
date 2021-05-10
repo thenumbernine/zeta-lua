@@ -627,6 +627,8 @@ void main() {
 
 			uniforms = {
 				
+				levelSize = self.size,
+
 				backgroundTex = 2,
 				fgTileTex = 0,
 				bgTileTex = 3,
@@ -997,6 +999,9 @@ function Level:update(dt)
 	self.pos[1] = self.pos[1] + self.vel[1] * dt
 	self.pos[2] = self.pos[2] + self.vel[2] * dt
 end
+		
+local vec4i = require 'vec-ffi.vec4i'
+local viewport = vec4i()
 
 function Level:draw(R, viewBBox)
 	local patch = require 'base.script.patch'
@@ -1120,19 +1125,32 @@ end
 			self.levelFgShader:useNone()
 		end
 	else
-		self.levelSceneGraphShader:use()
+		local shader = self.levelSceneGraphShader
+		shader:use()
 		
-		if self.levelSceneGraphShader.uniforms.tileSize then
-			gl.glUniform1f(self.levelSceneGraphShader.uniforms.tileSize.loc, self.tileSize)
+		if shader.uniforms.tileSize then
+			gl.glUniform1f(shader.uniforms.tileSize.loc, self.tileSize)
 		end
-		if self.levelSceneGraphShader.uniforms.viewMin then
-			gl.glUniform2f(self.levelSceneGraphShader.uniforms.viewMin.loc, bbox.min[1], bbox.min[2])
+		if shader.uniforms.viewMin then
+			gl.glUniform2f(shader.uniforms.viewMin.loc, bbox.min[1], bbox.min[2])
 		end
-		if self.levelSceneGraphShader.uniforms.texpackTexSizeInTiles then
+		if shader.uniforms.viewPos then
+			local viewPosX = .5 * (viewBBox.min[1] + viewBBox.max[1])
+			local viewPosY = .5 * (viewBBox.min[2] + viewBBox.max[2])
+			gl.glUniform2f(shader.uniforms.viewPos.loc, viewPosX, viewPosY)
+		end
+		if shader.uniforms.texpackTexSizeInTiles then
 			gl.glUniform2f(
-				self.levelSceneGraphShader.uniforms.texpackTexSizeInTiles.loc,
+				shader.uniforms.texpackTexSizeInTiles.loc,
 				self.texpackTex.width / self.tileSize,
 				self.texpackTex.height / self.tileSize)
+		end
+		if shader.uniforms.viewSize then
+			gl.glUniform1f(shader.uniforms.viewSize.loc, game.viewSize)
+		end
+		if shader.uniforms.viewport then
+			gl.glGetIntegerv(gl.GL_VIEWPORT, viewport.s)
+			gl.glUniform4f(shader.uniforms.viewport.loc, viewport:unpack())
 		end
 		
 		self.fgTileTex:bind(0)					-- map from tile to fg tex in texpack
@@ -1149,27 +1167,32 @@ end
 		
 		self.spriteSheetTex:bind(9)
 
-		R:quad(
-			1, 1,
-			self.size[1],
-			self.size[2],
-			0,0,
-			1,1,
-			0,
-			1,1,1,1,
+		gl.glMatrixMode(gl.GL_PROJECTION)
+		gl.glPushMatrix()
+		R:ortho(0, 1, 0, 1, -1, 1)
+		
+		gl.glMatrixMode(gl.GL_MODELVIEW)
+		gl.glPushMatrix()
+		R:viewPos(0, 0)
 
-			-- set this, otherwise the fixed pipeline is used via glEnable(GL_TEXTURE_2D)
-			-- however the R:quad() function unsets the shader after drawing the poly
-			-- so TODO just do the gl calls here instead
-			self.levelSceneGraphShader
-		)
+		gl.glBegin(gl.GL_TRIANGLE_STRIP)
+		gl.glVertex2f(0, 0)
+		gl.glVertex2f(1, 0)
+		gl.glVertex2f(0, 1)
+		gl.glVertex2f(1, 1)
+		gl.glEnd()
+		
+		gl.glMatrixMode(gl.GL_PROJECTION)
+		gl.glPopMatrix()
+		gl.glMatrixMode(gl.GL_MODELVIEW)
+		gl.glPopMatrix()
 
 		for i=9,0,-1 do
 			gl.glActiveTexture(gl.GL_TEXTURE0 + i)
 			gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
 		end
 
-		self.levelSceneGraphShader:useNone()
+		shader:useNone()
 	end
 end
 

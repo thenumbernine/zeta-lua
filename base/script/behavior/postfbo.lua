@@ -84,8 +84,12 @@ return function(parentClass)
 					vertexCode = [[
 varying vec4 color;
 varying vec2 tc;	//in pixels
+
+uniform vec4 viewport;	//xy=xy, zw=wh
+
 void main() {
-	tc = gl_MultiTexCoord0.xy;	//in pixels
+	tc = gl_Vertex.xy * viewport.zw + .5 + viewport.xy;
+
 	color = gl_Color;
 	gl_Position = ftransform();
 }
@@ -101,7 +105,7 @@ so the screen is (tilesWide = 2 * viewSize tiles) wide and (tilesTall = 2 * view
 and one tile is (2 * viewSize tiles = viewport.z pixels <=> 1 tile = .5 * viewport.z / viewSize pixels)
 (maybe write that as a uniform to save calculations?)
 */
-uniform float viewSize;	
+uniform float viewSize;
 
 uniform vec2 texSize;
 uniform vec4 viewport;	//xy=xy, zw=wh
@@ -325,10 +329,10 @@ add some extra render info into the buffer on how to transform the rays at each 
 			end
 			tex:bind()
 			gl.glBegin(gl.GL_TRIANGLE_STRIP)
-			gl.glTexCoord2f(x + .5, y + .5)				gl.glVertex2f(0, 0)
-			gl.glTexCoord2f(x + w + .5, y + .5)			gl.glVertex2f(1, 0)
-			gl.glTexCoord2f(x + .5, y + h + .5)			gl.glVertex2f(0, 1)
-			gl.glTexCoord2f(x + w + .5, y + h + .5)		gl.glVertex2f(1, 1)
+			gl.glVertex2f(0, 0)
+			gl.glVertex2f(1, 0)
+			gl.glVertex2f(0, 1)
+			gl.glVertex2f(1, 1)
 			gl.glEnd()
 			tex:unbind()
 			renderShader:useNone()
