@@ -1,47 +1,24 @@
 #if defined(VERTEX_SHADER)
 
-varying vec2 tc;
-
-uniform float viewSize;		//half width of ortho
-uniform vec4 viewport;		//xy=xy, zw=wh
-
-uniform vec2 viewPos;
-
-uniform vec2 levelSize;	// level size, in tiles
+varying vec2 unitScreenCoord;	//[-1,1]^2 unit screen space
 
 void main() {
-	float aspectRatio = viewport.z / viewport.w;
-
-	//gl_Vertex is in [0,1]^2 unit screen space
-	tc = gl_Vertex.xy;	
-	//convert to [-1,1]^2 unit screen space
-	tc *= 2.;
-	tc -= 1.;
-	//inverse ortho transform
-	tc.y /= aspectRatio;
-	tc *= viewSize;
-	//inverse modelview transform
-	tc += viewPos;
-	//convert to tile coordinates
-	tc -= 1.;
-	tc /= levelSize;
-	
+	unitScreenCoord = gl_Vertex.xy;
 	gl_Position = ftransform();
 }
 
 #endif	//VERTEX_SHADER
 #if defined(FRAGMENT_SHADER)
 
-//[0,1] normalized-world coordinates 
-//use tc * levelSize + 1 to get the world coordinates
-varying vec2 tc;	
-
-uniform vec2 levelSize;
+varying vec2 unitScreenCoord;
 
 
-// min of the bbox of the viewport, in world coordinates
-//used by bg for scrolling effect
-uniform vec2 viewMin;
+uniform vec2 viewPos;
+uniform float viewSize;		//half width of ortho
+uniform vec4 viewport;		//xy=xy, zw=wh
+uniform float aspectRatioH_W;	//= h/w = viewport.w/viewport.z
+
+uniform vec2 levelSize;	// level size, in tiles
 
 uniform float tileSize;
 
@@ -76,10 +53,10 @@ float lumAlphaToUInt16(vec2 lumAlpha) {
 	return 255. * lumAlpha.x + 256. * 255. * lumAlpha.y;
 }
 
-vec4 applyBackgroundTex(vec4 fragColor, vec2 pos) {
+vec4 applyBackgroundTex(vec4 fragColor, vec2 pos, vec2 mapTC) {
 	
 	// background color
-	float bgIndexV = texture2D(backgroundTex, tc).x;
+	float bgIndexV = texture2D(backgroundTex, mapTC).x;
 	
 	float bgIndex = lumToUInt8(bgIndexV);
 	if (bgIndex == 0.) return fragColor;	//TODO epsilon?
@@ -94,6 +71,8 @@ vec4 applyBackgroundTex(vec4 fragColor, vec2 pos) {
 	vec4 scaleScroll = texture2D(backgroundStructTex, vec2(.75, u));
 	vec2 scale = scaleScroll.xy;
 	vec2 scroll = scaleScroll.zw;
+
+	vec2 viewMin = viewPos - vec2(viewSize, viewSize * aspectRatioH_W);
 
 	vec2 uv = pos - viewMin * scroll;
 	uv.y = 1. - uv.y;
@@ -123,12 +102,12 @@ vec4 applyTileForColor(vec4 fragColor, vec2 posInTile, vec2 tileIndexV) {
 	return fragColor;
 }
 
-vec4 applyBgTileTex(vec4 fragColor, vec2 posInTile) {
-	return applyTileForColor(fragColor, posInTile, texture2D(bgTileTex, tc).zw);
+vec4 applyBgTileTex(vec4 fragColor, vec2 posInTile, vec2 mapTC) {
+	return applyTileForColor(fragColor, posInTile, texture2D(bgTileTex, mapTC).zw);
 }
 
-vec4 applyFgTileTex(vec4 fragColor, vec2 posInTile) {
-	return applyTileForColor(fragColor, posInTile, texture2D(fgTileTex, tc).zw);
+vec4 applyFgTileTex(vec4 fragColor, vec2 posInTile, vec2 mapTC) {
+	return applyTileForColor(fragColor, posInTile, texture2D(fgTileTex, mapTC).zw);
 }
 
 vec2 rot2D(vec2 v, float angle) {
@@ -138,14 +117,14 @@ vec2 rot2D(vec2 v, float angle) {
 		v.x * a.y + v.y * a.x);
 }
 
-vec4 applySprite(vec4 fragColor, vec2 pos, vec2 posInTile) {
+vec4 applySprite(vec4 fragColor, vec2 pos, vec2 posInTile, vec2 mapTC) {
 	// raytrace through sprites at this tile
 	// 1-based, 0 == no sprites
 	//using GL_LUMINANCE_ALPHA:
-	//vec2 spriteListOffsetV = texture2D(spriteListOffsetTileTex, tc).zw;
+	//vec2 spriteListOffsetV = texture2D(spriteListOffsetTileTex, mapTC).zw;
 	//float spriteListOffset = lumAlphaToUInt16(spriteListOffsetV);
 	//using GL_RGBA32F:
-	float spriteListOffset = texture2D(spriteListOffsetTileTex, tc).x;
+	float spriteListOffset = texture2D(spriteListOffsetTileTex, mapTC).x;
 	//how come other lumAlphaToUInt16 in the background can compare exactly to zero?
 	// but this one is near zero
 	//something is wrong with this buffer reading
@@ -216,7 +195,7 @@ vec4 applySprite(vec4 fragColor, vec2 pos, vec2 posInTile) {
 		vec2 rc = rot.xy;
 		float angle = rot.z;
 
-//TODO rc
+//TODO rc = rotation-center
 		/*
 		now, based on the tc, find the sprite position, lookup texel, and lookup frame info in sprite sheet
 		*/
@@ -235,21 +214,36 @@ vec4 applySprite(vec4 fragColor, vec2 pos, vec2 posInTile) {
 	return fragColor;
 }
 
-
-void main() {
-	vec2 pos = tc * levelSize + 1.;
+vec4 getColorAtPos(vec2 pos) {
 	vec2 posInTile = pos - floor(pos);
 
+	//convert to texcoords in map texture
+	vec2 mapTC = (pos - 1.) / levelSize;
+
 	vec4 fragColor = vec4(0.);
-	fragColor = applyBackgroundTex(fragColor, pos);			//operates on gl_FragColor	
-	fragColor = applyBgTileTex(fragColor, posInTile);		//operates on gl_FragColor
-	fragColor = applySprite(fragColor, pos, posInTile);			//operates on gl_FragColor
-	fragColor = applyFgTileTex(fragColor, posInTile);		//operates on gl_FragColor
+	fragColor = applyBackgroundTex(fragColor, pos, mapTC);			//operates on gl_FragColor	
+	fragColor = applyBgTileTex(fragColor, posInTile, mapTC);		//operates on gl_FragColor
+	fragColor = applySprite(fragColor, pos, posInTile, mapTC);			//operates on gl_FragColor
+	fragColor = applyFgTileTex(fragColor, posInTile, mapTC);		//operates on gl_FragColor
 	
 	//hmm, how to handle alpha, since this won't mix the same as applying these two layers separately
 	fragColor.a = 1.;
 
-	gl_FragColor = fragColor;
+	return fragColor;
+}
+
+void main() {
+	//gl_Vertex is in [-1,1]^2 unit screen space
+	vec2 pos = unitScreenCoord;
+	//inverse ortho transform
+	pos.y *= aspectRatioH_W;
+	pos *= viewSize;
+	//inverse modelview transform
+	pos += viewPos;
+	//and now we are in world-space
+
+	//here's for a single sample:
+	gl_FragColor = getColorAtPos(pos);
 }
 
 #endif	//FRAGMENT_SHADER

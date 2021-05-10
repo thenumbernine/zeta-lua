@@ -1131,9 +1131,6 @@ end
 		if shader.uniforms.tileSize then
 			gl.glUniform1f(shader.uniforms.tileSize.loc, self.tileSize)
 		end
-		if shader.uniforms.viewMin then
-			gl.glUniform2f(shader.uniforms.viewMin.loc, bbox.min[1], bbox.min[2])
-		end
 		if shader.uniforms.viewPos then
 			local viewPosX = .5 * (viewBBox.min[1] + viewBBox.max[1])
 			local viewPosY = .5 * (viewBBox.min[2] + viewBBox.max[2])
@@ -1148,9 +1145,12 @@ end
 		if shader.uniforms.viewSize then
 			gl.glUniform1f(shader.uniforms.viewSize.loc, game.viewSize)
 		end
+		gl.glGetIntegerv(gl.GL_VIEWPORT, viewport.s)
 		if shader.uniforms.viewport then
-			gl.glGetIntegerv(gl.GL_VIEWPORT, viewport.s)
 			gl.glUniform4f(shader.uniforms.viewport.loc, viewport:unpack())
+		end
+		if shader.uniforms.aspectRatioH_W then
+			gl.glUniform1f(shader.uniforms.aspectRatioH_W.loc, tonumber(viewport.w) / tonumber(viewport.z))
 		end
 		
 		self.fgTileTex:bind(0)					-- map from tile to fg tex in texpack
@@ -1169,16 +1169,15 @@ end
 
 		gl.glMatrixMode(gl.GL_PROJECTION)
 		gl.glPushMatrix()
-		R:ortho(0, 1, 0, 1, -1, 1)
-		
+		gl.glLoadIdentity()
 		gl.glMatrixMode(gl.GL_MODELVIEW)
 		gl.glPushMatrix()
-		R:viewPos(0, 0)
+		gl.glLoadIdentity()
 
 		gl.glBegin(gl.GL_TRIANGLE_STRIP)
-		gl.glVertex2f(0, 0)
-		gl.glVertex2f(1, 0)
-		gl.glVertex2f(0, 1)
+		gl.glVertex2f(-1, -1)
+		gl.glVertex2f(1, -1)
+		gl.glVertex2f(-1, 1)
 		gl.glVertex2f(1, 1)
 		gl.glEnd()
 		
