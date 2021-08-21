@@ -142,7 +142,7 @@ void main() {
 	vec2 raydir = rayvel / raylength;
 
 	//float numSteps = 100.;
-	float numSteps = max(1, rayLInfLength);
+	float numSteps = max(1., rayLInfLength);
 	//numSteps = min(numSteps, 100.);	
 	//if I have to cap the raytrace steps, then that means there are samples I'm missing, so how about I scale my step randomly to make up for it?
 
@@ -151,7 +151,7 @@ void main() {
 //TODO numSteps should be l-inf dist of pixels covered
 // TODO sampling below - esp transparency - should be step-independent
 	float dlen = raylength / numSteps;
-	for (float i = 0; i < numSteps; ++i) {
+	for (float i = 0.; i < numSteps; ++i) {
 		vec2 oldraypos = raypos;
 		raypos += raydir * dlen;
 
@@ -201,15 +201,15 @@ add some extra render info into the buffer on how to transform the rays at each 
 		//opacity = 1.;
 
 		//now add color slope to raydir and normalize
-		float l0m = dot(grey, texture2D(tex, (raypos + vec2( 0., -1.) + viewport.xy) / viewport.zw));
-		float lm0 = dot(grey, texture2D(tex, (raypos + vec2(-1.,  0.) + viewport.xy) / viewport.zw));
-		float lp0 = dot(grey, texture2D(tex, (raypos + vec2( 1.,  0.) + viewport.xy) / viewport.zw));
-		float l0p = dot(grey, texture2D(tex, (raypos + vec2( 0.,  1.) + viewport.xy) / viewport.zw));
-		//float lmm = dot(grey, texture2D(tex, (raypos + vec2(-1., -1.) + viewport.xy) / viewport.zw));
-		//float lpm = dot(grey, texture2D(tex, (raypos + vec2( 1., -1.) + viewport.xy) / viewport.zw));
-		//float lmp = dot(grey, texture2D(tex, (raypos + vec2(-1.,  1.) + viewport.xy) / viewport.zw));
-		//float lpp = dot(grey, texture2D(tex, (raypos + vec2( 1.,  1.) + viewport.xy) / viewport.zw));
-		//float l00 = dot(grey, texture2D(tex, (raypos + vec2( 0.,  0.) + viewport.xy) / viewport.zw));
+		float l0m = dot(grey, texture2D(tex, (raypos + vec2( 0., -1.) + viewport.xy) / viewport.zw).rgb);
+		float lm0 = dot(grey, texture2D(tex, (raypos + vec2(-1.,  0.) + viewport.xy) / viewport.zw).rgb);
+		float lp0 = dot(grey, texture2D(tex, (raypos + vec2( 1.,  0.) + viewport.xy) / viewport.zw).rgb);
+		float l0p = dot(grey, texture2D(tex, (raypos + vec2( 0.,  1.) + viewport.xy) / viewport.zw).rgb);
+		//float lmm = dot(grey, texture2D(tex, (raypos + vec2(-1., -1.) + viewport.xy) / viewport.zw).rgb);
+		//float lpm = dot(grey, texture2D(tex, (raypos + vec2( 1., -1.) + viewport.xy) / viewport.zw).rgb);
+		//float lmp = dot(grey, texture2D(tex, (raypos + vec2(-1.,  1.) + viewport.xy) / viewport.zw).rgb);
+		//float lpp = dot(grey, texture2D(tex, (raypos + vec2( 1.,  1.) + viewport.xy) / viewport.zw).rgb);
+		//float l00 = dot(grey, texture2D(tex, (raypos + vec2( 0.,  0.) + viewport.xy) / viewport.zw).rgb);
 
 		// 1st order dx,dy
 		vec2 dl = vec2(.5 * (lp0 - lm0), .5 * (l0p - l0m));
@@ -243,7 +243,7 @@ add some extra render info into the buffer on how to transform the rays at each 
 		//color.a = 1. - color.a * (1. - opacity);
 		
 		color.rgb *= 1. - color.a;
-		color.rgb += color.a * sampleColor;
+		color.rgb += color.a * sampleColor.rgb;
 	}
 	
 	gl_FragColor = vec4(color.rgb, 1.);

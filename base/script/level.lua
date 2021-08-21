@@ -530,7 +530,7 @@ void main() {
 	vec2 bgTileIndexV = texture2D(bgTileTex, tc).zw;
 	float bgTileIndex = 255. * (bgTileIndexV.x + 256. * bgTileIndexV.y);
 	if (bgTileIndex > 0.) {
-		bgTileIndex = bgTileIndex - 1;
+		--bgTileIndex;
 		float ti = mod(bgTileIndex, tilesWide);
 		float tj = (bgTileIndex - ti) / tilesWide;
 		
@@ -590,7 +590,7 @@ void main() {
 	vec2 fgTileIndexV = texture2D(fgTileTex, tc).zw;	// z = lum = lo byte, w = alpha = hi byte
 	float fgTileIndex = 255. * (fgTileIndexV.x + 256. * fgTileIndexV.y);	// this looks too horrible to be correct
 	if (fgTileIndex > 0.) {	//0 = transparent
-		fgTileIndex = fgTileIndex - 1;
+		--fgTileIndex;
 		float ti = mod(fgTileIndex, tilesWide);
 		float tj = (fgTileIndex - ti) / tilesWide;
 		

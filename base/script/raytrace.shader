@@ -268,7 +268,7 @@ void main() {
 	pos += viewPos;
 	//and now we are in world-space
 
-#if 0	//single sample
+#if 1	//single sample
 	//here's for a single sample:
 	gl_FragColor = getColorAtWorldPos(pos);
 #else	//raytrace
