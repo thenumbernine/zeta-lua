@@ -575,7 +575,7 @@ function Hero:update(dt)
 					if self.onground
 					-- and we're at max vel (don't forget friction has been applied last frame)
 					and math.abs(self.vel[1]) >= self.maxRunVel - self.friction
-					--and self:findItem(nil, require 'zeta.script.obj.speedbooster'.is)
+					--and self:findItem(nil, require 'zeta.script.obj.speedbooster':isa)
 					then
 						self.speedBoostCharge = math.min(1, self.speedBoostCharge + dt)
 					end	
@@ -654,7 +654,7 @@ function Hero:update(dt)
 	and (self.collidedLeft or self.collidedRight)
 	then
 		--local WallJump = require 'zeta.script.obj.walljump'
-		local hasWallJump = true--self:findItem(nil, WallJump.is)
+		local hasWallJump = true--self:findItem(nil, WallJump:isa)
 		-- wall grinding? via the pick-up button
 		if --self.inputShootAux and 
 		hasWallJump then
