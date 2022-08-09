@@ -1,7 +1,7 @@
 local Game = require 'base.script.singleton.class.game'
 
 local ZetaGame = behaviors(Game
-	, require 'base.script.behavior.postfbo'
+--	, require 'base.script.behavior.postfbo'
 )
 
 ZetaGame.name = 'ZetaGame'

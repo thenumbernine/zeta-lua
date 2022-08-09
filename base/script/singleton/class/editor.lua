@@ -428,21 +428,21 @@ end
 
 local function checkboxTooltip(name, ptr)
 	assert(ptr, "forgot to pass a ptr for "..name)
-	ig.igPushIDStr(name)
+	ig.igPushID_Str(name)
 	ig.igCheckbox('', ptr)
 	hoverTooltip(name)
 	ig.igPopID()
 end
 
 local function radioTooltip(name, ptr, value)
-	ig.igPushIDStr(name)
-	ig.igRadioButtonIntPtr('', ptr, value)
+	ig.igPushID_Str(name)
+	ig.igRadioButton_IntPtr('', ptr, value)
 	hoverTooltip(name)
 	ig.igPopID()
 end
 
 local function buttonTooltip(name, ptr)
-	ig.igPushIDStr(name)
+	ig.igPushID_Str(name)
 	local result = ig.igButton('', ig.ImVec2(16,16))
 	hoverTooltip(name)
 	ig.igPopID()
@@ -487,7 +487,7 @@ function PickTileTypeWindow:update()
 	ig.igBegin('Choose Tile Type...', self.opened)
 	
 	for i=0,#editor.tileOptions do
-		ig.igPushIDStr('PickTileTypeWindow:update '..i)
+		ig.igPushID_Str('PickTileTypeWindow:update '..i)
 		self:radioButton(self.index, i, function(i)
 			self.callback(i)
 			self.opened[0] = false
@@ -512,7 +512,7 @@ end
 
 function PickTileTypeWindow:openButton(index, callback)
 	local editor = self.editor
-	ig.igPushIDStr('PickTileTypeWindow:openButton')
+	ig.igPushID_Str('PickTileTypeWindow:openButton')
 	self:radioButton(-1, index, function()
 		self:open(index, callback)
 	end)
@@ -725,7 +725,7 @@ function TileExchangeWindow:update()
 	local level = game.level
 	local editor = self.editor
 	
-	ig.igPushIDStr('Tile Exchange Window')
+	ig.igPushID_Str('Tile Exchange Window')
 	ig.igBegin('Tile Exchange', self.opened)
 	
 	checkboxTooltip('Tile Type', editor.paintingTileType)
@@ -737,14 +737,14 @@ function TileExchangeWindow:update()
 	ig.igSeparator()
 
 	--[[ here we're going to need a button that shows a popup that lets you choose
-	ig.igPushIDStr('Tile Type From')
+	ig.igPushID_Str('Tile Type From')
 	editor:tileTypeButton(self.tileTypeFrom
 	ig.igPopID()
-	ig.igPushIDStr('Tile Type To')
+	ig.igPushID_Str('Tile Type To')
 	ig.igPopID()
 	--]]
 
-	ig.igPushIDStr('Tile From')
+	ig.igPushID_Str('Tile From')
 	editor.pickTileWindow:openButton('from', self.tileFrom, function(i)
 		self.tileFrom = i
 	end)
@@ -752,7 +752,7 @@ function TileExchangeWindow:update()
 	ig.igPopID()
 	ig.igSameLine()
 	
-	ig.igPushIDStr('Tile To')
+	ig.igPushID_Str('Tile To')
 	editor.pickTileWindow:openButton('to', self.tileTo, function(i)
 		self.tileTo = i
 	end)
@@ -1207,12 +1207,12 @@ function Editor:editProperties(editorPropsField, selectedField, createNew, reser
 		local prop = self[editorPropsField][i]
 		local propTitle = prop.k
 	
-		ig.igPushIDStr('prop #'..i)
+		ig.igPushID_Str('prop #'..i)
 					
 		if prop.fieldType[0] == fieldTypeEnum.string then
 			local done
 			if prop.multiLineVisible then
-				ig.igPushIDStr('multiline')
+				ig.igPushID_Str('multiline')
 				-- ctrl+enter returns by default?
 				done = ig.igInputTextMultiline(propTitle, prop.vptr, textBufferSize,
 					ig.ImVec2(0,0),
@@ -1221,7 +1221,7 @@ function Editor:editProperties(editorPropsField, selectedField, createNew, reser
 				done = done or ig.igButton('done editing')
 				ig.igPopID()
 			else
-				ig.igPushIDStr('singleline')
+				ig.igPushID_Str('singleline')
 				done = ig.igInputText(propTitle, prop.vptr, textBufferSize, ig.ImGuiInputTextFlags_EnterReturnsTrue + ig.ImGuiInputTextFlags_AllowTabInput)
 				ig.igPopID()
 			end
@@ -1479,7 +1479,7 @@ function Editor:updateGUI()
 				-- why do I have to explicitly specify this child's size?
 				ig.igBeginChild('side '..side, ig.ImVec2(40, 64))
 				
-				ig.igPushIDStr(side)
+				ig.igPushID_Str(side)
 				local lc = side:lower()	
 				self.pickTileWindow:openButton(side:lower()..' tile', self['selected'..side..'TileIndex'], function(i)
 					self['selected'..side..'TileIndex'] = i
@@ -1535,7 +1535,7 @@ function Editor:updateGUI()
 		--and ig.igCollapsingHeader('Background Options:')
 		then
 			for i=0,#self.backgroundOptions do
-				ig.igPushIDStr('background '..i)
+				ig.igPushID_Str('background '..i)
 				local background = self.backgroundOptions[i].background
 				
 				local tex = level.bgtexpackTex
@@ -1572,14 +1572,14 @@ function Editor:updateGUI()
 				end
 				
 				ig.igSameLine()
-				ig.igPushIDStr('radio')
-				ig.igRadioButtonIntPtr('', self.selectedBackgroundIndex, i)
+				ig.igPushID_Str('radio')
+				ig.igRadioButton_IntPtr('', self.selectedBackgroundIndex, i)
 				ig.igPopID()
 
 				if i > 0 then
 					ig.igSameLine()
-					ig.igPushIDStr('tree')
-					if ig.igTreeNodeStr('') then
+					ig.igPushID_Str('tree')
+					if ig.igTreeNode_Str('') then
 						local float = ffi.new('float[1]')
 						for _,field in ipairs{'scaleX', 'scaleY', 'scrollX', 'scrollY'} do
 							float[0] = background[field] or 0
@@ -1597,7 +1597,7 @@ function Editor:updateGUI()
 	elseif self.editMode[0] == editModeObjects then
 		do --if ig.igCollapsingHeader('Object Type:', ig.ImGuiTreeNodeFlags_DefaultOpen) then
 			for i,spawnOption in ipairs(self.spawnOptions) do
-				ig.igPushIDStr('spawnOption #'..i)
+				ig.igPushID_Str('spawnOption #'..i)
 				local spawnType = spawnOption.spawnType
 				local spawnClass = require(spawnType.spawn)
 				local sprite = spawnClass.sprite
@@ -1709,7 +1709,7 @@ function Editor:event(event)
 end
 
 function Editor:update()
-	-- do tihs before checking editor.active
+	-- do this before checking editor.active
 	-- so if the editor shuts off, the player will be able to walk again
 	local player = game.players[1]
 	if self.active and self.noClipping[0] then
