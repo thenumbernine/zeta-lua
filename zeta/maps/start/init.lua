@@ -24,11 +24,12 @@ function toggleDefenses(args)
 	if not args.silent then
 		popup(circuit..' circuit:\n'.. (value
 			and [[
+Emergency alarm activated.
+Defense systems enabled.]]
+			or [[
 Emergency alarm deactivated.
 Defense systems disabled.]]
-			or [[
-Emergency alarm activated.
-Defense systems enabled.]]))
+		))
 	end
 end
 
