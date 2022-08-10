@@ -73,6 +73,7 @@ modio.levelcfg = {
 	--path = 'reboot',
 	path = 'start',
 	--path = 'start original',
+	music = 'music/sb_aurora.wav',
 }
 --]]
 

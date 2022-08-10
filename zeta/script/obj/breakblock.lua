@@ -63,6 +63,8 @@ BreakBlock.states.unbreak = {
 	end,
 	update = function(self)
 		if self.seqHasFinished then
+			local x = math.floor(self.pos[1])
+			local y = math.floor(self.pos[2])
 			local level = game.level
 			local index = self.index
 			level.tileMap[index] = self.tileIndex

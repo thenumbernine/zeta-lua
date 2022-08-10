@@ -1,6 +1,8 @@
 local App = require 'base.script.singleton.class.glapp'
 local ZetaApp = class(App)
 
+ZetaApp.title = 'Zeta'
+
 function ZetaApp:loadLevelConfig(save)
 	local levelcfg = ZetaApp.super.loadLevelConfig(self, save)
 
