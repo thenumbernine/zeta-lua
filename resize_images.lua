@@ -13,7 +13,7 @@ local targetSize = tonumber(arg[2]) or 16
 print('target size:',targetSize)
 
 local files = table()
-for f in file[dir]() do
+for f in os.listdir(dir) do
 	if f:match('%.png$') then
 		files:insert(f)
 	end

@@ -11,17 +11,17 @@ end
 
 
 -- first zip the dir itself - before the dists have been copied into subdirs
-exec('cd .. && 7z a dumpworld.7z dumpworld/')
+exec('cd .. && 7z a zeta2d.7z zeta2d/')
 os.execute('mkdir dist')
-exec('mv ../dumpworld.7z dist/')
-exec('scp -i ~/Documents/christopheremoore.net/digitalocean_christopheremoore.com_rsa dist/dumpworld.7z root@christopheremoore.net:/var/www/christopheremoore.net/')
+exec('mv ../zeta2d.7z dist/')
+exec('scp -i ~/Documents/christopheremoore.net/digitalocean_christopheremoore.com_rsa dist/zeta2d.7z root@christopheremoore.net:/var/www/christopheremoore.net/')
 
 for _,dist in ipairs{'osx', 'win32'} do
 	exec('./package.lua '..dist)
-	exec('mv dist/'..dist..' dist/dumpworld')
-	exec('cd dist && 7z a dumpworld-'..dist..'.7z dumpworld/')
-	exec('scp -i ~/Documents/christopheremoore.net/digitalocean_christopheremoore.com_rsa dist/dumpworld-'..dist..'.7z root@christopheremoore.net:/var/www/christopheremoore.net/')
-	exec('mv dist/dumpworld dist/'..dist)
+	exec('mv dist/'..dist..' dist/zeta2d')
+	exec('cd dist && 7z a zeta2d-'..dist..'.7z zeta2d/')
+	exec('scp -i ~/Documents/christopheremoore.net/digitalocean_christopheremoore.com_rsa dist/zeta2d-'..dist..'.7z root@christopheremoore.net:/var/www/christopheremoore.net/')
+	exec('mv dist/zeta2d dist/'..dist)
 end
 
 exec('rm -fr dist')

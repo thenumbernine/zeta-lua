@@ -6,7 +6,7 @@ ZetaApp.title = 'Zeta'
 function ZetaApp:loadLevelConfig(save)
 	local levelcfg = ZetaApp.super.loadLevelConfig(self, save)
 
--- zetatron-specific
+-- zeta-specific
 	if not levelcfg.path then
 		local seed = os.time()
 		print('generating seed '..seed)

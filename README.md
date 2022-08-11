@@ -1,4 +1,5 @@
-# Dumpworld #
+# Zeta
+## A Metroidvania Game
 
 ![](docs/images/pic1.png)
 ![](docs/images/pic2.png)

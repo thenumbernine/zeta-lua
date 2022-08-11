@@ -19,7 +19,7 @@ local Image = require 'image'
 local parser = require 'parser'
 
 local tilePath = dir..'/tile.png'
-local origTilePath = '../dumpworld-original/'..dir..'/tile.png'
+local origTilePath = '../zeta2d-original/'..dir..'/tile.png'
 assert(os.fileexists(origTilePath), "couldn't find the original tile file")
 
 local oldSearchPath = table{'mario', 'base'}
@@ -29,7 +29,7 @@ local newSearchPath = table{'mario', 'base'}
 -- replace 'require' calls with arg strings
 local origTileTypes = table()
 for _,path in ipairs(oldSearchPath) do
-	local inc = '../dumpworld-original/'..path..'/script/tiles.lua'
+	local inc = '../zeta2d-original/'..path..'/script/tiles.lua'
 	local tree = parser.parse(file[inc])
 	local function rmap(x)
 		for k,v in pairs(x) do
