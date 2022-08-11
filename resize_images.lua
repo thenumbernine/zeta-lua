@@ -46,8 +46,13 @@ print('copying')
 
 
 	local w,h = image:size()
+	local ratio = w/h
 print('resizing')
-	image = image:resize(w/h*targetSize,targetSize)
+	if ratio < 1 then
+		image = image:resize(ratio*targetSize,targetSize)
+	else
+		image = image:resize(targetSize,targetSize/ratio)
+	end
 
 -- [[
 print('canvas square')

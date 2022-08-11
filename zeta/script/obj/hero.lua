@@ -897,7 +897,11 @@ function Hero:draw(R, viewBBox, holdOveride)
 	if self.touchEntDown then
 		vx = vx - self.touchEntDown.vel[1]
 	end
-	
+
+	self.drawCenter = self.drawCenter or {}
+	self.drawCenter[1] = .5
+	self.drawCenter[2] = 0
+
 	if not self.dead then
 		if self.climbing then
 			if self.vel[1] ~= 0 or self.vel[2] ~= 0 then
@@ -906,8 +910,15 @@ function Hero:draw(R, viewBBox, holdOveride)
 				self.seq = 'climb1'	-- still
 			end
 		else
+			-- TODO ducking shouldn't override falling / onground test, here and in physics
 			if self.ducking then
-				self.seq = 'duck'
+				self.drawCenter[1] = self.drawMirror and .25 or .75
+				self.drawCenter[2] = .25
+				if self.inputLeftRight ~= 0 then
+					self.seq = 'crawl_walk'
+				else
+					self.seq = 'crawl'
+				end
 			elseif self.lookingUp and self.inputLeftRight == 0 then
 				if self.weapon then
 					self.seq = 'lookup_carry'

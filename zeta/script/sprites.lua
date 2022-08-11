@@ -18,6 +18,8 @@ return {
 			walk_carry=seq{name='run_carry', n=16, freq=25},
 			run=seq{name='run', n=16, freq=50},
 			run_carry=seq{name='run_carry', n=16, freq=50},
+			crawl=seq{name='crawl', n=1},
+			crawl_walk=seq{name='crawl', n=16, freq=25},
 			climb={'climb1', 'climb2', freq=4},
 			stand={'stand_0'},
 			stand_carry={'stand_carry_0'},
