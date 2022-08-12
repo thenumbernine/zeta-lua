@@ -34,7 +34,7 @@ local Hero = behaviors(require 'base.script.obj.player',
 	require 'zeta.script.behavior.deathtopieces')
 
 Hero.sprite = 'hero'
-Hero.maxHealth = 5
+Hero.maxHealth = 10
 
 Hero.inputUpDownLast = 0
 Hero.inputRun = false
@@ -48,7 +48,7 @@ Hero.nextShootTime = -1
 
 Hero.attackStat = 0
 Hero.defenseStat = 0
-Hero.rechargeCellsDuration = 10	-- seconds
+Hero.rechargeCellsDuration = 3	-- seconds
 Hero.nextRechargeCellsTime = -1
 
 for _,ammo in ipairs{'Cells', 'Grenades', 'Missiles'} do

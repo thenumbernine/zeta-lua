@@ -2,7 +2,7 @@ local Geemer = require 'zeta.script.obj.geemer'
 local game = require 'base.script.singleton.game'
 
 local BossGeemer = class(Geemer)
-BossGeemer.maxHealth = 100
+BossGeemer.maxHealth = 40
 BossGeemer.bbox = box2(-.9, 0, .9, 1.8)
 BossGeemer.sprite = 'boss-geemer'
 -- todo - some parabola math to make sure they jump right on the player
