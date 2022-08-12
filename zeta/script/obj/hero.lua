@@ -905,9 +905,9 @@ function Hero:draw(R, viewBBox, holdOveride)
 	if not self.dead then
 		if self.climbing then
 			if self.vel[1] ~= 0 or self.vel[2] ~= 0 then
-				self.seq = 'climb'	-- moving
+				self.seq = 'climb_updown'	-- moving
 			else
-				self.seq = 'climb1'	-- still
+				self.seq = 'climb'	-- still
 			end
 		else
 			-- TODO ducking shouldn't override falling / onground test, here and in physics
