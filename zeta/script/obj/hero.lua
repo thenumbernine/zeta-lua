@@ -56,11 +56,46 @@ for _,ammo in ipairs{'Cells', 'Grenades', 'Missiles'} do
 	Hero['maxAmmo'..ammo] = 0
 end
 
+local minimapBaseWidth = 24
+local minimapInputSpeed = .01
+local minimapInputZoomRatio = .99
+
 function Hero:init(...)
 	Hero.super.init(self, ...)
 	self.items = table()	-- self.items = {{obj1, ...}, {obj2, ...}, ...} for each unique class
 	self.holding = nil
 	self.color = nil	-- TODO team colors
+
+	-- mini-map ... maybe this should be a base behavior for any mod player?
+	-- TODO glCopyImageSubData isn't in GLES I think ... for that, fbo for the minimap blitters?
+	local modio = require 'base.script.singleton.modio'
+	local texsys = modio:require 'script.singleton.texsys'
+	local level = game.level
+	local gl = game.R.gl
+	local Tex2D = texsys.GLTex2D
+	self.minimapFgTex = Tex2D{
+		width = level.fgTileTex.width,
+		height = level.fgTileTex.height,
+		minFilter = gl.GL_NEAREST,
+		magFilter = gl.GL_NEAREST,
+		internalFormat = level.fgTileTex.internalFormat,
+		format = level.fgTileTex.format,
+		type = level.fgTileTex.type,
+	}
+	self.minimapBgTex = Tex2D{
+		width = level.bgTileTex.width,
+		height = level.bgTileTex.height,
+		minFilter = gl.GL_NEAREST,
+		magFilter = gl.GL_NEAREST,
+		internalFormat = level.bgTileTex.internalFormat,
+		format = level.bgTileTex.format,
+		type = level.bgTileTex.type,
+	}
+	self.minimapPos = vec2(self.pos:unpack())
+	self.minimapWidth = minimapBaseWidth
+
+	-- hmm doesn't work at first
+	self:updateMinimap()
 end
 
 function Hero:refreshSize()
@@ -207,6 +242,7 @@ function Hero:hasKicked(other)
 	other.kickHandicapTime = game.time + .5
 end
 
+-- TODO be sure to only call this when onground or climbing
 function Hero:tryToStand()
 	-- TODO in collision v2, because we can go right up to walls, if you're next to one, then the ul tile gets tested for solid and you can't stand
 	-- in v2 we have touch and stuck detection working
@@ -267,11 +303,8 @@ Hero.speedBoostMaxRunVel = 30
 -- goes from 0 to 1 as player goes from max speed to max speed boosted speed
 Hero.speedBoostCharge = 0
 function Hero:getMaxRunVel()
-	local SpeedBooster = require 'zeta.script.obj.speedbooster'
-	for _,items in ipairs(self.items) do
-		if SpeedBooster:isa(items[1]) then
-			return self.speedBoostMaxRunVel
-		end
+	if self:findItem'speedbooster' then
+		return self.speedBoostMaxRunVel
 	end
 	return self.maxRunVel
 end
@@ -654,10 +687,11 @@ function Hero:update(dt)
 	and (self.collidedLeft or self.collidedRight)
 	then
 		--local WallJump = require 'zeta.script.obj.walljump'
-		local hasWallJump = true--self:findItem(nil, WallJump:isa)
+		local hasWallJump = self:findItem'walljump'	--:findItem(nil, function(o) return WallJump:isa(o) end)
 		-- wall grinding? via the pick-up button
 		if --self.inputShootAux and 
-		hasWallJump then
+		hasWallJump 
+		then
 			--self.drawMirror = not self.collidedLeft
 			self.vel[2] = -game.gravity * dt	-- to stop
 			--self.vel[2] = self.vel[2] * .5	-- to go slow
@@ -700,7 +734,8 @@ function Hero:update(dt)
 			self:tryToStand()
 		end
 	end
-	-- pushed up or down while jumping?
+	
+	--[[ pushed up or down while jumping?
 	if not self.onground
 	and game.time > self.wallJumpEndTime
 	and self.inputUpDown ~= 0
@@ -711,6 +746,13 @@ function Hero:update(dt)
 			self:tryToStand()
 		end
 	end
+	--]]
+	-- [[ option #2: don't allow falling/jumping while ducking
+	if not self.onground then
+		self:tryToStand()
+	end
+	--]]
+
 	if self.ducking or self.lookingUp then
 		if self.inputLeftRight ~= 0 then 
 			self.drawMirror = self.inputLeftRight < 0
@@ -826,6 +868,62 @@ function Hero:update(dt)
 	self.inputJumpAuxLast = self.inputJumpAux
 	self.inputPageUpLast = self.inputPageUp
 	self.inputPageDownLast = self.inputPageDown
+
+
+	-- [[
+	-- update automap ... TODO upon room change?  or upon tile change?
+	if self.lastpos[1] ~= self.pos[1]
+	or self.lastpos[2] ~= self.pos[2]
+	then
+		self:updateMinimap()
+	end
+end
+
+function Hero:updateMinimap()
+	local gl = game.R.gl
+	local xmin = math.clamp(self.viewBBox.min[1], 0, self.minimapFgTex.width-1)
+	local xmax = math.clamp(self.viewBBox.max[1], 0, self.minimapFgTex.width-1)
+	local ymin = math.clamp(self.viewBBox.min[2], 0, self.minimapFgTex.height-1)
+	local ymax = math.clamp(self.viewBBox.max[2], 0, self.minimapFgTex.height-1)
+	local gl = game.R.gl
+-- [[
+	gl.glCopyImageSubData(
+		game.level.bgTileTex.id,
+		game.level.bgTileTex.target,
+		0,
+		xmin,
+		ymin,
+		0,
+		self.minimapBgTex.id,
+		self.minimapBgTex.target,
+		0,
+		xmin,
+		ymin,
+		0,
+		xmax - xmin + 1,
+		ymax - ymin + 1,
+		1
+	)
+--]]
+-- [[
+	gl.glCopyImageSubData(
+		game.level.fgTileTex.id,
+		game.level.fgTileTex.target,
+		0,
+		xmin,
+		ymin,
+		0,
+		self.minimapFgTex.id,
+		self.minimapFgTex.target,
+		0,
+		xmin,
+		ymin,
+		0,
+		xmax - xmin + 1,
+		ymax - ymin + 1,
+		1
+	)
+--]]
 end
 
 Hero.removeOnDie = false
@@ -1112,12 +1210,12 @@ function Hero:drawHUD(R, viewBBox)
 	end
 
 	if game.paused and not self.popupMessageText then
-
-		y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'Cells: ' .. ('%.1f'):format(self.ammoCells)..'/'..self.maxAmmoCells)
-		y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'Grenades: ' .. ('%.1f'):format(self.ammoGrenades)..'/'..self.maxAmmoGrenades)
-		y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'Missiles: ' .. ('%.1f'):format(self.ammoMissiles)..'/'..self.maxAmmoMissiles)
-		y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'DEF +' .. self.defenseStat)
-		y=y+1 gui.font:drawUnpacked(viewBBox.min[1], y, 1, -1, 'ATK +' .. self.attackStat)
+		local x = viewBBox.min[1] + 1
+		y=y+1 gui.font:drawUnpacked(x, y, 1, -1, 'Cells: ' .. ('%.1f'):format(self.ammoCells)..'/'..self.maxAmmoCells)
+		y=y+1 gui.font:drawUnpacked(x, y, 1, -1, 'Grenades: ' .. ('%.1f'):format(self.ammoGrenades)..'/'..self.maxAmmoGrenades)
+		y=y+1 gui.font:drawUnpacked(x, y, 1, -1, 'Missiles: ' .. ('%.1f'):format(self.ammoMissiles)..'/'..self.maxAmmoMissiles)
+		y=y+1 gui.font:drawUnpacked(x, y, 1, -1, 'DEF +' .. self.defenseStat)
+		y=y+1 gui.font:drawUnpacked(x, y, 1, -1, 'ATK +' .. self.attackStat)
 
 		gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
 		R:quad(
@@ -1138,6 +1236,87 @@ function Hero:drawHUD(R, viewBBox)
 				gui.font:drawUnpacked(x+3.5, y, 1, -1, item.name)
 			end
 		end
+	end
+
+
+	-- update minimap controls
+	-- TODO should it go here or update()
+	-- mind you update() won't run when the game is paused
+	-- where should player input updates go?  that should be independent of paused gamestate ...
+	if not game.paused then
+		self.minimapPos[1] = self.pos[1]
+		self.minimapPos[2] = self.pos[2]
+		self.minimapWidth = minimapBaseWidth
+	else
+		self.minimapPos[1] = self.minimapPos[1] + minimapInputSpeed * self.minimapWidth * self.inputLeftRight
+		self.minimapPos[2] = self.minimapPos[2] + minimapInputSpeed * self.minimapWidth * self.inputUpDown
+		if self.inputJumpAux then
+			self.minimapWidth = self.minimapWidth * minimapInputZoomRatio
+		elseif self.inputJump then
+			self.minimapWidth = self.minimapWidth / minimapInputZoomRatio
+		end
+	end
+	--]]
+
+
+	if (game.paused and not self.popupMessageText)
+	or not game.paused
+	then
+		-- automap / minimap
+		local minimapHUDWidth = 4
+		local minimapHUDHeight = 4
+		local minimapDrawWidth = self.minimapWidth	-- how much further around the player we show the minimap ... preferrably > game.viewSize otherwise does this really help?
+		local minimapDrawHeight = self.minimapWidth	-- TODO times aspectRatio divided by minimap aspectRatio
+		local border = .1
+		if game.paused then
+			local scale = 4.5
+			minimapHUDWidth = minimapHUDWidth * scale
+			minimapHUDHeight = minimapHUDHeight * scale
+			minimapDrawWidth = minimapDrawWidth * scale
+			minimapDrawHeight = minimapDrawHeight * scale
+		end
+		local modio = require 'base.script.singleton.modio'
+		local texsys = modio:require 'script.singleton.texsys'
+		local Tex2D = texsys.GLTex2D
+		local level = game.level
+		local x = viewBBox.max[1]-minimapHUDWidth-1
+		local y = viewBBox.max[2]-minimapHUDHeight-1
+		local tx = (self.minimapPos[1]-minimapDrawWidth)/self.minimapFgTex.width
+		local ty = (self.minimapPos[2]-minimapDrawHeight)/self.minimapFgTex.height
+		local tw = (2*minimapDrawWidth)/self.minimapFgTex.width
+		local th = (2*minimapDrawHeight)/self.minimapFgTex.height
+		gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
+		gl.glDisable(gl.GL_TEXTURE_2D)
+		R:quad(
+			x - border, 
+			y - border, 
+			minimapHUDWidth + 2 * border, 
+			minimapHUDHeight + 2 * border,
+			0,0,1,1, 0, 
+			.7,.7,.7,.5)-- r,g,b,a,
+		level.levelFgShader:use()
+		if level.levelFgShader.uniforms.tileSize then
+			gl.glUniform1f(level.levelFgShader.uniforms.tileSize.loc, level.tileSize)
+		end
+		level.texpackTex:bind(1)
+
+		self.minimapBgTex:bind(0)
+		R:quad(
+			x, y, minimapHUDWidth, minimapHUDHeight,
+			tx, ty, tw, th,
+			0, -- angle,
+			1,1,1,1)-- r,g,b,a,
+	
+		self.minimapFgTex:bind(0)
+		R:quad(
+			x, y, minimapHUDWidth, minimapHUDHeight,
+			tx, ty, tw, th,
+			0, -- angle,
+			1,1,1,1)-- r,g,b,a,
+		
+		Tex2D:unbind(1)
+		Tex2D:unbind(0)
+		level.levelFgShader:useNone()
 	end
 
 	-- popup messages from terminals, talking, etc

@@ -8,6 +8,7 @@ ZetaGame.name = 'ZetaGame'
 ZetaGame.gravity = -50
 ZetaGame.maxVel = 1000
 ZetaGame.maxFallVel = 20
+--ZetaGame.viewSize = 12
 
 function ZetaGame:resetObjects(...)
 	ZetaGame.super.resetObjects(self, ...)
