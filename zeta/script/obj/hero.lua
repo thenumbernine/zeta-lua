@@ -1011,7 +1011,10 @@ function Hero:draw(R, viewBBox, holdOveride)
 		if self.climbing
 		or game.time < self.wallJumpEndTime
 		then
-			if self.vel[1] ~= 0 or self.vel[2] ~= 0 then
+			if
+			--self.vel[2] ~= 0  -- vel doesn't consider blocking ...
+			self.inputUpDown ~= 0
+			then
 				self.seq = 'climb_updown'	-- moving
 			else
 				self.seq = 'climb'	-- still
