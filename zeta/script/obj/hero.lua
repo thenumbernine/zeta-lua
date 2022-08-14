@@ -699,13 +699,36 @@ function Hero:update(dt)
 		if --self.inputShootAux and
 		hasWallJump
 		then
-			--self.drawMirror = not self.collidedLeft
-			self.vel[2] = -game.gravity * dt	-- to stop
-			--self.vel[2] = self.vel[2] * .5	-- to go slow
-			-- TODO instead of stopping while holding, remember who/where you're hooked onto, update with that, and only release upon (a) jump, or (b) ... either tapping again or releasing the grab button ... and allow this for collide-up as well as left and right
-		end
-		if hasWallJump then
-			self.wallJumpEndTime = game.time + .15
+			-- only grab a block if it's a ledge
+			local dx = self.drawMirror and -1 or 1
+			local x = math.floor(self.pos[1])
+			local checkX = x + dx
+			local y = math.floor(self.pos[2] + self.bbox.max[2])
+			local level = game.level
+			local t1 = level:getTile(checkX,y)
+			local t2 = level:getTile(checkX,y-1)
+			local solid1 = t1 and t1.solid or false
+			local solid2 = t2 and t2.solid or false
+			if not solid1 
+			and solid2 
+			then
+				--self.drawMirror = not self.collidedLeft
+				self.vel[2] = -game.gravity * dt	-- to stop
+				--self.vel[2] = self.vel[2] * .5	-- to go slow
+				-- TODO instead of stopping while holding, remember who/where you're hooked onto, update with that, and only release upon (a) jump, or (b) ... either tapping again or releasing the grab button ... and allow this for collide-up as well as left and right
+				self.wallJumpEndTime = game.time + .15
+		
+				-- if you're grabbing and you push up, TODO animate this
+				if self.inputUpDown > 0 then
+					self.vel[1] = 0
+					self.vel[2] = 0
+					self.pos[1] = checkX + .5
+					self.pos[2] = y
+					self.ducking = true
+					self.onground = true
+					self.wallJumpEndTime = nil
+				end
+			end
 		end
 	end
 
@@ -1014,6 +1037,7 @@ function Hero:draw(R, viewBBox, holdOveride)
 			if
 			--self.vel[2] ~= 0  -- vel doesn't consider blocking ...
 			self.inputUpDown ~= 0
+			and not (game.time < self.wallJumpEndTime)	-- don't show climbing for wallgrab
 			then
 				self.seq = 'climb_updown'	-- moving
 			else
