@@ -1,4 +1,5 @@
 local class = require 'ext.class'
+local file = require 'ext.file'
 local App = require 'base.script.singleton.class.glapp'
 local ZetaApp = class(App)
 
