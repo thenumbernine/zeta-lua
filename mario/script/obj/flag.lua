@@ -1,3 +1,4 @@
+local vec = require 'vec.vec2'
 local Object = require 'base.script.obj.object'
 local Mario = require 'mario.script.obj.mario'
 local game = require 'base.script.singleton.game'

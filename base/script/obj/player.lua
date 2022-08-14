@@ -1,4 +1,6 @@
 local class = require 'ext.class'
+local vec2 = require 'vec.vec2'
+local box2 = require 'vec.box2'
 
 local Object = require 'base.script.obj.object'
 

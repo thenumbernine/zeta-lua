@@ -4,6 +4,8 @@
 -- so why's it getting this far?
 local math = require 'ext.math'
 local table = require 'ext.table'
+local vec2 = require 'vec.vec2'
+local box2 = require 'vec.box2'
 if game.savePoint then return end
 
 for _,obj in ipairs(game.objs) do obj.remove = true end

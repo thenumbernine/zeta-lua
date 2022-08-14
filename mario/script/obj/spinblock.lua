@@ -1,7 +1,7 @@
 local class = require 'ext.class'
+local vec2 = require 'vec.vec2'
 local GameObject = require 'base.script.obj.object'
 local game = require 'base.script.singleton.game'
-local vec2 = require 'vec.vec2'
 
 local SpinBlock = class(GameObject)
 SpinBlock.sprite = 'spinblock'

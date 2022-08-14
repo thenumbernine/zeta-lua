@@ -27,6 +27,8 @@ when you pick up an item, you're holding it...
 --]]
 local table = require 'ext.table'
 local math = require 'ext.math'
+local vec2 = require 'vec.vec2'
+local box2 = require 'vec.box2'
 local Object = require 'base.script.obj.object'
 local gui = require 'base.script.singleton.gui'
 local game = require 'base.script.singleton.game'

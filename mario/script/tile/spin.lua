@@ -1,4 +1,5 @@
 local class = require 'ext.class'
+local vec2 = require 'vec.vec2'
 local Tile = require 'base.script.tile.tile'
 local game = require 'base.script.singleton.game'
 

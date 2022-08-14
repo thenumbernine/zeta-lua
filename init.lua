@@ -2,7 +2,6 @@
 
 -- setup global env:
 local table = require 'ext.table'
-require 'vec'
 
 numPlayers=numPlayers or 1
 

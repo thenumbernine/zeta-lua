@@ -1,4 +1,6 @@
 local math = require 'ext.math'
+local vec2 = require 'vec.vec2'
+local box2 = require 'vec.box2'
 local Hero = require 'zeta.script.obj.hero'
 local KeyCard = require 'zeta.script.obj.keycard'
 local threads = require 'base.script.singleton.threads'

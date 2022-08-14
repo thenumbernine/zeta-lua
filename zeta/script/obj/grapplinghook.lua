@@ -1,5 +1,6 @@
-local class = require 'ext.class'
 local GrapplingShot = (function() 
+	local class = require 'ext.class'
+	local box2 = require 'vec.box2'
 	local Object = require 'base.script.obj.object'	
 	
 	local GrapplingShot = class(Object)
@@ -99,6 +100,8 @@ local GrapplingShot = (function()
 end)()
 
 local GrapplingHook = (function()
+	local class = require 'ext.class'
+	local vec2 = require 'vec.vec2'
 	local Weapon = require 'zeta.script.obj.weapon'
 	local GrapplingHook = class(Weapon)
 	GrapplingHook.sprite = 'blaster'

@@ -3,6 +3,9 @@
 -- "don't do this if game.savePoint exists"
 -- so why's it getting this far?
 local table = require 'ext.table'
+local vec2 = require 'vec.vec2'
+local vec3 = require 'vec.vec3'
+
 if game.savePoint then return end
 
 for _,obj in ipairs(game.objs) do obj.remove = true end

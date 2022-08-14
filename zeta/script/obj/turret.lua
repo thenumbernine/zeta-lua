@@ -1,4 +1,5 @@
 local class = require 'ext.class'
+local vec2 = require 'vec.vec2'
 local Enemy = require 'zeta.script.obj.enemy'
 local MissileBlast = require 'zeta.script.obj.missileblast'
 local game = require 'base.script.singleton.game'
