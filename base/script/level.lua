@@ -925,7 +925,9 @@ end
 function Level:getTile(x,y)
 	x = math.floor(x)
 	y = math.floor(y)
-	if x<1 or y<1 or x>self.size[1] or y>self.size[2] then return 0 end
+	if x<1 or y<1 or x>self.size[1] or y>self.size[2] then 
+		return self.tileTypes[0]
+	end
 	local tileIndex = self.tileMap[(x-1)+self.size[1]*(y-1)]
 	return self.tileTypes[tileIndex]
 end
