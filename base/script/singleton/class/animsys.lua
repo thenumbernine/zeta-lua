@@ -1,3 +1,7 @@
+local class = require 'ext.class'
+local file = require 'ext.file'
+local io = require 'ext.io'
+local tolua = require 'ext.tolua'
 local game = require 'base.script.singleton.game'
 local texsys = require 'base.script.singleton.texsys'
 local modio = require 'base.script.singleton.modio'

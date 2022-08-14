@@ -1,3 +1,4 @@
+local class = require 'ext.class'
 local Tile = class()
 function Tile:init(args)
 	if args then

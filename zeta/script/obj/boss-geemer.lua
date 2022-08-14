@@ -1,3 +1,5 @@
+local table = require 'ext.table'
+local class = require 'ext.class'
 local Geemer = require 'zeta.script.obj.geemer'
 local game = require 'base.script.singleton.game'
 
@@ -38,7 +40,7 @@ end
 
 BossGeemer.jumpsBeforeShaking = 0
 BossGeemer.states.waitingToJump.enter = function(self, ...)
---	print(tolua(BossGeemer.super.states.waitingToJump))
+--	print(require 'ext.tolua'(BossGeemer.super.states.waitingToJump))
 	BossGeemer.super.states.waitingToJump.enter(self, ...)
 		-- spawn a few
 

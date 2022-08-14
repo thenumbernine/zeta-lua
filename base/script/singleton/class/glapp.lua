@@ -1,5 +1,11 @@
 local ffi = require 'ffi'
 local bit = require 'bit'
+local os = require 'ext.os'
+local file = require 'ext.file'
+local class = require 'ext.class'
+local table = require 'ext.table'
+local tolua = require 'ext.tolua'
+
 local ImGuiApp = require 'imguiapp'
 local sdl = require 'ffi.sdl'
 

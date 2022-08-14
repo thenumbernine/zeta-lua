@@ -1,3 +1,4 @@
+local class = require 'ext.class'
 local Missile = require 'zeta.script.obj.missile'
 local Weapon  = require 'zeta.script.obj.weapon'
 local MissileLauncher = class(Weapon)
@@ -8,5 +9,4 @@ MissileLauncher.shotSound = 'explode1'
 MissileLauncher.rotCenter = {.25,.5}
 MissileLauncher.shotClass = Missile 
 MissileLauncher.ammo = 'Missiles'
-
 return MissileLauncher

@@ -1,3 +1,4 @@
+local class = require 'ext.class'
 local function hurtsToTouchBehavior(parentClass)
 	local HurtsToTouchTemplate = class(parentClass)
 --[[	

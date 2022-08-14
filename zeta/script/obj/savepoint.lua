@@ -1,3 +1,7 @@
+local class = require 'ext.class'
+local table = require 'ext.table'
+local string = require 'ext.string'
+local tolua = require 'ext.tolua'
 local Object = require 'base.script.obj.object'
 local game = require 'base.script.singleton.game'
 local Hero = require 'zeta.script.obj.hero'
@@ -148,7 +152,7 @@ function SavePoint:playerUse(player)
 			..'\tsysTime='..game.sysTime..',\n'
 			..'\tlevelcfg={path='..tolua(game.levelcfg.path)..'},\n'
 			..'\tsession='
-			..tolua(game.session,{indent=true}):split'\n':map(function(line,i)
+			..string.split(tolua(game.session,{indent=true}), '\n'):map(function(line,i)
 				return (i==1 and '' or '\t')..line
 			end):concat('\n')
 			..',\n'

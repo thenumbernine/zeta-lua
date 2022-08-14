@@ -1,3 +1,4 @@
+local class = require 'ext.class'
 return function(parentClass)
 
 	local game = require 'base.script.singleton.game'

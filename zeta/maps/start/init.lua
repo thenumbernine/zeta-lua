@@ -2,6 +2,7 @@ session['defensesActive_Main'] = true
 session['defensesActive_Mine Exit Corridor'] = false
 session['defensesActive_Mineral Processing'] = true
 
+local tolua = require 'ext.tolua'
 print('init.lua session',tolua(session))
 --[[
 args:

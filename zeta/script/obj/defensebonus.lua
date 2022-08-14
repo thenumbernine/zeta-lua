@@ -1,3 +1,4 @@
+local class = require 'ext.class'
 local PowerupItem = require 'zeta.script.obj.powerupitem'
 local DefenseBonus = class(PowerupItem)
 DefenseBonus.sprite = 'defense-bonus'

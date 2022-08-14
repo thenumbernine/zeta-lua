@@ -1,3 +1,4 @@
+local class = require 'ext.class'
 local Item = require 'zeta.script.obj.item'
 local OverlayObject = require 'base.script.item'
 local game = require 'base.script.singleton.game'

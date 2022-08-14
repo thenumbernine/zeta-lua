@@ -1,3 +1,4 @@
+local class = require 'ext.class'
 local game = require 'base.script.singleton.game'
 
 local function takesDamageBehavior(parentClass)

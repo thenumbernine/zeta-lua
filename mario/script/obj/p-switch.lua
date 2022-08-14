@@ -1,3 +1,6 @@
+local class = require 'ext.class'
+local table = require 'ext.table'
+local string = require 'ext.string'
 local game = require 'base.script.singleton.game'
 local threads = require 'base.script.singleton.threads'
 local Object = require 'base.script.obj.object'
@@ -34,7 +37,7 @@ or just have a final n bits denote that -- and of the like coin & anticoin block
 function PSwitch:init(args)
 	PSwitch.super.init(self, args)
 
-	self.delays = self.delays:split','
+	self.delays = string.split(self.delays, ',')
 
 	-- TODO how to determine p-switch and !-block color when we are using bitmap tiles?
 	-- solution: store several ! and !-outline tile types

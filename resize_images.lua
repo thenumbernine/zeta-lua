@@ -2,7 +2,8 @@
 -- dragonbones adds transparent padding, 
 -- and if I output it to a smaller res, messes with it
 -- so I'll resize it here
-require 'ext'
+local table = require 'ext.table'
+local os = require 'ext.os'
 local box2 = require 'vec.box2'
 local Image = require 'image'
 

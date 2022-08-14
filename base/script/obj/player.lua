@@ -1,3 +1,5 @@
+local class = require 'ext.class'
+
 local Object = require 'base.script.obj.object'
 
 local Player = class(Object)

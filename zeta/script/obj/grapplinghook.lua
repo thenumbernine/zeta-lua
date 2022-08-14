@@ -1,3 +1,4 @@
+local class = require 'ext.class'
 local GrapplingShot = (function() 
 	local Object = require 'base.script.obj.object'	
 	

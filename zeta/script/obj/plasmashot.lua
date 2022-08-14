@@ -1,4 +1,5 @@
-local bit = require' bit'
+local bit = require 'bit'
+local class = require 'ext.class'
 local Object = require 'base.script.obj.object'
 local game = require 'base.script.singleton.game'
 

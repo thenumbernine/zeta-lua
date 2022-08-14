@@ -1,4 +1,5 @@
 local ffi = require 'ffi'
+local class = require 'ext.class'
 local modio = require 'base.script.singleton.modio'
 
 local Renderer = class()

@@ -1,5 +1,6 @@
 -- TODO global namespace?  vec2 box2 ext?
 -- TODO use ffi vec2's with x and y fields?
+local class = require 'ext.class'
 local vec2 = require 'vec.vec2'
 
 dirs = {

@@ -1,3 +1,4 @@
+local class = require 'ext.class'
 local Tile = require 'base.script.tile.tile'
 local Slope45 = class(Tile)
 Slope45.solid = true

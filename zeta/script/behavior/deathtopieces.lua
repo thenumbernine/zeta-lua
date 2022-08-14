@@ -1,3 +1,4 @@
+local class = require 'ext.class'
 local SpritePieces = require 'zeta.script.obj.spritepieces'
 
 local deathToPiecesBehavior = function(parentClass)

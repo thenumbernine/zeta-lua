@@ -1,3 +1,5 @@
+local class = require 'ext.class'
+local table = require 'ext.table'
 local modio = require 'base.script.singleton.modio'
 local GUI = require 'gui'
 

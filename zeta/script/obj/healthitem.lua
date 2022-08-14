@@ -1,3 +1,4 @@
+local class = require 'ext.class'
 local TouchItem = require 'zeta.script.obj.touchitem'
 local HealthItem = class(TouchItem)
 HealthItem.sprite = 'heart'

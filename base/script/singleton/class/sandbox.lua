@@ -1,5 +1,5 @@
 local showcode = require 'template.showcode'
-
+local class = require 'ext.class'
 local Sandbox = class()
 
 Sandbox.prefixCode = [[

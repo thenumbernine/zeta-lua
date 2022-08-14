@@ -7,6 +7,7 @@ select the upper-left corner of a preset patch
 this looks over the tiles under it
 for any that are in the patch, converts them to the correct patch tile, based on the neighbors
 --]]
+local table = require 'ext.table'
 local neighbors = table{
 	{name='c8', differOffsets={{-1,-1},{0,-1},{1,-1},{1,0},{1,1},{0,1},{-1,1},{-1,0}}}, -- center, with nothing around it 
 	{name='c4', differOffsets={{1,1},{-1,1},{1,-1},{-1,-1}}}, -- center, with diagonals missing

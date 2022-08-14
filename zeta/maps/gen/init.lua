@@ -2,6 +2,7 @@
 -- .. but the code that calls this is wrapped in a block:
 -- "don't do this if game.savePoint exists"
 -- so why's it getting this far?
+local table = require 'ext.table'
 if game.savePoint then return end
 
 for _,obj in ipairs(game.objs) do obj.remove = true end
@@ -96,6 +97,7 @@ local function getBlockAt(pos)
 end
 
 
+local class = require 'ext.class'
 local Room = class()
 function Room:init()
 	rooms:insert(self)

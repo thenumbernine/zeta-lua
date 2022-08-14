@@ -10,6 +10,9 @@ level is going to contain ...
 
 local ffi = require 'ffi'
 local bit = require 'bit'
+local class = require 'ext.class'
+local table = require 'ext.table'
+local file = require 'ext.file'
 local modio = require 'base.script.singleton.modio'
 local game = require 'base.script.singleton.game'	-- this should exist by now, right?
 local Image = require 'image'
@@ -738,7 +741,7 @@ void main() {
 		end
 
 		--[[ debug write it out
-		print(tolua(rects:mapi(function(rect)
+		print(require 'ext.tolua'(rects:mapi(function(rect)
 			rect = table(rect)
 			rect.tex = nil
 			return rect

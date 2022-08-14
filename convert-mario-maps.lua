@@ -2,6 +2,10 @@
 
 local ffi = require 'ffi'
 local bit = require 'bit'
+local table = require 'ext.table'
+local string = require 'ext.string'
+local file = require 'ext.file'
+local tolua = require 'ext.tolua'
 
 --[[ hmm ...
 local gcmem = require 'ext.gcmem'
@@ -14,8 +18,7 @@ function gcmem.free() end
 local mapName = ... or 'mine'
 local dir = 'mario/maps/'..mapName
 os.execute('mkdir '..dir)
-require 'ext'
-box2 = require 'vec.box2'
+local box2 = require 'vec.box2'
 local Image = require 'image'
 local parser = require 'parser'
 
@@ -77,9 +80,13 @@ print('backgroundIndex',backgroundIndex)
 
 local newTileTypes = table()
 for i=#newSearchPath,1,-1 do
-	local ls = file[newSearchPath[i]..'/script/tiletypes.lua']
-		:trim()
-		:split'\n'
+	local ls = 
+		string.split(
+			string.trim(
+				file[newSearchPath[i]..'/script/tiletypes.lua']
+			),
+			'\n'
+		)
 		:map(function(l) return l:match("'(.-)'") or '' end)
 		:filter(function(l) return #l > 0 end)
 	newTileTypes:append(ls)

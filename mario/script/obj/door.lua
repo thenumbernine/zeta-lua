@@ -1,8 +1,9 @@
 local class = require 'ext.class'
+local table = require 'ext.table'
+local vec2 = require 'vec.vec2'
 local GameObject  = require 'base.script.obj.object'
 local game = require 'base.script.singleton.game'
 local threads = require 'base.script.singleton.threads'
-local vec2 = require 'vec.vec2'
 
 local Door = class(GameObject)
 

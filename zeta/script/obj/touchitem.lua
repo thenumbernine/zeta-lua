@@ -1,3 +1,4 @@
+local class = require 'ext.class'
 local Item = require 'zeta.script.obj.item'
 local TouchItem = class(Item)
 TouchItem.useGravity = false

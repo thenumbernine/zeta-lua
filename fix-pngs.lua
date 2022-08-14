@@ -1,5 +1,6 @@
 #!/usr/bin/env luajit
-require 'ext'
+local os = require 'ext.os'
+local table = require 'ext.table'
 
 local cmd = [[find . -name "*.png" -print0 | xargs -0 pngcrush -c 6 -ow -rem allb -reduce]]
 assert(0 == os.execute(cmd))

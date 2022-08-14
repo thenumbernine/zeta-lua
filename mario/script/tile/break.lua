@@ -1,3 +1,4 @@
+local class = require 'ext.class'
 local Tile = require 'base.script.tile.tile'
 local Mario = require 'mario.script.obj.mario'
 local game = require 'base.script.singleton.game'

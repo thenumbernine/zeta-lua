@@ -1,3 +1,4 @@
+local class = require 'ext.class'
 local AmmoMaxItem = require 'zeta.script.obj.ammomaxitem'
 local MissileMaxItem = class(AmmoMaxItem)
 MissileMaxItem.sprite = 'missile'

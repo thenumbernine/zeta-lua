@@ -2,6 +2,8 @@
 -- .. but the code that calls this is wrapped in a block:
 -- "don't do this if game.savePoint exists"
 -- so why's it getting this far?
+local math = require 'ext.math'
+local table = require 'ext.table'
 if game.savePoint then return end
 
 for _,obj in ipairs(game.objs) do obj.remove = true end
@@ -86,6 +88,7 @@ editor.smoothDiagLevel[0] = 2	--27'
 local wallBuffer = 3
 
 
+local class = require 'ext.class'
 local Room = class()
 function Room:init(args)
 	self.bbox = box2(args.bbox)

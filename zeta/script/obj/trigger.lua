@@ -1,3 +1,4 @@
+local class = require 'ext.class'
 local Object = require 'base.script.obj.object'
 local Player = require 'base.script.obj.player'
 local game = require 'base.script.singleton.game'

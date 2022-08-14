@@ -1,4 +1,5 @@
 -- PowerupItem are items that have to be picked up 
+local class = require 'ext.class'
 local Item = require 'zeta.script.obj.item'
 local game = require 'base.script.singleton.game'
 local PowerupItem = class(Item)

@@ -1,3 +1,4 @@
+local table = require 'ext.table'
 local game = require 'base.script.singleton.game'
 
 local function walkEnemyBehavior(parentClass)

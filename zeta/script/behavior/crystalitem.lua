@@ -1,3 +1,4 @@
+local class = require 'ext.class'
 local function crystalItemBehavior(parentClass)
 	local CrystalItemTemplate = class(parentClass)
 

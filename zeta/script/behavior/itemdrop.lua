@@ -1,3 +1,4 @@
+local class = require 'ext.class'
 local game = require 'base.script.singleton.game'
 local itemDropBehavior = function(parentClass)
 	--assert(require 'zeta.script.obj.takesdamage':isa(parentClass))

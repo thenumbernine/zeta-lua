@@ -1,3 +1,6 @@
+local class = require 'ext.class'
+local table = require 'ext.table'
+local coroutine = require 'ext.coroutine'
 local audio = require 'base.script.singleton.audio'
 local modio = require 'base.script.singleton.modio'
 local AudioSource = require 'audio.source'
@@ -169,7 +172,7 @@ function Game:reset()
 		-- so I'll have the self keep track of it, and block the thread here
 		if self.levelInitThread then
 			-- wait for it to finish
-			repeat until not self.levelInitThread:assertresume()
+			repeat until not coroutine.assertresume(self.levelInitThread)
 			self.levelInitThread = nil
 		end
 	end
@@ -269,7 +272,7 @@ function Game:loadFromSavePoint()
 	-- (since spawn is room-driven)
 	if self.respawnThread then
 		-- wait for it to finish
-		repeat until not self.respawnThread:assertresume()
+		repeat until not coroutine.assertresume(self.respawnThread)
 		self.respawnThread = nil
 	end
 
