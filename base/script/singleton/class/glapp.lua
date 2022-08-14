@@ -167,12 +167,17 @@ function App:initGL(gl, glname)
 	game.clientConn = clientConn
 	if server then
 		game.server = server
-	end				
+	end
 
 	
+	game:glInit(R)
+
+
 	-- needs tob e done outside game atm because it modifies levelcfg ...
 	-- ... which is passed to game
 	local savefile = modio:find 'save/save.txt'
+	
+	-- TODO matches zetascript/obj/savepoint.lua ... consolidate
 	local arrayRef = class()
 	function arrayRef:init(args)
 		self.index = assert(args.index)
@@ -182,6 +187,7 @@ function App:initGL(gl, glname)
 	if savefile and os.fileexists(savefile) then
 		local code = [[
 local arrayRef = ...
+local table = require 'ext.table'
 return ]]..file[savefile]
 		save = assert(load(code))(arrayRef)
 
@@ -223,7 +229,6 @@ return ]]..file[savefile]
 
 	game:setLevel(levelcfg)
 	
-	game:glInit(R)
 	
 	game.playerClientObjs = table()
 	game.onReset = function()
@@ -241,7 +246,7 @@ return ]]..file[savefile]
 			end
 		end
 		
-		-- TODO send client a command to do this			
+		-- TODO send client a command to do this
 		game.clientConn.players = table()
 		for i=1,#game.clientConn.playerIndexes do
 			local playerIndex = game.clientConn.playerIndexes[i]
@@ -281,7 +286,7 @@ end
 function App:loadLevelConfig(save)
 	-- set load level info
 		-- first get it from the modio
-	local levelcfg = 
+	local levelcfg =
 		(save and save.levelcfg)
 		or modio.levelcfg
 		or (os.fileexists'levelcfg.lua' and assert(load('return '..file['levelcfg.lua']))())
@@ -309,7 +314,7 @@ if os.fileexists(configFileName) then
 	config = assert(load('return '..file[configFileName]))()
 end
 if type(config) ~= 'table' then config = {} end
-if type(config.playerKeys) ~= 'table' then 
+if type(config.playerKeys) ~= 'table' then
 	config.playerKeys = {}
 end
 for i=#config.playerKeys+1,numPlayers do
@@ -324,7 +329,7 @@ function getEventName(event, a,b,c)
 		local s = table()
 		local ds = 'udlr'
 		for i=1,4 do
-			if 0 ~= bit.band(d,bit.lshift(1,i-1)) then 
+			if 0 ~= bit.band(d,bit.lshift(1,i-1)) then
 				s:insert(ds:sub(i,i))
 			end
 		end
@@ -350,7 +355,7 @@ local function processEvent(press, ...)
 		if press then
 			local ev = {...}
 			ev.name = getEventName(...)
-			-- give the event a name 
+			-- give the event a name
 			print('got', ev.name)
 			waitingForEvent.callback(ev)
 			waitingForEvent = nil
@@ -412,7 +417,7 @@ function App:event(event, ...)
 			processEvent(press, sdl.SDL_JOYAXISMOTION, event.jaxis.which, event.jaxis.axis, lr)
 		end
 	elseif event.type == sdl.SDL_JOYBUTTONDOWN or event.type == sdl.SDL_JOYBUTTONUP then
-		-- event.jbutton.state is 0/1 for up/down, right? 
+		-- event.jbutton.state is 0/1 for up/down, right?
 		local press = event.type == sdl.SDL_JOYBUTTONDOWN
 		processEvent(press, sdl.SDL_JOYBUTTONDOWN, event.jbutton.which, event.jbutton.button)
 	elseif event.type == sdl.SDL_KEYDOWN or event.type == sdl.SDL_KEYUP then
@@ -430,7 +435,7 @@ function App:event(event, ...)
 	end
 
 	--[[ slowdown effect
-	if event.key.keysym.sym == sdl.SDLK_BACKQUOTE then	
+	if event.key.keysym.sym == sdl.SDLK_BACKQUOTE then
 		timescale = 1 - 4/5 * (press and 1 or 0)
 	end
 	--]]
@@ -451,13 +456,13 @@ function App:update(...)
 
 	for _,player in ipairs(game.players) do
 		local x = 0
-		if player.inputUp then x=x+1 end 
-		if player.inputDown then x=x-1 end 
+		if player.inputUp then x=x+1 end
+		if player.inputDown then x=x-1 end
 		player.inputUpDown = x
 		
 		local x = 0
-		if player.inputLeft then x=x-1 end 
-		if player.inputRight then x=x+1 end 
+		if player.inputLeft then x=x-1 end
+		if player.inputRight then x=x+1 end
 		player.inputLeftRight = x
 	
 		-- has to be done here, because game.pause keeps the player loop from updating
@@ -494,8 +499,8 @@ function App:update(...)
 
 	-- use these. they're based on the game time, updated at the sdl clock rate.
 	game.sysDeltaTime = sysDeltaTime
-	game.sysLastTime = game.sysTime 
-	game.sysTime = game.sysTime + sysDeltaTime 
+	game.sysLastTime = game.sysTime
+	game.sysTime = game.sysTime + sysDeltaTime
 
 	if not game.paused then
 	--if sysThisTime > 5 then
@@ -516,7 +521,7 @@ function App:update(...)
 
 				R:report('game:update')
 			end
-			--if skips > 0 then print(skips,'skips') end			
+			--if skips > 0 then print(skips,'skips') end
 		end
 	end
 
@@ -548,7 +553,7 @@ local playerInputOpened = ffi.new('bool['..numPlayers..']', false)
 function App:updateGUI(...)
 	editor:updateGUI(...)
 	
-	if mainOpened[0] then 
+	if mainOpened[0] then
 		modalBegin('Main', mainOpened)
 		if ig.igButton'Controls...' then
 			controlsOpened[0] = true
@@ -586,7 +591,7 @@ function App:updateGUI(...)
 									key = inputKeyName,
 									playerIndex = playerIndex,
 									callback = function(ev)
-										config.playerKeys[playerIndex][inputKeyName] = ev 
+										config.playerKeys[playerIndex][inputKeyName] = ev
 										file[configFileName] = tolua(config, {indent=true})
 										-- next resume
 										threads:add(function()
@@ -606,10 +611,10 @@ function App:updateGUI(...)
 						ig.igSameLine()
 						local ev = config.playerKeys[playerIndex][inputKeyName]
 						if ig.igButton(
-							waitingForEvent 
+							waitingForEvent
 							and waitingForEvent.key == inputKeyName
 							and waitingForEvent.playerIndex == playerIndex
-							and 'Press Button...' or ev.name or '?') 
+							and 'Press Button...' or ev.name or '?')
 						then
 							waitingForEvent = {
 								key = inputKeyName,

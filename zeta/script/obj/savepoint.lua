@@ -54,7 +54,7 @@ function SavePoint:playerUse(player)
 					serializeForType = table(tolua.defaultSerializeForType, {
 						table = function(state, v)	--, tab, path, keyRef)
 							local m = getmetatable(v)
-							-- hmm, explicit control of all objects ...						
+							-- hmm, explicit control of all objects ...
 							-- [[ looks much better, but less flexible
 							if m == nil then
 								return serialize(v, tab..'\t')
@@ -63,7 +63,7 @@ function SavePoint:playerUse(player)
 							elseif m == vec4 then
 								return 'vec4('..table.concat(v,',')..')'
 							elseif m == box2 then
-								return 'box2'..tolua(v)
+								return 'box2'..tolua(v, {indent=false})
 							elseif m == table then
 								return 'table'..serialize(v, tab..'\t')
 							--]]
@@ -76,12 +76,47 @@ function SavePoint:playerUse(player)
 							then
 								return serialize(v, tab..'\t')
 							--]]
-							elseif Object:isa(v) then 
+							elseif Object:isa(v) then
 								return arrayNamed(v, game.objs, 'game.objs', 'Object')
 							elseif SpawnInfo:isa(v) then
 								return arrayNamed(v, game.level.spawnInfos, 'game.level.spawnInfos', 'SpawnInfo')
 							elseif k == 'playerServerObj' then
 								return arrayNamed(v, game.server.playerServerObjs, 'game.server.playerServerObjs', 'PlayerServerObj')
+							elseif k == 'minimapFgTex' or k == 'minimapBgTex' then
+								-- I would serialize all Tex2D's, but, how often will I have them?  I don't want to make it a normal thing.
+								local modio = require 'base.script.singleton.modio'
+								local texsys = modio:require 'script.singleton.texsys'
+								local Tex2D = texsys.GLTex2D
+								assert(Tex2D:isa(v))
+								
+								local gl = game.R.gl
+								assert(v.format == gl.GL_LUMINANCE_ALPHA)
+								assert(v.internalFormat == gl.GL_LUMINANCE_ALPHA)
+								assert(v.type == gl.GL_UNSIGNED_BYTE)
+								local formatSize = 2	-- TODO deduce from format
+								
+								local size = formatSize * v.width * v.height
+								local ffi = require 'ffi'
+								local data = ffi.new('uint8_t[?]', size)
+								game.R:report'before glGetTexImage'
+								-- TODO move to gl.tex
+								gl.glGetTexImage(v.target, 0, v.format, v.type, data)
+								game.R:report'glGetTexImage'
+								
+								-- TODO gl.tex getParameter?
+								--assert(v:getParameter'GL_TEXTURE_MAG_FILTER', gl.GL_NEAREST)
+								--assert(v:getParameter'GL_TEXTURE_MIN_FILTER', gl.GL_NEAREST)
+
+								return "require 'base.script.singleton.modio':require 'script.singleton.texsys'.GLTex2D{"
+										.."width="..v.width..', '
+										.."height="..v.height..', '
+										.."minFilter=require 'base.script.singleton.game'.R.gl.GL_NEAREST,"
+										.."magFilter=require 'base.script.singleton.game'.R.gl.GL_NEAREST,"
+										.."internalFormat="..v.internalFormat..', '
+										.."format="..v.format..', '
+										.."type="..v.type..', '
+										.."data="..tolua(ffi.string(data, size))
+									.."}"
 							else
 								return "error('can\\'t serialize unknown table from key "..k.."')"
 							end
@@ -175,7 +210,8 @@ TODO serialize threads
 --]=]
 
 		file['zeta/save/save.txt'] = saveDataSerialized
-	
+
+		-- TODO matches base/script/singleton/class/glapp.lua ... consolidate
 		local arrayRef = class()
 		function arrayRef:init(args)
 			self.index = assert(args.index)
@@ -183,7 +219,8 @@ TODO serialize threads
 		end
 		local code = [[
 local arrayRef = ...
-return ]]..saveDataSerialized	
+local table = require 'ext.table'
+return ]]..saveDataSerialized
 		local save = assert(load(code))(arrayRef)
 		game:setSavePoint(save)
 		

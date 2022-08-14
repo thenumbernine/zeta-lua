@@ -8,14 +8,14 @@ up - go through doors
 down - duck / crawl
 inputShoot - shoot
 inputJump - jump
-inputShootAux - pick up / put down object 
-inputJumpAux - use selected item / run 
+inputShootAux - pick up / put down object
+inputJumpAux - use selected item / run
 
 when you pick up an item, you're holding it...
 
 - primary attack:
 	- weapon
-- secondary attack:	
+- secondary attack:
 	- shield
 	- jetpack
 	- grappling hook
@@ -140,7 +140,7 @@ self.holding.pos[2] = self.pos[2]
 		end
 
 		self.holding.heldby = nil
-		self.holding = nil	
+		self.holding = nil
 	end
 	
 	if other then
@@ -152,7 +152,7 @@ self.holding.pos[2] = self.pos[2]
 		self.holding = other
 		self.holding.heldby = self
 	
--- clear collision flags 
+-- clear collision flags
 -- this assumes only classes set flags and not objects
 -- TODO getters and setters for custom behavior per-object
 self.holdingLastSolidFlags = rawget(self.holding, 'solidFlags')
@@ -179,7 +179,7 @@ function Hero:updateHeldPosition()
 	else
 		offset = self.holding.playerHoldOffsetDucking
 	end
-	offset = offset or {.625, .125}	
+	offset = offset or {.625, .125}
 	
 	self.holding.drawMirror = self.drawMirror
 	local side
@@ -214,7 +214,7 @@ end
 
 Hero.speedBoostDamageTime = -1
 function Hero:touch(other, side)
-	-- kick ignore 
+	-- kick ignore
 	if other.kickedBy == self
 	and other.kickHandicapTime >= game.time
 	then
@@ -231,7 +231,7 @@ function Hero:touch(other, side)
 	if other == self.weapon then return true end
 	if other.heldby == self then return true end
 
-	if self.speedBoostCharge == 1 
+	if self.speedBoostCharge == 1
 	and other.takeDamage
 	and self.speedBoostDamageTime < game.time
 	then
@@ -253,7 +253,7 @@ end
 function Hero:tryToStand()
 	-- TODO in collision v2, because we can go right up to walls, if you're next to one, then the ul tile gets tested for solid and you can't stand
 	-- in v2 we have touch and stuck detection working
-	-- so fix this in that by standing, doing a single move test, and going back to ducking if we hit anything 
+	-- so fix this in that by standing, doing a single move test, and going back to ducking if we hit anything
 
 	local level = game.level
 	local cantStand = false
@@ -322,13 +322,13 @@ Hero.swimmingJumpVel = 10
 -- v = jump velocity
 -- before jump duration: y = v t
 -- after jump duration: y0 = v t0 is the height at which gravity kicks in
--- a is gravity, a < 0 
+-- a is gravity, a < 0
 -- y = y0 + v (t - t0) + 1/2 a (t - t0)^2 is the height after the jump
 -- y' = 0 at v + a (t - t0) = 0 <=> a (t - t0) = -v <=> th = t0 - v / a
 -- y(th) = y0 + v (th - t0) + 1/2 a (th - t0)^2 = y0 + v (-v/a) + 1/2 a (-v/a)^2 = y0 - v^2/a + 1/2 v^2/a = y0 - 1/2 v^2/a = yh is the max height of the jump
 -- yh = y0 - 1/2 v^2 / a <=> 1/2 v^2 / (-a) + v t0 - yh = 0 <=> v = a (t0 ± sqrt(t0^2 - 2 yh / a ))
 -- also means t0 = yh / v + 1/2 v / a
-do 
+do
 	local jumpHeight = 4.5
 -- [[ define by height
 	Hero.jumpDuration = .15
@@ -351,7 +351,7 @@ function Hero:update(dt)
 	local roomPosX, roomPosY = level:getMapTilePos(self.pos:unpack())
 	self.room = level:getRoomAtMapTilePos(roomPosX, roomPosY)
 
-	-- [[ create/remove objects based on our current room 
+	-- [[ create/remove objects based on our current room
 	if self.room ~= self.roomLast then
 		-- reload tiles from the original buffers (in case any were modified)
 		level:refreshTiles()
@@ -382,7 +382,7 @@ function Hero:update(dt)
 		local targetPosY = self.pos[2] + .15 * level.mapTileSize[2]
 			
 		if not (editor and editor.active) then
-			local viewSizeX = (self.viewBBox.max[1] - self.viewBBox.min[1]) / 2 
+			local viewSizeX = (self.viewBBox.max[1] - self.viewBBox.min[1]) / 2
 			local viewSizeY = (self.viewBBox.max[2] - self.viewBBox.min[2]) / 2
 
 			local different = {}
@@ -423,7 +423,7 @@ function Hero:update(dt)
 			if different.down then
 				local ymin = (roomPosY-1) * level.mapTileSize[2] + 1 + viewSizeY
 				if targetPosY < ymin then
-					targetPosY = ymin 
+					targetPosY = ymin
 					pushedDown = true
 				end
 			end
@@ -475,11 +475,11 @@ function Hero:update(dt)
 		self.weapon = nil
 	end
 
---	if self.weapon and self.weapon.update then 
+--	if self.weapon and self.weapon.update then
 --		self.weapon:update(dt, self)
 --	end
 	
-	-- if we pushed the pickup-item button 
+	-- if we pushed the pickup-item button
 	-- TODO's ...
 	-- 1) make all items touch-to-pickup
 	-- 2) keep 'pickup' and 'interact' separate
@@ -502,8 +502,8 @@ function Hero:update(dt)
 	end
 
 	-- see if we have a weapon to shoot
-	if self.inputShoot 
-	--and not self.inputShootLast 
+	if self.inputShoot
+	--and not self.inputShootLast
 	then
 		if self.weapon
 		and self.weapon.onShoot
@@ -599,7 +599,7 @@ function Hero:update(dt)
 					moveVel = self.runVel
 					if self.onground then
 						-- we're running.  determine how long we must keep running to hit the max speed.
-						-- don't keep resetting this value too. 
+						-- don't keep resetting this value too.
 						if not self.inputMaxSpeedTime then
 							self.inputMaxSpeedTime = game.time
 						end
@@ -618,7 +618,7 @@ function Hero:update(dt)
 					--and self:findItem(nil, require 'zeta.script.obj.speedbooster':isa)
 					then
 						self.speedBoostCharge = math.min(1, self.speedBoostCharge + dt)
-					end	
+					end
 					
 					if self.onground and (self.inputLeftRight > 0) ~= (self.vel[1] > 0) then
 						self.inputMaxSpeedTime = nil
@@ -626,7 +626,7 @@ function Hero:update(dt)
 					end
 				end
 
-				local accel = --self.onground and 
+				local accel = --self.onground and
 					(self.walkAccel + self.friction) or self.airAccel
 				if self.inputLeftRight < 0 then
 					self.vel[1] = self.vel[1] - accel
@@ -696,8 +696,8 @@ function Hero:update(dt)
 		--local WallJump = require 'zeta.script.obj.walljump'
 		local hasWallJump = self:findItem'walljump'	--:findItem(nil, function(o) return WallJump:isa(o) end)
 		-- wall grinding? via the pick-up button
-		if --self.inputShootAux and 
-		hasWallJump 
+		if --self.inputShootAux and
+		hasWallJump
 		then
 			--self.drawMirror = not self.collidedLeft
 			self.vel[2] = -game.gravity * dt	-- to stop
@@ -737,7 +737,7 @@ function Hero:update(dt)
 			if not self.lookingUp then
 				self.lookingUp = true
 			end
-		elseif self.inputUpDown == 0 then 
+		elseif self.inputUpDown == 0 then
 			self:tryToStand()
 		end
 	end
@@ -761,7 +761,7 @@ function Hero:update(dt)
 	--]]
 
 	if self.ducking or self.lookingUp then
-		if self.inputLeftRight ~= 0 then 
+		if self.inputLeftRight ~= 0 then
 			self.drawMirror = self.inputLeftRight < 0
 		end
 	end
@@ -808,8 +808,8 @@ function Hero:update(dt)
 			end
 		end
 	end
-	if not self.inputJump 
-	and self.inputJumpLast 
+	if not self.inputJump
+	and self.inputJumpLast
 	and self.vel[2] > 0
 	then
 		self.inputJumpTime = nil
@@ -825,7 +825,7 @@ function Hero:update(dt)
 		local itemIndex = self.items:find(nil, function(items)
 			return items:find(self.weapon)
 		end)
-		itemIndex = itemIndex or 0 
+		itemIndex = itemIndex or 0
 	
 		local dir
 		if pageUpPress then
@@ -986,7 +986,7 @@ end
 function Hero:takeDamage(damage, attacker, inflicter, side)
 	if self.dead then return end
 	--if self.speedBoostCharge == 1 then return end	-- should speed boost make you invincible, or just hit first?
-	return Hero.super.takeDamage(self, damage, attacker, inflicter, side) 
+	return Hero.super.takeDamage(self, damage, attacker, inflicter, side)
 end
 
 function Hero:draw(R, viewBBox, holdOveride)
@@ -1008,7 +1008,9 @@ function Hero:draw(R, viewBBox, holdOveride)
 	self.drawCenter[2] = 0
 
 	if not self.dead then
-		if self.climbing then
+		if self.climbing
+		or game.time < self.wallJumpEndTime
+		then
 			if self.vel[1] ~= 0 or self.vel[2] ~= 0 then
 				self.seq = 'climb_updown'	-- moving
 			else
@@ -1089,7 +1091,7 @@ function Hero:draw(R, viewBBox, holdOveride)
 		if l == 1 then
 			local speedEchoTick = math.floor(game.time * 20)
 			if speedEchoTick ~= self.speedEchoTick then
-				self.speedEchoTick = speedEchoTick 
+				self.speedEchoTick = speedEchoTick
 			
 				-- get current frame ...
 				
@@ -1109,7 +1111,7 @@ function Hero:draw(R, viewBBox, holdOveride)
 					drawMirror = self.drawMirror,
 					color = {0,.5,1,1},
 					update = function(self)
-						self.seqStartTime = game.time - frameNumber / freq 
+						self.seqStartTime = game.time - frameNumber / freq
 						self.color[4] = 1 - (game.time - startTime) / lifetime
 						if self.color[4] < 0 then self.remove = true end
 					end,
@@ -1128,7 +1130,7 @@ function Hero:draw(R, viewBBox, holdOveride)
 
 	if self.weapon then
 		self.weapon:updateHeldPosition(R, viewBBox, true)
-		self.weapon:draw(R, viewBBox, true)	
+		self.weapon:draw(R, viewBBox, true)
 	end
 
 	if self.holding then
@@ -1163,7 +1165,7 @@ function Hero:drawHUD(R, viewBBox)
 	local gl = R.gl
 	-- TODO if start button pushed ...
 	-- then show inventory
-	-- otherwise have 'l' and 'r' cycle ... weapons only? 
+	-- otherwise have 'l' and 'r' cycle ... weapons only?
 
 	local x = viewBBox.min[1]
 	local y = viewBBox.min[2]+1
@@ -1204,7 +1206,7 @@ function Hero:drawHUD(R, viewBBox)
 		end
 	end
 
-	y=y+1 
+	y=y+1
 	if self.weapon then
 		drawInv(self.weapon, x, y, select(2, self.items:find(nil, function(items)
 			return items:find(self.weapon)
@@ -1296,11 +1298,11 @@ function Hero:drawHUD(R, viewBBox)
 		gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
 		gl.glDisable(gl.GL_TEXTURE_2D)
 		R:quad(
-			x - border, 
-			y - border, 
-			minimapHUDWidth + 2 * border, 
+			x - border,
+			y - border,
+			minimapHUDWidth + 2 * border,
 			minimapHUDHeight + 2 * border,
-			0,0,1,1, 0, 
+			0,0,1,1, 0,
 			.7,.7,.7,.5)-- r,g,b,a,
 		level.levelFgShader:use()
 		if level.levelFgShader.uniforms.tileSize then
