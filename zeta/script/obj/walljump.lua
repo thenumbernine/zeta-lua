@@ -1,3 +1,4 @@
+local behaviors = require 'base.script.behaviors'
 local WallJump = behaviors(
 	require 'zeta.script.obj.item',
 	require 'zeta.script.behavior.crystalitem')

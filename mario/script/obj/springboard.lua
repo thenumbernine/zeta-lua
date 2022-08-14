@@ -1,4 +1,5 @@
 local game = require 'base.script.singleton.game'
+local behaviors = require 'base.script.behaviors'
 
 --[[
 TODO:

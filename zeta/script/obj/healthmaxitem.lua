@@ -1,3 +1,4 @@
+local behaviors = require 'base.script.behaviors'
 local HealthMaxItem = behaviors(require 'zeta.script.obj.powerupitem',
 	require 'zeta.script.behavior.crystalitem')
 HealthMaxItem.sprite = 'heart'

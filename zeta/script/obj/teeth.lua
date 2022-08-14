@@ -1,4 +1,5 @@
 local game = require 'base.script.singleton.game'
+local behaviors = require 'base.script.behaviors'
 local Teeth = behaviors(require 'zeta.script.obj.enemy',
 	require 'zeta.script.behavior.statemachine',
 	require 'zeta.script.behavior.hurtstotouch')

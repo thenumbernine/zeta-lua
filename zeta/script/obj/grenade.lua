@@ -4,6 +4,7 @@ local box2 = require 'vec.box2'
 local MissileBlast = require 'zeta.script.obj.missileblast'
 local Puff = require 'zeta.script.obj.puff'
 local game = require 'base.script.singleton.game'
+local behaviors = require 'base.script.behaviors'
 local Grenade = behaviors(require 'base.script.obj.object',
 	require 'zeta.script.behavior.takesdamage')
 Grenade.bbox = box2(-.1, 0, .1, .2)

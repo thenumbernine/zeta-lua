@@ -9,6 +9,7 @@ local Object = require 'base.script.obj.object'
 local ExclaimTile = require 'mario.script.tile.exclaim'
 local ExclaimOutlineTile = require 'mario.script.tile.exclaimoutline'
 local teamColors = require 'base.script.teamcolors'
+local behaviors = require 'base.script.behaviors'
 
 local PSwitch = behaviors(Object,
 	require 'mario.script.behavior.kickable')

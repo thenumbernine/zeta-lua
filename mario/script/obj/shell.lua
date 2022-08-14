@@ -1,5 +1,6 @@
 local game = require 'base.script.singleton.game'
 local Player = require 'base.script.obj.player'
+local behaviors = require 'base.script.behaviors'
 
 local Shell = behaviors(
 	require 'base.script.obj.object',

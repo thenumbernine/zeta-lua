@@ -1,6 +1,7 @@
 local SpinParticle = require 'mario.script.obj.spinparticle'
 local game = require 'base.script.singleton.game'
 local Mario = require 'mario.script.obj.mario'
+local behaviors = require 'base.script.behaviors'
 
 --[[
 up + release Y : kick up

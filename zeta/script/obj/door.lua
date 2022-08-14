@@ -6,6 +6,7 @@ local KeyCard = require 'zeta.script.obj.keycard'
 local threads = require 'base.script.singleton.threads'
 local game = require 'base.script.singleton.game'
 local animsys = require 'base.script.singleton.animsys'
+local behaviors = require 'base.script.behaviors'
 local Door = behaviors(require 'base.script.obj.object',
 	require 'zeta.script.behavior.statemachine')
 Door.sprite = 'door'

@@ -2,6 +2,7 @@ local bit = require 'bit'
 local game = require 'base.script.singleton.game'
 local CoinTile = require 'mario.script.tile.coin'
 local SpikeTile = require 'mario.script.tile.spike'
+local behaviors = require 'base.script.behaviors'
 
 local Mario = behaviors(require 'base.script.obj.player',
 	require 'mario.script.behavior.kickable')

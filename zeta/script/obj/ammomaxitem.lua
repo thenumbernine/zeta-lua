@@ -1,3 +1,4 @@
+local behaviors = require 'base.script.behaviors'
 local AmmoMaxItem = behaviors(require 'zeta.script.obj.powerupitem',
 	require 'zeta.script.behavior.crystalitem')
 AmmoMaxItem.amount = 1	-- how much

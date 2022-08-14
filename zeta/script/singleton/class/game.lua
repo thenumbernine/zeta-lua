@@ -1,5 +1,6 @@
 local table = require 'ext.table'
 local Game = require 'base.script.singleton.class.game'
+local behaviors = require 'base.script.behaviors'
 
 local ZetaGame = behaviors(Game
 --	, require 'base.script.behavior.postfbo'

@@ -5,6 +5,7 @@ local game = require 'base.script.singleton.game'
 local threads = require 'base.script.singleton.threads'
 local Puff = require 'mario.script.obj.puff'
 local setTimeout = require 'base.script.settimeout'
+local behaviors = require 'base.script.behaviors'
 
 local Flag = behaviors(Object,
 	require 'mario.script.behavior.kickable')

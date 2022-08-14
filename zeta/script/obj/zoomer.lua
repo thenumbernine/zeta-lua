@@ -1,3 +1,4 @@
+local behaviors = require 'base.script.behaviors'
 local Zoomer = behaviors(require 'zeta.script.obj.enemy',
 	require 'zeta.script.behavior.hurtstotouch')
 Zoomer.sprite = 'zoomer'

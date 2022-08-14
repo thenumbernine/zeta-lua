@@ -2,6 +2,7 @@ local class = require 'ext.class'
 local Object = require 'base.script.obj.object'
 local SpinParticle = require 'mario.script.obj.spinparticle'
 local game = require 'base.script.singleton.game'
+local behaviors = require 'base.script.behaviors'
 
 local Explosive = behaviors(Object,
 	require 'mario.script.behavior.kickable')

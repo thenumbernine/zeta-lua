@@ -1,12 +1,12 @@
-local table = require 'ext.table'
-local game = require 'base.script.singleton.game'
-
 local function walkEnemyBehavior(parentClass)
+	local table = require 'ext.table'
+	local game = require 'base.script.singleton.game'
+	local behaviors = require 'base.script.behaviors'
 
 	local WalkEnemyTemplate = behaviors(
-		parentClass,
-		require 'mario.script.behavior.hurtstotouch'
---		require 'zeta.script.behavior.takesdamage',
+		parentClass
+		, require 'mario.script.behavior.hurtstotouch'
+--		, require 'zeta.script.behavior.takesdamage'
 	)
 
 	WalkEnemyTemplate.dir = -1
@@ -72,5 +72,4 @@ local function walkEnemyBehavior(parentClass)
 
 	return WalkEnemyTemplate
 end
-
 return walkEnemyBehavior
