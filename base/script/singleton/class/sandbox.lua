@@ -3,6 +3,8 @@ local class = require 'ext.class'
 local Sandbox = class()
 
 Sandbox.prefixCode = [[
+local create = require 'base.script.create'
+local setTimeout = require 'base.script.settimeout'
 local editor = require 'base.script.singleton.editor'()
 local threads = require 'base.script.singleton.threads'
 local game = require 'base.script.singleton.game'

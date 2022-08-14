@@ -407,10 +407,9 @@ function Level:init(args)
 		assert(self.backgroundStructTex.width == 2)		-- if it's not then change the lookups below
 
 
--- TODO for some reason on the sprite scenegraph stuff, GL_LUMINANCE_ALPHA isn't cutting it
--- even though it works fine for the tile info in the map
--- so figure out why, or make a few pathways depending on the graphics card's support?
-require 'vec-ffi.vec4f'
+		-- TODO for some reason on the sprite scenegraph stuff, GL_LUMINANCE_ALPHA isn't cutting it
+		-- even though it works fine for the tile info in the map
+		-- so figure out why, or make a few pathways depending on the graphics card's support?
 		
 		-- offset into the sprite table
 		self.spriteListOffsetTileMap = ffi.new('vec4f_t[?]', self.size[1] * self.size[2])

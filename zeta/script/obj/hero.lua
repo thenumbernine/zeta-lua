@@ -33,6 +33,7 @@ local Object = require 'base.script.obj.object'
 local gui = require 'base.script.singleton.gui'
 local game = require 'base.script.singleton.game'
 local editor = require 'base.script.singleton.editor'()
+local setTimeout = require 'base.script.settimeout'
 local Hero = behaviors(require 'base.script.obj.player',
 	require 'zeta.script.behavior.takesdamage',
 	require 'zeta.script.behavior.deathtopieces')
@@ -885,10 +886,10 @@ end
 
 function Hero:updateMinimap()
 	local gl = game.R.gl
-	local xmin = math.clamp(self.viewBBox.min[1], 0, self.minimapFgTex.width-1)
-	local xmax = math.clamp(self.viewBBox.max[1], 0, self.minimapFgTex.width-1)
-	local ymin = math.clamp(self.viewBBox.min[2], 0, self.minimapFgTex.height-1)
-	local ymax = math.clamp(self.viewBBox.max[2], 0, self.minimapFgTex.height-1)
+	local xmin = math.clamp(math.floor(self.viewBBox.min[1]), 0, self.minimapFgTex.width-1)
+	local xmax = math.clamp(math.ceil(self.viewBBox.max[1]), 0, self.minimapFgTex.width-1)
+	local ymin = math.clamp(math.floor(self.viewBBox.min[2]), 0, self.minimapFgTex.height-1)
+	local ymax = math.clamp(math.ceil(self.viewBBox.max[2]), 0, self.minimapFgTex.height-1)
 	local gl = game.R.gl
 -- [[
 	gl.glCopyImageSubData(

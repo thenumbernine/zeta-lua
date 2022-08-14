@@ -4,6 +4,7 @@ local coroutine = require 'ext.coroutine'
 local audio = require 'base.script.singleton.audio'
 local modio = require 'base.script.singleton.modio'
 local AudioSource = require 'audio.source'
+local setTimeout = require 'base.script.settimeout'
 
 math.randomseed(os.time())
 
