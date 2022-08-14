@@ -1,5 +1,7 @@
 local game = require 'base.script.singleton.game'
 local behaviors = require 'base.script.behaviors'
+local dirs = require 'base.script.dirs'
+
 local Geemer = behaviors(require 'zeta.script.obj.enemy',
 	require 'zeta.script.behavior.statemachine',
 	require 'zeta.script.behavior.hurtstotouch'

@@ -1,4 +1,5 @@
 local class = require 'ext.class'
+local dirs = require 'base.script.dirs'
 local SpritePieces = require 'zeta.script.obj.spritepieces'
 
 local deathToPiecesBehavior = function(parentClass)

@@ -12,7 +12,6 @@ local sdl = require 'ffi.sdl'
 local NetCom = require 'netrefl.netcom'
 
 require 'netrefl.netfield_list'
-require 'base.script.util'	-- common things used by everyone
 
 local AudioSource = require 'audio.source'
 local AudioBuffer = require 'audio.buffer'

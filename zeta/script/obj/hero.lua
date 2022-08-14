@@ -35,6 +35,7 @@ local game = require 'base.script.singleton.game'
 local editor = require 'base.script.singleton.editor'()
 local setTimeout = require 'base.script.settimeout'
 local behaviors = require 'base.script.behaviors'
+local dirs = require 'base.script.dirs'
 local Hero = behaviors(require 'base.script.obj.player',
 	require 'zeta.script.behavior.takesdamage',
 	require 'zeta.script.behavior.deathtopieces')

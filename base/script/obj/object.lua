@@ -11,6 +11,8 @@ local game = require 'base.script.singleton.game'
 local sounds = require 'base.script.singleton.sounds'
 local threads = require 'base.script.singleton.threads'
 local sandbox = require 'base.script.singleton.sandbox'
+local dirs = require 'base.script.dirs'
+local oppositeSide = require 'base.script.oppositeside'
 
 local Object = class()
 

@@ -6,10 +6,11 @@ local box2 = require 'vec.box2'
 local game = require 'base.script.singleton.game'
 local threads = require 'base.script.singleton.threads'
 local Object = require 'base.script.obj.object'
-local ExclaimTile = require 'mario.script.tile.exclaim'
-local ExclaimOutlineTile = require 'mario.script.tile.exclaimoutline'
 local teamColors = require 'base.script.teamcolors'
 local behaviors = require 'base.script.behaviors'
+local dirs = require 'base.script.dirs'
+local ExclaimTile = require 'mario.script.tile.exclaim'
+local ExclaimOutlineTile = require 'mario.script.tile.exclaimoutline'
 
 local PSwitch = behaviors(Object,
 	require 'mario.script.behavior.kickable')

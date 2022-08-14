@@ -22,6 +22,7 @@ local game = require 'base.script.singleton.game'
 local SpawnInfo = require 'base.script.spawninfo'
 local Object = require'base.script.obj.object'
 local glapp = require 'base.script.singleton.glapp'
+local dirs = require 'base.script.dirs'
 
 local Editor = class()
 
