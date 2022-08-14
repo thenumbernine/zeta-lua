@@ -1,3 +1,4 @@
+local bit = require' bit'
 local Object = require 'base.script.obj.object'
 local game = require 'base.script.singleton.game'
 

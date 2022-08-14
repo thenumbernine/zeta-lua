@@ -1274,6 +1274,7 @@ function Hero:drawHUD(R, viewBBox)
 			minimapHUDHeight = minimapHUDHeight * scale
 			minimapDrawWidth = minimapDrawWidth * scale
 			minimapDrawHeight = minimapDrawHeight * scale
+			-- TODO we would need another var in the levelFgShader for scaling up vertex positions in ordre for the tiles to display correctly
 		end
 		local modio = require 'base.script.singleton.modio'
 		local texsys = modio:require 'script.singleton.texsys'

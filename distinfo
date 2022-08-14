@@ -1,3 +1,5 @@
+-- used with my lua-dist project for packaging.
+
 -- TODO make sure name has no spaces/symbols, or is properly escaped for all these cp commands: 
 name = 'Zeta'	-- or whatever you want to call the .app
 

@@ -1,3 +1,5 @@
+local ffi = require 'ffi'
+local bit = require 'bit'
 local sdl = require 'ffi.sdl'
 local gl = require 'gl'
 local ig = require 'ffi.imgui'

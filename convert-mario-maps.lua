@@ -1,6 +1,7 @@
 #!/usr/bin/env luajit
 
 local ffi = require 'ffi'
+local bit = require 'bit'
 
 --[[ hmm ...
 local gcmem = require 'ext.gcmem'

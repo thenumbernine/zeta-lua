@@ -1,3 +1,4 @@
+local bit = require 'bit'
 local game = require 'base.script.singleton.game'
 local CoinTile = require 'mario.script.tile.coin'
 local SpikeTile = require 'mario.script.tile.spike'

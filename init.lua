@@ -1,8 +1,6 @@
 #!/usr/bin/env luajit
 
 -- setup global env:
-ffi = require 'ffi'
-bit = require 'bit'
 require 'ext'
 require 'vec'
 

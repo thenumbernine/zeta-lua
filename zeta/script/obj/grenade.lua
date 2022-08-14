@@ -1,3 +1,4 @@
+local bit = require 'bit'
 local MissileBlast = require 'zeta.script.obj.missileblast'
 local Puff = require 'zeta.script.obj.puff'
 local game = require 'base.script.singleton.game'

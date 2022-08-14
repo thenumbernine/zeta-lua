@@ -1,5 +1,5 @@
 -- behavior for game singleton class
-
+local ffi = require 'ffi'
 local vec4i = require 'vec-ffi.vec4i'
 local vec2i = require 'vec-ffi.vec2i'
 local FBO = require 'gl.fbo'

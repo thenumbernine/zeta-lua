@@ -1,4 +1,5 @@
 local ffi = require 'ffi'
+local bit = require 'bit'
 local animsys = require 'base.script.singleton.animsys'
 local game = require 'base.script.singleton.game'
 local sounds = require 'base.script.singleton.sounds'
