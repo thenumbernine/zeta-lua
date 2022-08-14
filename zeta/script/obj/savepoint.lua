@@ -99,8 +99,9 @@ function SavePoint:playerUse(player)
 								local ffi = require 'ffi'
 								local data = ffi.new('uint8_t[?]', size)
 								game.R:report'before glGetTexImage'
-								-- TODO move to gl.tex
-								gl.glGetTexImage(v.target, 0, v.format, v.type, data)
+								v:bind()
+								gl.glGetTexImage(v.target, 0, v.format, v.type, data)	-- TODO move to gl.tex
+								v:unbind()
 								game.R:report'glGetTexImage'
 								
 								-- TODO gl.tex getParameter?
@@ -115,7 +116,7 @@ function SavePoint:playerUse(player)
 										.."internalFormat="..v.internalFormat..', '
 										.."format="..v.format..', '
 										.."type="..v.type..', '
-										.."data="..tolua(ffi.string(data, size))
+										.."data=require'ffi'.cast('char*', "..tolua(ffi.string(data, size))..")"
 									.."}"
 							else
 								return "error('can\\'t serialize unknown table from key "..k.."')"
