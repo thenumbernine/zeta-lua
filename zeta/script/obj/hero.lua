@@ -709,8 +709,8 @@ function Hero:update(dt)
 			local t2 = level:getTile(checkX,y-1)
 			local solid1 = t1 and t1.solid or false
 			local solid2 = t2 and t2.solid or false
-			if not solid1 
-			and solid2 
+			if not solid1
+			and solid2
 			then
 				--self.drawMirror = not self.collidedLeft
 				self.vel[2] = -game.gravity * dt	-- to stop

@@ -356,7 +356,7 @@ local function processEvent(press, ...)
 			local ev = {...}
 			ev.name = getEventName(...)
 			-- give the event a name
-			print('got', ev.name)
+--print('got', ev.name)
 			waitingForEvent.callback(ev)
 			waitingForEvent = nil
 		end
@@ -395,7 +395,7 @@ function App:event(event, ...)
 	if editor and editor.active and editor.isHandlingKeyboard then return end
 
 	if event.type == sdl.SDL_JOYHATMOTION then
-		if event.jhat.value ~= 0 then
+		--if event.jhat.value ~= 0 then
 			-- TODO make sure all hat value bits are cleared
 			-- or keep track of press/release
 			for i=0,3 do
@@ -403,7 +403,15 @@ function App:event(event, ...)
 				local press = bit.band(dirbit, event.jhat.value) ~= 0
 				processEvent(press, sdl.SDL_JOYHATMOTION, event.jhat.which, event.jhat.hat, dirbit)
 			end
-		end
+			--[[
+			if event.jhat.value == sdl.SDL_HAT_CENTERED then
+				for i=0,3 do
+					local dirbit = bit.lshift(1,i)
+					processEvent(false, sdl.SDL_JOYHATMOTION, event.jhat.which, event.jhat.hat, dirbit)
+				end
+			end
+			--]]
+		--end
 	elseif event.type == sdl.SDL_JOYAXISMOTION then
 		-- -1,0,1 depend on the axis press
 		local lr = math.floor(3 * (tonumber(event.jaxis.value) + 32768) / 65536) - 1
