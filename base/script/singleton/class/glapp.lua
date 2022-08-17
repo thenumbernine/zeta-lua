@@ -604,7 +604,7 @@ function App:updateGUI(...)
 										-- next resume
 										threads:add(function()
 											coroutine.yield()
-											thread:resume()
+											coroutine.resume(thread)
 										end)
 									end,
 								}
@@ -612,7 +612,7 @@ function App:updateGUI(...)
 								coroutine.yield()
 							end
 						end)
-						thread:resume()
+						coroutine.resume(thread)
 					end
 					for _,inputKeyName in ipairs(inputKeyNames) do
 						ig.igText(inputKeyName)
@@ -622,7 +622,7 @@ function App:updateGUI(...)
 							waitingForEvent
 							and waitingForEvent.key == inputKeyName
 							and waitingForEvent.playerIndex == playerIndex
-							and 'Press Button...' or ev.name or '?')
+							and 'Press Button...' or (ev and ev.name) or '?')
 						then
 							waitingForEvent = {
 								key = inputKeyName,
