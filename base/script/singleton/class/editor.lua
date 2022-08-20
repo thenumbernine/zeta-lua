@@ -5,6 +5,7 @@ local table = require 'ext.table'
 local math = require 'ext.math'
 local tolua = require 'ext.tolua'
 local file = require 'ext.file'
+local os = require 'ext.os'
 local vec2 = require 'vec.vec2'
 local vec3 = require 'vec.vec3'
 local vec4 = require 'vec.vec4'
@@ -270,7 +271,8 @@ do
 		-- what should we smooth?  diagonals for sure
 		-- and ... only the first solid?  or *any* solid?
 		-- only the first for now -- in case there's solid=true blocks that shouldn't be smoothed (like shootable)
-		return index == 1 or index.diag
+		local tiletype = game.levelcfg.tileTypes[index]
+		return index == 1 or (tiletype and tiletype.diag)
 	end
 
 	local function validNeighbor(self,map,x,y)
@@ -1914,7 +1916,7 @@ function Editor:update()
 					end
 				end
 			-- mouse drag
-			elseif mouse.deltaPos[1] ~= 0 or mouse.deltaPos[2] ~= 0 then
+			elseif mouse.deltaPos.x ~= 0 or mouse.deltaPos.y ~= 0 then
 				if self.isMoving then
 					local dx = x - self.movePressPos[1]
 					local dy = y - self.movePressPos[2]

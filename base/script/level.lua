@@ -12,7 +12,8 @@ local ffi = require 'ffi'
 local bit = require 'bit'
 local class = require 'ext.class'
 local table = require 'ext.table'
-local file = require 'ext.file'
+local io = require 'ext.io'
+local os = require 'ext.os'
 local vec2 = require 'vec.vec2'
 local box2 = require 'vec.box2'
 local modio = require 'base.script.singleton.modio'
@@ -211,6 +212,21 @@ function Level:init(args)
 	local tileImage = Image(tileFile)
 	self.size = vec2(tileImage:size())
 
+	do
+		local maptilesizepath = mappath..'/maptilesize.lua'
+		local searchMapTileSizePath = modio:find(maptilesizepath)
+print('maptilesizepath', maptilesizepath) 	
+		if searchMapTileSizePath then
+print('exists')			
+			local fromlua = require 'ext.fromlua'
+			self.mapTileSize = vec2(table.unpack(
+				assert(fromlua(assert(io.readfile(searchMapTileSizePath))))
+			))
+print('found self.mapTileSize', self.mapTileSize)
+		end
+	end
+print('self.mapTileSize', self.mapTileSize)
+
 	-- how many tiles wide and high a maptile is (which rooms are comoposed of)
 	self.sizeInMapTiles = vec2(
 		math.ceil(self.size[1]/self.mapTileSize[1]),
@@ -276,7 +292,7 @@ function Level:init(args)
 
 	-- load backgrounds here
 	do
-		self.backgrounds = table(assert(assert(load('return '..assert(file[assert(modio:find('script/backgrounds.lua'))])))()))
+		self.backgrounds = table(assert(assert(load('return '..assert(io.readfile(assert(modio:find('script/backgrounds.lua'))))))()))
 		self.bgtexpackFilename = modio:find(mappath..'/bgtexpack.png')
 		if not self.bgtexpackFilename then
 			self.bgtexpackFilename = modio:find'bgtexpack.png'
@@ -617,7 +633,7 @@ void main() {
 			},
 		}
 
-		local shaderCode = assert(file['base/script/raytrace.shader'])
+		local shaderCode = assert(io.readfile('base/script/raytrace.shader'))
 		self.levelSceneGraphShader = GLProgram{
 			vertexCode = table{
 				'#define VERTEX_SHADER 1',
@@ -802,7 +818,7 @@ void main() {
 		if spawnInfoFile then
 			spawnInfoFile = modio:find(spawnInfoFile)
 			if spawnInfoFile then
-				local spawnInfos = assert(assert(load('return '..file[spawnInfoFile]))())
+				local spawnInfos = assert(assert(load('return '..io.readfile(spawnInfoFile)))())
 				self:processSpawnInfoArgs(spawnInfos)	
 			end
 		end
@@ -811,7 +827,7 @@ void main() {
 	local roomsFile = args.roomsFile or (mappath and mappath..'/rooms.lua')
 	if roomsFile then roomsFile = modio:find(roomsFile) end
 	if roomsFile then
-		self.roomProps = assert(assert(load('return '..file[roomsFile]))())
+		self.roomProps = assert(assert(load('return '..io.readfile(roomsFile)))())
 	else
 		self.roomProps = table()
 	end
@@ -911,7 +927,7 @@ function Level:initialize()
 		local initFile = modio:find(self.initFile)
 		if initFile then
 			local sandbox = require 'base.script.singleton.sandbox' 
-			return sandbox(assert(file[initFile]))
+			return sandbox(assert(io.readfile(initFile)))
 		end
 	end
 end

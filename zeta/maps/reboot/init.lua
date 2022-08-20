@@ -1,0 +1,1 @@
+game.viewSize = 8
