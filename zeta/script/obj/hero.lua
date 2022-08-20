@@ -615,7 +615,7 @@ function Hero:update(dt)
 					if self.onground
 					-- and we're at max vel (don't forget friction has been applied last frame)
 					and math.abs(self.vel[1]) >= self.maxRunVel - self.friction
-					--and self:findItem(nil, require 'zeta.script.obj.speedbooster':isa)
+					and self:findItem'speedbooster'
 					then
 						self.speedBoostCharge = math.min(1, self.speedBoostCharge + dt)
 					end

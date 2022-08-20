@@ -2,9 +2,12 @@
 -- .. but the code that calls this is wrapped in a block:
 -- "don't do this if game.savePoint exists"
 -- so why's it getting this far?
+local string = require 'ext.string'
 local table = require 'ext.table'
 local vec2 = require 'vec.vec2'
 local vec3 = require 'vec.vec3'
+
+local mapbasename = 'gen'
 
 if game.savePoint then return end
 
@@ -14,7 +17,9 @@ level.spawnInfos = table()
 
 local modio = require 'base.script.singleton.modio'
 local path = modio.search[1]..'/maps/'..modio.levelcfg.path
-local seed = assert(tonumber(assert(path:match('gen(%d+)'))))
+print('path', path)
+os.exit()
+local seed = assert(tonumber(assert(path:match(string.patescape(mapbasename)..'(%d+)'))))
 
 local blocksWide = level.size[1] / level.mapTileSize[1]
 local blocksHigh = level.size[2] / level.mapTileSize[2]
@@ -36,7 +41,7 @@ local blasterBreakTileType = game:findTileType'zeta.script.tile.blasterbreak'
 
 local emptyFgTile = 0
 local solidFgTile = 0x000101
-local ladderTile = 2
+local ladderFgTile = 2
 
 
 local offsets = {vec2(1,0), vec2(0,1), vec2(-1,0), vec2(0,-1)}
@@ -652,7 +657,7 @@ for _,room in ipairs(rooms) do
 					and level.tileMap[rx + level.size[1]*ry] == emptyTileType
 					then
 						level.tileMap[rx + level.size[1]*ry] = ladderTileType
-						level.bgTileMap[rx + level.size[1]*ry] = ladderTile
+						level.bgTileMap[rx + level.size[1]*ry] = ladderFgTile
 					end
 				end
 			end
