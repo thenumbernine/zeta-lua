@@ -55,6 +55,25 @@ function Game:setLevel(levelcfg)
 	self.levelcfg = levelcfg
 end
 
+-- useful function, not sure if it goes here or in level ...
+function Game:findTileType(tileTypeClass)
+	if type(tileTypeClass) == 'string' then
+		tileTypeClass = require(tileTypeClass)
+	end
+	return self.levelcfg.tileTypes:find(nil, function(tileType)
+		return tileTypeClass == getmetatable(tileType)
+	end)
+end
+
+function Game:findTileTypeOrSubclass(tileTypeClass)
+	if type(tileTypeClass) == 'string' then
+		tileTypeClass = require(tileTypeClass)
+	end
+	return self.levelcfg.tileTypes:find(nil, function(tileType)
+		return tileTypeClass:isa(tileType)
+	end)
+end
+
 Game.startPosIndex = 0
 function Game:getStartPos()
 	local startPositions = self.level.spawnInfos:filter(function(spawnInfo)

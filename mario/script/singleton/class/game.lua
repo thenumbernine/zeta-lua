@@ -3,7 +3,7 @@ local teamColors = require 'base.script.teamcolors'
 local setTimeout = require 'base.script.settimeout'
 local behaviors = require 'base.script.behaviors'
 local MarioGame = behaviors(Game
-	, require 'base.script.behavior.postfbo'
+--	, require 'base.script.behavior.postfbo'
 )
 
 MarioGame.maxFallVel = 20

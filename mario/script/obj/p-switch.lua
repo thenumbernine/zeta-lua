@@ -98,11 +98,11 @@ local flipTile = function(x,y)
 		if ExclaimTile:isa(tile) then
 			-- TODO shaders ...
 			-- on tiles nonetheless ...
-			local exclaimOutlineTileType = assert(game.levelcfg.tileTypes:find(nil, function(tileType) return ExclaimOutlineTile:isa(tileType) end))		
+			local exclaimOutlineTileType = assert(game:findTileTypeOrSubclass(ExclaimOutlineTile))
 			game.level:setTile(x,y, exclaimOutlineTileType, 1+14)
 			return true
 		elseif ExclaimOutlineTile:isa(tile) then
-			local exclaimTileType = assert(game.levelcfg.tileTypes:find(nil, function(tileType) return ExclaimTile:isa(tileType) end))
+			local exclaimTileType = assert(game:findTileTypeOrSubclass(ExclaimTile))
 			game.level:setTile(x,y, exclaimTileType, 1+11)
 			return true
 		end

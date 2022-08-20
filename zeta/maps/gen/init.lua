@@ -28,38 +28,11 @@ local function lInfLength(v) return math.max(math.abs(v[1]), math.abs(v[2])) end
 local function l1Length(v) return math.abs(v[1]) + math.abs(v[2]) end
 local function square(x) return x*x end
 
-local function pickRandom(ar)
-	return ar[math.random(#ar)]
-end
-
-local function pickLast(ar)
-	return ar[#ar]
-end
-
-local function shuffle(ar)
-	local tmp = table()
-	for i=1,#ar do
-		tmp:insert( math.random(#tmp+1), ar[i] )
-	end
-	for i=1,#tmp do
-		ar[i] = tmp:remove(math.random(#tmp))
-	end
-	return ar
-end
-
-
-local function findTileType(tileTypeName)
-	local tileTypeClass = assert(require(tileTypeName))
-	return game.levelcfg.tileTypes:find(nil, function(tileType)
-		return tileTypeClass == getmetatable(tileType)
-	end)
-end
-
 
 local emptyTileType = 0
-local solidTileType = findTileType'base.script.tile.solid'
-local ladderTileType = findTileType'base.script.tile.ladder'
-local blasterBreakTileType = findTileType'zeta.script.tile.blasterbreak'
+local solidTileType = game:findTileType'base.script.tile.solid'
+local ladderTileType = game:findTileType'base.script.tile.ladder'
+local blasterBreakTileType = game:findTileType'zeta.script.tile.blasterbreak'
 
 local emptyFgTile = 0
 local solidFgTile = 0x000101
@@ -186,8 +159,7 @@ local function buildRoomChain(startRoom, startBlock, numRooms, extDoorType)
 				print("unable to find neighbor to spawn new room!")
 				break
 			end
-			shuffle(emptyOptions)
-			emptyOptions:sort(cmp)
+			emptyOptions = emptyOptions:shuffle():sort(cmp)
 			
 			local optionIndex = 1	--math.floor(math.random() * math.random() * #emptyOptions) + 1
 			local option = emptyOptions[optionIndex]
@@ -221,8 +193,7 @@ local function buildRoomChain(startRoom, startBlock, numRooms, extDoorType)
 				end
 				
 				-- sort so that those with offsetIndex matching lastOffsetIndex are first
-				shuffle(emptyOptions)
-				emptyOptions:sort(cmp)
+				emptyOptions = emptyOptions:shuffle():sort(cmp)
 				
 				-- bias towards zero
 				local optionIndex = 1
@@ -355,7 +326,7 @@ for i=2,#goals do
 		print("!!! unable to find neighbor to grow new room chain (leaving some items out) !!!")
 		break
 	end
-	local srcRoom = pickRandom(emptyOptions).src.room
+	local srcRoom = emptyOptions:pickRandom().src.room
 	
 	local goal = goals[i-1]
 	
@@ -391,7 +362,7 @@ for i=2,#goals do
 
 	for _,spawn in ipairs(goal.roomItems) do
 		local options = getEmptyNeighborOptions(roomChain)
-		local option = pickRandom(options)
+		local option = options:pickRandom()
 		if not option then
 			error("couldn't find room to place item")
 		else
@@ -822,7 +793,7 @@ for goalIndex,goal in ipairs(goals) do
 		for _,room in ipairs(roomChain) do totalBlocks:append(room.blocks) end
 		print('goal #'..goalIndex..' #roomChain '..#roomChain..' #totalBlocks '..#totalBlocks)
 		for _,itemArgs in ipairs(goal.hiddenItems or {}) do
-			local block = pickRandom(totalBlocks)
+			local block = totalBlocks:pickRandom()
 			if block then
 				local x,y = pickTileSolidOnEdge(block)
 				if not x then
@@ -842,7 +813,7 @@ for goalIndex,goal in ipairs(goals) do
 				if not room.noMonsters then
 					for _,block in ipairs(room.blocks) do
 						for i=1,5 do
-							local spawnType = assert(pickRandom(goal.enemies))
+							local spawnType = assert(table.pickRandom(goal.enemies))
 							local x,y
 							if ({
 								['zeta.script.obj.teeth'] = 1,

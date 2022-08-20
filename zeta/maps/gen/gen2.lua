@@ -28,14 +28,6 @@ local function lInfLength(v) return math.max(math.abs(v[1]), math.abs(v[2])) end
 local function l1Length(v) return math.abs(v[1]) + math.abs(v[2]) end
 local function square(x) return x*x end
 
-local function pickRandom(ar)
-	return ar[math.random(#ar)]
-end
-
-local function pickLast(ar)
-	return ar[#ar]
-end
-
 local function shuffle(ar)
 	local tmp = table()
 	for i=1,#ar do
@@ -47,19 +39,10 @@ local function shuffle(ar)
 	return ar
 end
 
-
-local function findTileType(tileTypeName)
-	local tileTypeClass = assert(require(tileTypeName))
-	return game.levelcfg.tileTypes:find(nil, function(tileType)
-		return tileTypeClass == getmetatable(tileType)
-	end)
-end
-
-
 local emptyTileType = 0
-local solidTileType = findTileType'base.script.tile.solid'
-local ladderTileType = findTileType'base.script.tile.ladder'
-local blasterBreakTileType = findTileType'zeta.script.tile.blasterbreak'
+local solidTileType = game:findTileType'base.script.tile.solid'
+local ladderTileType = game:findTileType'base.script.tile.ladder'
+local blasterBreakTileType = game:findTileType'zeta.script.tile.blasterbreak'
 
 local emptyFgTile = 0
 local solidFgTile = 0x000101
