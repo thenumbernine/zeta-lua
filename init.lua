@@ -67,8 +67,9 @@ modio.search:insert(1, 'zeta')
 modio.levelcfg = {
 	--blocksWide = 16, blocksHigh = 16,
 	--path = 'reboot',
+	path = 'reboot2',
 	--path = 'gen',
-	path = 'gen2',
+	--path = 'gen2',
 	--path = 'start',
 	--path = 'start original',
 	music = 'music/sb_aurora.wav',

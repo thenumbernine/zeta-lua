@@ -1213,12 +1213,14 @@ function Hero:drawHUD(R, viewBBox)
 	
 	y=y+1
 	-- vel
-	R:quad(x+5, y-1, 2, .7,
-		0,0,0,0,0,
-		0,0,0,.5)
-	R:quad(x+5.1, y-.9, 1.8*self.speedBoostCharge, .5,
-		0,0,0,0,0,
-		0,1,1,.5)
+	if self:findItem'speedbooster' then
+		R:quad(x+5, y-1, 2, .7,
+			0,0,0,0,0,
+			0,0,0,.5)
+		R:quad(x+5.1, y-.9, 1.8*self.speedBoostCharge, .5,
+			0,0,0,0,0,
+			0,1,1,.5)
+	end
 
 	local x = viewBBox.min[1]
 	local function drawInv(item, x, y, items)

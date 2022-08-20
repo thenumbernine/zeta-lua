@@ -1,13 +1,21 @@
--- if we're loading from a save point then return
--- .. but the code that calls this is wrapped in a block:
--- "don't do this if game.savePoint exists"
--- so why's it getting this far?
+--[[
+instructions:
+copy this zeta/maps/gen/ 
+to zeta/maps/gen####/ for some number ####
+
+if we're loading from a save point then return
+ .. but the code that calls this is wrapped in a block:
+ "don't do this if game.savePoint exists"
+ so why's it getting this far?
+--]]
 local string = require 'ext.string'
 local table = require 'ext.table'
 local vec2 = require 'vec.vec2'
 local vec3 = require 'vec.vec3'
 
 local mapbasename = 'gen'
+
+getmetatable(game).viewSize = 16
 
 if game.savePoint then return end
 
@@ -17,8 +25,6 @@ level.spawnInfos = table()
 
 local modio = require 'base.script.singleton.modio'
 local path = modio.search[1]..'/maps/'..modio.levelcfg.path
-print('path', path)
-os.exit()
 local seed = assert(tonumber(assert(path:match(string.patescape(mapbasename)..'(%d+)'))))
 
 local blocksWide = level.size[1] / level.mapTileSize[1]
@@ -52,9 +58,19 @@ local positiveOffsetIndexForAxis = {1,2}
 local negativeOffsetIndexForAxis = {3,4}
 
 
-local function getGenMaxExtraDoors() return 0 end --math.random(25) end
-local function getGenNumRoomsInChain() return math.random(2,4) end -- math.random(10,20) end-- math.random(100,200) end
-local function getGenRoomSize() return math.random(1,3) end -- math.ceil(math.random() * math.random() * 20) end
+local function getGenMaxExtraDoors()
+	return 0
+	--return math.random(25)
+end
+local function getGenNumRoomsInChain()
+	return math.random(2,4)
+	--return math.random(10,20)
+	--return math.random(100,200)
+end
+local function getGenRoomSize()
+	return math.random(1,3)
+	--return math.ceil(math.random() * math.random() * 20)
+end
 local probToRemoveInterRoomWalls = 0
 
 
@@ -229,10 +245,11 @@ local goals = {
 		-- I think I need enemies per-room
 		-- and then sets of enemies for each room to pick from per-chain
 		enemies = {
-			'mario.script.obj.goomba',
+			--'mario.script.obj.goomba',
 			--'mario.script.obj.goomba-flying',
-			'mario.script.obj.koopa',
+			--'mario.script.obj.koopa',
 			--'mario.script.obj.koopa-flying',
+			'zeta.script.obj.geemer',
 		},
 		hiddenItems = {
 			{spawn='zeta.script.obj.healthitem', duration=1e+9},
@@ -251,8 +268,8 @@ local goals = {
 	{
 		color = vec3(1,0,0),
 		enemies = {
-			'mario.script.obj.ballnchain',
-			'mario.script.obj.thwomp',
+			--'mario.script.obj.ballnchain',
+			--'mario.script.obj.thwomp',
 			--'mario.script.obj.thwimp',
 			
 			'zeta.script.obj.sawblade',
@@ -352,14 +369,14 @@ for i=2,#goals do
 		local offset = option.offsetIndex
 		local opposite = oppositeOffsetIndex[offset]
 		
-		assert(neighbor.wall[opposite] == 'solid') 
+		assert(neighbor.wall[opposite] == 'solid')
 		assert(src.wall[offset] == 'solid')
 		neighbor.wall[opposite] = vec3(0,0,0)
 		src.wall[offset] = vec3(0,0,0)
 		
 		room.noMonsters = true
 		item.pos = {
-			(neighbor.pos[1] + .5) * level.mapTileSize[1] + 1.5, 
+			(neighbor.pos[1] + .5) * level.mapTileSize[1] + 1.5,
 			(neighbor.pos[2] + .5) * level.mapTileSize[2],
 		}
 		spawnInfos:insert(item)
@@ -417,7 +434,7 @@ for _,room in ipairs(rooms) do
 end
 --]=]
 
--- [=[ 
+-- [=[
 print'filling in tiles...'
 for y=0,level.mapTileSize[2]*blocksHigh-1 do
 	for x=0,level.mapTileSize[1]*blocksWide-1 do
@@ -486,7 +503,7 @@ for _,room in ipairs(rooms) do
 					r,g,b = r/m,g/m,b/m
 					colorImg(rx,ry,r,g,b)
 				end
-				--]]	
+				--]]
 				
 				local bv = vec2(x,y)
 				
@@ -547,7 +564,7 @@ for _,room in ipairs(rooms) do
 							level.tileMap[rx + level.size[1]*ry] = solidTileType
 							level.fgTileMap[rx + level.size[1]*ry] = solidFgTile
 							do	--if len < .7 then	-- platform valid
-								if y % 4 == 0 then	-- platform 
+								if y % 4 == 0 then	-- platform
 									local xymod = (x + y) % 8
 									if xymod >= 2 or x == level.mapTileSize[1]/2 then
 										level.tileMap[rx+level.size[1]*ry] = emptyTileType
@@ -560,7 +577,7 @@ for _,room in ipairs(rooms) do
 							end
 						end
 					end
-				end	
+				end
 				--]=]
 			end
 		end
@@ -568,9 +585,9 @@ for _,room in ipairs(rooms) do
 			local n = axisForOffsetIndex[index]
 			local n2 = 3-n
 			local doorType = block.wall[index]
-			if doorType ~= 'solid' 
+			if doorType ~= 'solid'
 			and doorType	-- simplex noise needs this
-			then	
+			then
 				local left = vec2(-offset[2], offset[1])
 				-- clear the whole column from center to edge
 				print('clearing whole column from center to edge at '..block.pos)
@@ -580,9 +597,9 @@ for _,room in ipairs(rooms) do
 						local x, y = level.mapTileSize[1] * block.pos[1] + pos[1], level.mapTileSize[2] * block.pos[2] + pos[2]
 						assert(x >= 0 and y >= 0 and x < level.size[1] and y < level.size[2],
 							'checking at '..x..','..y..' of size '..level.size..'...')
-						if i >= level.mapTileSize[n]/2 - 1 then	-- at the end of the column make our 
-							level.tileMap[x+level.size[1]*y] = emptyTileType 
-							level.fgTileMap[x+level.size[1]*y] = emptyFgTile 
+						if i >= level.mapTileSize[n]/2 - 1 then	-- at the end of the column make our
+							level.tileMap[x+level.size[1]*y] = emptyTileType
+							level.fgTileMap[x+level.size[1]*y] = emptyFgTile
 							--seamImg(x, y, 1,1,1)	-- make shootable blocks stand out, so give them a different seam color
 						else
 							level.tileMap[x+level.size[1]*y] = emptyTileType	-- up to then, clear the way
@@ -603,11 +620,11 @@ for _,room in ipairs(rooms) do
 				-- we should have it clear the whole column as empty
 				-- and then use clearColor for clearing the wall
 				local constraintClearTileType = goal.clearColor or emptyTileType
-				local constraintClearFgTile = goal.emptyFgTile or emptyFgTile			
-				--]=]	
+				local constraintClearFgTile = goal.emptyFgTile or emptyFgTile
+				--]=]
 				-- and while we're at it,  make sure the rest of the wall is solid
 				print('making sure wall is solid at '..block.pos)
-				-- somewherein here oob tiles are written 
+				-- somewherein here oob tiles are written
 				for i=level.mapTileSize[n]/2,level.mapTileSize[n]/2 do
 					for j=2,level.mapTileSize[n2]/2-1 do
 						local pos = vec2(level.mapTileSize[1]/2, level.mapTileSize[2]/2) + offset * i + left * j
@@ -615,7 +632,7 @@ for _,room in ipairs(rooms) do
 							local x = pos[1] + level.mapTileSize[1] * block.pos[1]
 							local y = pos[2] + level.mapTileSize[2] * block.pos[2]
 							do --if x >= 0 and y >= 0 and x < level.size[1] and y < level.size[2] then
-								assert(x >= 0 and y >= 0 and x < level.size[1] and y < level.size[1], 
+								assert(x >= 0 and y >= 0 and x < level.size[1] and y < level.size[1],
 									'solid check failed at '..x..','..y..' of '..level.size..'...')
 								level.tileMap[x+level.size[1]*y] = solidTileType
 								level.fgTileMap[x+level.size[1]*y] = solidFgTile
@@ -625,15 +642,15 @@ for _,room in ipairs(rooms) do
 				end
 				print'...done making sure wall is solid'
 				if goal
-				--and goal.door 
+				--and goal.door
 				then
 					print('adding goal door at '..block.pos)
 					local ofs = offset[n] == -1 and 0 or 1
 					spawnInfos:insert{
 						angle = n == 2 and 90 or nil,
-						spawn = 'zeta.script.obj.door', 
-						color = goal.color ~= vec3(0,0,0) 
-							and table(goal.color):append{1} 
+						spawn = 'zeta.script.obj.door',
+						color = goal.color ~= vec3(0,0,0)
+							and table(goal.color):append{1}
 							or nil,
 						pos = vec2(
 							level.mapTileSize[1]/2+.5 + offset[1] * (level.mapTileSize[n]/2 + ofs) + level.mapTileSize[1] * block.pos[1],
@@ -682,6 +699,13 @@ spawnInfos:insert(2, {
 		level.mapTileSize[2] * (startRoomPos[2] + .5),
 	},
 })
+spawnInfos:insert(2, {
+	spawn = 'zeta.script.obj.walljump',
+	pos = {
+		level.mapTileSize[1] * (startRoomPos[1] + .5) + 0.5,
+		level.mapTileSize[2] * (startRoomPos[2] + .5),
+	},
+})
 
 -- these objects deserve a platform
 -- TODO make sure the platform doesn't overwrite an object
@@ -712,12 +736,12 @@ local platformSpawns = table{
 print'putting platforms under spawns...'
 for _,info in ipairs(spawnInfos) do
 	if platformSpawns[info.spawn] then
-		for j=0,1 do	
+		for j=0,1 do
 			for i=1,5 do
 				local x = info.pos[1]-4.5+i
 				local y = info.pos[2]-2-j
 				level.tileMap[x + level.size[1]*y] = solidTileType
-				level.fgTileMap[x + level.size[1]*y] = solidFgTile 
+				level.fgTileMap[x + level.size[1]*y] = solidFgTile
 			end
 		end
 	end
@@ -788,7 +812,7 @@ local function pickTileSolidOnEdge(block)
 	return x,y
 end
 
--- add items 
+-- add items
 print'placing monsters and hidden items...'
 local hiddenItemsSoFar = table()
 for goalIndex,goal in ipairs(goals) do
@@ -822,8 +846,8 @@ for goalIndex,goal in ipairs(goals) do
 							local x,y
 							if ({
 								['zeta.script.obj.teeth'] = 1,
-								['mario.script.obj.goomba'] = 1,
-								['mario.script.obj.koopa'] = 1,
+								--['mario.script.obj.goomba'] = 1,
+								--['mario.script.obj.koopa'] = 1,
 							})[spawnType] then
 								x,y = pickTileOnGround(block)
 							elseif ({
@@ -899,7 +923,7 @@ for _,room in ipairs(rooms) do
 		editor.smoothDiagLevel[0] = 2	--27'
 		editor.paintingTileType[0] = false
 		editor.paintingFgTile[0] = false
-		editor.paintingBgTile[0] = true 
+		editor.paintingBgTile[0] = true
 		editor.smoothBrush.paint(editor, cx, cy, math.max(level.mapTileSize:unpack())/2+1)
 	end
 end
