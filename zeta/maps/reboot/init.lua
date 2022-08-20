@@ -5,7 +5,7 @@ local vec3 = require 'vec.vec3'
 
 local mapname = 'reboot'
 
-getmetatable(game).viewSize = 8
+getmetatable(game).viewSize = 16
 
 if game.savePoint then return end
 
@@ -24,6 +24,8 @@ local spawnInfos = table()
 math.randomseed(seed)
 print('seed',seed)
 
+local function l1Length(v) return math.abs(v[1]) + math.abs(v[2]) end
+
 local emptyTileType = 0
 local solidTileType = game:findTileType'base.script.tile.solid'
 local ladderTileType = game:findTileType'base.script.tile.ladder'
@@ -31,7 +33,7 @@ local blasterBreakTileType = game:findTileType'zeta.script.tile.blasterbreak'
 
 local emptyFgTile = 0
 local solidFgTile = 0x000101
-local ladderTile = 2
+local ladderFgTile = 2
 
 local offsets = {vec2(1,0), vec2(0,1), vec2(-1,0), vec2(0,-1)}
 local sideForName={right=1, up=2, left=3, down=4}
@@ -43,7 +45,11 @@ local negativeOffsetIndexForAxis = {3,4}
 
 local function getGenMaxExtraDoors() return 0 end --math.random(25) end
 local function getGenNumRoomsInChain() return math.random(2,4) end -- math.random(10,20) end-- math.random(100,200) end
-local function getGenRoomSize() return math.random(1,3) end -- math.ceil(math.random() * math.random() * 20) end
+local function getGenRoomSize() 
+	return 1	-- TODO if you choose 0 then all the keys spawn at the start ... why?
+	--return math.random(1,3) 
+	--return math.ceil(math.random() * math.random() * 20) 
+end
 local probToRemoveInterRoomWalls = 0
 
 
@@ -218,10 +224,15 @@ local goals = {
 		-- I think I need enemies per-room
 		-- and then sets of enemies for each room to pick from per-chain
 		enemies = {
-			'mario.script.obj.goomba',
+			--'mario.script.obj.goomba',
 			--'mario.script.obj.goomba-flying',
-			'mario.script.obj.koopa',
+			--'mario.script.obj.koopa',
 			--'mario.script.obj.koopa-flying',
+			'zeta.script.obj.bat',
+			'zeta.script.obj.geemer',
+			'zeta.script.obj.zoomer',
+			'zeta.script.obj.turret',
+			'zeta.script.obj.zoomer',
 		},
 		hiddenItems = {
 			{spawn='zeta.script.obj.healthitem', duration=1e+9},
@@ -240,8 +251,8 @@ local goals = {
 	{
 		color = vec3(1,0,0),
 		enemies = {
-			'mario.script.obj.ballnchain',
-			'mario.script.obj.thwomp',
+			--'mario.script.obj.ballnchain',
+			--'mario.script.obj.thwomp',
 			--'mario.script.obj.thwimp',
 			
 			'zeta.script.obj.sawblade',
@@ -508,6 +519,7 @@ for _,room in ipairs(rooms) do
 				end
 				local len = lenNorm^(1/normPower)
 
+				--[[
 				local freq = 4
 				local noise = simplexNoise(
 					(vec2(rx / level.mapTileSize[1], ry / level.mapTileSize[2]) * freq)
@@ -516,6 +528,7 @@ for _,room in ipairs(rooms) do
 				noise = noise / freq
 				noise = noise * .7	-- .7 leaves a 3x3 in the middle of the walls
 				len = len + noise
+				--]]
 
 				-- len in [0, .1] is tiered jump platforms
 				-- len in [.1, .9] is empty
@@ -671,6 +684,13 @@ spawnInfos:insert(2, {
 		level.mapTileSize[2] * (startRoomPos[2] + .5),
 	},
 })
+spawnInfos:insert(2, {
+	spawn = 'zeta.script.obj.walljump',
+	pos = {
+		level.mapTileSize[1] * (startRoomPos[1] + .5) + 0.5,
+		level.mapTileSize[2] * (startRoomPos[2] + .5),
+	},
+})
 
 -- these objects deserve a platform
 -- TODO make sure the platform doesn't overwrite an object
@@ -811,8 +831,8 @@ for goalIndex,goal in ipairs(goals) do
 							local x,y
 							if ({
 								['zeta.script.obj.teeth'] = 1,
-								['mario.script.obj.goomba'] = 1,
-								['mario.script.obj.koopa'] = 1,
+								--['mario.script.obj.goomba'] = 1,
+								--['mario.script.obj.koopa'] = 1,
 							})[spawnType] then
 								x,y = pickTileOnGround(block)
 							elseif ({
