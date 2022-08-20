@@ -46,7 +46,7 @@ local negativeOffsetIndexForAxis = {3,4}
 local function getGenMaxExtraDoors() return 0 end --math.random(25) end
 local function getGenNumRoomsInChain() return math.random(2,4) end -- math.random(10,20) end-- math.random(100,200) end
 local function getGenRoomSize() 
-	return 1	-- TODO if you choose 0 then all the keys spawn at the start ... why?
+	return 1
 	--return math.random(1,3) 
 	--return math.ceil(math.random() * math.random() * 20) 
 end
@@ -165,6 +165,7 @@ local function buildRoomChain(startRoom, startBlock, numRooms, extDoorType)
 			local option = emptyOptions[optionIndex]
 			local srcBlock = option.src
 			local neighborBlock = option.neighbor
+			lastBlock = neighborBlock
 			local neighborOffsetIndex = option.offsetIndex
 			--lastOffsetIndex = option.offsetIndex
 			--lastOffsetIndex = math.random(4)
@@ -184,7 +185,7 @@ local function buildRoomChain(startRoom, startBlock, numRooms, extDoorType)
 		do -- build the room itself
 			local roomSize = getGenRoomSize()
 			print('new room roomSize',roomSize)
-			for i=1,roomSize do
+			for i=1,roomSize-1 do
 				
 				local emptyOptions = getEmptyNeighborOptions{lastRoom}
 				if #emptyOptions == 0 then
@@ -360,7 +361,7 @@ for i=2,#goals do
 		room.noMonsters = true
 		item.pos = {
 			(neighbor.pos[1] + .5) * level.mapTileSize[1] + 1.5, 
-			(neighbor.pos[2] + .5) * level.mapTileSize[2],
+			(neighbor.pos[2] + .5) * level.mapTileSize[2] - 2,
 		}
 		spawnInfos:insert(item)
 	end
@@ -379,7 +380,7 @@ for i=2,#goals do
 	spawnInfos:insert{
 		pos = {
 			(lastBlock.pos[1] + .5) * level.mapTileSize[1] + 1.5,
-			(lastBlock.pos[2] + .5) * level.mapTileSize[2],
+			(lastBlock.pos[2] + .5) * level.mapTileSize[2] - 2,
 		},
 		spawn = 'zeta.script.obj.keycard',
 		color = table(goals[i].color):append{1},
@@ -579,7 +580,7 @@ for _,room in ipairs(rooms) do
 				for i=0,level.mapTileSize[n]/2 do
 					for j=-1,1 do
 						local pos = vec2(level.mapTileSize[1]/2, level.mapTileSize[2]/2) + offset * i + left * j
-						if n == 1 then pos[2] = pos[2] - 1 end
+						if n == 1 then pos[2] = pos[2] - 2 end
 						local x, y = level.mapTileSize[1] * block.pos[1] + pos[1], level.mapTileSize[2] * block.pos[2] + pos[2]
 						assert(x >= 0 and y >= 0 and x < level.size[1] and y < level.size[2],
 							'checking at '..x..','..y..' of size '..level.size..'...')
@@ -614,7 +615,7 @@ for _,room in ipairs(rooms) do
 				for i=level.mapTileSize[n]/2,level.mapTileSize[n]/2 do
 					for j=2,level.mapTileSize[n2]/2-1 do
 						local pos = vec2(level.mapTileSize[1]/2, level.mapTileSize[2]/2) + offset * i + left * j
-						if n == 1 then pos[2] = pos[2] - 1 end
+						if n == 1 then pos[2] = pos[2] - 2 end
 						do --if pos[1] >= 0 and pos[2] >= 0 and pos[1] < level.mapTileSize[1] and pos[2] < level.mapTileSize[2] then
 							local x = pos[1] + level.mapTileSize[1] * block.pos[1]
 							local y = pos[2] + level.mapTileSize[2] * block.pos[2]
@@ -636,7 +637,7 @@ for _,room in ipairs(rooms) do
 					local pos = vec2(
 							level.mapTileSize[1]/2+.5 + offset[1] * (level.mapTileSize[n]/2 + ofs) + level.mapTileSize[1] * block.pos[1],
 							level.mapTileSize[2]/2 + offset[2] * (level.mapTileSize[n]/2 + ofs) + level.mapTileSize[2] * block.pos[2])
-					if n == 1 then pos[2] = pos[2] - 1 end
+					if n == 1 then pos[2] = pos[2] - 2 end
 					spawnInfos:insert{
 						angle = n == 2 and 90 or nil,
 						spawn = 'zeta.script.obj.door', 
