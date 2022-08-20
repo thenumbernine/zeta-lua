@@ -1,1 +1,1 @@
-game.viewSize = 8
+getmetatable(game).viewSize = 8

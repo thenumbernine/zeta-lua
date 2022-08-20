@@ -1108,7 +1108,9 @@ function Hero:draw(R, viewBBox, holdOveride)
 
 	Hero.super.draw(self, R, viewBBox, holdOverride)
 
-	if self.speedBoostCharge > 0 then
+	if self:findItem'speedbooster'
+	and self.speedBoostCharge > 0 
+	then
 		local l = self.speedBoostCharge
 		local color = rawget(self, 'color')
 		self.color = {0,.5*l,l,1}
