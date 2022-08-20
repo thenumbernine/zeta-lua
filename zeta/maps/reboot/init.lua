@@ -224,15 +224,13 @@ local goals = {
 		-- I think I need enemies per-room
 		-- and then sets of enemies for each room to pick from per-chain
 		enemies = {
-			--'mario.script.obj.goomba',
-			--'mario.script.obj.goomba-flying',
-			--'mario.script.obj.koopa',
-			--'mario.script.obj.koopa-flying',
+			--[[
 			'zeta.script.obj.bat',
 			'zeta.script.obj.geemer',
 			'zeta.script.obj.zoomer',
 			'zeta.script.obj.turret',
 			'zeta.script.obj.zoomer',
+			--]]
 		},
 		hiddenItems = {
 			{spawn='zeta.script.obj.healthitem', duration=1e+9},
@@ -251,14 +249,12 @@ local goals = {
 	{
 		color = vec3(1,0,0),
 		enemies = {
-			--'mario.script.obj.ballnchain',
-			--'mario.script.obj.thwomp',
-			--'mario.script.obj.thwimp',
-			
+			--[[
 			'zeta.script.obj.sawblade',
 			'zeta.script.obj.turret',
 			'zeta.script.obj.geemer',	-- rename to 'jumper' ?
 			'zeta.script.obj.zoomer',
+			--]]
 		},
 		hiddenItems = {
 			{spawn='zeta.script.obj.grenadeitem'},
@@ -273,10 +269,12 @@ local goals = {
 	{
 		color = vec3(0,1,0),
 		enemies = {
+			--[[
 			'zeta.script.obj.geemer',
 			'zeta.script.obj.redgeemer',
 			'zeta.script.obj.zoomer',
 			'zeta.script.obj.bat',
+			--]]
 		},
 		hiddenItems = {
 			{spawn='zeta.script.obj.missileitem'},
@@ -291,11 +289,13 @@ local goals = {
 	{
 		color = vec3(0,0,1),
 		enemies = {
+			--[[
 			'zeta.script.obj.geemer',
 			'zeta.script.obj.redgeemer',
 			'zeta.script.obj.zoomer',
 			'zeta.script.obj.bat',
 			'zeta.script.obj.teeth',
+			--]]
 		},
 		hiddenItems = {
 			{spawn='zeta.script.obj.cellitem'},
@@ -579,6 +579,7 @@ for _,room in ipairs(rooms) do
 				for i=0,level.mapTileSize[n]/2 do
 					for j=-1,1 do
 						local pos = vec2(level.mapTileSize[1]/2, level.mapTileSize[2]/2) + offset * i + left * j
+						if n == 1 then pos[2] = pos[2] - 1 end
 						local x, y = level.mapTileSize[1] * block.pos[1] + pos[1], level.mapTileSize[2] * block.pos[2] + pos[2]
 						assert(x >= 0 and y >= 0 and x < level.size[1] and y < level.size[2],
 							'checking at '..x..','..y..' of size '..level.size..'...')
@@ -613,6 +614,7 @@ for _,room in ipairs(rooms) do
 				for i=level.mapTileSize[n]/2,level.mapTileSize[n]/2 do
 					for j=2,level.mapTileSize[n2]/2-1 do
 						local pos = vec2(level.mapTileSize[1]/2, level.mapTileSize[2]/2) + offset * i + left * j
+						if n == 1 then pos[2] = pos[2] - 1 end
 						do --if pos[1] >= 0 and pos[2] >= 0 and pos[1] < level.mapTileSize[1] and pos[2] < level.mapTileSize[2] then
 							local x = pos[1] + level.mapTileSize[1] * block.pos[1]
 							local y = pos[2] + level.mapTileSize[2] * block.pos[2]
@@ -631,15 +633,17 @@ for _,room in ipairs(rooms) do
 				then
 					print('adding goal door at '..block.pos)
 					local ofs = offset[n] == -1 and 0 or 1
+					local pos = vec2(
+							level.mapTileSize[1]/2+.5 + offset[1] * (level.mapTileSize[n]/2 + ofs) + level.mapTileSize[1] * block.pos[1],
+							level.mapTileSize[2]/2 + offset[2] * (level.mapTileSize[n]/2 + ofs) + level.mapTileSize[2] * block.pos[2])
+					if n == 1 then pos[2] = pos[2] - 1 end
 					spawnInfos:insert{
 						angle = n == 2 and 90 or nil,
 						spawn = 'zeta.script.obj.door', 
 						color = goal.color ~= vec3(0,0,0) 
 							and table(goal.color):append{1} 
 							or nil,
-						pos = vec2(
-							level.mapTileSize[1]/2+.5 + offset[1] * (level.mapTileSize[n]/2 + ofs) + level.mapTileSize[1] * block.pos[1],
-							level.mapTileSize[2]/2 + offset[2] * (level.mapTileSize[n]/2 + ofs) + level.mapTileSize[2] * block.pos[2]),
+						pos = pos,
 					}
 				end
 			end
@@ -674,21 +678,21 @@ spawnInfos:insert(1, {
 	spawn = 'base.script.obj.start',
 	pos = {
 		level.mapTileSize[1] * (startRoomPos[1] + .5) + 1.5,
-		level.mapTileSize[2] * (startRoomPos[2] + .5),
+		level.mapTileSize[2] * (startRoomPos[2] + .5) - 1,
 	},
 })
 spawnInfos:insert(2, {
 	spawn = 'zeta.script.obj.blaster',
 	pos = {
 		level.mapTileSize[1] * (startRoomPos[1] + .5) + 2.5,
-		level.mapTileSize[2] * (startRoomPos[2] + .5),
+		level.mapTileSize[2] * (startRoomPos[2] + .5) - 1,
 	},
 })
 spawnInfos:insert(2, {
 	spawn = 'zeta.script.obj.walljump',
 	pos = {
 		level.mapTileSize[1] * (startRoomPos[1] + .5) + 0.5,
-		level.mapTileSize[2] * (startRoomPos[2] + .5),
+		level.mapTileSize[2] * (startRoomPos[2] + .5) - 1,
 	},
 })
 
