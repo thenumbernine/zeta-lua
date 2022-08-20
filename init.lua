@@ -28,7 +28,7 @@ end
 local modio = require 'base.script.singleton.modio'
 modio.search = table{'base'}
 
---[[ mario
+-- [[ mario
 modio.search:insert(1, 'mario')
 modio.levelcfg = {
 
@@ -61,14 +61,14 @@ modio.levelcfg = {
 }
 --]]
 
--- [[ zeta
+--[[ zeta
 modio.search:insert(1, 'zeta')
 --modio.search:insert'mario'	-- don't add this, it messes up the block types.
 modio.levelcfg = {
 	--blocksWide = 16, blocksHigh = 16,
 	--path = 'gen',
-	--path = 'reboot',
-	path = 'start',
+	path = 'reboot',
+	--path = 'start',
 	--path = 'start original',
 	music = 'music/sb_aurora.wav',
 }

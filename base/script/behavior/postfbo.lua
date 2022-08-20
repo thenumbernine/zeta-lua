@@ -19,6 +19,9 @@ return function(parentClass)
 	local viewport = vec4i()
 	local drawbuffer = ffi.new'int[1]'
 
+	-- this flag tells things like base/script/level to raytrace the sprites
+	PostFBOTemplate.raytraceSprites = true 
+
 	function PostFBOTemplate:render(preDrawCallback, postDrawCallback, ...)
 		
 		local editor = require 'base.script.singleton.editor'()

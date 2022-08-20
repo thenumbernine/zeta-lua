@@ -1013,13 +1013,13 @@ local viewport = vec4i()
 function Level:draw(R, viewBBox, playerPos)
 	local patch = require 'base.script.patch'
 
--- TODO how to toggle this ... hmmm
-local raytraceSprites = false
+	-- TODO how to toggle this ... hmmm
+	local raytraceSprites = game.raytraceSprites
 
-local editor = require 'base.script.singleton.editor'()
-if editor.active then
-	raytraceSprites = false
-end
+	local editor = require 'base.script.singleton.editor'()
+	if editor.active then
+		raytraceSprites = false
+	end
 
 	-- [[ raytracing
 	if raytraceSprites then

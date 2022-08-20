@@ -268,7 +268,7 @@ void main() {
 	pos += viewPos;
 	//and now we are in world-space
 
-#if 1	//single sample
+#if 0	//single sample
 	//here's for a single sample:
 	gl_FragColor = getColorAtWorldPos(pos);
 #else	//raytrace
@@ -296,7 +296,7 @@ void main() {
 	vec2 raydir = rayvel / raylength;
 
 	//float numSteps = 100.;
-	float numSteps = max(1, rayLInfLength);
+	float numSteps = max(1., rayLInfLength);
 	//numSteps = min(numSteps, 100.);	
 	//if I have to cap the raytrace steps, then that means there are samples I'm missing, so how about I scale my step randomly to make up for it?
 
@@ -305,7 +305,7 @@ void main() {
 //TODO numSteps should be l-inf dist of pixels covered
 // TODO sampling below - esp transparency - should be step-independent
 	float dlen = raylength / numSteps;
-	for (float i = 0; i < numSteps; ++i) {
+	for (float i = 0.; i < numSteps; ++i) {
 		vec2 oldraypos = raypos;
 		raypos += raydir * dlen;
 
@@ -355,15 +355,15 @@ add some extra render info into the buffer on how to transform the rays at each 
 		//opacity = 1.;
 
 		//now add color slope to raydir and normalize
-		float l0m = dot(grey, getColorAtViewportPos(raypos));
-		float lm0 = dot(grey, getColorAtViewportPos(raypos));
-		float lp0 = dot(grey, getColorAtViewportPos(raypos));
-		float l0p = dot(grey, getColorAtViewportPos(raypos));
-		//float lmm = dot(grey, getColorAtViewportPos(raypos));
-		//float lpm = dot(grey, getColorAtViewportPos(raypos));
-		//float lmp = dot(grey, getColorAtViewportPos(raypos));
-		//float lpp = dot(grey, getColorAtViewportPos(raypos));
-		//float l00 = dot(grey, getColorAtViewportPos(raypos));
+		float l0m = dot(grey, getColorAtViewportPos(raypos).rgb);
+		float lm0 = dot(grey, getColorAtViewportPos(raypos).rgb);
+		float lp0 = dot(grey, getColorAtViewportPos(raypos).rgb);
+		float l0p = dot(grey, getColorAtViewportPos(raypos).rgb);
+		//float lmm = dot(grey, getColorAtViewportPos(raypos).rgb);
+		//float lpm = dot(grey, getColorAtViewportPos(raypos).rgb);
+		//float lmp = dot(grey, getColorAtViewportPos(raypos).rgb);
+		//float lpp = dot(grey, getColorAtViewportPos(raypos).rgb);
+		//float l00 = dot(grey, getColorAtViewportPos(raypos).rgb);
 
 		// 1st order dx,dy
 		vec2 dl = vec2(.5 * (lp0 - lm0), .5 * (l0p - l0m));
@@ -397,7 +397,7 @@ add some extra render info into the buffer on how to transform the rays at each 
 		//color.a = 1. - color.a * (1. - opacity);
 		
 		color.rgb *= 1. - color.a;
-		color.rgb += color.a * sampleColor;
+		color.rgb += color.a * sampleColor.rgb;
 	}
 	
 	gl_FragColor = vec4(color.rgb, 1.);
