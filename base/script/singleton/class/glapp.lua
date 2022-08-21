@@ -25,8 +25,7 @@ local animsys = require 'base.script.singleton.animsys'
 local teamColors = require 'base.script.teamcolors'
 local modio = require 'base.script.singleton.modio'
 
-local ig = require 'ffi.imgui'
-local iglua = require 'ig'
+local ig = require 'imgui'
 
 
 -- don't include these til after opengl init
