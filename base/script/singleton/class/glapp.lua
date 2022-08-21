@@ -26,7 +26,7 @@ local teamColors = require 'base.script.teamcolors'
 local modio = require 'base.script.singleton.modio'
 
 local ig = require 'ffi.imgui'
-local iglua = require 'base.script.iglua'
+local iglua = require 'ig'
 
 
 -- don't include these til after opengl init
