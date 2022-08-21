@@ -567,7 +567,7 @@ function App:update(...)
 end
 
 local function modalBegin(title, t, k)
-	return ig.Begin(title, t, k, bit.bor(
+	return ig.luatableBegin(title, t, k, bit.bor(
 			ig.ImGuiWindowFlags_NoTitleBar,
 			ig.ImGuiWindowFlags_NoResize,
 			ig.ImGuiWindowFlags_NoCollapse,
@@ -611,7 +611,7 @@ function App:updateGUI(...)
 
 		if modalsOpened.audio then
 			modalBegin('Audio', nil)
-				if ig.SliderFloat('fx volume', game.audioConfig, 'effectVolume', 0, 1) then
+				if ig.luatableSliderFloat('fx volume', game.audioConfig, 'effectVolume', 0, 1) then
 					--[[ if you want, update all previous audio sources...
 					for _,src in ipairs(game.audioSources) do
 						-- TODO if the gameplay sets the gain down then we'll want to multiply by their default gain
@@ -619,7 +619,7 @@ function App:updateGUI(...)
 					end
 					--]]
 				end
-				if ig.SliderFloat('bg volume', game.audioConfig, 'backgroundVolume', 0, 1) then
+				if ig.luatableSliderFloat('bg volume', game.audioConfig, 'backgroundVolume', 0, 1) then
 					self.bgAudioSource:setGain(game.audioConfig.backgroundVolume)
 				end
 				if ig.igButton'Done' then
