@@ -1132,7 +1132,7 @@ function Editor:editProperties(editorPropsField, selectedField, createNew, reser
 		end
 		assert(type(fieldType) == 'number')
 		assert(fieldType >= 0 and fieldType < #fieldTypeNames)
-		prop.fieldType = ffi.new('int[1]',fieldType)
+		prop.fieldType = fieldType
 		
 		if fieldType == fieldTypeEnum.string then
 			prop.vptr = ffi.new('char[?]', textBufferSize)
@@ -1180,7 +1180,7 @@ function Editor:editProperties(editorPropsField, selectedField, createNew, reser
 	
 		ig.igPushID_Str('prop #'..i)
 					
-		if prop.fieldType[0] == fieldTypeEnum.string then
+		if prop.fieldType == fieldTypeEnum.string then
 			local done
 			if prop.multiLineVisible then
 				ig.igPushID_Str('multiline')
@@ -1207,13 +1207,13 @@ function Editor:editProperties(editorPropsField, selectedField, createNew, reser
 			ig.tooltipCheckbox('...', bool)
 			prop.multiLineVisible = bool[0]
 
-		elseif prop.fieldType[0] == fieldTypeEnum.number then
+		elseif prop.fieldType == fieldTypeEnum.number then
 			ig.igInputFloat(propTitle, prop.vptr) 
 			self[selectedField][prop.k] = prop.vptr[0]
-		elseif prop.fieldType[0] == fieldTypeEnum.boolean then
+		elseif prop.fieldType == fieldTypeEnum.boolean then
 			ig.tooltipCheckbox(propTitle, prop.vptr)
 			self[selectedField][prop.k] = prop.vptr[0]
-		elseif prop.fieldType[0] == fieldTypeEnum.vec2 then
+		elseif prop.fieldType == fieldTypeEnum.vec2 then
 			ig.igInputFloat2(propTitle, prop.vptr)
 			self[selectedField][prop.k][1] = prop.vptr[0]
 			self[selectedField][prop.k][2] = prop.vptr[1]
@@ -1230,19 +1230,19 @@ function Editor:editProperties(editorPropsField, selectedField, createNew, reser
 			ig.tooltipCheckbox('abs', bool)
 			prop.isAbsolute = bool
 			--]]
-		elseif prop.fieldType[0] == fieldTypeEnum.vec4 then
+		elseif prop.fieldType == fieldTypeEnum.vec4 then
 			ig.igInputFloat4(propTitle, prop.vptr)
 			self[selectedField][prop.k][1] = prop.vptr[0]
 			self[selectedField][prop.k][2] = prop.vptr[1]
 			self[selectedField][prop.k][3] = prop.vptr[2]
 			self[selectedField][prop.k][4] = prop.vptr[3]
-		elseif prop.fieldType[0] == fieldTypeEnum.box2 then
+		elseif prop.fieldType == fieldTypeEnum.box2 then
 			ig.igInputFloat4(propTitle, prop.vptr)
 			self[selectedField][prop.k].min[1] = prop.vptr[0]
 			self[selectedField][prop.k].min[2] = prop.vptr[1]
 			self[selectedField][prop.k].max[1] = prop.vptr[2]
 			self[selectedField][prop.k].max[2] = prop.vptr[3]
-		elseif prop.fieldType[0] == fieldTypeEnum.tile then
+		elseif prop.fieldType == fieldTypeEnum.tile then
 			self.pickTileWindow:openButton(nil, prop.vptr[0], function(tileIndex)
 				prop.vptr[0] = tileIndex
 				self[selectedField][prop.k] = prop.vptr[0]
@@ -1267,6 +1267,22 @@ function Editor:editProperties(editorPropsField, selectedField, createNew, reser
 	self.newFieldType = self.newFieldType or 1	-- 1-based
 	ig.luatableCombo('new field type', self, 'newFieldType', fieldTypeNames)
 
+	local function alert(str)
+		-- [[
+		print(str)
+		--]]
+		--[[
+		ig.igOpenPopup('Error!')
+		if ig.igBeginPopupModal('Error!', nil, ig.ImGuiWindowFlags_AlwaysAutoResize) then
+			ig.igText(str)
+			if ig.igButton('OK') then
+				ig.igCloseCurrentPopup()
+			end
+			ig.igEndPopup()
+		end
+		--]]
+	end
+	
 	self.newFieldStr = self.newFieldStr or ffi.new('char[?]', textBufferSize)
 	if ig.igInputText('new field name', self.newFieldStr, textBufferSize, ig.ImGuiInputTextFlags_EnterReturnsTrue)
 	then
@@ -1303,22 +1319,6 @@ function Editor:updateGUI()
 	if not self.active then return end
 	local level = game.level
 
-	local function alert(str)
-		-- [[
-		print(str)
-		--]]
-		--[[
-		ig.igOpenPopup('Error!')
-		if ig.igBeginPopupModal('Error!', nil, ig.ImGuiWindowFlags_AlwaysAutoResize) then
-			ig.igText(str)
-			if ig.igButton('OK') then
-				ig.igCloseCurrentPopup()
-			end
-			ig.igEndPopup()
-		end
-		--]]
-	end
-	
 	if self.removeAllObjsPtr then
 		for _,spawnInfo in ipairs(level.spawnInfos) do
 			spawnInfo:removeObj()
