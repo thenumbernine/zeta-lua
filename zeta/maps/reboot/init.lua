@@ -489,7 +489,7 @@ for _,room in ipairs(rooms) do
 				end
 				--]]	
 				
-				local bv = vec2(x,y)
+				local bv = vec2(x+.5,y+.5)
 				
 				-- [=[ simplex noise based
 				local lenNorm = 0

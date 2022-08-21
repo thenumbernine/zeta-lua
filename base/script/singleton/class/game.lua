@@ -28,6 +28,11 @@ function Game:glInit(R)
 	gl.glClearColor(0,0,0,0)
 	gl.glEnable(gl.GL_BLEND)
 	gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+
+	self.audioConfig = {
+		effectVolume = .1,
+		backgroundVolume = .5,
+	}
 end
 
 Game.viewSize = 16
@@ -204,8 +209,6 @@ function Game:reset()
 		self:loadFromSavePoint() -- ...if we have any save data
 	end
 end
-
-Game.volume = .1
 
 function Game:getNextAudioSource()
 	if #self.audioSources == 0 then return end

@@ -1335,7 +1335,7 @@ function Object:playSound(name, volume, pitch)
 
 	local sound = sounds:load(name..'.wav')
 	source:setBuffer(sound)
-	source:setGain((volume or 1) * game.volume)
+	source:setGain((volume or 1) * game.audioConfig.effectVolume)
 	source:setPitch(pitch or 1)
 	source:setPosition(self.pos[1] - closestPlayer.pos[1], self.pos[2] - closestPlayer.pos[2], 0)
 	source:setVelocity(self.vel[1] - closestPlayer.vel[1], self.vel[2] - closestPlayer.vel[2], 0)

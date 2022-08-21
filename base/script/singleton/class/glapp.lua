@@ -24,6 +24,11 @@ local sounds = require 'base.script.singleton.sounds'
 local animsys = require 'base.script.singleton.animsys'
 local teamColors = require 'base.script.teamcolors'
 local modio = require 'base.script.singleton.modio'
+
+local ig = require 'ffi.imgui'
+local iglua = require 'base.script.iglua'
+
+
 -- don't include these til after opengl init
 local gui	-- ... don't include til after opengl init
 local editor
@@ -99,7 +104,7 @@ local App = class(ImGuiApp)
 	-- closest resolution:
 App.width = winWidth or 768
 App.height = winHeight or 512
-App.title = 'Dump World'
+App.title = 'Zeta Engine'
 App.sdlInitFlags = bit.bor(sdl.SDL_INIT_VIDEO, sdl.SDL_INIT_JOYSTICK)
 
 function App:initGL(gl, glname)
@@ -271,12 +276,12 @@ return ]]..file[savefile]
 	if levelcfg.music then
 		local bgMusicFileName = modio:find(levelcfg.music)
 		if bgMusicFileName then
-			local bgMusic = AudioBuffer(bgMusicFileName)	-- TODO specify by mod init or something
-			local bgAudioSource = AudioSource()
-			bgAudioSource:setBuffer(bgMusic)
-			bgAudioSource:setLooping(true)
-			bgAudioSource:setGain(.5)
-			bgAudioSource:play()
+			self.bgMusic = AudioBuffer(bgMusicFileName)	-- TODO specify by mod init or something
+			self.bgAudioSource = AudioSource()
+			self.bgAudioSource:setBuffer(self.bgMusic)
+			self.bgAudioSource:setLooping(true)
+			self.bgAudioSource:setGain(game.audioConfig.backgroundVolume)
+			self.bgAudioSource:play()
 		end
 	end
 	
@@ -321,7 +326,17 @@ for i=#config.playerKeys+1,numPlayers do
 	config.playerKeys[i] = {}
 end
 
-local mainOpened = ffi.new('bool[1]', false)
+
+local modalsOpened = {
+	main = false,
+	-- TODO don't do this?  merge with modal system somehow?
+	controls = false,
+
+	audio = false,
+	playerInput = require 'ext.range'(numPlayers):mapi(function() return false end),
+}
+
+-- TODO could this be combined with the menus into a menu stack?  more organized than all these separate bools?
 local waitingForEvent
 
 function getEventName(event, a,b,c)
@@ -450,7 +465,14 @@ function App:event(event, ...)
 
 	if event.type == sdl.SDL_KEYDOWN then
 		if event.key.keysym.sym == sdl.SDLK_ESCAPE then
-			mainOpened[0] = not mainOpened[0]
+			-- TODO better system? 
+			if modalsOpened.controls then
+				modalsOpened.controls = false
+			elseif modalsOpened.audio then
+				modalsOpened.audio = false
+			else
+				modalsOpened.main = not modalsOpened.main
+			end
 		elseif event.key.keysym.sym == sdl.SDLK_F2 then
 			game:reset()
 		end
@@ -510,7 +532,7 @@ function App:update(...)
 	game.sysLastTime = game.sysTime
 	game.sysTime = game.sysTime + sysDeltaTime
 
-	if not game.paused then
+	if not (game.paused or modalsOpened.main) then
 	--if sysThisTime > 5 then
 	
 		frameAccumTime = frameAccumTime + sysDeltaTime
@@ -545,9 +567,8 @@ function App:update(...)
 	R:report('update end')
 end
 
-local ig = require 'ffi.imgui'
-local function modalBegin(title, flag)
-	return ig.igBegin(title, flag, bit.bor(
+local function modalBegin(title, t, k)
+	return iglua.Begin(title, t, k, bit.bor(
 			ig.ImGuiWindowFlags_NoTitleBar,
 			ig.ImGuiWindowFlags_NoResize,
 			ig.ImGuiWindowFlags_NoCollapse,
@@ -556,40 +577,61 @@ local function modalBegin(title, flag)
 		0))
 end
 
-local controlsOpened = ffi.new('bool[1]', false)
-local playerInputOpened = ffi.new('bool['..numPlayers..']', false)
+
 function App:updateGUI(...)
 	editor:updateGUI(...)
 	
-	if mainOpened[0] then
-		modalBegin('Main', mainOpened)
+	if modalsOpened.main then
+		modalBegin('Main', modalsOpened, 'main')
 		if ig.igButton'Controls...' then
-			controlsOpened[0] = true
+			modalsOpened.controls = true
+		end
+		if ig.igButton'Audio...' then
+			modalsOpened.audio = true
 		end
 		if ig.igButton'Return To Game' then
-			mainOpened[0] = false
+			modalsOpened.main = false
 		end
 		if ig.igButton'Quit' then
 			self:requestExit()
 		end
 		ig.igEnd()
 
-		if controlsOpened[0] then
+		if modalsOpened.controls then
 			modalBegin('Controls', nil)
 			for playerIndex=1,numPlayers do
 				if ig.igButton('Player '..playerIndex) then
-					playerInputOpened[playerIndex-1] = true
+					modalsOpened.playerInput[playerIndex] = true
 				end
 			end
 			if ig.igButton'Done' then
-				controlsOpened[0] = false
+				modalsOpened.controls = false
 			end
 			ig.igEnd()
 		end
 
+		if modalsOpened.audio then
+			modalBegin('Audio', nil)
+				if iglua.SliderFloat('fx volume', game.audioConfig, 'effectVolume', 0, 1) then
+					--[[ if you want, update all previous audio sources...
+					for _,src in ipairs(game.audioSources) do
+						-- TODO if the gameplay sets the gain down then we'll want to multiply by their default gain
+						src:setGain(audioConfig.effectVolume * src.gain)
+					end
+					--]]
+				end
+				if iglua.SliderFloat('bg volume', game.audioConfig, 'backgroundVolume', 0, 1) then
+					self.bgAudioSource:setGain(game.audioConfig.backgroundVolume)
+				end
+				if ig.igButton'Done' then
+					modalsOpened.audio = false
+				end
+			ig.igEnd()
+		end
+
 		for playerIndex=1,numPlayers do
-			if playerInputOpened[playerIndex-1] then
-				modalBegin('Player '..playerIndex..' Input', playerInputOpened+playerIndex-1)
+			if modalsOpened.playerInput[playerIndex] then
+				modalBegin('Player '..playerIndex..' Input', modalsOpened.playerInput, playerIndex)
 					
 					local thread
 					if ig.igButton'Set All' then
@@ -635,7 +677,7 @@ function App:updateGUI(...)
 						end
 					end
 					if ig.igButton'Done' then
-						playerInputOpened[playerIndex-1] = false
+						modalsOpened.playerInput[playerIndex] = false
 					end
 				ig.igEnd()
 			end
