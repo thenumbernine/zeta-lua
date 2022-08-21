@@ -691,8 +691,8 @@ function TileExchangeWindow:init(editor)
 	self.widthPtr = 1
 	self.heightPtr = 1
 	self.opened = false
-	self.transferTilesFromToPtr = ffi.new('bool[1]', true)
-	self.transferTilesToFromPtr = ffi.new('bool[1]', true)
+	self.transferTilesFromToPtr = true
+	self.transferTilesToFromPtr = true
 end
 
 function TileExchangeWindow:update()
@@ -738,13 +738,13 @@ function TileExchangeWindow:update()
 	ig.luatableSliderInt('width', self, 'widthPtr', 1, 64)
 	ig.luatableSliderInt('height', self, 'heightPtr', 1, 64)
 	
-	ig.tooltipCheckbox('from->to', self.transferTilesFromToPtr)
+	ig.luatableTooltipCheckbox('from->to', self, 'transferTilesFromToPtr')
 	ig.igSameLine()
-	ig.tooltipCheckbox('to->from', self.transferTilesToFromPtr)
+	ig.luatableTooltipCheckbox('to->from', self, 'transferTilesToFromPtr')
 
 	if self.tileFrom > 0
 	and self.tileTo > 0	-- TODO handle clear for 'move to' to support selective erases
-	and (self.transferTilesFromToPtr[0] or self.transferTilesToFromPtr[0])
+	and (self.transferTilesFromToPtr or self.transferTilesToFromPtr)
 	then 
 		local texpackImage = level.texpackImage
 		local width, height, channels, format = texpackImage.width, texpackImage.height, texpackImage.channels, texpackImage.format
@@ -769,13 +769,13 @@ function TileExchangeWindow:update()
 							local dx = u + level.tileSize * i
 							local dy = v + level.tileSize * j
 							local sx, sy = dx, dy
-							if self.transferTilesFromToPtr[0] 
+							if self.transferTilesFromToPtr 
 							and i >= moveFromXMin and i <= moveFromXMax
 							and j >= moveFromYMin and j <= moveFromYMax
 							then
 								sx = u + level.tileSize * (i - moveFromXMin + moveToXMin)
 								sy = v + level.tileSize * (j - moveFromYMin + moveToYMin)
-							elseif self.transferTilesToFromPtr[0]
+							elseif self.transferTilesToFromPtr
 							and i >= moveToXMin and i <= moveToXMax
 							and j >= moveToYMin and j <= moveToYMax
 							then
@@ -818,14 +818,14 @@ textures will appear exchanged in the map as well.
 							local tx = (tile-1) % tilesWide
 							local ty = (tile-tx-1) / tilesWide
 							local update
-							if self.transferTilesFromToPtr[0]
+							if self.transferTilesFromToPtr
 							and tx >= moveFromXMin and tx <= moveFromXMax
 							and ty >= moveFromYMin and ty <= moveFromYMax
 							then
 								tx = tx - moveFromXMin + moveToXMin
 								ty = ty - moveFromYMin + moveToYMin
 								update = true
-							elseif self.transferTilesToFromPtr[0]
+							elseif self.transferTilesToFromPtr
 							and tx >= moveToXMin and tx <= moveToXMax
 							and ty >= moveToYMin and ty <= moveToYMax
 							then
@@ -932,7 +932,7 @@ local editModeRooms = 4
 local editModeMove = 5	-- drag to make rect, then click-and-drag rect to move it around
 
 function Editor:init()	
-	self.editMode = ffi.new('int[1]', editModePaintTiles)
+	self.editMode = editModePaintTiles
 	
 	self.paintingTileType = true
 	self.paintingFgTile = true
@@ -1203,9 +1203,7 @@ function Editor:editProperties(editorPropsField, selectedField, createNew, reser
 			end					
 		
 			ig.igSameLine()
-			local bool = ffi.new('bool[1]', prop.multiLineVisible or false)
-			ig.tooltipCheckbox('...', bool)
-			prop.multiLineVisible = bool[0]
+			ig.luatableTooltipCheckbox('...', prop, 'multiLineVisible')
 
 		elseif prop.fieldType == fieldTypeEnum.number then
 			ig.igInputFloat(propTitle, prop.vptr) 
@@ -1226,9 +1224,7 @@ function Editor:editProperties(editorPropsField, selectedField, createNew, reser
 			2) allow the user/script to toggle/specify them for all objects at once
 			in the end ... just use spawninfos for positions whenever possible
 			ig.igSameLine()
-			local bool = ffi.new('bool[1]', prop.isAbsolute)
-			ig.tooltipCheckbox('abs', bool)
-			prop.isAbsolute = bool
+			ig.luatableTooltipCheckbox('abs', prop, 'isAbsolute')
 			--]]
 		elseif prop.fieldType == fieldTypeEnum.vec4 then
 			ig.igInputFloat4(propTitle, prop.vptr)
@@ -1386,23 +1382,23 @@ function Editor:updateGUI()
 	-- call this before the Edit Level Init Code button so the pointer exists
 	self.initFileWindow:update()
 
-	ig.tooltipRadioButton('Paint Tiles', self.editMode, editModePaintTiles)
+	ig.luatableTooltipRadioButton('Paint Tiles', self, 'editMode', editModePaintTiles)
 	ig.igSameLine()
-	ig.tooltipRadioButton('Fill Tiles', self.editMode, editModeFillTiles)
+	ig.luatableTooltipRadioButton('Fill Tiles', self, 'editMode', editModeFillTiles)
 	ig.igSameLine()
-	ig.tooltipRadioButton('Smooth Tiles', self.editMode, editModeSmoothTiles)
+	ig.luatableTooltipRadioButton('Smooth Tiles', self, 'editMode', editModeSmoothTiles)
 	ig.igSameLine()
-	ig.tooltipRadioButton('Edit Objects', self.editMode, editModeObjects)
+	ig.luatableTooltipRadioButton('Edit Objects', self, 'editMode', editModeObjects)
 	ig.igSameLine()
-	ig.tooltipRadioButton('Edit Rooms', self.editMode, editModeRooms)
+	ig.luatableTooltipRadioButton('Edit Rooms', self, 'editMode', editModeRooms)
 	ig.igSameLine()
-	ig.tooltipRadioButton('Move', self.editMode, editModeMove)
+	ig.luatableTooltipRadioButton('Move', self, 'editMode', editModeMove)
 	ig.igSeparator()
 
-	if self.editMode[0] == editModePaintTiles 
-	or self.editMode[0] == editModeFillTiles
-	or self.editMode[0] == editModeSmoothTiles
-	or self.editMode[0] == editModeMove
+	if self.editMode == editModePaintTiles 
+	or self.editMode == editModeFillTiles
+	or self.editMode == editModeSmoothTiles
+	or self.editMode == editModeMove
 	then
 		-- not sure if I should use brushes for painting objects or not ...
 		ig.luatableTooltipCheckbox('Tile Type', self, 'paintingTileType')
@@ -1412,21 +1408,23 @@ function Editor:updateGUI()
 		ig.luatableTooltipCheckbox('Bg Tile', self, 'paintingBgTile')
 		ig.igSameLine()
 		ig.luatableTooltipCheckbox('Background', self, 'paintingBackground')
-		if self.editMode[0] == editModeMove then
+		if self.editMode == editModeMove then
 			ig.igSameLine()
 			ig.luatableTooltipCheckbox('Objects', self, 'paintingObjects')
 		end
 		ig.igSeparator()
 	end
 
-	if self.editMode[0] == editModeMove then
-		self.moveToolStampPtr = self.moveToolStampPtr or ffi.new('bool[1]',false)
-		ig.tooltipCheckbox('Stamp Selection', self.moveToolStampPtr)
+	if self.editMode == editModeMove then
+		if self.moveToolStampPtr == nil then
+			self.moveToolStampPtr = false
+		end
+		ig.luatableTooltipCheckbox('Stamp Selection', self, 'moveToolStampPtr')
 	end
 
-	if self.editMode[0] == editModePaintTiles
-	or self.editMode[0] == editModeFillTiles
-	or self.editMode[0] == editModeSmoothTiles
+	if self.editMode == editModePaintTiles
+	or self.editMode == editModeFillTiles
+	or self.editMode == editModeSmoothTiles
 	then
 		
 		if self.paintingTileType
@@ -1469,12 +1467,12 @@ function Editor:updateGUI()
 	
 		do --if ig.igCollapsingHeader('Brush Options:') then
 			-- TODO fill-smoothing?  hmm, sounds dangerously contradictive
-			if self.editMode[0] == editModePaintTiles
-			or self.editMode[0] == editModeSmoothTiles then
+			if self.editMode == editModePaintTiles
+			or self.editMode == editModeSmoothTiles then
 				-- TODO separate sizes for paint and smooth brushes?
 				ig.luatableSliderInt('Brush Width', self, 'brushTileWidth', 1, 20)
 				ig.luatableSliderInt('Brush Height', self, 'brushTileHeight', 1, 20)
-				if self.editMode[0] == editModePaintTiles then
+				if self.editMode == editModePaintTiles then
 					ig.luatableSliderInt('Stamp Width', self, 'brushStampWidth', 1, 20)
 					ig.luatableSliderInt('Stamp Height', self, 'brushStampHeight', 1, 20)
 					if self.smoothWhilePainting then
@@ -1483,8 +1481,8 @@ function Editor:updateGUI()
 					ig.luatableTooltipCheckbox('Smooth While Painting', self, 'smoothWhilePainting')
 					-- TODO igSameLine only if Unsmooth comes next
 				end
-				if self.editMode[0] == editModeSmoothTiles
-				or (self.editMode[0] == editModePaintTiles and self.smoothWhilePainting)
+				if self.editMode == editModeSmoothTiles
+				or (self.editMode == editModePaintTiles and self.smoothWhilePainting)
 				then
 					ig.luatableTooltipCheckbox('Unsmooth', self, 'unsmooth')
 					ig.igSameLine()
@@ -1557,7 +1555,7 @@ function Editor:updateGUI()
 			end
 		end
 	
-	elseif self.editMode[0] == editModeObjects then
+	elseif self.editMode == editModeObjects then
 		do --if ig.igCollapsingHeader('Object Type:', ig.ImGuiTreeNodeFlags_DefaultOpen) then
 			for i,spawnOption in ipairs(self.spawnOptions) do
 				ig.igPushID_Str('spawnOption #'..i)
@@ -1603,7 +1601,7 @@ function Editor:updateGUI()
 				self.selectedSpawnInfo:respawn()
 			end
 		end
-	elseif self.editMode[0] == editModeRooms then
+	elseif self.editMode == editModeRooms then
 		ig.luatableInputInt('Room Value', self, 'selectedRoomIndex')
 		if ig.igButton('New Room Number') then
 			local roomsUsed = table()
@@ -1704,9 +1702,9 @@ function Editor:update()
 		local yf = self.viewBBox.min[2] + (self.viewBBox.max[2] - self.viewBBox.min[2]) * mouse.pos.y
 		local x = math.floor(xf)
 		local y = math.floor(yf)
-		if self.editMode[0] == editModePaintTiles
-		or self.editMode[0] == editModeFillTiles
-		or self.editMode[0] == editModeSmoothTiles
+		if self.editMode == editModePaintTiles
+		or self.editMode == editModeFillTiles
+		or self.editMode == editModeSmoothTiles
 		then
 			if self.shiftDown then
 				if x >= 1 and y >= 1 and x <= level.size[1] and y <= level.size[2] then
@@ -1724,15 +1722,15 @@ function Editor:update()
 					end
 				end
 			else
-				if self.editMode[0] == editModePaintTiles then
+				if self.editMode == editModePaintTiles then
 					Editor.paintBrush.paint(self, x, y)
-				elseif self.editMode[0] == editModeFillTiles then
+				elseif self.editMode == editModeFillTiles then
 					Editor.fillBrush.paint(self, x, y)
-				elseif self.editMode[0] == editModeSmoothTiles then
+				elseif self.editMode == editModeSmoothTiles then
 					Editor.smoothBrush.paint(self, x, y)
 				end
 			end
-		elseif self.editMode[0] == editModeObjects then	
+		elseif self.editMode == editModeObjects then	
 			-- only on single click
 			do	--if mouse.leftDown and not mouse.lastLeftDown then
 				if self.shiftDown then
@@ -1773,7 +1771,7 @@ function Editor:update()
 					end
 				end
 			end
-		elseif self.editMode[0] == editModeRooms then
+		elseif self.editMode == editModeRooms then
 			if x >= 1 and y >= 1 and x <= level.size[1] and y <= level.size[2] then
 				local rx, ry = level:getMapTilePos(x,y)
 				if self.shiftDown then
@@ -1782,7 +1780,7 @@ function Editor:update()
 					level.roomMap[rx-1 + level.sizeInMapTiles[1]*(ry-1)] = self.selectedRoomIndex
 				end
 			end
-		elseif self.editMode[0] == editModeMove then
+		elseif self.editMode == editModeMove then
 			-- mouse press
 			if mouse.leftDown and not mouse.lastLeftDown then
 				self.movePressPos = vec2(x,y)
@@ -1793,7 +1791,7 @@ function Editor:update()
 					self.isMoving = true
 				else
 					
-					if self.moveToolStampPtr[0] 
+					if self.moveToolStampPtr 
 					and self.moveBBox 
 					then
 						-- stamp everything from the upper-left of the move tool to the upper-left of the mouse cursor
@@ -1965,7 +1963,7 @@ function Editor:update()
 		end
 	-- not mouse.leftDown
 	else
-		if self.editMode[0] == editModeMove then
+		if self.editMode == editModeMove then
 			if mouse.lastLeftDown then
 				self.isMoving = false
 			end
@@ -2203,17 +2201,17 @@ function Editor:draw(R, viewBBox)
 		local cx = math.floor(self.viewBBox.min[1] + (self.viewBBox.max[1] - self.viewBBox.min[1]) * mouse.pos.x)
 		local cy = math.floor(self.viewBBox.min[2] + (self.viewBBox.max[2] - self.viewBBox.min[2]) * mouse.pos.y)
 		local brushWidth, brushHeight = 1, 1
-		if self.editMode[0] == editModePaintTiles
-		or self.editMode[0] == editModeFillTiles
-		or self.editMode[0] == editModeSmoothTiles
+		if self.editMode == editModePaintTiles
+		or self.editMode == editModeFillTiles
+		or self.editMode == editModeSmoothTiles
 		then	-- tiles
-			if self.editMode[0] == editModePaintTiles
-			or self.editMode[0] == editModeSmoothTiles
+			if self.editMode == editModePaintTiles
+			or self.editMode == editModeSmoothTiles
 			then
 				brushWidth = self.brushTileWidth
 				brushHeight = self.brushTileHeight
 			end
-		elseif self.editMode[0] == editModeMove and self.moveBBox and self.moveToolStampPtr[0] then
+		elseif self.editMode == editModeMove and self.moveBBox and self.moveToolStampPtr then
 			brushWidth = self.moveBBox.max[1] - self.moveBBox.min[1] + 1
 			brushHeight = self.moveBBox.max[2] - self.moveBBox.min[2] + 1
 		end
@@ -2221,7 +2219,7 @@ function Editor:draw(R, viewBBox)
 		local ymin = math.floor(cy - tonumber(brushHeight-1)/2)
 		local xmax = xmin + brushWidth-1
 		local ymax = ymin + brushHeight-1
-		if self.editMode[0] == editModeRooms then
+		if self.editMode == editModeRooms then
 			xmin, ymin = level:getMapTilePos(xmin, ymin)
 			xmax, ymax = level:getMapTilePos(xmax, ymax)
 			xmin = (xmin - 1) * level.mapTileSize[1] + 1
@@ -2234,7 +2232,7 @@ function Editor:draw(R, viewBBox)
 			xmax - xmin + .8, ymax - ymin + .8,
 			0, 0, 1, 1, 0,
 			1, 1, 0, 1)	--color
-		if self.editMode[0] == editModePaintTiles and self.smoothWhilePainting then
+		if self.editMode == editModePaintTiles and self.smoothWhilePainting then
 			xmin = xmin - self.smoothBorder
 			ymin = ymin - self.smoothBorder
 			xmax = xmax + self.smoothBorder
@@ -2251,7 +2249,7 @@ function Editor:draw(R, viewBBox)
 	end
 
 	-- show move rectangle
-	if self.editMode[0] == editModeMove
+	if self.editMode == editModeMove
 	and self.moveBBox
 	then
 		gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
