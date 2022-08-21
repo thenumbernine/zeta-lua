@@ -72,7 +72,7 @@ modio.levelcfg = {
 	--path = 'gen2',
 	--path = 'start',
 	--path = 'start original',
-	music = 'music/sb_aurora.wav',
+	--music = 'music/sb_aurora.wav',
 }
 --]]
 

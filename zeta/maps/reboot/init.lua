@@ -5,7 +5,7 @@ local vec3 = require 'vec.vec3'
 
 local mapname = 'reboot'
 
-getmetatable(game).viewSize = 16
+getmetatable(game).viewSize = 8
 
 if game.savePoint then return end
 

@@ -726,6 +726,8 @@ function Hero:update(dt)
 					self.pos[2] = y
 					self.ducking = true
 					self.onground = true
+					self.climbToCrawlEndTime = game.time + .3
+					self.seqStartTime = game.time
 					self.wallJumpEndTime = nil
 				end
 			end
@@ -1048,7 +1050,10 @@ function Hero:draw(R, viewBBox, holdOveride)
 			if self.ducking then
 				self.drawCenter[1] = self.drawMirror and .25 or .75
 				self.drawCenter[2] = .25
-				if self.inputLeftRight ~= 0 then
+				-- if you just got done climbing within half a second ago (or however long the climb_to_crawl animation length is) -- then play that
+				if self.climbToCrawlEndTime > game.time then
+					self.seq = 'climb_to_crawl'
+				elseif self.inputLeftRight ~= 0 then
 					self.seq = 'crawl_walk'
 				else
 					self.seq = 'crawl'

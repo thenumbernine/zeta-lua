@@ -22,6 +22,7 @@ return {
 			crawl_walk=seq{name='crawl', n=16, freq=24},
 			climb={'climb_1'},
 			climb_updown=seq{name='climb', n=16, freq=24},
+			climb_to_crawl=seq{name='climb_to_crawl', n=8, freq=24},
 			stand={'stand_0'},
 			stand_carry={'stand_carry_0'},
 			lookup={'lookup_0'},
