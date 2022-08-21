@@ -432,37 +432,6 @@ do
 	}
 end
 
-local function hoverTooltip(name)
-	if ig.igIsItemHovered(ig.ImGuiHoveredFlags_None) then
-		ig.igBeginTooltip()
-		ig.igText(name)
-		ig.igEndTooltip()
-	end
-end
-
-local function checkboxTooltip(name, ptr)
-	assert(ptr, "forgot to pass a ptr for "..name)
-	ig.igPushID_Str(name)
-	ig.igCheckbox('', ptr)
-	hoverTooltip(name)
-	ig.igPopID()
-end
-
-local function radioTooltip(name, ptr, value)
-	ig.igPushID_Str(name)
-	ig.igRadioButton_IntPtr('', ptr, value)
-	hoverTooltip(name)
-	ig.igPopID()
-end
-
-local function buttonTooltip(name, ptr)
-	ig.igPushID_Str(name)
-	local result = ig.igButton('', ig.ImVec2(16,16))
-	hoverTooltip(name)
-	ig.igPopID()
-	return result
-end
-
 local PickTileTypeWindow = class()
 
 function PickTileTypeWindow:init(editor)
@@ -742,11 +711,11 @@ function TileExchangeWindow:update()
 	ig.igPushID_Str('Tile Exchange Window')
 	ig.igBegin('Tile Exchange', self.opened)
 	
-	checkboxTooltip('Tile Type', editor.paintingTileType)
+	ig.tooltipCheckbox('Tile Type', editor.paintingTileType)
 	ig.igSameLine()
-	checkboxTooltip('Fg Tile', editor.paintingFgTile)
+	ig.tooltipCheckbox('Fg Tile', editor.paintingFgTile)
 	ig.igSameLine()
-	checkboxTooltip('Bg Tile', editor.paintingBgTile)
+	ig.tooltipCheckbox('Bg Tile', editor.paintingBgTile)
 
 	ig.igSeparator()
 
@@ -775,9 +744,9 @@ function TileExchangeWindow:update()
 	ig.igSliderInt('width', self.widthPtr, 1, 64)
 	ig.igSliderInt('height', self.heightPtr, 1, 64)
 	
-	checkboxTooltip('from->to', self.transferTilesFromToPtr)
+	ig.tooltipCheckbox('from->to', self.transferTilesFromToPtr)
 	ig.igSameLine()
-	checkboxTooltip('to->from', self.transferTilesToFromPtr)
+	ig.tooltipCheckbox('to->from', self.transferTilesToFromPtr)
 
 	if self.tileFrom > 0
 	and self.tileTo > 0	-- TODO handle clear for 'move to' to support selective erases
@@ -1247,14 +1216,14 @@ function Editor:editProperties(editorPropsField, selectedField, createNew, reser
 		
 			ig.igSameLine()
 			local bool = ffi.new('bool[1]', prop.multiLineVisible or false)
-			checkboxTooltip('...', bool)
+			ig.tooltipCheckbox('...', bool)
 			prop.multiLineVisible = bool[0]
 
 		elseif prop.fieldType[0] == fieldTypeEnum.number then
 			ig.igInputFloat(propTitle, prop.vptr) 
 			self[selectedField][prop.k] = prop.vptr[0]
 		elseif prop.fieldType[0] == fieldTypeEnum.boolean then
-			checkboxTooltip(propTitle, prop.vptr)
+			ig.tooltipCheckbox(propTitle, prop.vptr)
 			self[selectedField][prop.k] = prop.vptr[0]
 		elseif prop.fieldType[0] == fieldTypeEnum.vec2 then
 			ig.igInputFloat2(propTitle, prop.vptr)
@@ -1270,7 +1239,7 @@ function Editor:editProperties(editorPropsField, selectedField, createNew, reser
 			in the end ... just use spawninfos for positions whenever possible
 			ig.igSameLine()
 			local bool = ffi.new('bool[1]', prop.isAbsolute)
-			checkboxTooltip('abs', bool)
+			ig.tooltipCheckbox('abs', bool)
 			prop.isAbsolute = bool
 			--]]
 		elseif prop.fieldType[0] == fieldTypeEnum.vec4 then
@@ -1432,17 +1401,17 @@ function Editor:updateGUI()
 	-- call this before the Edit Level Init Code button so the pointer exists
 	self.initFileWindow:update()
 
-	radioTooltip('Paint Tiles', self.editMode, editModePaintTiles)
+	ig.tooltipRadioButton('Paint Tiles', self.editMode, editModePaintTiles)
 	ig.igSameLine()
-	radioTooltip('Fill Tiles', self.editMode, editModeFillTiles)
+	ig.tooltipRadioButton('Fill Tiles', self.editMode, editModeFillTiles)
 	ig.igSameLine()
-	radioTooltip('Smooth Tiles', self.editMode, editModeSmoothTiles)
+	ig.tooltipRadioButton('Smooth Tiles', self.editMode, editModeSmoothTiles)
 	ig.igSameLine()
-	radioTooltip('Edit Objects', self.editMode, editModeObjects)
+	ig.tooltipRadioButton('Edit Objects', self.editMode, editModeObjects)
 	ig.igSameLine()
-	radioTooltip('Edit Rooms', self.editMode, editModeRooms)
+	ig.tooltipRadioButton('Edit Rooms', self.editMode, editModeRooms)
 	ig.igSameLine()
-	radioTooltip('Move', self.editMode, editModeMove)
+	ig.tooltipRadioButton('Move', self.editMode, editModeMove)
 	ig.igSeparator()
 
 	if self.editMode[0] == editModePaintTiles 
@@ -1451,23 +1420,23 @@ function Editor:updateGUI()
 	or self.editMode[0] == editModeMove
 	then
 		-- not sure if I should use brushes for painting objects or not ...
-		checkboxTooltip('Tile Type', self.paintingTileType)
+		ig.tooltipCheckbox('Tile Type', self.paintingTileType)
 		ig.igSameLine()
-		checkboxTooltip('Fg Tile', self.paintingFgTile)
+		ig.tooltipCheckbox('Fg Tile', self.paintingFgTile)
 		ig.igSameLine()
-		checkboxTooltip('Bg Tile', self.paintingBgTile)
+		ig.tooltipCheckbox('Bg Tile', self.paintingBgTile)
 		ig.igSameLine()
-		checkboxTooltip('Background', self.paintingBackground)
+		ig.tooltipCheckbox('Background', self.paintingBackground)
 		if self.editMode[0] == editModeMove then
 			ig.igSameLine()
-			checkboxTooltip('Objects', self.paintingObjects)
+			ig.tooltipCheckbox('Objects', self.paintingObjects)
 		end
 		ig.igSeparator()
 	end
 
 	if self.editMode[0] == editModeMove then
 		self.moveToolStampPtr = self.moveToolStampPtr or ffi.new('bool[1]',false)
-		checkboxTooltip('Stamp Selection', self.moveToolStampPtr)
+		ig.tooltipCheckbox('Stamp Selection', self.moveToolStampPtr)
 	end
 
 	if self.editMode[0] == editModePaintTiles
@@ -1526,21 +1495,21 @@ function Editor:updateGUI()
 					if self.smoothWhilePainting[0] then
 						ig.igSliderInt('Smooth Border', self.smoothBorder, 0, 10)
 					end
-					checkboxTooltip('Smooth While Painting', self.smoothWhilePainting)
+					ig.tooltipCheckbox('Smooth While Painting', self.smoothWhilePainting)
 				end
 				if self.editMode[0] == editModeSmoothTiles
 				or (self.editMode[0] == editModePaintTiles and self.smoothWhilePainting[0])
 				then
 					ig.igSameLine()
-					checkboxTooltip('Unsmooth', self.unsmooth)
+					ig.tooltipCheckbox('Unsmooth', self.unsmooth)
 					ig.igSameLine()
-					checkboxTooltip('Smooth Aligns Patch to Anything', self.alignPatchToAnything)
+					ig.tooltipCheckbox('Smooth Aligns Patch to Anything', self.alignPatchToAnything)
 					ig.igSameLine()
-					radioTooltip("Smooth Tiles to 90'", self.smoothDiagLevel, 0)
+					ig.tooltipRadioButton("Smooth Tiles to 90'", self.smoothDiagLevel, 0)
 					ig.igSameLine()
-					radioTooltip("Smooth Tiles to 45'", self.smoothDiagLevel, 1)
+					ig.tooltipRadioButton("Smooth Tiles to 45'", self.smoothDiagLevel, 1)
 					ig.igSameLine()
-					radioTooltip("Smooth Tiles to 27'", self.smoothDiagLevel, 2)
+					ig.tooltipRadioButton("Smooth Tiles to 27'", self.smoothDiagLevel, 2)
 				end
 			end
 		end
