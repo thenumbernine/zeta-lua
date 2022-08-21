@@ -854,31 +854,27 @@ local ConsoleWindow = class()
 
 function ConsoleWindow:init()
 	self.opened = false
-	self.buffer = ffi.new('char[?]', 2048)
+	self.buffer = ''
 end
 
 function ConsoleWindow:update()
 	if not self.opened then return end
 
-	local bufferSize = ffi.sizeof(self.buffer)
-
 	ig.luatableBegin('Console', self, 'opened')
 	local size = ig.igGetWindowSize()
-	if ig.igInputTextMultiline('code', self.buffer, bufferSize,
+	if ig.luatableInputTextMultiline('code', self, 'buffer',
 		ig.ImVec2(size.x,size.y - 56),
 		ig.ImGuiInputTextFlags_EnterReturnsTrue
 		+ ig.ImGuiInputTextFlags_AllowTabInput)
 	or ig.igButton('run code')
 	then
-		self.buffer[bufferSize-1] = 0
-		local code = ffi.string(self.buffer)
 		local sandbox = require 'base.script.singleton.sandbox'
-		print('executing...\n'..code)
-		sandbox(code)
+		print('executing...\n'..self.buffer)
+		sandbox(self.buffer)
 	end
 	ig.igSameLine()
 	if ig.igButton('clear code') then
-		ffi.fill(self.buffer, bufferSize)
+		self.buffer = ''
 	end
 	ig.igEnd()
 end
@@ -887,23 +883,19 @@ local InitFileWindow = class()
 
 function InitFileWindow:init()
 	self.opened = false
-	-- hmm ... init files have a max size ...
-	self.buffer = ffi.new('char[?]', 65536)
+	self.buffer = ''
 end
 
 function InitFileWindow:update()
 	if self.opened then
-		local bufferSize = ffi.sizeof(self.buffer)
 		ig.luatableBegin('Level Init Code', self, 'opened')
 		local size = ig.igGetWindowSize()
-		ig.igInputTextMultiline('code', self.buffer, bufferSize,
+		ig.luatableInputTextMultiline('code', self, 'buffer',
 			ig.ImVec2(size.x, size.y - 56),	-- minus titlebar height and button height
 			ig.ImGuiInputTextFlags_AllowTabInput)
 		if ig.igButton('Save') then
-			self.buffer[bufferSize-1] = 0
-			local code = ffi.string(self.buffer)
 			local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
-			file[dir..'/init.lua'] = code
+			file[dir..'/init.lua'] = self.buffer
 			self.opened = false
 		end
 		ig.igSameLine()
@@ -917,10 +909,7 @@ end
 function InitFileWindow:open()
 	self.opened = true
 	local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
-	local initFileData = file[dir..'/init.lua'] or ''
-	local bufferSize = ffi.sizeof(self.buffer)
-	ffi.copy(self.buffer, initFileData, math.min(#initFileData, bufferSize-1))
-	self.buffer[bufferSize-1] = 0
+	self.buffer = file[dir..'/init.lua'] or ''
 end
 
 
@@ -1182,6 +1171,7 @@ function Editor:editProperties(editorPropsField, selectedField, createNew, reser
 					
 		if prop.fieldType == fieldTypeEnum.string then
 			local done
+			prop.multiLineVisible = prop.multiLineVisible or false
 			if prop.multiLineVisible then
 				ig.igPushID_Str('multiline')
 				-- ctrl+enter returns by default?
@@ -1279,10 +1269,10 @@ function Editor:editProperties(editorPropsField, selectedField, createNew, reser
 		--]]
 	end
 	
-	self.newFieldStr = self.newFieldStr or ffi.new('char[?]', textBufferSize)
-	if ig.igInputText('new field name', self.newFieldStr, textBufferSize, ig.ImGuiInputTextFlags_EnterReturnsTrue)
+	self.newFieldStr = self.newFieldStr or ''
+	if ig.luatableInputText('new field name', self, 'newFieldStr', ig.ImGuiInputTextFlags_EnterReturnsTrue)
 	then
-		local k = ffi.string(self.newFieldStr)
+		local k = self.newFieldStr
 		if reservedKeys and reservedKeys[k] then
 			alert("can't use the reserved field: "..k)
 		elseif self[selectedField][k] ~= nil then
