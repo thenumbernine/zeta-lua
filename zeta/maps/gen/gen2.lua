@@ -67,7 +67,7 @@ local negativeOffsetIndexForAxis = {3,4}
 
 
 local editor = require 'base.script.singleton.editor'()
-editor.smoothDiagLevel[0] = 2	--27'
+editor.smoothDiagLevel = 2	--27'
 
 
 local wallBuffer = 3
@@ -94,16 +94,16 @@ function Node:init(args)
 end
 
 function Node:paint()
-	editor.paintingTileType[0] = true
-	editor.paintingFgTile[0] = true
-	editor.paintingBgTile[0] = true
-	editor.paintingBackground[0] = false
-	editor.selectedTileTypeIndex[0] = self.tileType
+	editor.paintingTileType = true
+	editor.paintingFgTile = true
+	editor.paintingBgTile = true
+	editor.paintingBackground = false
+	editor.selectedTileTypeIndex = self.tileType
 	editor.selectedFgTileIndex = self.fgTile
-	editor.brushTileWidth[0] = self.radius
-	editor.brushTileHeight[0] = self.radius
-	editor.smoothWhilePainting[0] = true
-	editor.smoothBorder[0] = 2
+	editor.brushTileWidth = self.radius
+	editor.brushTileHeight = self.radius
+	editor.smoothWhilePainting = true
+	editor.smoothBorder = 2
 	
 	editor.paintBrush.paint(editor, math.floor(self.pt[1])+1, math.floor(self.pt[2])+1)
 end

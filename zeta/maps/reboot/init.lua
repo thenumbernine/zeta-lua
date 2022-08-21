@@ -904,16 +904,16 @@ for _,room in ipairs(rooms) do
 	local editor = require 'base.script.singleton.editor'()
 		local cx = (block.pos[1] + .5) * level.mapTileSize[1]
 		local cy = (block.pos[2] + .5) * level.mapTileSize[2]
-		editor.smoothDiagLevel[0] = 0	--90'
-		editor.paintingTileType[0] = true
-		editor.paintingFgTile[0] = true
-		editor.paintingBgTile[0] = false
+		editor.smoothDiagLevel = 0	--90'
+		editor.paintingTileType = true
+		editor.paintingFgTile = true
+		editor.paintingBgTile = false
 		editor.smoothBrush.paint(editor, cx, cy, math.max(level.mapTileSize:unpack())/2+1)
 
-		editor.smoothDiagLevel[0] = 2	--27'
-		editor.paintingTileType[0] = false
-		editor.paintingFgTile[0] = false
-		editor.paintingBgTile[0] = true 
+		editor.smoothDiagLevel = 2	--27'
+		editor.paintingTileType = false
+		editor.paintingFgTile = false
+		editor.paintingBgTile = true 
 		editor.smoothBrush.paint(editor, cx, cy, math.max(level.mapTileSize:unpack())/2+1)
 	end
 end

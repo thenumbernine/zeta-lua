@@ -42,10 +42,10 @@ Editor.paintBrush = {
 		local fgty = (self.selectedFgTileIndex > 0) and ((self.selectedFgTileIndex-fgtx-1) / tilesWide)
 		local bgtx = (self.selectedBgTileIndex > 0) and ((self.selectedBgTileIndex-1) % tilesWide)
 		local bgty = (self.selectedBgTileIndex > 0) and ((self.selectedBgTileIndex-bgtx-1) / tilesWide)
-		local xmin = math.floor(cx - tonumber(self.brushTileWidth[0]-1)/2)
-		local ymin = math.floor(cy - tonumber(self.brushTileHeight[0]-1)/2)
-		local xmax = xmin + self.brushTileWidth[0]-1
-		local ymax = ymin + self.brushTileHeight[0]-1
+		local xmin = math.floor(cx - tonumber(self.brushTileWidth-1)/2)
+		local ymin = math.floor(cy - tonumber(self.brushTileHeight-1)/2)
+		local xmax = xmin + self.brushTileWidth-1
+		local ymax = ymin + self.brushTileHeight-1
 		if xmax < 1 then return end
 		if ymax < 1 then return end
 		if xmin > level.size[1] then return end
@@ -57,52 +57,52 @@ Editor.paintBrush = {
 		for y=ymin,ymax do
 			for x=xmin,xmax do
 				local offset = x-1 + level.size[1] * (y-1)
-				if self.paintingTileType[0] then
-					level.tileMap[offset] = self.selectedTileTypeIndex[0]
-					level.tileMapOriginal[offset] = self.selectedTileTypeIndex[0]
+				if self.paintingTileType then
+					level.tileMap[offset] = self.selectedTileTypeIndex
+					level.tileMapOriginal[offset] = self.selectedTileTypeIndex
 				end
-				if self.paintingFgTile[0] then
+				if self.paintingFgTile then
 					if self.selectedFgTileIndex == 0 then
 						level.fgTileMap[offset] = 0
 						level.fgTileMapOriginal[offset] = 0
 					else
 						level.fgTileMap[offset] = 
 							1
-							+ ((fgtx+((x-xmin)%self.brushStampWidth[0]))%tilesWide)
+							+ ((fgtx+((x-xmin)%self.brushStampWidth))%tilesWide)
 							+ tilesWide * (
-								((fgty+((ymax-y)%self.brushStampHeight[0]))%tilesHigh)
+								((fgty+((ymax-y)%self.brushStampHeight))%tilesHigh)
 							)
 						level.fgTileMapOriginal[offset] = level.fgTileMap[offset]
 					end
 				end
-				if self.paintingBgTile[0] then
+				if self.paintingBgTile then
 					level.bgTileMap[offset] = (self.selectedBgTileIndex == 0) and 0 or (
-						1 + ((bgtx+(x-xmin)%self.brushStampWidth[0])%tilesWide)
+						1 + ((bgtx+(x-xmin)%self.brushStampWidth)%tilesWide)
 						+ tilesWide * (
-							((bgty+(ymax-y)%self.brushStampHeight[0])%tilesHigh)
+							((bgty+(ymax-y)%self.brushStampHeight)%tilesHigh)
 						)
 					)
 					level.bgTileMapOriginal[offset] = level.bgTileMap[offset]
 				end
-				if self.paintingBackground[0] then
-					level.backgroundMap[offset] = self.selectedBackgroundIndex[0]
-					level.backgroundMapOriginal[offset] = self.selectedBackgroundIndex[0]
+				if self.paintingBackground then
+					level.backgroundMap[offset] = self.selectedBackgroundIndex
+					level.backgroundMapOriginal[offset] = self.selectedBackgroundIndex
 				end
 			end
 		end
 		
-		if self.smoothWhilePainting[0] then
-			Editor.smoothBrush.paint(self, cx, cy, self.smoothBorder[0])
+		if self.smoothWhilePainting then
+			Editor.smoothBrush.paint(self, cx, cy, self.smoothBorder)
 		end
 	
 		-- if we changed the fgTileMap then update the texels of the overmap
-		if self.paintingFgTile[0] then
+		if self.paintingFgTile then
 			level:refreshFgTileTexels(xmin,ymin,xmax,ymax)
 		end
-		if self.paintingBgTile[0] then
+		if self.paintingBgTile then
 			level:refreshBgTileTexels(xmin,ymin,xmax,ymax)
 		end
-		if self.paintingBackground[0] then
+		if self.paintingBackground then
 			level:refreshBackgroundTexels(xmin,ymin,xmax,ymax)
 		end
 	end,
@@ -124,10 +124,10 @@ Editor.fillBrush = {
 			local check = table{vec2(x,y)}
 			local offset = x-1 + level.size[1] * (y-1)
 			local infos = {
-				{map='tileMap', mask=self.paintingTileType[0], value=self.selectedTileTypeIndex[0]},
-				{map='fgTileMap', mask=self.paintingFgTile[0], value=self.selectedFgTileIndex},
-				{map='bgTileMap', mask=self.paintingBgTile[0], value=self.selectedBgTileIndex},
-				{map='backgroundMap', mask=self.paintingBackground[0], value=self.selectedBackgroundIndex[0]},
+				{map='tileMap', mask=self.paintingTileType, value=self.selectedTileTypeIndex},
+				{map='fgTileMap', mask=self.paintingFgTile, value=self.selectedFgTileIndex},
+				{map='bgTileMap', mask=self.paintingBgTile, value=self.selectedBgTileIndex},
+				{map='backgroundMap', mask=self.paintingBackground, value=self.selectedBackgroundIndex},
 			}
 			for _,info in ipairs(infos) do
 				info.srcValue = level[info.map][offset]
@@ -204,10 +204,10 @@ Editor.fillBrush = {
 			if infos[2].mask then --self.paintingFgTile[0] then
 				level:refreshFgTileTexels(xmin,ymin,xmax,ymax)
 			end
-			if infos[3].mask then --self.paintingBgTile[0] then
+			if infos[3].mask then --self.paintingBgTile then
 				level:refreshBgTileTexels(xmin,ymin,xmax,ymax)
 			end
-			if infos[4].mask then --self.paintingBgTile[0] then
+			if infos[4].mask then --self.paintingBgTile then
 				level:refreshBackgroundTexels(xmin,ymin,xmax,ymax)
 			end
 		end
@@ -278,7 +278,7 @@ do
 	local function validNeighbor(self,map,x,y)
 		local level = game.level
 		if x < 1 or y < 1 or x > level.size[1] or y > level.size[2] then return end
-		if not self.alignPatchToAnything[0] then return isSelectedTemplate(map,x,y) end
+		if not self.alignPatchToAnything then return isSelectedTemplate(map,x,y) end
 		local offset = x-1 + level.size[1] * (y-1)
 		local index = level[map][offset]
 		return index > 0
@@ -300,10 +300,10 @@ do
 			local tilesWide = texpack.width / level.tileSize
 			local tilesHigh = texpack.height / level.tileSize
 
-			local xmin = math.floor(cx - tonumber(self.brushTileWidth[0]-1)/2) - extraBorder
-			local ymin = math.floor(cy - tonumber(self.brushTileHeight[0]-1)/2) - extraBorder
-			local xmax = xmin + self.brushTileWidth[0]-1 + 2*extraBorder
-			local ymax = ymin + self.brushTileHeight[0]-1 + 2*extraBorder
+			local xmin = math.floor(cx - tonumber(self.brushTileWidth-1)/2) - extraBorder
+			local ymin = math.floor(cy - tonumber(self.brushTileHeight-1)/2) - extraBorder
+			local xmax = xmin + self.brushTileWidth-1 + 2*extraBorder
+			local ymax = ymin + self.brushTileHeight-1 + 2*extraBorder
 			if xmax < 1 then return end
 			if ymax < 1 then return end
 			if xmin > level.size[1] then return end
@@ -314,9 +314,9 @@ do
 			if ymax > level.size[2] then ymax = level.size[2] end
 
 			for _,info in ipairs{
-				{map='fgTileMap', painting=self.paintingFgTile[0], selected=self.selectedFgTileIndex},
-				{map='bgTileMap', painting=self.paintingBgTile[0], selected=self.selectedBgTileIndex},
-				{map='tileMap', painting=self.paintingTileType[0], selected=self.selectedTileTypeIndex[0], drawingTileType=true},
+				{map='fgTileMap', painting=self.paintingFgTile, selected=self.selectedFgTileIndex},
+				{map='bgTileMap', painting=self.paintingBgTile, selected=self.selectedBgTileIndex},
+				{map='tileMap', painting=self.paintingTileType, selected=self.selectedTileTypeIndex, drawingTileType=true},
 			} do
 				local map = info.map
 				local painting = info.painting
@@ -343,7 +343,7 @@ do
 							local checkThisTile = drawingTileType and isTileTypeSmoothable(map,x,y) or isSelectedTemplate(map,x,y)
 							if checkThisTile then
 								for _,neighbor in ipairs(patch.neighbors) do
-									if (neighbor.diag or 0) <= self.smoothDiagLevel[0] then	    -- and we're within our diagonalization precedence (0 for 90', 1 for 45', 2 for 30')
+									if (neighbor.diag or 0) <= self.smoothDiagLevel then	    -- and we're within our diagonalization precedence (0 for 90', 1 for 45', 2 for 30')
 										local neighborIsValid = true
 										-- make sure all neighbors that should differ do differ
 										if neighbor.differOffsets then
@@ -372,7 +372,7 @@ do
 										end
 										if neighborIsValid then
 											-- if unsmooth then force it to the center
-											if self.unsmooth[0] then
+											if self.unsmooth then
 												neighbor = select(2, patch.neighbors:find(nil, function(neighbor)
 													return neighbor.name == 'c00'
 												end))
@@ -419,13 +419,13 @@ do
 			end
 		
 			-- if we changed the fgTileMap then update the texels of the overmap
-			if self.paintingFgTile[0] then
+			if self.paintingFgTile then
 				level:refreshFgTileTexels(xmin,ymin,xmax,ymax)
 			end
-			if self.paintingBgTile[0] then
+			if self.paintingBgTile then
 				level:refreshBgTileTexels(xmin,ymin,xmax,ymax)
 			end
-			if self.paintingBackground[0] then
+			if self.paintingBackground then
 				level:refreshBackgroundTexels(xmin,ymin,xmax,ymax)
 			end
 		end,
@@ -436,7 +436,7 @@ local PickTileTypeWindow = class()
 
 function PickTileTypeWindow:init(editor)
 	self.editor = editor
-	self.opened = ffi.new('bool[1]',false)
+	self.opened = false
 	self.index = 0
 end
 
@@ -457,23 +457,19 @@ function PickTileTypeWindow:radioButton(selected, index, callback)
 	then
 		callback(index)
 	end
-	if ig.igIsItemHovered(ig.ImGuiHoveredFlags_None) then
-		ig.igBeginTooltip()
-		ig.igText('tile type: '..tileTypeOption.tileType.name)
-		ig.igEndTooltip()
-	end
+	ig.hoverTooltip('tile type: '..tileTypeOption.tileType.name)
 end
 
 function PickTileTypeWindow:update()
 	local editor = self.editor
-	if not self.opened[0] then return end
-	ig.igBegin('Choose Tile Type...', self.opened)
+	if not self.opened then return end
+	ig.luatableBegin('Choose Tile Type...', self, 'opened')
 	
 	for i=0,#editor.tileOptions do
 		ig.igPushID_Str('PickTileTypeWindow:update '..i)
 		self:radioButton(self.index, i, function(i)
 			self.callback(i)
-			self.opened[0] = false
+			self.opened = false
 		end)
 		
 		-- it would be nice if wrapping controls was automatic
@@ -488,7 +484,7 @@ function PickTileTypeWindow:update()
 end
 
 function PickTileTypeWindow:open(index, callback)
-	self.opened[0] = true
+	self.opened = true
 	self.index = index
 	self.callback = callback
 end
@@ -506,13 +502,13 @@ end
 local PickTileWindow = class()
 
 function PickTileWindow:init()
-	self.opened = ffi.new('bool[1]',false)
+	self.opened = false
 end
 
 function PickTileWindow:update()
-	if not self.opened[0] then return end
+	if not self.opened then return end
 
-	ig.igBegin('Choose Tile...', self.opened)
+	ig.luatableBegin('Choose Tile...', self, 'opened')
 
 	local tex = game.level.texpackTex
 	local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
@@ -539,7 +535,7 @@ function PickTileWindow:update()
 		ig.ImVec2(tex.width, tex.height))	-- size
 	then
 		self.callback(1+x+tilesWide*y)
-		self.opened[0] = false
+		self.opened = false
 	end
 	if ig.igIsItemHovered(ig.ImGuiHoveredFlags_None) then
 		ig.igBeginTooltip()
@@ -558,7 +554,7 @@ end
 
 -- don't call open until this is called (so the ptr exists)
 function PickTileWindow:open(callback)
-	self.opened[0] = true
+	self.opened = true
 	self.callback = callback
 end
 
@@ -578,10 +574,8 @@ function PickTileWindow:openButton(hoverText, tileIndex, callback)
 	then
 		self:open(callback)
 	end
-	if hoverText and ig.igIsItemHovered(ig.ImGuiHoveredFlags_None) then
-		ig.igBeginTooltip()
-		ig.igText(hoverText..': '..tileIndex)
-		ig.igEndTooltip()
+	if hoverText then
+		ig.hoverTooltip(hoverText..': '..tileIndex)
 	end
 end
 
@@ -655,32 +649,32 @@ end
 local MoveWorldWindow = class()
 
 function MoveWorldWindow:init()
-	self.opened = ffi.new('bool[1]',false)
-	self.xPtr = ffi.new('int[1]',0)
-	self.yPtr = ffi.new('int[1]',0)
+	self.opened = false
+	self.xPtr = 0
+	self.yPtr = 0
 end
 
 function MoveWorldWindow:open()
-	self.opened[0] = true
-	self.xPtr[0] = 0
-	self.yPtr[0] = 0
+	self.opened = true
+	self.xPtr = 0
+	self.yPtr = 0
 end
 
 -- draws the button
 -- shows the popup if it's opened
 function MoveWorldWindow:update()
-	if not self.opened[0] then return end
+	if not self.opened then return end
 
-	ig.igBegin('Move World', self.opened)
-	ig.igInputInt('Move X', self.xPtr)
-	ig.igInputInt('Move Y', self.yPtr)
+	ig.luatableBegin('Move World', self, 'opened')
+	ig.luatableInputInt('Move X', self, 'xPtr')
+	ig.luatableInputInt('Move Y', self, 'yPtr')
 	if ig.igButton('OK') then
-		doMoveWorld(self.xPtr[0], self.yPtr[0])
-		self.opened[0] = false
+		doMoveWorld(self.xPtr, self.yPtr)
+		self.opened = false
 	end
 	ig.igSameLine()
 	if ig.igButton('Cancel') then
-		self.opened[0] = false
+		self.opened = false
 	end
 	ig.igEnd()
 end
@@ -694,28 +688,28 @@ function TileExchangeWindow:init(editor)
 	self.tileTypeTo = 0
 	self.tileFrom = 0
 	self.tileTo = 0
-	self.widthPtr = ffi.new('int[1]',1)
-	self.heightPtr = ffi.new('int[1]',1)
-	self.opened = ffi.new('bool[1]', false)
+	self.widthPtr = 1
+	self.heightPtr = 1
+	self.opened = false
 	self.transferTilesFromToPtr = ffi.new('bool[1]', true)
 	self.transferTilesToFromPtr = ffi.new('bool[1]', true)
 end
 
 function TileExchangeWindow:update()
 	
-	if not self.opened[0] then return end
+	if not self.opened then return end
 	
 	local level = game.level
 	local editor = self.editor
 	
 	ig.igPushID_Str('Tile Exchange Window')
-	ig.igBegin('Tile Exchange', self.opened)
+	ig.luatableBegin('Tile Exchange', self, 'opened')
 	
-	ig.tooltipCheckbox('Tile Type', editor.paintingTileType)
+	ig.luatableTooltipCheckbox('Tile Type', editor, 'paintingTileType')
 	ig.igSameLine()
-	ig.tooltipCheckbox('Fg Tile', editor.paintingFgTile)
+	ig.luatableTooltipCheckbox('Fg Tile', editor, 'paintingFgTile')
 	ig.igSameLine()
-	ig.tooltipCheckbox('Bg Tile', editor.paintingBgTile)
+	ig.luatableTooltipCheckbox('Bg Tile', editor, 'paintingBgTile')
 
 	ig.igSeparator()
 
@@ -741,8 +735,8 @@ function TileExchangeWindow:update()
 	end)
 	ig.igPopID()
 	
-	ig.igSliderInt('width', self.widthPtr, 1, 64)
-	ig.igSliderInt('height', self.heightPtr, 1, 64)
+	ig.luatableSliderInt('width', self, 'widthPtr', 1, 64)
+	ig.luatableSliderInt('height', self, 'heightPtr', 1, 64)
 	
 	ig.tooltipCheckbox('from->to', self.transferTilesFromToPtr)
 	ig.igSameLine()
@@ -758,12 +752,12 @@ function TileExchangeWindow:update()
 		local tilesHigh = height / level.tileSize
 		local moveFromXMin = (self.tileFrom-1) % tilesWide
 		local moveFromYMin = (self.tileFrom-moveFromXMin-1) / tilesWide
-		local moveFromXMax = moveFromXMin + self.widthPtr[0] - 1
-		local moveFromYMax = moveFromYMin + self.heightPtr[0] - 1
+		local moveFromXMax = moveFromXMin + self.widthPtr - 1
+		local moveFromYMax = moveFromYMin + self.heightPtr - 1
 		local moveToXMin = (self.tileTo-1) % tilesWide
 		local moveToYMin = (self.tileTo-moveToXMin-1) / tilesWide
-		local moveToXMax = moveToXMin + self.widthPtr[0] - 1
-		local moveToYMax = moveToYMin + self.heightPtr[0] - 1
+		local moveToXMax = moveToXMin + self.widthPtr - 1
+		local moveToYMax = moveToYMin + self.heightPtr - 1
 
 		if ig.igButton('Swap In Texpack')
 		then
@@ -806,18 +800,16 @@ function TileExchangeWindow:update()
 				format = gl.GL_RGBA,
 			}
 		end
-		if ig.igIsItemHovered(ig.ImGuiHoveredFlags_None) then
-			ig.igBeginTooltip()
-			ig.igText('Exchange two tile ranges within the texpack.\n'
-					..'The map will retain its tile indexes, so\n'
-					..'textures will appear exchanged in the map as well.')
-			ig.igEndTooltip()
-		end
+		ig.hoverTooltip[[
+Exchange two tile ranges within the texpack.
+The map will retain its tile indexes, so
+textures will appear exchanged in the map as well.
+]]
 		
 		if ig.igButton('Swap in Level') then
 			local maps = table()
-			if editor.paintingFgTile[0] then maps:insert(level.fgTileMapOriginal) end
-			if editor.paintingBgTile[0] then maps:insert(level.bgTileMapOriginal) end
+			if editor.paintingFgTile then maps:insert(level.fgTileMapOriginal) end
+			if editor.paintingBgTile then maps:insert(level.bgTileMapOriginal) end
 			for _,map in ipairs(maps) do
 				for y=0,level.size[2]-1 do
 					for x=0,level.size[1]-1 do
@@ -851,11 +843,7 @@ function TileExchangeWindow:update()
 			level:refreshTiles()
 		end
 		
-		if ig.igIsItemHovered(ig.ImGuiHoveredFlags_None) then
-			ig.igBeginTooltip()
-			ig.igText('Exchange two tile ranges of indexes within the map.')
-			ig.igEndTooltip()
-		end
+		ig.hoverTooltip'Exchange two tile ranges of indexes within the map.'
 	end
 
 	ig.igEnd()
@@ -865,16 +853,16 @@ end
 local ConsoleWindow = class()
 
 function ConsoleWindow:init()
-	self.opened = ffi.new('bool[1]', false)
+	self.opened = false
 	self.buffer = ffi.new('char[?]', 2048)
 end
 
 function ConsoleWindow:update()
-	if not self.opened[0] then return end
+	if not self.opened then return end
 
 	local bufferSize = ffi.sizeof(self.buffer)
 
-	ig.igBegin('Console', self.opened)
+	ig.luatableBegin('Console', self, 'opened')
 	local size = ig.igGetWindowSize()
 	if ig.igInputTextMultiline('code', self.buffer, bufferSize,
 		ig.ImVec2(size.x,size.y - 56),
@@ -898,15 +886,15 @@ end
 local InitFileWindow = class()
 
 function InitFileWindow:init()
-	self.opened = ffi.new('bool[1]',false)
+	self.opened = false
 	-- hmm ... init files have a max size ...
 	self.buffer = ffi.new('char[?]', 65536)
 end
 
 function InitFileWindow:update()
-	if self.opened[0] then
+	if self.opened then
 		local bufferSize = ffi.sizeof(self.buffer)
-		ig.igBegin('Level Init Code', self.opened)
+		ig.luatableBegin('Level Init Code', self, 'opened')
 		local size = ig.igGetWindowSize()
 		ig.igInputTextMultiline('code', self.buffer, bufferSize,
 			ig.ImVec2(size.x, size.y - 56),	-- minus titlebar height and button height
@@ -916,18 +904,18 @@ function InitFileWindow:update()
 			local code = ffi.string(self.buffer)
 			local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
 			file[dir..'/init.lua'] = code
-			self.opened[0] = false
+			self.opened = false
 		end
 		ig.igSameLine()
 		if ig.igButton('Cancel') then
-			self.opened[0] = false
+			self.opened = false
 		end
 		ig.igEnd()
 	end
 end
 
 function InitFileWindow:open()
-	self.opened[0] = true
+	self.opened = true
 	local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
 	local initFileData = file[dir..'/init.lua'] or ''
 	local bufferSize = ffi.sizeof(self.buffer)
@@ -946,39 +934,39 @@ local editModeMove = 5	-- drag to make rect, then click-and-drag rect to move it
 function Editor:init()	
 	self.editMode = ffi.new('int[1]', editModePaintTiles)
 	
-	self.paintingTileType = ffi.new('bool[1]',true)
-	self.paintingFgTile = ffi.new('bool[1]',true)
-	self.paintingBgTile = ffi.new('bool[1]',true)
-	self.paintingBackground = ffi.new('bool[1]',true)
-	self.paintingObjects = ffi.new('bool[1]',true)	-- only used by move tool 
+	self.paintingTileType = true
+	self.paintingFgTile = true
+	self.paintingBgTile = true
+	self.paintingBackground = true
+	self.paintingObjects = true	-- only used by move tool 
 
 	-- paint & smooth brush options:
-	self.brushTileWidth = ffi.new('int[1]',1)
-	self.brushTileHeight = ffi.new('int[1]',1)
+	self.brushTileWidth = 1
+	self.brushTileHeight = 1
 	-- paint brush options:
-	self.brushStampWidth = ffi.new('int[1]',1)
-	self.brushStampHeight = ffi.new('int[1]',1)
-	self.smoothWhilePainting = ffi.new('bool[1]',0)
-	self.smoothBorder = ffi.new('int[1]',1)
+	self.brushStampWidth = 1
+	self.brushStampHeight = 1
+	self.smoothWhilePainting = false
+	self.smoothBorder = 1
 	-- smooth brush options:
-	self.alignPatchToAnything = ffi.new('bool[1]',true)
-	self.smoothDiagLevel = ffi.new('int[1]',0)
-	self.unsmooth = ffi.new('bool[1]',false)
+	self.alignPatchToAnything = true
+	self.smoothDiagLevel = 0
+	self.unsmooth = false
 
-	self.selectedTileTypeIndex = ffi.new('int[1]',0)
+	self.selectedTileTypeIndex = 0
 	self.selectedFgTileIndex = 0
 	self.selectedBgTileIndex = 0
-	self.selectedBackgroundIndex = ffi.new('int[1]',0)
-	self.selectedSpawnIndex = ffi.new('int[1]',0)
-	self.selectedRoomIndex = ffi.new('int[1]',0)
+	self.selectedBackgroundIndex = 0
+	self.selectedSpawnIndex = 0
+	self.selectedRoomIndex = 0
 
-	self.showTileTypes = ffi.new('bool[1]',true)
-	self.showSpawnInfos = ffi.new('bool[1]',true)
-	self.showObjects = ffi.new('bool[1]',true)
-	self.showRooms = ffi.new('bool[1]',true)
+	self.showTileTypes = true
+	self.showSpawnInfos = true
+	self.showObjects = true
+	self.showRooms = true
 	
-	self.noClipping = ffi.new('bool[1]',true)
-	self.removeAllObjsPtr = ffi.new('bool[1]',false)
+	self.noClipping = true
+	self.removeAllObjsPtr = false
 
 	self.pickTileTypeWindow = PickTileTypeWindow(self)
 	self.pickTileWindow = PickTileWindow()
@@ -1276,8 +1264,8 @@ function Editor:editProperties(editorPropsField, selectedField, createNew, reser
 	
 	ig.igSeparator()
 
-	self.newFieldType = self.newFieldType or ffi.new('int[1]', 0)
-	ig.igCombo('new field type', self.newFieldType, fieldTypeNames)
+	self.newFieldType = self.newFieldType or 1	-- 1-based
+	ig.luatableCombo('new field type', self, 'newFieldType', fieldTypeNames)
 
 	self.newFieldStr = self.newFieldStr or ffi.new('char[?]', textBufferSize)
 	if ig.igInputText('new field name', self.newFieldStr, textBufferSize, ig.ImGuiInputTextFlags_EnterReturnsTrue)
@@ -1288,7 +1276,7 @@ function Editor:editProperties(editorPropsField, selectedField, createNew, reser
 		elseif self[selectedField][k] ~= nil then
 			alert("the field "..k.." already exists")
 		else
-			local fieldType = self.newFieldType[0]
+			local fieldType = self.newFieldType - 1	-- 0-based
 			local v
 			if fieldType == fieldTypeEnum.string then
 				v = ''
@@ -1331,7 +1319,7 @@ function Editor:updateGUI()
 		--]]
 	end
 	
-	if self.removeAllObjsPtr[0] then
+	if self.removeAllObjsPtr then
 		for _,spawnInfo in ipairs(level.spawnInfos) do
 			spawnInfo:removeObj()
 		end
@@ -1362,17 +1350,17 @@ function Editor:updateGUI()
 		end
 		
 		if ig.igBeginMenu('Display') then
-			ig.igMenuItem('no clipping', nil, self.noClipping)
-			ig.igMenuItem('Show Tile Types', nil, self.showTileTypes)
-			ig.igMenuItem('Show Spawn Infos', nil, self.showSpawnInfos)
-			ig.igMenuItem('Show Objects', nil, self.showObjects)
-			ig.igMenuItem('Show Rooms', nil, self.showRooms)
+			ig.luatableMenuItem('no clipping', nil, self, 'noClipping')
+			ig.luatableMenuItem('Show Tile Types', nil, self, 'showTileTypes')
+			ig.luatableMenuItem('Show Spawn Infos', nil, self, 'showSpawnInfos')
+			ig.luatableMenuItem('Show Objects', nil, self, 'showObjects')
+			ig.luatableMenuItem('Show Rooms', nil, self, 'showRooms')
 			ig.igEndMenu()
 		end
 	
 		if ig.igBeginMenu('Misc') then
 			
-			ig.igMenuItem('remove all objs', nil, self.removeAllObjsPtr)
+			ig.luatableMenuItem('remove all objs', nil, self, 'removeAllObjsPtr')
 			if ig.igMenuItem('respawn all objs') then
 				for _,spawnInfo in ipairs(level.spawnInfos) do
 					spawnInfo:removeObj()
@@ -1381,11 +1369,11 @@ function Editor:updateGUI()
 			end
 
 			-- adds the buttons and does the updating
-			if ig.igMenuItem('Move Whole World', nil, self.moveWorldWindow.opened) then
+			if ig.luatableMenuItem('Move Whole World', nil, self.moveWorldWindow, 'opened') then
 				self.moveWorldWindow:open()
 			end
-			ig.igMenuItem('Tile Exchange', nil, self.tileExchangeWindow.opened)
-			ig.igMenuItem('Console', nil, self.consoleWindow.opened)
+			ig.luatableMenuItem('Tile Exchange', nil, self.tileExchangeWindow, 'opened')
+			ig.luatableMenuItem('Console', nil, self.consoleWindow, 'opened')
 
 			ig.igEndMenu()
 		end
@@ -1393,10 +1381,7 @@ function Editor:updateGUI()
 		ig.igEndMenuBar()
 	end
 
-	self.viewSizePtr = self.viewSizePtr or ffi.new('float[1]')
-	self.viewSizePtr[0] = game.viewSize
-	ig.igSliderFloat('zoom', self.viewSizePtr, 1, math.max(level.size:unpack()), '%.3f', ig.ImGuiSliderFlags_Logarithmic)
-	game.viewSize = tonumber(self.viewSizePtr[0])
+	ig.luatableSliderFloat('zoom', game, 'viewSize', 1, math.max(level.size:unpack()), '%.3f', ig.ImGuiSliderFlags_Logarithmic)
 
 	-- call this before the Edit Level Init Code button so the pointer exists
 	self.initFileWindow:update()
@@ -1420,16 +1405,16 @@ function Editor:updateGUI()
 	or self.editMode[0] == editModeMove
 	then
 		-- not sure if I should use brushes for painting objects or not ...
-		ig.tooltipCheckbox('Tile Type', self.paintingTileType)
+		ig.luatableTooltipCheckbox('Tile Type', self, 'paintingTileType')
 		ig.igSameLine()
-		ig.tooltipCheckbox('Fg Tile', self.paintingFgTile)
+		ig.luatableTooltipCheckbox('Fg Tile', self, 'paintingFgTile')
 		ig.igSameLine()
-		ig.tooltipCheckbox('Bg Tile', self.paintingBgTile)
+		ig.luatableTooltipCheckbox('Bg Tile', self, 'paintingBgTile')
 		ig.igSameLine()
-		ig.tooltipCheckbox('Background', self.paintingBackground)
+		ig.luatableTooltipCheckbox('Background', self, 'paintingBackground')
 		if self.editMode[0] == editModeMove then
 			ig.igSameLine()
-			ig.tooltipCheckbox('Objects', self.paintingObjects)
+			ig.luatableTooltipCheckbox('Objects', self, 'paintingObjects')
 		end
 		ig.igSeparator()
 	end
@@ -1444,15 +1429,15 @@ function Editor:updateGUI()
 	or self.editMode[0] == editModeSmoothTiles
 	then
 		
-		if self.paintingTileType[0]
+		if self.paintingTileType
 		--and ig.igCollapsingHeader('Tile Type Options:',0)
 		then
-			self.pickTileTypeWindow:openButton(self.selectedTileTypeIndex[0], function(i)
-				self.selectedTileTypeIndex[0] = i
+			self.pickTileTypeWindow:openButton(self.selectedTileTypeIndex, function(i)
+				self.selectedTileTypeIndex = i
 			end)
 		end
 		
-		if (self.paintingFgTile[0] or self.paintingBgTile[0])
+		if (self.paintingFgTile or self.paintingBgTile)
 		--and ig.igCollapsingHeader('Tile Texture:')
 		then
 			ig.igSameLine()	
@@ -1487,34 +1472,34 @@ function Editor:updateGUI()
 			if self.editMode[0] == editModePaintTiles
 			or self.editMode[0] == editModeSmoothTiles then
 				-- TODO separate sizes for paint and smooth brushes?
-				ig.igSliderInt('Brush Width', self.brushTileWidth, 1, 20)
-				ig.igSliderInt('Brush Height', self.brushTileHeight, 1, 20)
+				ig.luatableSliderInt('Brush Width', self, 'brushTileWidth', 1, 20)
+				ig.luatableSliderInt('Brush Height', self, 'brushTileHeight', 1, 20)
 				if self.editMode[0] == editModePaintTiles then
-					ig.igSliderInt('Stamp Width', self.brushStampWidth, 1, 20)
-					ig.igSliderInt('Stamp Height', self.brushStampHeight, 1, 20)
-					if self.smoothWhilePainting[0] then
-						ig.igSliderInt('Smooth Border', self.smoothBorder, 0, 10)
+					ig.luatableSliderInt('Stamp Width', self, 'brushStampWidth', 1, 20)
+					ig.luatableSliderInt('Stamp Height', self, 'brushStampHeight', 1, 20)
+					if self.smoothWhilePainting then
+						ig.luatableSliderInt('Smooth Border', self, 'smoothBorder', 0, 10)
 					end
-					ig.tooltipCheckbox('Smooth While Painting', self.smoothWhilePainting)
+					ig.luatableTooltipCheckbox('Smooth While Painting', self, 'smoothWhilePainting')
+					-- TODO igSameLine only if Unsmooth comes next
 				end
 				if self.editMode[0] == editModeSmoothTiles
-				or (self.editMode[0] == editModePaintTiles and self.smoothWhilePainting[0])
+				or (self.editMode[0] == editModePaintTiles and self.smoothWhilePainting)
 				then
+					ig.luatableTooltipCheckbox('Unsmooth', self, 'unsmooth')
 					ig.igSameLine()
-					ig.tooltipCheckbox('Unsmooth', self.unsmooth)
+					ig.luatableTooltipCheckbox('Smooth Aligns Patch to Anything', self, 'alignPatchToAnything')
 					ig.igSameLine()
-					ig.tooltipCheckbox('Smooth Aligns Patch to Anything', self.alignPatchToAnything)
+					ig.luatableTooltipRadioButton("Smooth Tiles to 90'", self, 'smoothDiagLevel', 0)
 					ig.igSameLine()
-					ig.tooltipRadioButton("Smooth Tiles to 90'", self.smoothDiagLevel, 0)
+					ig.luatableTooltipRadioButton("Smooth Tiles to 45'", self, 'smoothDiagLevel', 1)
 					ig.igSameLine()
-					ig.tooltipRadioButton("Smooth Tiles to 45'", self.smoothDiagLevel, 1)
-					ig.igSameLine()
-					ig.tooltipRadioButton("Smooth Tiles to 27'", self.smoothDiagLevel, 2)
+					ig.luatableTooltipRadioButton("Smooth Tiles to 27'", self, 'smoothDiagLevel', 2)
 				end
 			end
 		end
 	
-		if self.paintingBackground[0]
+		if self.paintingBackground
 		--and ig.igCollapsingHeader('Background Options:')
 		then
 			for i=0,#self.backgroundOptions do
@@ -1546,28 +1531,23 @@ function Editor:updateGUI()
 					-1,	-- frame_padding
 					i == self.selectedBackgroundIndex and ig.ImVec4(1,1,0,.25) or ig.ImVec4(0,0,0,0))	-- bg_col
 				then
-					self.selectedBackgroundIndex[0] = i
+					self.selectedBackgroundIndex = i
 				end
-				if ig.igIsItemHovered(ig.ImGuiHoveredFlags_None) then
-					ig.igBeginTooltip()
-					ig.igText(background.name)
-					ig.igEndTooltip()
-				end
+				ig.hoverTooltip(background.name)
 				
 				ig.igSameLine()
 				ig.igPushID_Str('radio')
-				ig.igRadioButton_IntPtr('', self.selectedBackgroundIndex, i)
+				ig.luatableRadioButton('', self, 'selectedBackgroundIndex', i)
 				ig.igPopID()
 
 				if i > 0 then
 					ig.igSameLine()
 					ig.igPushID_Str('tree')
 					if ig.igTreeNode_Str('') then
-						local float = ffi.new('float[1]')
 						for _,field in ipairs{'scaleX', 'scaleY', 'scrollX', 'scrollY'} do
-							float[0] = background[field] or 0
-							ig.igInputFloat(field, float)
-							background[field] = float[0]
+							background[field] = background[field]or 0
+							ig.luatableInputFloat(field, background, field)
+							-- TODO UPDATE SOMETHING, THE CHANGES AREN'T REFLECTING UNTIL YOU SAVE AND RELOAD
 						end
 						ig.igTreePop()
 					end
@@ -1593,20 +1573,16 @@ function Editor:updateGUI()
 					ig.ImVec2(0, 0), --uv0
 					ig.ImVec2(1, 1), --uv1
 					-1,	-- frame_padding
-					i == self.selectedSpawnIndex[0] and ig.ImVec4(1,1,0,.25) or ig.ImVec4(0,0,0,0))	-- bg_col
+					i == self.selectedSpawnIndex and ig.ImVec4(1,1,0,.25) or ig.ImVec4(0,0,0,0))	-- bg_col
 				then
-					self.selectedSpawnIndex[0] = i
+					self.selectedSpawnIndex = i
 				end
 				-- it would be nice if wrapping controls was automatic
 				local tilesWide = 4
 				if i % tilesWide > 0 and i < #self.spawnOptions then
 					ig.igSameLine()	
 				end
-				if ig.igIsItemHovered(ig.ImGuiHoveredFlags_None) then
-					ig.igBeginTooltip()
-					ig.igText(spawnType.spawn)
-					ig.igEndTooltip()
-				end
+				ig.hoverTooltip(spawnType.spawn)
 				ig.igPopID()
 			end
 		end
@@ -1628,7 +1604,7 @@ function Editor:updateGUI()
 			end
 		end
 	elseif self.editMode[0] == editModeRooms then
-		ig.igInputInt('Room Value', self.selectedRoomIndex)
+		ig.luatableInputInt('Room Value', self, 'selectedRoomIndex')
 		if ig.igButton('New Room Number') then
 			local roomsUsed = table()
 			for ry = 1,level.sizeInMapTiles[2] do
@@ -1639,16 +1615,16 @@ function Editor:updateGUI()
 			end
 			for i=0,#roomsUsed:keys() do
 		 		if not roomsUsed[i] then
-					self.selectedRoomIndex[0] = i
+					self.selectedRoomIndex = i
 					break
 				end
 			end
 		end
 
-		self.selectedRoom = level.roomProps[self.selectedRoomIndex[0]]
+		self.selectedRoom = level.roomProps[self.selectedRoomIndex]
 		if not self.selectedRoom then
 			self.selectedRoom = {}
-			level.roomProps[self.selectedRoomIndex[0]] = self.selectedRoom
+			level.roomProps[self.selectedRoomIndex] = self.selectedRoom
 		end
 		self:editProperties(
 			'roomProps',
@@ -1695,7 +1671,7 @@ function Editor:update()
 	-- do this before checking editor.active
 	-- so if the editor shuts off, the player will be able to walk again
 	local player = game.players[1]
-	if self.active and self.noClipping[0] then
+	if self.active and self.noClipping then
 		local dt = game.sysDeltaTime
 		local noClipSpeed = 2 * game.viewSize
 		player.pos[1] = player.pos[1] + dt * player.inputLeftRight * noClipSpeed
@@ -1734,17 +1710,17 @@ function Editor:update()
 		then
 			if self.shiftDown then
 				if x >= 1 and y >= 1 and x <= level.size[1] and y <= level.size[2] then
-					if self.paintingTileType[0] then
-						self.selectedTileTypeIndex[0] = level.tileMapOriginal[x-1+level.size[1]*(y-1)]
+					if self.paintingTileType then
+						self.selectedTileTypeIndex = level.tileMapOriginal[x-1+level.size[1]*(y-1)]
 					end
-					if self.paintingFgTile[0] then
+					if self.paintingFgTile then
 						self.selectedFgTileIndex = level.fgTileMapOriginal[x-1+level.size[1]*(y-1)]
 					end
-					if self.paintingBgTile[0] then
+					if self.paintingBgTile then
 						self.selectedBgTileIndex = level.bgTileMapOriginal[x-1+level.size[1]*(y-1)]
 					end
-					if self.paintingBackground[0] then
-						self.selectedBackgroundIndex[0] = level.backgroundMapOriginal[x-1+level.size[1]*(y-1)]
+					if self.paintingBackground then
+						self.selectedBackgroundIndex = level.backgroundMapOriginal[x-1+level.size[1]*(y-1)]
 					end
 				end
 			else
@@ -1762,11 +1738,11 @@ function Editor:update()
 				if self.shiftDown then
 				-- ... hmm this is dif than tiles
 				-- search through and pick out a spawn obj under the mouse
-					self.selectedSpawnIndex[0] = 0
+					self.selectedSpawnIndex = 0
 					self.selectedSpawnInfo = nil
 					for _,spawnInfo in ipairs(level.spawnInfos) do
 						if spawnInfo.pos[1] == x+.5 and spawnInfo.pos[2] == y then
-							self.selectedSpawnIndex[0] = self.spawnOptions:find(nil, function(option)
+							self.selectedSpawnIndex = self.spawnOptions:find(nil, function(option)
 								return option.spawnType.spawn == spawnInfo.spawn
 							end) or 0
 							self.selectedSpawnInfo = spawnInfo
@@ -1785,10 +1761,10 @@ function Editor:update()
 							level.spawnInfos:remove(i)
 						end
 					end
-					if self.selectedSpawnIndex[0] ~= 0 then
+					if self.selectedSpawnIndex ~= 0 then
 						local spawnInfo = SpawnInfo{
 							pos=vec2(x+.5, y),
-							spawn=self.spawnOptions[self.selectedSpawnIndex[0]].spawnType.spawn,
+							spawn=self.spawnOptions[self.selectedSpawnIndex].spawnType.spawn,
 						}
 						level.spawnInfos:insert(spawnInfo)
 						self.selectedSpawnInfo = spawnInfo
@@ -1801,9 +1777,9 @@ function Editor:update()
 			if x >= 1 and y >= 1 and x <= level.size[1] and y <= level.size[2] then
 				local rx, ry = level:getMapTilePos(x,y)
 				if self.shiftDown then
-					self.selectedRoomIndex[0] = level.roomMap[rx-1 + level.sizeInMapTiles[1]*(ry-1)]
+					self.selectedRoomIndex = level.roomMap[rx-1 + level.sizeInMapTiles[1]*(ry-1)]
 				else
-					level.roomMap[rx-1 + level.sizeInMapTiles[1]*(ry-1)] = self.selectedRoomIndex[0]
+					level.roomMap[rx-1 + level.sizeInMapTiles[1]*(ry-1)] = self.selectedRoomIndex
 				end
 			end
 		elseif self.editMode[0] == editModeMove then
@@ -1823,10 +1799,10 @@ function Editor:update()
 						-- stamp everything from the upper-left of the move tool to the upper-left of the mouse cursor
 						-- TODO (a) transparent overlay (like brush stamps) and (b) center it instead of upper-left
 						for _,info in ipairs{
-							{map='tileMap', flag=self.paintingTileType[0]},
-							{map='fgTileMap', flag=self.paintingFgTile[0]},
-							{map='bgTileMap', flag=self.paintingBgTile[0]},
-							{map='backgroundMap', flag=self.paintingBackground[0]},
+							{map='tileMap', flag=self.paintingTileType},
+							{map='fgTileMap', flag=self.paintingFgTile},
+							{map='bgTileMap', flag=self.paintingBgTile},
+							{map='backgroundMap', flag=self.paintingBackground},
 						} do
 							if info.flag then
 								for srcy=self.moveBBox.min[2],self.moveBBox.max[2] do
@@ -1858,21 +1834,21 @@ function Editor:update()
 						end
 						
 						-- if we changed the fgTileMap then update the texels of the overmap
-						if self.paintingFgTile[0] then
+						if self.paintingFgTile then
 							level:refreshFgTileTexels(
 								math.floor(x - tonumber(brushWidth-1)/2),
 								math.floor(y - tonumber(brushHeight-1)/2),
 								self.moveBBox.max[1] - self.moveBBox.min[1] + math.floor(x - tonumber(brushWidth-1)/2),
 								self.moveBBox.max[2] - self.moveBBox.min[2] + math.floor(y - tonumber(brushHeight-1)/2))
 						end
-						if self.paintingBgTile[0] then
+						if self.paintingBgTile then
 							level:refreshBgTileTexels(
 								math.floor(x - tonumber(brushWidth-1)/2),
 								math.floor(y - tonumber(brushHeight-1)/2),
 								self.moveBBox.max[1] - self.moveBBox.min[1] + math.floor(x - tonumber(brushWidth-1)/2),
 								self.moveBBox.max[2] - self.moveBBox.min[2] + math.floor(y - tonumber(brushHeight-1)/2))
 						end
-						if self.paintingBackground[0] then
+						if self.paintingBackground then
 							level:refreshBackgroundTexels(
 								math.floor(x - tonumber(brushWidth-1)/2),
 								math.floor(y - tonumber(brushHeight-1)/2),
@@ -1903,10 +1879,10 @@ function Editor:update()
 						end
 						
 						for _,info in ipairs{
-							{map='tileMap', flag=self.paintingTileType[0]},
-							{map='fgTileMap', flag=self.paintingFgTile[0]},
-							{map='bgTileMap', flag=self.paintingBgTile[0]},
-							{map='backgroundMap', flag=self.paintingBackground[0]},
+							{map='tileMap', flag=self.paintingTileType},
+							{map='fgTileMap', flag=self.paintingFgTile},
+							{map='bgTileMap', flag=self.paintingBgTile},
+							{map='backgroundMap', flag=self.paintingBackground},
 						} do
 							if info.flag then
 								for y0=y1,y2,y3 do
@@ -1925,21 +1901,21 @@ function Editor:update()
 						end
 
 						-- if we changed the fgTileMap then update the texels of the overmap
-						if self.paintingFgTile[0] then
+						if self.paintingFgTile then
 							level:refreshFgTileTexels(
 								math.min(x1,x2),
 								math.min(y1,y2),
 								math.max(x1,x2),
 								math.max(y1,y2))
 						end
-						if self.paintingBgTile[0] then
+						if self.paintingBgTile then
 							level:refreshBgTileTexels(
 								math.min(x1,x2),
 								math.min(y1,y2),
 								math.max(x1,x2),
 								math.max(y1,y2))
 						end
-						if self.paintingBackground[0] then
+						if self.paintingBackground then
 							level:refreshBackgroundTexels(
 								math.min(x1,x2),
 								math.min(y1,y2),
@@ -1947,7 +1923,7 @@ function Editor:update()
 								math.max(y1,y2))
 						end
 
-						if self.paintingObjects[0] then
+						if self.paintingObjects then
 							for _,spawnInfo in ipairs(level.spawnInfos) do
 								if spawnInfo.pos[1]-.5 >= self.moveBBox.min[1]
 								and spawnInfo.pos[1]-.5 <= self.moveBBox.max[1]
@@ -2006,7 +1982,7 @@ function Editor:draw(R, viewBBox)
 	local level = game.level
 
 	-- show the rooms
-	if self.showRooms[0] then
+	if self.showRooms then
 		for rx=1,level.sizeInMapTiles[1] do
 			for ry=1,level.sizeInMapTiles[2] do
 				local roomIndex = level.roomMap[rx-1 + level.sizeInMapTiles[1] * (ry-1)]
@@ -2075,7 +2051,7 @@ function Editor:draw(R, viewBBox)
 	end
 
 	-- draw spawn infos in the level
-	if self.showSpawnInfos[0] then
+	if self.showSpawnInfos then
 		for _,spawnInfo in ipairs(level.spawnInfos) do
 			
 			local x,y = spawnInfo.pos:unpack()
@@ -2146,7 +2122,7 @@ function Editor:draw(R, viewBBox)
 	end
 
 	-- draw bboxes of objects
-	if self.showObjects[0] then
+	if self.showObjects then
 		for _,obj in ipairs(game.objs) do
 			local bbox = obj.bbox
 			gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
@@ -2194,7 +2170,7 @@ function Editor:draw(R, viewBBox)
 	if ymin < 1 then ymin = 1 end
 	if ymax > game.level.size[2] then ymax = game.level.size[2] end
 
-	if self.showTileTypes[0] then
+	if self.showTileTypes then
 		-- if we are too far zoomed out, use a lighter render
 		if itileBBox.max[1] - itileBBox.min[1] <= glapp.width / game.level.overmapZoomLevel then
 			for y=ymin,ymax do
@@ -2234,8 +2210,8 @@ function Editor:draw(R, viewBBox)
 			if self.editMode[0] == editModePaintTiles
 			or self.editMode[0] == editModeSmoothTiles
 			then
-				brushWidth = self.brushTileWidth[0]
-				brushHeight = self.brushTileHeight[0]
+				brushWidth = self.brushTileWidth
+				brushHeight = self.brushTileHeight
 			end
 		elseif self.editMode[0] == editModeMove and self.moveBBox and self.moveToolStampPtr[0] then
 			brushWidth = self.moveBBox.max[1] - self.moveBBox.min[1] + 1
@@ -2258,11 +2234,11 @@ function Editor:draw(R, viewBBox)
 			xmax - xmin + .8, ymax - ymin + .8,
 			0, 0, 1, 1, 0,
 			1, 1, 0, 1)	--color
-		if self.editMode[0] == editModePaintTiles and self.smoothWhilePainting[0] then
-			xmin = xmin - self.smoothBorder[0]
-			ymin = ymin - self.smoothBorder[0]
-			xmax = xmax + self.smoothBorder[0]
-			ymax = ymax + self.smoothBorder[0]
+		if self.editMode[0] == editModePaintTiles and self.smoothWhilePainting then
+			xmin = xmin - self.smoothBorder
+			ymin = ymin - self.smoothBorder
+			xmax = xmax + self.smoothBorder
+			ymax = ymax + self.smoothBorder
 			R:quad(
 				xmin + .1, ymin + .1,
 				xmax - xmin + .8, ymax - ymin + .8,
