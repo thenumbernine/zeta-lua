@@ -34,15 +34,16 @@ KeyShotItem.shotClass = require 'zeta.script.obj.keyshot'
 KeyShotItem.shotSound = 'shoot'
 KeyShotItem.shotOffset = vec2(0, .45)
 
-KeyShotItem.bbox = box2(-.1, -.1, .1, .1)
+KeyShotItem.bbox = box2(-.2, -.2, .2, .2)
 KeyShotItem.rotCenter = {.5, .5}
 KeyShotItem.drawCenter = {.5, .5}
 
 function KeyShotItem:doShoot(player, pos, vel)
 	local player = self.heldby
 	if player then
+		-- TODO if we remove our held item / weapon then we should pick the next weapon in that .items[] bin
+		-- and TODO if we run out of that bin but we have more items we should go to the next bin
 		player:removeItem(self)
-		player:cycleWeapon(1)	--next weapon
 		self.remove = true
 	end
 	local shot = KeyShotItem.super.doShoot(self, player, pos, vel)

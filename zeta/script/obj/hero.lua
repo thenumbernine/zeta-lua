@@ -1468,6 +1468,8 @@ Hero.findItem = Hero.findItemNamed
 -- doesn't remove it from the game
 -- returns it
 function Hero:removeItem(removeItem, callback)
+	local Weapon = require 'zeta.script.obj.weapon'
+	-- TODO overlap?
 	for i=#self.items,1,-1 do
 		local items = self.items[i]
 		for j,item in ipairs(items) do
@@ -1479,9 +1481,30 @@ function Hero:removeItem(removeItem, callback)
 			end
 			if found then
 				items:remove(j)
-				if #items == 0 then self.items:remove(i) end
-				if self.weapon == item then self.weapon = nil end
-				if item.heldby == self then item.heldby = nil end
+				if #items == 0 then 
+					self.items:remove(i) 
+					items = nil
+				end
+				local nextHeld
+				if self.weapon == item then 
+					self.weapon = nil 
+					if items then 
+						nextHeld = items[1] 
+					end
+				end
+				if item.heldby == self then 
+					item.heldby = nil 
+					if items then 
+						nextHeld = items[1] 
+					end
+				end
+				if nextHeld then
+					if Weapon:isa(nextHeld) then
+						self.weapon = nextHeld
+					else
+						self:setHeld(nextHeld)
+					end
+				end
 				return item
 			end
 		end

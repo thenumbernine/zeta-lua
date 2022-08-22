@@ -13,7 +13,7 @@ local Weapon = require 'zeta.script.obj.weapon'
 local Object = require 'base.script.obj.object'
 local KeyShot = class(Object)
 
-KeyShot.bbox = box2(-.1, -.1, .1, .1)
+KeyShot.bbox = box2(-.2, -.2, .2, .2)
 KeyShot.sprite = 'blaster-shot'
 KeyShot.useGravity = false
 KeyShot.damage = 1
