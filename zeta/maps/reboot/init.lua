@@ -1,3 +1,17 @@
+--[[
+from the top ...
+
+1) make a grid of empty rooms
+2) connect by doors ... all locked at first
+3) place some ammo of type A in our first room ... maybe 5 ammo ...
+4) this ammo opens doors around it ... 
+5) in each room are monsters ...
+	monsters die to produce ammo types as well
+
+ammo type -> door type -> monster type -> repeat
+
+--]]
+
 local string = require 'ext.string'
 local table = require 'ext.table'
 local vec2 = require 'vec.vec2'
@@ -5,7 +19,9 @@ local vec3 = require 'vec.vec3'
 
 local mapname = 'reboot'
 
-getmetatable(game).viewSize = 8
+getmetatable(game).viewSize = 16
+
+local Hero = require 'zeta.script.obj.hero'
 
 if game.savePoint then return end
 
@@ -218,102 +234,23 @@ end
 -- stupid turrets and sawblades
 game.session.defensesActive_Main = true
 
-local goals = {
-	{
-		color = vec3(0,0,0),
-		
-		-- I think I need enemies per-room
-		-- and then sets of enemies for each room to pick from per-chain
-		enemies = {
-			--[[
-			'zeta.script.obj.bat',
-			'zeta.script.obj.geemer',
-			'zeta.script.obj.zoomer',
-			'zeta.script.obj.turret',
-			'zeta.script.obj.zoomer',
-			--]]
-		},
-		hiddenItems = {
-			{spawn='zeta.script.obj.healthitem', duration=1e+9},
-			{spawn='zeta.script.obj.healthmaxitem'},
-				
-			{spawn='zeta.script.obj.attackbonus'},
-			{spawn='zeta.script.obj.defensebonus'},
-		},
-		roomItems = {
-			'zeta.script.obj.savepoint',
-			'zeta.script.obj.energyrefill',
-			'zeta.script.obj.skillsaw',
-		},
-	},
-	-- [[
-	{
-		color = vec3(1,0,0),
-		enemies = {
-			--[[
-			'zeta.script.obj.sawblade',
-			'zeta.script.obj.turret',
-			'zeta.script.obj.geemer',	-- rename to 'jumper' ?
-			'zeta.script.obj.zoomer',
-			--]]
-		},
-		hiddenItems = {
-			{spawn='zeta.script.obj.grenadeitem'},
-			{spawn='zeta.script.obj.grenademaxitem'},
-		},
-		roomItems = {
-			'zeta.script.obj.savepoint',
-			'zeta.script.obj.energyrefill',
-			'zeta.script.obj.grenadelauncher',
-		},
-	},
-	{
-		color = vec3(0,1,0),
-		enemies = {
-			--[[
-			'zeta.script.obj.geemer',
-			'zeta.script.obj.redgeemer',
-			'zeta.script.obj.zoomer',
-			'zeta.script.obj.bat',
-			--]]
-		},
-		hiddenItems = {
-			{spawn='zeta.script.obj.missileitem'},
-			{spawn='zeta.script.obj.missilemaxitem'},
-		},
-		roomItems = {
-			'zeta.script.obj.savepoint',
-			'zeta.script.obj.energyrefill',
-			'zeta.script.obj.missilelauncher',
-		},
-	},
-	{
-		color = vec3(0,0,1),
-		enemies = {
-			--[[
-			'zeta.script.obj.geemer',
-			'zeta.script.obj.redgeemer',
-			'zeta.script.obj.zoomer',
-			'zeta.script.obj.bat',
-			'zeta.script.obj.teeth',
-			--]]
-		},
-		hiddenItems = {
-			{spawn='zeta.script.obj.cellitem'},
-			{spawn='zeta.script.obj.cellmaxitem'},
-		},
-		roomItems = {
-			'zeta.script.obj.savepoint',
-			'zeta.script.obj.energyrefill',
-			'zeta.script.obj.plasmarifle',
-			'zeta.script.obj.grapplinghook',
-		},
-	},
-	--]]
-	{
-		color = vec3(1,1,1),
-	},
+local colors = table{
+	vec3(1,0,0),
+	vec3(1,1,0),
+	vec3(0,1,0),
+	vec3(0,1,1),
+	vec3(0,0,1),
+	vec3(1,0,1),
+	vec3(0,0,0),
+	vec3(1,1,1),
 }
+
+
+local goals = colors:mapi(function(color)
+	return {
+		color = vec3(table.unpack(color)),
+	}
+end)
 for _,goal in ipairs(goals) do
 	goals[tostring(goal.color)] = goal
 end
@@ -324,6 +261,10 @@ local startRoomPos = vec2(math.random(0,blocksWide-1), math.random(0,blocksHigh-
 local startBlock = assert(getBlockAt(startRoomPos))
 startRoom:addBlock(startBlock)
 
+
+
+
+--[==[
 local lastBlock = startBlock
 for i=2,#goals do
 	-- pick a new source room to start spawning the chain from
@@ -366,13 +307,15 @@ for i=2,#goals do
 		spawnInfos:insert(item)
 	end
 
-	for _,spawn in ipairs(goal.roomItems) do
-		local options = getEmptyNeighborOptions(roomChain)
-		local option = options:pickRandom()
-		if not option then
-			error("couldn't find room to place item")
-		else
-			makeItemRoom(option, {spawn=spawn})
+	if goal.roomItems then
+		for _,spawn in ipairs(goal.roomItems) do
+			local options = getEmptyNeighborOptions(roomChain)
+			local option = options:pickRandom()
+			if not option then
+				error("couldn't find room to place item")
+			else
+				makeItemRoom(option, {spawn=spawn})
+			end
 		end
 	end
 
@@ -398,6 +341,7 @@ for i=2,#goals do
 
 	--]=]
 end
+--]==]
 
 -- [=[
 print'merging neighbors...'
@@ -682,20 +626,44 @@ spawnInfos:insert(1, {
 		level.mapTileSize[2] * (startRoomPos[2] + .5) - 1,
 	},
 })
-spawnInfos:insert(2, {
+--[[
+spawnInfos:insert{
 	spawn = 'zeta.script.obj.blaster',
 	pos = {
 		level.mapTileSize[1] * (startRoomPos[1] + .5) + 2.5,
 		level.mapTileSize[2] * (startRoomPos[2] + .5) - 1,
 	},
-})
-spawnInfos:insert(2, {
+}
+--]]
+spawnInfos:insert{
 	spawn = 'zeta.script.obj.walljump',
 	pos = {
 		level.mapTileSize[1] * (startRoomPos[1] + .5) + 0.5,
 		level.mapTileSize[2] * (startRoomPos[2] + .5) - 1,
 	},
-})
+}
+
+for _,color in ipairs{
+	{1, .5, .5, 1},
+	{.5, 1, .5, 1},
+	{.5, .5, 1, 1},
+} do
+	for i=1,10 do
+		spawnInfos:insert{
+			spawn = 'zeta.script.obj.keyshotitem',
+			pos = {
+				level.mapTileSize[1] * (startRoomPos[1] + .5) + 0.5 + math.random() * 10 - 5,
+				level.mapTileSize[2] * (startRoomPos[2] + .5) + 5,
+			},
+			color = color,--{1, .5, .5, 1},
+			name = 'key '..tostring(vec3(table.unpack(color))),
+
+			-- temp flag
+			noFloorPlease = true,
+		}
+	end
+end
+
 
 -- these objects deserve a platform
 -- TODO make sure the platform doesn't overwrite an object
@@ -726,12 +694,16 @@ local platformSpawns = table{
 print'putting platforms under spawns...'
 for _,info in ipairs(spawnInfos) do
 	if platformSpawns[info.spawn] then
-		for j=0,1 do	
-			for i=1,5 do
-				local x = info.pos[1]-4.5+i
-				local y = info.pos[2]-2-j
-				level.tileMap[x + level.size[1]*y] = solidTileType
-				level.fgTileMap[x + level.size[1]*y] = solidFgTile 
+		if info.noFloorPlease then
+			info.noFloorPlease = nil
+		else
+			for j=0,1 do	
+				for i=1,5 do
+					local x = info.pos[1]-4.5+i
+					local y = info.pos[2]-2-j
+					level.tileMap[x + level.size[1]*y] = solidTileType
+					level.fgTileMap[x + level.size[1]*y] = solidFgTile 
+				end
 			end
 		end
 	end

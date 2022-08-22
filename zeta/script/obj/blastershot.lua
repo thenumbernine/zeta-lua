@@ -22,9 +22,9 @@ function BlasterShot:init(...)
 --	self.removeTime = game.time + .2
 end
 
-BlasterShot.solidFlags = BlasterShot.SOLID_SHOT	
-BlasterShot.touchFlags = BlasterShot.SOLID_WORLD + BlasterShot.SOLID_YES + BlasterShot.SOLID_NO
-BlasterShot.blockFlags = BlasterShot.SOLID_WORLD + BlasterShot.SOLID_YES
+BlasterShot.solidFlags = BlasterShot.SOLID_SHOT
+BlasterShot.touchFlags = bit.bor(BlasterShot.SOLID_WORLD, BlasterShot.SOLID_YES, BlasterShot.SOLID_NO)
+BlasterShot.blockFlags = bit.bor(BlasterShot.SOLID_WORLD, BlasterShot.SOLID_YES)
 
 function BlasterShot:touchTile(tileType, side, plane, x, y)
 	if require 'zeta.script.tile.blasterbreak':isa(tileType) then

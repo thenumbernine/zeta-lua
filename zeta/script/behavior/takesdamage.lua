@@ -39,7 +39,7 @@ local function takesDamageBehavior(parentClass)
 		if self.invincibleEndTime >= game.time then return end
 		if self.dead then return end
 
-		if attacker.modifyDamageGiven then
+		if attacker and attacker.modifyDamageGiven then
 			damage = attacker:modifyDamageGiven(damage, self, inflicter, side) or damage
 		end
 		if self.modifyDamageTaken then

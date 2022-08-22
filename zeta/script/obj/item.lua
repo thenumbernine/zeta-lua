@@ -46,10 +46,7 @@ function Item:playerGrab(player, side)
 	do
 		local found = false
 		for _,items in ipairs(player.items) do
-			if getmetatable(self) ~= require 'zeta.script.obj.keycard'	-- they have to be held uniquely
-			and getmetatable(items[1]) == getmetatable(self)
-			and items[1].name == self.name
-			then
+			if player:itemBinMatches(self, items[1]) then
 				items:insert(self)
 				found = true
 				break

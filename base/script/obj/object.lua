@@ -78,8 +78,8 @@ function Object:init(args)
 	end
 
 	--[[
-	since i'm not holding individual tile objects anymore, 
-	i'll have level allocate them only for tiles that have objects on them 
+	since i'm not holding individual tile objects anymore,
+	i'll have level allocate them only for tiles that have objects on them
 	--]]
 	self.tiles = {}
 
@@ -208,7 +208,7 @@ function Object:unlink()
 				level.objsAtTile[x] = nil
 			end
 		end
-		-- clear as we go. safe because #self.tiles is stored upon iteration init		
+		-- clear as we go. safe because #self.tiles is stored upon iteration init
 		self.tiles[i] = nil
 	end
 end
@@ -270,18 +270,18 @@ Object.SOLID_GRENADE = 32
 -- what you are.  used as a reference for others.
 Object.solidFlags = Object.SOLID_YES	-- have 'yes'-flags react to you
 
--- what you can touch.  
--- if your touch flag matches their solid flag (or vice versa) 
+-- what you can touch.
+-- if your touch flag matches their solid flag (or vice versa)
 -- then both yours and their touch functions will trigger,
 -- in order according to each of your touchPriority
 Object.touchFlags = -1					-- call touch for everything
 
 -- what blocks you
--- notice if you want something's block to pass thru then have your touch function to return true 
+-- notice if you want something's block to pass thru then have your touch function to return true
 Object.blockFlags = Object.SOLID_WORLD + Object.SOLID_YES
 
 local collisionEpsilon = 1e-4
-Object.collisionEpsilon = collisionEpsilon 
+Object.collisionEpsilon = collisionEpsilon
 
 local function testBoxBox(self, testStuck, bxmin, bymin, bxmax, bymax, dt, dx, dy)
 	if dt == 0 then return dt end
@@ -293,7 +293,7 @@ local function testBoxBox(self, testStuck, bxmin, bymin, bxmax, bymax, dt, dx, d
 --print('  ========================')
 --print('  == BEGIN BOX/BOX TEST ==')
 --print('  ========================')
---print('testing bbox',box2(bxmin,bymin,bxmax,bymax),'dt',dt,'dx',dx,'dy',dy)	
+--print('testing bbox',box2(bxmin,bymin,bxmax,bymax),'dt',dt,'dx',dx,'dy',dy)
 
 	-- see if we're touching at our current time
 	if testStuck
@@ -339,12 +339,12 @@ local function testBoxBox(self, testStuck, bxmin, bymin, bxmax, bymax, dt, dx, d
 		local sideX
 		if dx > 0 then
 --print('dtx',dtx,' > 0 so testing right side')
-			--self.pos[1] + self.bbox.max[1] + dtx*dx = bxmin 
+			--self.pos[1] + self.bbox.max[1] + dtx*dx = bxmin
 			dtx = (bxmin - self.pos[1] - self.bbox.max[1]) / dx
 			sideX = 'Right'
 		elseif dx < 0 then
 --print('dtx',dtx,' < 0 so testing left side')
-			--self.pos[1] + self.bbox.min[1] + dtx*dx = bxmax 
+			--self.pos[1] + self.bbox.min[1] + dtx*dx = bxmax
 			dtx = (bxmax - self.pos[1] - self.bbox.min[1]) / dx
 			sideX = 'Left'
 		end
@@ -355,12 +355,12 @@ local function testBoxBox(self, testStuck, bxmin, bymin, bxmax, bymax, dt, dx, d
 			-- because a clear dtx means a full step
 --print('blocking y axis info:',tolua({dy = dy,dtx = dtx,self_ymin = self.pos[2] + self.bbox.min[2] + dtx * dy,self_ymax = self.pos[2] + self.bbox.max[2] + dtx * dy,box_ymin = bymin,box_ymax = bymax},{indent=true}))
 			-- use < > instead of <= >= to let objects slide across the sides of others
-			if not (self.pos[2] + self.bbox.min[2] + dtx * dy < bymax 
+			if not (self.pos[2] + self.bbox.min[2] + dtx * dy < bymax
 				and self.pos[2] + self.bbox.max[2] + dtx * dy > bymin)
 			then
 --print('recalled x movement collision -- not being blocked on y axis')
 				sideX = nil
-				dtx = dt 
+				dtx = dt
 			end
 		end
 
@@ -368,32 +368,32 @@ local function testBoxBox(self, testStuck, bxmin, bymin, bxmax, bymax, dt, dx, d
 		local sideY
 		if dy > 0 then
 --print('dty',dty,' > 0 so testing up side')
-			--self.pos[2] + self.bbox.max[2] + dty*dy = bymin 
+			--self.pos[2] + self.bbox.max[2] + dty*dy = bymin
 			dty = (bymin - self.pos[2] - self.bbox.max[2]) / dy
 			sideY = 'Up'
 		elseif dy < 0 then
 --print('dty',dty,' < 0 so testing down side')
-			--self.pos[2] + self.bbox.min[2] + dty*dy = bymax 
+			--self.pos[2] + self.bbox.min[2] + dty*dy = bymax
 			dty = (bymax - self.pos[2] - self.bbox.min[2]) / dy
 			sideY = 'Down'
 		end
 		if dty then
 			if math.abs(dty) < collisionEpsilon then dty = 0 end
---print('found y movement collision',dty)			
+--print('found y movement collision',dty)
 --print('blocking x axis info:',tolua({dx = dx,dty = dty,self_xmin = self.pos[1] + self.bbox.min[1] + dty * dx,self_xmax = self.pos[1] + self.bbox.max[1] + dty * dx,box_xmin = bxmin, box_xmax = bxmax},{indent=true}))
 			if not (self.pos[1] + self.bbox.min[1] + dty * dx < bxmax
 				and self.pos[1] + self.bbox.max[1] + dty * dx > bxmin)
 			then
---print('recalled y movement collision - not being blocked on x axis')					
+--print('recalled y movement collision - not being blocked on x axis')
 				dty = dt
 				sideY = nil
 			end
 		end
 
-		-- if our collision will happen in positive time then find when that is 
---print('checking x collision time',dtx,'to current step time',dt)			
+		-- if our collision will happen in positive time then find when that is
+--print('checking x collision time',dtx,'to current step time',dt)
 		if 0 <= dtx and dtx < dt then
---print('found it is better - using it')				
+--print('found it is better - using it')
 			dt = dtx
 			side = sideX
 		end
@@ -415,7 +415,7 @@ local function buildTileTypePoly(tileType)
 
 	local clipPlane = assert(tileType.plane)
 
-	-- build poly based on clip plane orientation	
+	-- build poly based on clip plane orientation
 	-- TODO cache poly based on planes
 	-- or pass the tiletype itself, and cache the poly based on / within the tile type
 	local vtxs = table()
@@ -431,7 +431,7 @@ local function buildTileTypePoly(tileType)
 		error("this isn't a poly, it's a box!")
 	end
 
-	-- intersections of each edge of the box	
+	-- intersections of each edge of the box
 	-- plane a x + b y + c = 0
 	-- y = -(ax+c)/b
 	-- for x=0: y=-c/b
@@ -601,7 +601,7 @@ local function buildTileTypePoly(tileType)
 			-- |  |
 			-- |  |
 			-- |  /
-			-- 1-b 
+			-- 1-b
 			vtxs:insert{0,0}
 			planes:insert{-1,0,0}
 			vtxs:insert{0,1}
@@ -634,7 +634,7 @@ plane is the plane that chops the box
 	assumes the plane normal is unit
 --]]
 local function testBoxSlope(self, testStuck, x, y, tileType, dt, dx, dy)
-	-- we only handle dt==0 collisions if we're testing interpenetration, i.e. non-blocking touch callbacks 
+	-- we only handle dt==0 collisions if we're testing interpenetration, i.e. non-blocking touch callbacks
 	-- and at the moment there are no non-blocking tiles, nor tile touch callbacks
 	if dt == 0 then return dt end
 
@@ -670,7 +670,7 @@ local function testBoxSlope(self, testStuck, x, y, tileType, dt, dx, dy)
 			bestPlaneDepth = planeDepth
 			bestNormal = {-1, 0}
 		end
-				-- left	
+				-- left
 		local planeDepth = math.huge
 		for _,vtx in ipairs(vtxs) do
 			planeDepth = math.min(planeDepth, (self.pos[1] + self.bbox.min[1]) - (x + vtx[1]))
@@ -687,7 +687,7 @@ local function testBoxSlope(self, testStuck, x, y, tileType, dt, dx, dy)
 		if planeDepth > bestPlaneDepth then
 			bestPlaneDepth = planeDepth
 			bestNormal = {0, -1}
-		end	
+		end
 				-- down
 		local planeDepth = math.huge
 		for _,vtx in ipairs(vtxs) do
@@ -715,7 +715,7 @@ local function testBoxSlope(self, testStuck, x, y, tileType, dt, dx, dy)
 		end
 --print('bestPlaneDepth',bestPlaneDepth,'bestNormal',table.unpack(bestNormal))
 		if bestPlaneDepth < 0 then
---print("bestPlaneDepth < 0 means we're stuck")		
+--print("bestPlaneDepth < 0 means we're stuck")
 			dt = 0		-- stuck
 		end
 	end
@@ -732,7 +732,7 @@ local function testBoxSlope(self, testStuck, x, y, tileType, dt, dx, dy)
 
 			-- move 4 vtxs of self.pos+self.bbox
 
---print('testing self vtxs against slopebox planes') 
+--print('testing self vtxs against slopebox planes')
 			-- normal[i] is the normal of the edge between vtxs[i] and vtxs[i+1]
 			-- but really just use -y,x and normalize it ...
 			for i=1,#vtxs do
@@ -749,7 +749,7 @@ local function testBoxSlope(self, testStuck, x, y, tileType, dt, dx, dy)
 				-- testing plane normal to move delta is a good idea
 				local planeDotDelta = plane[1] * dx + plane[2] * dy
 
---print('plane dot delta',planeDotDelta)				
+--print('plane dot delta',planeDotDelta)
 				if planeDotDelta < 0 then	-- moving into the plane?
 --print('testing slopebox edge ['..va[1]..','..va[2]..'] -> ['..vb[1]..','..vb[2]..']')
 					for xminmax=1,2 do
@@ -778,7 +778,7 @@ local function testBoxSlope(self, testStuck, x, y, tileType, dt, dx, dy)
 								local det = -dx * vaby + dy * vabx
 								if det ~= 0 then	-- 0 means perpendicular
 									local s = (-dy * v_va_x + dx * v_va_y) / det
-									-- use >= <= to hit corners 
+									-- use >= <= to hit corners
 									if s >= 0 and s <= 1 then
 										local dtv = (-vaby * v_va_x + vabx * v_va_y) / det
 										-- getting toe-stumping midway up slopes ...
@@ -798,10 +798,10 @@ local function testBoxSlope(self, testStuck, x, y, tileType, dt, dx, dy)
 				end
 			end
 
---print('testing slopebox vtxs against self planes') 
+--print('testing slopebox vtxs against self planes')
 			-- move poly by -dx, -dy against bbox
 			for _,vtx in ipairs(vtxs) do
---print('testing vtx',table.unpack(vtx))				
+--print('testing vtx',table.unpack(vtx))
 
 				local dtx
 				if dx < 0 then
@@ -815,40 +815,40 @@ local function testBoxSlope(self, testStuck, x, y, tileType, dt, dx, dy)
 				end
 				if dtx then
 					if math.abs(dtx) < collisionEpsilon then dtx = 0 end
-					-- make sure our collision time 
-					if 0 <= dtx and dtx < dt 
+					-- make sure our collision time
+					if 0 <= dtx and dtx < dt
 					-- make sure we're colliding on the self at that point
 					and self.pos[2] + self.bbox.min[2] < y + vtx[2] - dtx * dy
 					and self.pos[2] + self.bbox.max[2] > y + vtx[2] - dtx * dy
 					then
 						dt = dtx
 						bestNormal = dx < 0 and {1,0} or {-1,0}
---print('found x collision at dt',dt,'normal',table.unpack(bestNormal))									
+--print('found x collision at dt',dt,'normal',table.unpack(bestNormal))
 					end
 				end
 				
 				local dty
 				if dy < 0 then
-					-- bottom of self 
+					-- bottom of self
 					-- (y + vtx[2]) - dy * dtu = self.pos[2] + self.bbox.max[2]
 					dty = ((self.pos[2] + self.bbox.min[2]) - (y + vtx[2])) / -dy
 				elseif dy > 0 then
-					-- top of self 
+					-- top of self
 					-- (y + vtx[2]) - dy * dty = self.pos[2] + self.bbox.max[2]
 					dty = ((self.pos[2] + self.bbox.max[2]) - (y + vtx[2])) / -dy
 				end
 				if dty then
 					if math.abs(dty) < collisionEpsilon then dty = 0 end
-					if 0 <= dty and dty < dt 
+					if 0 <= dty and dty < dt
 					-- make sure we're colliding on the self at that point
 					and self.pos[1] + self.bbox.min[1] < x + vtx[1] - dty * dx
 					and self.pos[1] + self.bbox.max[1] > x + vtx[1] - dty * dx
 					then
 						dt = dty
 						bestNormal = dy < 0 and {0,1} or {0,-1}
---print('found y collision at dt',dt,'normal',table.unpack(bestNormal))									
+--print('found y collision at dt',dt,'normal',table.unpack(bestNormal))
 					end
-				end		
+				end
 			end
 		end
 	end
@@ -867,7 +867,7 @@ local numObjsTested = 0
 local avgNumTestsPerObj = 0
 function Object.debugUpdate()
 print(numObjsTested..' objs tested, '..avgNumTestsPerObj / numObjsTested..' avg objs per test')
-avgNumTestsPerObj = 0 
+avgNumTestsPerObj = 0
 numObjsTested = 0
 end
 --]]
@@ -920,7 +920,7 @@ function Object:move_sub(dx,dy)
 		local cymin = self.pos[2] + self.bbox.min[2] + math.min(dt * dy,0)
 		local cxmax = self.pos[1] + self.bbox.max[1] + math.max(dt * dx,0)
 		local cymax = self.pos[2] + self.bbox.max[2] + math.max(dt * dy,0)
---print('testing entire bbox',box2(cxmin,cymin,cxmax,cymax)) 
+--print('testing entire bbox',box2(cxmin,cymin,cxmax,cymax))
 		
 		local xmin = math.floor(cxmin)-1
 		local ymin = math.floor(cymin)-1
@@ -935,17 +935,17 @@ function Object:move_sub(dx,dy)
 			if xmin < 1 then xmin = 1 end
 			if xmax > level.size[1] then xmax = level.size[1] end
 			if ymin < 1 then ymin = 1 end
-			if ymax > level.size[2] then ymax = level.size[2] end	
+			if ymax > level.size[2] then ymax = level.size[2] end
 			
 			-- if we can collide with the world
-			-- I'm not checking touchFlags because allowing touching non-blocking tiles 
+			-- I'm not checking touchFlags because allowing touching non-blocking tiles
 			--  would mean rechecking tiles with certain tiles (previously checked, touched, and non-blocked) excluded
 			-- which I don't have support for, nor see a use for
 			-- I'm thinking of getting rid of tile.touch anyways.
 			if bit.band(self.blockFlags, Object.SOLID_WORLD) ~= 0 then
 
 			-- test world
---print('clamped tile bounds to',box2(xmin,ymin,xmax,ymax))			
+--print('clamped tile bounds to',box2(xmin,ymin,xmax,ymax))
 				for y=ymin,ymax do
 					for x=xmin,xmax do
 						local tileType = level:getTile(x,y)
@@ -965,7 +965,7 @@ function Object:move_sub(dx,dy)
 									touchedTileY = y
 								end
 							else
---[[ real-deal poly intersection								
+--[[ real-deal poly intersection
 								local newNormal
 								dt, newNormal = testBoxSlope(self, false, x, y, tileType, dt, dx, dy)
 								if newNormal then
@@ -983,7 +983,7 @@ function Object:move_sub(dx,dy)
 									touchedTileY = y
 								end
 --]]
--- [=[ poor-man's chop it up into tiny pieces							
+-- [=[ poor-man's chop it up into tiny pieces
 								local udivs = 16
 								local vdivs = 16
 								local plane = tileType.plane
@@ -995,7 +995,7 @@ function Object:move_sub(dx,dy)
 											dt, newSide = testBoxBox(self, false, x + u/udivs, y + v/vdivs, x + (u+1)/udivs,y + (v+1)/vdivs, dt, dx, dy)
 											if newSide then
 												side = newSide
-												normal = dirs[oppositeSide[side:lower()]]	-- plane 
+												normal = dirs[oppositeSide[side:lower()]]	-- plane
 												touchedObj = nil
 												touchedTileType = tileType
 												touchedTileX = x
@@ -1011,7 +1011,7 @@ function Object:move_sub(dx,dy)
 				end
 			end
 				
-			-- test objs	
+			-- test objs
 			for x=xmin,xmax do
 				local col = level.objsAtTile[x]
 				if col then
@@ -1022,7 +1022,7 @@ function Object:move_sub(dx,dy)
 							for _,obj in ipairs(tile.objs) do
 								-- don't collide self with self
 								if not obj.remove
-								and obj ~= self 
+								and obj ~= self
 								-- only collide if we will can touch or be blocked by them
 								and (bit.band(self.touchFlags, obj.solidFlags) ~= 0
 									or bit.band(obj.touchFlags, self.solidFlags) ~= 0
@@ -1037,12 +1037,12 @@ function Object:move_sub(dx,dy)
 								-- don't check objects twice
 								and (not objsTested or not table.find(objsTested, obj))
 								then
-					--avgNumTestsPerObj = avgNumTestsPerObj + 1 
+					--avgNumTestsPerObj = avgNumTestsPerObj + 1
 									
 									local newSide
 									dt, newSide = testBoxBox(
 										self,
-										true,	-- testStuck.  only needs to be true if self isn't blocked by this object. 
+										true,	-- testStuck.  only needs to be true if self isn't blocked by this object.
 										obj.pos[1]+obj.bbox.min[1],
 										obj.pos[2]+obj.bbox.min[2],
 										obj.pos[1]+obj.bbox.max[1],
@@ -1078,9 +1078,9 @@ function Object:move_sub(dx,dy)
 
 		if t < 1 then
 			dt = 1 - t
-			if math.abs(dt) < collisionEpsilon then 
+			if math.abs(dt) < collisionEpsilon then
 				t = 1
-				dt = 0 
+				dt = 0
 			end
 		end
 
@@ -1103,13 +1103,13 @@ function Object:move_sub(dx,dy)
 				-- TODO tile touch callbacks?
 			end
 			
---print('touchedObj is',touchedObj)			
+--print('touchedObj is',touchedObj)
 			if touchedObj then
 --print('checking self.touchFlags',self.touchFlags,'vs touchedObj.solidFlags',touchedObj.solidFlags)
-				if bit.band(self.touchFlags, touchedObj.solidFlags) ~= 0 
+				if bit.band(self.touchFlags, touchedObj.solidFlags) ~= 0
 				or bit.band(touchedObj.touchFlags, self.solidFlags) ~= 0
 				then
---print('running touches based on priority. self.touchPriority=',self.touchPriority,'touchedObj.touchPriority=',touchedObj.touchPriority)					
+--print('running touches based on priority. self.touchPriority=',self.touchPriority,'touchedObj.touchPriority=',touchedObj.touchPriority)
 					local opposite = oppositeSide[lside] or error("can't find opposite side for side "..tostring(side))
 					if self.touchPriority >= touchedObj.touchPriority then
 						if self.touch then dontblock = self:touch(touchedObj, lside) or dontblock end
@@ -1119,7 +1119,7 @@ function Object:move_sub(dx,dy)
 						if not touchedObj.remove and self.touch then dontblock = self:touch(touchedObj, lside) or dontblock end
 					end
 					if self.remove then return end
---print('after calling touch, dontblock=',dontblock)				
+--print('after calling touch, dontblock=',dontblock)
 				end
 			end
 			
@@ -1143,7 +1143,7 @@ function Object:move_sub(dx,dy)
 				-- clip velocity and movement on the collided axis and try again
 				local vDotN = self.vel:dot(normal)
 --print('self.vel',self.vel[1],self.vel[2])
---print('velocity dot normal',vDotN)				
+--print('velocity dot normal',vDotN)
 				if vDotN < 0 then
 --print('zeroing velocity against normal')
 					self.vel[1] = self.vel[1] - normal[1] * vDotN
@@ -1155,10 +1155,10 @@ function Object:move_sub(dx,dy)
 				local deltaDotN = dx * normal[1] + dy * normal[2]
 --print('delta dot normal',deltaDotN)
 				if deltaDotN < 0 then
---print('zeroing delta against normal')					
+--print('zeroing delta against normal')
 					dx = dx - normal[1] * deltaDotN
 					dy = dy - normal[2] * deltaDotN
---print('delta is now',dx,dy)				
+--print('delta is now',dx,dy)
 				end
 			end
 			
@@ -1166,7 +1166,7 @@ function Object:move_sub(dx,dy)
 			-- that way if it can be passed through
 			-- then the next traceline won't check it
 			if touchedObj then
---print('adding obj',touchedObj,'to the already-checked list')				
+--print('adding obj',touchedObj,'to the already-checked list')
 				if not objsTested then objsTested = {} end
 				table.insert(objsTested, touchedObj)
 			end
@@ -1224,12 +1224,12 @@ end
 --]]
 
 -- new system
-Object.touch = nil -- function(other, side) 
+Object.touch = nil -- function(other, side)
 
 function Object:draw(R, viewBBox, holdOverride)
 	if not self.sprite then return end
 	
-	-- heldby means re-rendering the obj to keep it in frame sync with the player	
+	-- heldby means re-rendering the obj to keep it in frame sync with the player
 	if self.heldby and not holdOverride then return end
 		
 	local level = game.level

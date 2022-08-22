@@ -113,6 +113,18 @@ function Hero:refreshSize()
 	end
 end
 
+-- called by zeta/script/obj.item :playerGrab on the grabbed item and the first of each bin
+-- used to determine how items should be binned
+function Hero:itemBinMatches(a, b)
+	-- keycards have to be held uniquely. 
+	-- (maybe group by color?)
+	-- (or maybe just give key cards names based on their color?)	
+	if require 'zeta.script.obj.keycard':isa(a) then return false end 
+	
+	-- default group by metatable + name
+	return getmetatable(b) == getmetatable(a) and a.name == b.name
+end
+
 function Hero:setHeld(other)
 	if self.holding and self.holding ~= other then
 -- revert to class originals
@@ -847,35 +859,7 @@ function Hero:update(dt)
 	local pageUpPress = self.inputPageUp and not self.inputPageUpLast
 	local pageDownPress = self.inputPageDown and not self.inputPageDownLast
 	if pageUpPress or pageDownPress then
-		local itemIndex = self.items:find(nil, function(items)
-			return items:find(self.weapon)
-		end)
-		itemIndex = itemIndex or 0
-	
-		local dir
-		if pageUpPress then
-			dir = 1
-		elseif pageDownPress then
-			dir = -1
-		end
-
-		local Weapon = require 'zeta.script.obj.weapon'
-		local newWeapon
-		while true do
-			itemIndex = (itemIndex + dir) % (#self.items + 1)
-	
-			-- TODO onHoldHide/onHoldShow ?
-			if itemIndex == 0 then
-				break
-			else
-				local item = self.items[itemIndex][1]
-				if Weapon:isa(item) then
-					newWeapon = item
-					break
-				end
-			end
-		end
-		self.weapon = newWeapon
+		self:cycleWeapon(pageUpPress and 1 or -1)
 	end
 
 	-- clean out the removed items
@@ -910,6 +894,33 @@ function Hero:update(dt)
 		self:updateMinimap()
 	end
 end
+
+-- [[ cycle weapon by unique weapon class
+function Hero:cycleWeapon(dir)
+	local itemIndex = self.items:find(nil, function(items)
+		return items:find(self.weapon)
+	end)
+	itemIndex = itemIndex or 0
+
+	local Weapon = require 'zeta.script.obj.weapon'
+	local newWeapon
+	while true do
+		itemIndex = (itemIndex + dir) % (#self.items + 1)
+
+		-- TODO onHoldHide/onHoldShow ?
+		if itemIndex == 0 then
+			break
+		else
+			local item = self.items[itemIndex][1]
+			if Weapon:isa(item) then
+				newWeapon = item
+				break
+			end
+		end
+	end
+	self.weapon = newWeapon
+end
+--]]
 
 function Hero:updateMinimap()
 	local gl = game.R.gl
