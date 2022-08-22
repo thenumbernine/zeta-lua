@@ -3,6 +3,8 @@ local Geemer = require 'zeta.script.obj.geemer'
 
 local KeyGeemer = class(Geemer)
 
+KeyGeemer.sprite = 'whitegeemer' 
+
 function KeyGeemer:init(args)
 	KeyGeemer.super.init(self, args)
 	if args.color then
