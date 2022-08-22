@@ -38,6 +38,13 @@ KeyShotItem.bbox = box2(-.2, -.2, .2, .2)
 KeyShotItem.rotCenter = {.5, .5}
 KeyShotItem.drawCenter = {.5, .5}
 
+function KeyShotItem:init(args)
+	KeyShotItem.super.init(self, args)
+	-- make name unique by color
+	-- that way player inventory will group by color (since it groups by class & name)
+	self.name = 'key '..tostring(vec3(table.unpack(self.color)))
+end
+
 function KeyShotItem:doShoot(player, pos, vel)
 	local player = self.heldby
 	if player then
