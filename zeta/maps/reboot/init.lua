@@ -254,7 +254,6 @@ local colors = table{
 	vec3(0,0,1),
 	vec3(1,0,1),
 	vec3(0,0,0),
-	vec3(1,1,1),
 }
 
 
@@ -275,6 +274,33 @@ startRoom:addBlock(startBlock)
 
 
 
+--[[
+local function makeItemRoom(option, item, roomChain)
+	local neighbor = assert(option.neighbor)
+	print('making room at '..neighbor.pos)
+	assert(not neighbor.room)
+	local room = Room()
+	roomChain:insert(room)
+	room:addBlock(neighbor)
+	local src = option.src
+	
+	local offset = option.offsetIndex
+	local opposite = oppositeOffsetIndex[offset]
+	
+	assert(neighbor.wall[opposite] == 'solid') 
+	assert(src.wall[offset] == 'solid')
+	neighbor.wall[opposite] = vec3(0,0,0)
+	src.wall[offset] = vec3(0,0,0)
+	
+	room.noMonsters = true
+	item.pos = {
+		(neighbor.pos[1] + .5) * level.mapTileSize[1] + 1.5, 
+		(neighbor.pos[2] + .5) * level.mapTileSize[2] - 2,
+	}
+	spawnInfos:insert(item)
+end
+--]]
+
 
 -- [==[
 local lastBlock = startBlock
@@ -288,37 +314,90 @@ for i=2,#goals do
 	local srcRoom = emptyOptions:pickRandom().src.room
 	
 	local goal = goals[i-1]
-	
-	-- draw out a new chain to a new item.  place it behind an old item's door (or a combination or any # of the last items ...)
-	local roomChain
-	roomChain, lastBlock = buildRoomChain(srcRoom, lastBlock, getGenNumRoomsInChain(), goal.color)
-	goal.roomChain = roomChain
 
-	local function makeItemRoom(option, item)
-		local neighbor = assert(option.neighbor)
-		print('making room at '..neighbor.pos)
-		assert(not neighbor.room)
-		local room = Room()
-		roomChain:insert(room)
-		room:addBlock(neighbor)
-		local src = option.src
-		
-		local offset = option.offsetIndex
-		local opposite = oppositeOffsetIndex[offset]
-		
-		assert(neighbor.wall[opposite] == 'solid') 
-		assert(src.wall[offset] == 'solid')
-		neighbor.wall[opposite] = vec3(0,0,0)
-		src.wall[offset] = vec3(0,0,0)
-		
-		room.noMonsters = true
-		item.pos = {
-			(neighbor.pos[1] + .5) * level.mapTileSize[1] + 1.5, 
-			(neighbor.pos[2] + .5) * level.mapTileSize[2] - 2,
+	local roomChainsAndLastBlocks = table()
+
+	local numBranches = math.random(2,4)
+	for branch=1,numBranches do
+		-- TODO instead of spawning off 'lastBlock'
+		-- spawn off any random block
+
+		-- draw out a new chain to a new item.  place it behind an old item's door (or a combination or any # of the last items ...)
+		local roomChain, chainLastBlock = buildRoomChain(srcRoom, lastBlock, getGenNumRoomsInChain(), goal.color)
+		-- but some are dead ends?
+	
+		roomChainsAndLastBlocks:insert{
+			roomChain = roomChain,
+			lastBlock = chainLastBlock,
 		}
-		spawnInfos:insert(item)
 	end
 
+	-- now in all (all except the key chain?)
+	-- put monsters that spawn old keys
+
+	
+
+	local color = goals[i].color
+
+	-- pick one chain to put the keys in
+	local pickedChainAndLastBlock = roomChainsAndLastBlocks:pickRandom()
+
+	-- in all the other rooms except that one, put monsters that swap keys
+	for _,roomChainAndLastBlock in ipairs(roomChainsAndLastBlocks) do
+
+		-- for one chain in particular, make keys with colors of our next goal
+		if roomChainAndLastBlock == pickedChainAndLastBlock then	
+			for i=1,5 do
+				spawnInfos:insert{
+					spawn = 'zeta.script.obj.keyshotitem',
+					pos = {
+						(lastBlock.pos[1] + .5) * level.mapTileSize[1] + 1.5
+							-- don't center it or it'll fall down the ladder well
+							+ 3 + math.random() * 3
+						,
+						(lastBlock.pos[2] + .5) * level.mapTileSize[2] - 2,
+					},
+					color = table(color):append{1},
+
+					-- temp flag
+					noFloorPlease = true,
+				}
+			end
+		end
+
+		-- make monsters that give up keys of any previous up to the next goal
+		-- TODO if we do include next goal then we don't need item keys above
+		for i=1,1 do
+			spawnInfos:insert{
+				spawn = 'zeta.script.obj.keygeemer',
+				pos = {
+					(lastBlock.pos[1] + .5) * level.mapTileSize[1] + 1.5
+						-- don't center it or it'll fall down the ladder well
+						- 8 + math.random() * 3
+					,
+					(lastBlock.pos[2] + .5) * level.mapTileSize[2] - 2,
+				},
+				-- TODO hit color (draw color) and give item color
+				color = table(color):append{1},
+
+				-- TODO drop amount random range?
+				dropColor = table(
+					table.sub(goals, 1, i):pickRandom().color
+				):append{1},
+			}
+		end
+	end
+	
+
+	local roomChain = pickedChainAndLastBlock.roomChain
+	-- idk why i need 'lastBlock' anymore ...
+	-- instead I should be picking from all old blocks right?
+	-- otherwise I risk picking a block with no neighbors and either overwriting old rooms or growing nowhere
+	lastBlock = pickedChainAndLastBlock.lastBlock
+	goal.roomChain = roomChain
+
+
+	--[[
 	if goal.roomItems then
 		for _,spawn in ipairs(goal.roomItems) do
 			local options = getEmptyNeighborOptions(roomChain)
@@ -326,12 +405,12 @@ for i=2,#goals do
 			if not option then
 				error("couldn't find room to place item")
 			else
-				makeItemRoom(option, {spawn=spawn})
+				makeItemRoom(option, {spawn=spawn}, roomChain)
 			end
 		end
 	end
+	--]]
 
-	local color = goals[i].color
 	--[[ 
 	spawnInfos:insert{
 		pos = {
@@ -343,23 +422,6 @@ for i=2,#goals do
 	}
 	--]]
 	-- [[
-	for i=1,5 do
-		spawnInfos:insert{
-			spawn = 'zeta.script.obj.keyshotitem',
-			pos = {
-				(lastBlock.pos[1] + .5) * level.mapTileSize[1] + 1.5
-					-- don't center it or it'll fall down the ladder well
-					+ 3 + math.random() * 3
-				,
-				(lastBlock.pos[2] + .5) * level.mapTileSize[2] - 2,
-			},
-			color = table(color):append{1},
-			name = 'key '..tostring(vec3(table.unpack(color))),
-
-			-- temp flag
-			noFloorPlease = true,
-		}
-	end
 	--]]
 
 
