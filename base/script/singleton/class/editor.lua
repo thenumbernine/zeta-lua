@@ -2298,7 +2298,7 @@ function Editor:saveMap()
 			for k,v in pairs(spawnInfo) do t[k] = v end
 			-- remove objects from serialization
 			t.obj = nil
-			return '\t'..tolua(t)..','
+			return '\t'..tolua(t, {indent=false})..','
 		end):concat('\n')
 		..'\n}'
 

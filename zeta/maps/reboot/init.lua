@@ -17,13 +17,20 @@ local table = require 'ext.table'
 local vec2 = require 'vec.vec2'
 local vec3 = require 'vec.vec3'
 
+
 local mapname = 'reboot'
 
 getmetatable(game).viewSize = 16
 
-local Hero = require 'zeta.script.obj.hero'
-
 if game.savePoint then return end
+
+
+setTimeout(.1, function()
+	for _,player in ipairs(game.players) do
+		require 'zeta.script.obj.walljump'{}:playerGrab(player, 1)
+	end
+end)
+
 
 for _,obj in ipairs(game.objs) do obj.remove = true end
 game.objs = table()
@@ -59,8 +66,13 @@ local positiveOffsetIndexForAxis = {1,2}
 local negativeOffsetIndexForAxis = {3,4}
 
 
-local function getGenMaxExtraDoors() return 0 end --math.random(25) end
-local function getGenNumRoomsInChain() return math.random(2,4) end -- math.random(10,20) end-- math.random(100,200) end
+local function getGenMaxExtraDoors() 
+	return 0
+end --math.random(25) end
+local function getGenNumRoomsInChain() 
+	return 1
+	--return math.random(2,4) 
+end -- math.random(10,20) end-- math.random(100,200) end
 local function getGenRoomSize() 
 	return 1
 	--return math.random(1,3) 
@@ -264,7 +276,7 @@ startRoom:addBlock(startBlock)
 
 
 
---[==[
+-- [==[
 local lastBlock = startBlock
 for i=2,#goals do
 	-- pick a new source room to start spawning the chain from
@@ -319,16 +331,36 @@ for i=2,#goals do
 		end
 	end
 
-	-- TODO make a room out of this?
+	local color = goals[i].color
+	--[[ 
 	spawnInfos:insert{
 		pos = {
 			(lastBlock.pos[1] + .5) * level.mapTileSize[1] + 1.5,
 			(lastBlock.pos[2] + .5) * level.mapTileSize[2] - 2,
 		},
 		spawn = 'zeta.script.obj.keycard',
-		color = table(goals[i].color):append{1},
+		color = table(color):append{1},
 	}
+	--]]
+	-- [[
+	for i=1,5 do
+		spawnInfos:insert{
+			spawn = 'zeta.script.obj.keyshotitem',
+			pos = {
+				(lastBlock.pos[1] + .5) * level.mapTileSize[1] + 1.5
+					-- don't center it or it'll fall down the ladder well
+					+ 3 + math.random() * 3
+				,
+				(lastBlock.pos[2] + .5) * level.mapTileSize[2] - 2,
+			},
+			color = table(color):append{1},
+			name = 'key '..tostring(vec3(table.unpack(color))),
 
+			-- temp flag
+			noFloorPlease = true,
+		}
+	end
+	--]]
 
 
 	--[=[
@@ -635,6 +667,7 @@ spawnInfos:insert{
 	},
 }
 --]]
+--[[
 spawnInfos:insert{
 	spawn = 'zeta.script.obj.walljump',
 	pos = {
@@ -642,12 +675,11 @@ spawnInfos:insert{
 		level.mapTileSize[2] * (startRoomPos[2] + .5) - 1,
 	},
 }
+--]]
 
-for _,color in ipairs{
-	{1, .5, .5, 1},
-	{.5, 1, .5, 1},
-	{.5, .5, 1, 1},
-} do
+-- [[
+do
+	local color = goals[1].color
 	for i=1,10 do
 		spawnInfos:insert{
 			spawn = 'zeta.script.obj.keyshotitem',
@@ -655,7 +687,7 @@ for _,color in ipairs{
 				level.mapTileSize[1] * (startRoomPos[1] + .5) + 0.5 + math.random() * 10 - 5,
 				level.mapTileSize[2] * (startRoomPos[2] + .5) + 5,
 			},
-			color = color,--{1, .5, .5, 1},
+			color = table(color):append{1},
 			name = 'key '..tostring(vec3(table.unpack(color))),
 
 			-- temp flag
@@ -663,6 +695,7 @@ for _,color in ipairs{
 		}
 	end
 end
+--]]
 
 
 -- these objects deserve a platform
@@ -694,9 +727,7 @@ local platformSpawns = table{
 print'putting platforms under spawns...'
 for _,info in ipairs(spawnInfos) do
 	if platformSpawns[info.spawn] then
-		if info.noFloorPlease then
-			info.noFloorPlease = nil
-		else
+		if not info.noFloorPlease then
 			for j=0,1 do	
 				for i=1,5 do
 					local x = info.pos[1]-4.5+i
@@ -707,6 +738,7 @@ for _,info in ipairs(spawnInfos) do
 			end
 		end
 	end
+	info.noFloorPlease = nil
 end
 
 

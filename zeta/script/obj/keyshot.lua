@@ -51,6 +51,19 @@ function KeyShot:touch(other, side)
 		-- only hurt if it isn't immune to this
 		other:takeDamage(self.damage, self.shooter, self, side)
 	end
+	
+	if self.color
+	and require 'zeta.script.obj.door':isa(other)
+	and vec4.__eq(self.color, other.color) 
+	then
+		other.spawnInfo.color = nil
+		other.color = nil
+		-- now find any door next to us (within 1 tile) 
+		-- and (only if the color matches?)
+		-- clear that as well?
+		-- nah .... 
+	end
+	
 	self.remove = true
 end
 

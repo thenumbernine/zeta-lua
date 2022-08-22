@@ -33,13 +33,21 @@ function Door:init(...)
 	end
 
 	-- room system ...
-	-- if there's a door next to this, and it's open, then open this door too
 	for _,obj in ipairs(game.objs) do
+		-- if there's a door next to this, and it's open, then open this door too
 		if obj ~= self
 		and Door:isa(obj)
 		and math.abs(obj.startPos[1] - self.startPos[1]) == 1
 		and obj.startPos[2] == self.startPos[2]
 		and obj.solidFlags == 0
+		then
+			self:setState'open'
+		end
+	
+		-- how about if the player is touching us at first?
+		if require 'zeta.script.obj.hero':isa(obj)
+		and math.abs(obj.pos[1] - self.startPos[1]) <= 2
+		and math.abs(obj.pos[2] - self.startPos[2]) <= 2
 		then
 			self:setState'open'
 		end

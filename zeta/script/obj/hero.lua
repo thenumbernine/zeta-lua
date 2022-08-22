@@ -1062,7 +1062,7 @@ function Hero:draw(R, viewBBox, holdOveride)
 				self.drawCenter[1] = self.drawMirror and .25 or .75
 				self.drawCenter[2] = .25
 				-- if you just got done climbing within half a second ago (or however long the climb_to_crawl animation length is) -- then play that
-				if self.climbToCrawlEndTime > game.time then
+				if self.climbToCrawlEndTime and self.climbToCrawlEndTime > game.time then
 					self.seq = 'climb_to_crawl'
 				elseif self.inputLeftRight ~= 0 then
 					self.seq = 'crawl_walk'
