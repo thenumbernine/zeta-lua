@@ -1,3 +1,4 @@
+local box2 = require 'vec.box2'
 local game = require 'base.script.singleton.game'
 local behaviors = require 'base.script.behaviors'
 

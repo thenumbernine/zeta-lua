@@ -1,5 +1,6 @@
 local table = require 'ext.table'
 local class = require 'ext.class'
+local box2 = require 'vec.box2'
 local Geemer = require 'zeta.script.obj.geemer'
 local game = require 'base.script.singleton.game'
 

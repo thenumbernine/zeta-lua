@@ -1,4 +1,6 @@
 local class = require 'ext.class'
+local vec2 = require 'vec.vec2'
+local vec4 = require 'vec.vec4'
 local Geemer = require 'zeta.script.obj.geemer'
 
 local KeyGeemer = class(Geemer)

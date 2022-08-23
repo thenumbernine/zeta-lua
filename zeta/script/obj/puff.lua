@@ -1,4 +1,5 @@
 local class = require 'ext.class'
+local vec4 = require 'vec.vec4'
 local Object = require 'base.script.obj.object'
 
 local Puff = class(Object)

@@ -1,5 +1,6 @@
 local bit = require 'bit'
 local class = require 'ext.class'
+local box2 = require 'vec.box2'
 local Object = require 'base.script.obj.object'
 local game = require 'base.script.singleton.game'
 --local setTimeout = require 'base.script.settimeout'

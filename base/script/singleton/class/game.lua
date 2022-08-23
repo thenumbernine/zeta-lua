@@ -1,6 +1,7 @@
 local class = require 'ext.class'
 local table = require 'ext.table'
 local coroutine = require 'ext.coroutine'
+local box2 = require 'vec.box2'
 local audio = require 'base.script.singleton.audio'
 local modio = require 'base.script.singleton.modio'
 local AudioSource = require 'audio.source'

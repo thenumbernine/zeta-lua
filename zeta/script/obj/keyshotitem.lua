@@ -9,6 +9,10 @@ Think of it like a sole missile from metroid.
 But it can be multi-colored.
 --]]
 local class = require 'ext.class'
+local vec2 = require 'vec.vec2'
+local vec3 = require 'vec.vec3'
+local vec4 = require 'vec.vec4'
+local box2 = require 'vec.box2'
 local Weapon = require 'zeta.script.obj.weapon'
 
 -- 'Weapon' has hold and shoot stuff, but needs to be picked up

@@ -9,10 +9,6 @@ local tolua = require 'ext.tolua'
 local ImGuiApp = require 'imguiapp'
 local sdl = require 'ffi.sdl'
 
-local NetCom = require 'netrefl.netcom'
-
-require 'netrefl.netfield_list'
-
 local AudioSource = require 'audio.source'
 local AudioBuffer = require 'audio.buffer'
 
@@ -48,6 +44,12 @@ end
 -- TODO hud here
 function PlayerClientObject:drawScene(player, aspectRatio)
 end
+
+
+local NetCom = require 'netrefl.netcom'
+local createNetFieldList = require 'netrefl.netfield_list'.createNetFieldList
+local netFieldString = require 'netrefl.netfield'.netFieldString
+local netFieldNumber = require 'netrefl.netfield'.netFieldNumber
 
 local netcom = NetCom()
 

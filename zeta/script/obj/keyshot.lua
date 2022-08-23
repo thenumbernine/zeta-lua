@@ -9,6 +9,8 @@ Think of it like a sole missile from metroid.
 But it can be multi-colored.
 --]]
 local class = require 'ext.class'
+local vec4 = require 'vec.vec4'
+local box2 = require 'vec.box2'
 local Weapon = require 'zeta.script.obj.weapon'
 local Object = require 'base.script.obj.object'
 local KeyShot = class(Object)

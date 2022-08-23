@@ -36,11 +36,11 @@ modio.levelcfg = {
 	--music = 'music/overworld.wav',
 
 	--path = 'empty',
-	path = 'test',
+	--path = 'test',
 	--path = 'test2',
 	--path = 'doors',		-- FIXME
 	--path = 'fight',
-	--path = 'mine',
+	path = 'mine',
 	--path = 'mine2',
 	--path = 'pswitch-fluids',
 	--path = 'pswitch-platform',
