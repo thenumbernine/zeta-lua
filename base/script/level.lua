@@ -721,12 +721,11 @@ void main() {
 			-- [[ color with the sprites themselves
 			local srcTex = rect.tex
 			local srcData = ffi.new('unsigned char[?]', srcTex.width * srcTex.height * spriteSheetImage.channels)
-			srcTex:bind()
 			local format = assert(({
 				[3] = gl.GL_RGB,
 				[4] = gl.GL_RGBA,
 			})[spriteSheetImage.channels], "couldn't determine format from # channels "..spriteSheetImage.channels)
-			gl.glGetTexImage(srcTex.target, 0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, srcData)
+			srcTex:toCPU(srcData)
 			srcTex:unbind()
 			for y=0,rect.h-1 do
 				local dstY = y + rect.y
@@ -1419,9 +1418,7 @@ print()
 
 --[[
 -- try to grab it again and see what comes out
-self.spriteListTex:bind()
---gl.glGetTexImage(self.spriteListTex.target, 0, gl.GL_LUMINANCE_ALPHA, gl.GL_UNSIGNED_BYTE, self.spriteListData) 
-gl.glGetTexImage(self.spriteListTex.target, 0, gl.GL_RGBA, gl.GL_FLOAT, self.spriteListData) 
+self.spriteListTex:toCPU(self.spriteListData)
 self.spriteListTex:unbind()
 print('after upload: ')
 for i=0,spriteListIndex-1 do

@@ -98,11 +98,10 @@ function SavePoint:playerUse(player)
 								local size = formatSize * v.width * v.height
 								local ffi = require 'ffi'
 								local data = ffi.new('uint8_t[?]', size)
-								game.R:report'before glGetTexImage'
-								v:bind()
-								gl.glGetTexImage(v.target, 0, v.format, v.type, data)	-- TODO move to gl.tex
+								game.R:report'before Tex:toCPU'
+								v:toCPU(data)
 								v:unbind()
-								game.R:report'glGetTexImage'
+								game.R:report'Tex:toCPU'
 								
 								-- TODO gl.tex getParameter?
 								--assert(v:getParameter'GL_TEXTURE_MAG_FILTER', gl.GL_NEAREST)
