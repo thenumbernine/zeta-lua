@@ -33,11 +33,7 @@ BreakBlock.states['break'] = {
 		self.index = index
 		self.tileIndex = level.tileMap[index]
 		self.fgTileIndex = level.fgTileMap[index]
-		
-		level.tileMap[index] = 0
-		level.fgTileMap[index] = 0
-		level:refreshFgTileTexels(x,y,x,y)
-	
+		level:setTile(x,y,0,0)
 		local tileType = assert(level.tileTypes[self.tileIndex])
 		self.regen = tileType.regen
 		self.seqStartTime = game.time
@@ -67,10 +63,7 @@ BreakBlock.states.unbreak = {
 			local x = math.floor(self.pos[1])
 			local y = math.floor(self.pos[2])
 			local level = game.level
-			local index = self.index
-			level.tileMap[index] = self.tileIndex
-			level.fgTileMap[index] = self.fgTileIndex
-			level:refreshFgTileTexels(x,y,x,y)
+			level:setTile(x,y,self.tileIndex,self.fgTileIndex)
 			self.remove = true
 		end
 	end

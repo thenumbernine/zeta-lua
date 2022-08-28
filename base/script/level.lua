@@ -992,7 +992,13 @@ end
 -- update downsampled texture of the whole map
 -- if you call level:setTile then you have to manually call this
 -- assumes that x1,y1,x2,y2 are integers in range [1,size] 
-function Level:refreshTileTexelsForLayer(x1,y1,x2,y2, tileMap, tileTex, internalFormat)
+-- gltype should correspond with the texture being passed, and its associated ctype should be the type of tileMap
+function Level:refreshTileTexelsForLayer(x1,y1,x2,y2, tileMap, tileTex, internalFormat, gltype)
+--[[
+	assert(tileTex.internalFormat == internalFormat, "tileTex.internalFormat was "..tileTex.internalFormat.." but you are using "..internalFormat)
+	assert(tileTex.type == gltype, "tileTex.type was "..tileTex.type.." but you are using "..gltype)
+	--assert(ffi.typeof(GLTex2D.cTypeForGLType[gltype]) == fi.typeof(timeMap[0]))
+--]]
 	local tilesWide = self.texpackTex.width / self.tileSize
 	local tilesHigh = self.texpackTex.height / self.tileSize
 	local tilesInTexpack = tilesWide * tilesHigh
@@ -1006,18 +1012,18 @@ function Level:refreshTileTexelsForLayer(x1,y1,x2,y2, tileMap, tileTex, internal
 
 	tileTex:bind()
 	for y = y1,y2 do
-		gl.glTexSubImage2D(tileTex.target, 0, x1 - 1, y - 1, x2 - x1 + 1, 1, internalFormat, gl.GL_UNSIGNED_BYTE, tileMap + (x1 - 1) + self.size[1] * (y - 1))
+		gl.glTexSubImage2D(tileTex.target, 0, x1 - 1, y - 1, x2 - x1 + 1, 1, internalFormat, gltype, tileMap + (x1 - 1) + self.size[1] * (y - 1))
 	end
 	tileTex:unbind()
 end
 function Level:refreshFgTileTexels(x1,y1,x2,y2)
-	return self:refreshTileTexelsForLayer(x1, y1, x2, y2, self.fgTileMap, self.fgTileTex, gl.GL_LUMINANCE_ALPHA)
+	return self:refreshTileTexelsForLayer(x1, y1, x2, y2, self.fgTileMap, self.fgTileTex, gl.GL_LUMINANCE_ALPHA, gl.GL_UNSIGNED_BYTE)
 end
 function Level:refreshBgTileTexels(x1,y1,x2,y2)
-	return self:refreshTileTexelsForLayer(x1, y1, x2, y2, self.bgTileMap, self.bgTileTex, gl.GL_LUMINANCE_ALPHA)
+	return self:refreshTileTexelsForLayer(x1, y1, x2, y2, self.bgTileMap, self.bgTileTex, gl.GL_LUMINANCE_ALPHA, gl.GL_UNSIGNED_BYTE)
 end
 function Level:refreshBackgroundTexels(x1,y1,x2,y2)
-	return self:refreshTileTexelsForLayer(x1, y1, x2, y2, self.backgroundMap, self.backgroundTex, gl.GL_LUMINANCE)
+	return self:refreshTileTexelsForLayer(x1, y1, x2, y2, self.backgroundMap, self.backgroundTex, gl.GL_LUMINANCE, gl.GL_UNSIGNED_BYTE)
 end
 
 function Level:makeEmpty(x,y)

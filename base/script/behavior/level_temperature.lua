@@ -11,15 +11,15 @@ local Temperature = require 'base.script.temperature'
 local game = require 'base.script.singleton.game'
 
 return function (parentClass)
-	local HeatTemplate = class(parentClass)
+	local HeatLevelTemplate = class(parentClass)
 
 	-- how often in game-time to update the heat fbo 
 	local updateFreq = .1
 	local defaultTemperature = Temperature.CtoK(15)
 	-- above ground it should be 10 C in Winter to 20 C in Summer
 
-	function HeatTemplate:init(...)
-		HeatTemplate.super.init(self, ...)
+	function HeatLevelTemplate:init(...)
+		HeatLevelTemplate.super.init(self, ...)
 
 		self.gradientTex = require 'gl.gradienttex'(256, 
 	--[[ rainbow or heatmap or whatever
@@ -52,19 +52,8 @@ return function (parentClass)
 
 
 
-local sofar = {}
 		self.temperatureMap = ffi.new('vec4f_t[?]', self.size[1] * self.size[2])
-		for j=0,self.size[2]-1 do
-			for i=0,self.size[1]-1 do
-				local tileType = self:getTile(i+1,j+1)
-				local temp = tileType and tileType.temperature or defaultTemperature
-if not sofar[temp] then
-	sofar[temp] = true
-print('temp', temp, 'at', i, j)
-end
-				self.temperatureMap[i+self.size[1]*j] = vec4f(temp, 0, 0, 0)
-			end
-		end
+		self:refreshTemperatureMap(1,1,self.size[1],self.size[2])
 
 		self.temperaturePingPong = GLPingPong{
 			width = self.size[1],
@@ -138,8 +127,8 @@ void main() {
 		}
 	end
 
-	function HeatTemplate:update(dt)
-		HeatTemplate.super.update(self, dt)
+	function HeatLevelTemplate:update(dt)
+		HeatLevelTemplate.super.update(self, dt)
 
 do return end
 		-- now do FBO stuff
@@ -163,10 +152,10 @@ do return end
 		-- test bounds
 		if x2 < 0 or y2 < 0 or x1 >= self.size[1] or y1 >= self.size[2] then return end
 		-- clamp bounds
-		x1 = math.clamp(x1, 0, self.size[1]-1)
-		x2 = math.clamp(x2, 0, self.size[1]-1)
-		y1 = math.clamp(y1, 0, self.size[2]-1)
-		y2 = math.clamp(y2, 0, self.size[2]-1)
+		x1 = math.max(x1, 0)
+		y1 = math.max(y1, 0)
+		x2 = math.min(x2, self.size[1]-1)
+		y2 = math.min(y2, self.size[2]-1)
 		-- setup fbo
 		-- set its viewport to the view bounds plus a bit ... maybe 2x or 3x size?
 		-- render the heat update shader
@@ -204,10 +193,10 @@ do return end
 	end
 
 	-- TODO ...
-	HeatTemplate.showTemperature = false
+	HeatLevelTemplate.showTemperature = false
 
-	function HeatTemplate:draw(...)
-		HeatTemplate.super.draw(self, ...)
+	function HeatLevelTemplate:draw(...)
+		HeatLevelTemplate.super.draw(self, ...)
 	
 		if not self.showTemperature then return end
 	
@@ -236,5 +225,49 @@ do return end
 		self.displayTemperatureShader:useNone()
 	end
 
-	return HeatTemplate 
+	function HeatLevelTemplate:setTile(...)
+		local x, y, tileIndex, fgTileIndex, bgTileIndex, backgroundIndex, dontUpdateTexs = ...
+		HeatLevelTemplate.super.setTile(self, ...)
+		-- now if we were modifying the tileIndex then update the heat too
+		if tileIndex then
+			-- TODO here update this tile's tempareture
+			self:refreshTemperatureMap(x,y,x,y)
+			if not dontUpdateTexs then	-- TODO when is this set again?
+				self:refreshTemperatureTexels(x,y,x,y)
+			end
+		end
+	end
+
+	-- this copies temperature cpu buffer to temperature gpu buffer
+	function HeatLevelTemplate:refreshTemperatureTexels(x1,y1,x2,y2)
+		return self:refreshTileTexelsForLayer(
+			x1,
+			y1,
+			x2,
+			y2,
+			self.temperatureMap,
+			self.temperaturePingPong:cur(),
+			gl.GL_RGBA,	--gl.GL_RGBA32F,
+			gl.GL_FLOAT
+		)
+	end
+
+	-- this copies tileType to temperature cpu buffer
+	function HeatLevelTemplate:refreshTemperatureMap(x1,y1,x2,y2)
+		if x2 < 1 or y2 < 1 or x1 > self.size[1] or y1 > self.size[2] then return end
+		x1 = math.max(x1, 1)
+		y1 = math.max(y1, 1)
+		x2 = math.min(x2, self.size[1])
+		y2 = math.min(y2, self.size[2])
+		if x2 < x1 or y2 < y1 then return end
+		for y=y1,y2 do
+			for x=x1,x2 do
+				local tileType = self:getTile(x,y)
+				local temp = tileType and tileType.temperature or defaultTemperature
+				self.temperatureMap[(x-1)+self.size[1]*(y-1)] = vec4f(temp, 0, 0, 0)
+			end
+		end
+	end
+
+	return HeatLevelTemplate 
 end
