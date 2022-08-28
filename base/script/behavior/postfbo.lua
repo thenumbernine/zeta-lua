@@ -8,6 +8,7 @@ local GLTex2D = require 'gl.tex2d'
 local GLProgram = require 'gl.program'
 local glreport = require 'gl.report'
 
+-- behavior for base.script.singleton.class.game subclasses
 return function(parentClass)
 	local PostFBOTemplate = class(parentClass)
 
@@ -19,7 +20,7 @@ return function(parentClass)
 	local viewport = vec4i()
 	local drawbuffer = ffi.new'int[1]'
 
-	-- this flag tells things like base/script/level to raytrace the sprites
+	-- this flag is queried by base.script.level to see if it should use raytrace shaders for the sprites
 	PostFBOTemplate.raytraceSprites = true 
 
 	function PostFBOTemplate:render(preDrawCallback, postDrawCallback, ...)

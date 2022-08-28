@@ -588,7 +588,7 @@ void main() {
 }
 ]],
 			fragmentCode = [[
-varying vec2 pos;	//world coordinates
+varying vec2 pos;	//world coordinates.   TODO why varying?  why not just tc * levelSize ?
 varying vec2 tc;	//in [0,1]^2
 
 uniform sampler2D fgTileTex;
@@ -945,10 +945,15 @@ function Level:getTile(x,y)
 	x = math.floor(x)
 	y = math.floor(y)
 	if x<1 or y<1 or x>self.size[1] or y>self.size[2] then 
-		return self.tileTypes[0]
+		return --self.tileTypes[0]	-- but there is no empty tile class ...
 	end
 	local tileIndex = self.tileMap[(x-1)+self.size[1]*(y-1)]
-	return self.tileTypes[tileIndex]
+	
+	local tileType = self.tileTypes[tileIndex]
+	if not tileType then
+		return --self.tileTypes[0]
+	end
+	return tileType
 end
 
 function Level:getTileWithOffset(x,y)
