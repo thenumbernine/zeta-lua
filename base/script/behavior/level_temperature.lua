@@ -53,7 +53,7 @@ return function (parentClass)
 
 
 		self.temperatureMap = ffi.new('vec4f_t[?]', self.size[1] * self.size[2])
-		self:refreshTemperatureMap(1,1,self.size[1],self.size[2])
+		self:copyTileTemperatureToTemperatureMap(1,1,self.size[1],self.size[2])
 
 		self.temperaturePingPong = GLPingPong{
 			width = self.size[1],
@@ -230,16 +230,15 @@ do return end
 		HeatLevelTemplate.super.setTile(self, ...)
 		-- now if we were modifying the tileIndex then update the heat too
 		if tileIndex then
-			-- TODO here update this tile's tempareture
-			self:refreshTemperatureMap(x,y,x,y)
+			self:copyTileTemperatureToTemperatureMap(x,y,x,y)
 			if not dontUpdateTexs then	-- TODO when is this set again?
-				self:refreshTemperatureTexels(x,y,x,y)
+				self:onUpdateTemperatureMap(x,y,x,y)
 			end
 		end
 	end
 
 	-- this copies temperature cpu buffer to temperature gpu buffer
-	function HeatLevelTemplate:refreshTemperatureTexels(x1,y1,x2,y2)
+	function HeatLevelTemplate:onUpdateTemperatureMap(x1,y1,x2,y2)
 		return self:refreshTileTexelsForLayer(
 			x1,
 			y1,
@@ -252,8 +251,15 @@ do return end
 		)
 	end
 
+	function HeatLevelTemplate:onUpdateTileMap(x1,y1,x2,y2)
+		HeatLevelTemplate.super.onUpdateTileMap(self,x1,y1,x2,y2)
+		
+		self:copyTileTemperatureToTemperatureMap(x1,y1,x2,y2)
+		self:onUpdateTemperatureMap(x1,y1,x2,y2)
+	end
+
 	-- this copies tileType to temperature cpu buffer
-	function HeatLevelTemplate:refreshTemperatureMap(x1,y1,x2,y2)
+	function HeatLevelTemplate:copyTileTemperatureToTemperatureMap(x1,y1,x2,y2)
 		if x2 < 1 or y2 < 1 or x1 > self.size[1] or y1 > self.size[2] then return end
 		x1 = math.max(x1, 1)
 		y1 = math.max(y1, 1)

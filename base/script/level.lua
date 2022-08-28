@@ -884,9 +884,10 @@ function Level:refreshTiles()
 		ffi.copy(self[field], self[field..'Original'], ffi.sizeof(self[field]))
 	end
 	-- refreshTileTexelsForLayer 
-	self:refreshFgTileTexels(1,1,self.size[1],self.size[2])
-	self:refreshBgTileTexels(1,1,self.size[1],self.size[2])
-	self:refreshBackgroundTexels(1,1,self.size[1],self.size[2])
+	self:onUpdateTileMap(1,1,self.size[1],self.size[2])
+	self:onUpdateFgTileMap(1,1,self.size[1],self.size[2])
+	self:onUpdateBgTileMap(1,1,self.size[1],self.size[2])
+	self:onUpdateBackgroundMap(1,1,self.size[1],self.size[2])
 end
 
 -- return mapTile x,y for tile x,y
@@ -968,23 +969,27 @@ function Level:setTile(x, y, tileIndex, fgTileIndex, bgTileIndex, backgroundInde
 	y = math.floor(y)
 	if x<1 or y<1 or x>self.size[1] or y>self.size[2] then return 0 end
 	local index = (x-1)+self.size[1]*(y-1)
-	if tileIndex then self.tileMap[index] = tileIndex end
+	if tileIndex then 
+		self.tileMap[index] = tileIndex 
+		-- TODO change 'dontUpdateTexs' to 'dontOnUpdate' ?
+		self:onUpdateTileMap(x,y,x,y)
+	end
 	if fgTileIndex then 
 		self.fgTileMap[index] = fgTileIndex 
 		if not dontUpdateTexs then
-			self:refreshFgTileTexels(x,y,x,y)
+			self:onUpdateFgTileMap(x,y,x,y)
 		end
 	end
 	if bgTileIndex then 
 		self.bgTileMap[index] = bgTileIndex 
 		if not dontUpdateTexs then
-			self:refreshBgTileTexels(x,y,x,y)
+			self:onUpdateBgTileMap(x,y,x,y)
 		end
 	end
 	if backgroundIndex then 
 		self.backgroundMap[index] = backgroundIndex 
 		if not dontUpdateTexs then
-			self:refreshBackgroundTexels(x,y,x,y)
+			self:onUpdateBackgroundMap(x,y,x,y)
 		end
 	end
 end
@@ -1016,13 +1021,19 @@ function Level:refreshTileTexelsForLayer(x1,y1,x2,y2, tileMap, tileTex, internal
 	end
 	tileTex:unbind()
 end
-function Level:refreshFgTileTexels(x1,y1,x2,y2)
+
+function Level:onUpdateTileMap(x1,y1,x2,y2)
+	-- nothing by default
+end
+-- TODO rename these to just 'refreshFgTile' etc ... and have the default behavior of refreshing be ... to update the texels
+-- or maybe instead of 'refresh', call it 'OnUpdate' ?
+function Level:onUpdateFgTileMap(x1,y1,x2,y2)
 	return self:refreshTileTexelsForLayer(x1, y1, x2, y2, self.fgTileMap, self.fgTileTex, gl.GL_LUMINANCE_ALPHA, gl.GL_UNSIGNED_BYTE)
 end
-function Level:refreshBgTileTexels(x1,y1,x2,y2)
+function Level:onUpdateBgTileMap(x1,y1,x2,y2)
 	return self:refreshTileTexelsForLayer(x1, y1, x2, y2, self.bgTileMap, self.bgTileTex, gl.GL_LUMINANCE_ALPHA, gl.GL_UNSIGNED_BYTE)
 end
-function Level:refreshBackgroundTexels(x1,y1,x2,y2)
+function Level:onUpdateBackgroundMap(x1,y1,x2,y2)
 	return self:refreshTileTexelsForLayer(x1, y1, x2, y2, self.backgroundMap, self.backgroundTex, gl.GL_LUMINANCE, gl.GL_UNSIGNED_BYTE)
 end
 

@@ -96,14 +96,17 @@ Editor.paintBrush = {
 		end
 	
 		-- if we changed the fgTileMap then update the texels of the overmap
+		if self.paintingTileType then
+			level:onUpdateTileMap(xmin,ymin,xmax,ymax)
+		end
 		if self.paintingFgTile then
-			level:refreshFgTileTexels(xmin,ymin,xmax,ymax)
+			level:onUpdateFgTileMap(xmin,ymin,xmax,ymax)
 		end
 		if self.paintingBgTile then
-			level:refreshBgTileTexels(xmin,ymin,xmax,ymax)
+			level:onUpdateBgTileMap(xmin,ymin,xmax,ymax)
 		end
 		if self.paintingBackground then
-			level:refreshBackgroundTexels(xmin,ymin,xmax,ymax)
+			level:onUpdateBackgroundMap(xmin,ymin,xmax,ymax)
 		end
 	end,
 }
@@ -201,14 +204,17 @@ Editor.fillBrush = {
 			end
 		
 			-- if we changed the fgTileMap then update the texels of the overmap
+			if infos[1].mask then
+				level:onUpdateTileMap(xmin,ymin,xmax,ymax)
+			end
 			if infos[2].mask then --self.paintingFgTile[0] then
-				level:refreshFgTileTexels(xmin,ymin,xmax,ymax)
+				level:onUpdateFgTileMap(xmin,ymin,xmax,ymax)
 			end
 			if infos[3].mask then --self.paintingBgTile then
-				level:refreshBgTileTexels(xmin,ymin,xmax,ymax)
+				level:onUpdateBgTileMap(xmin,ymin,xmax,ymax)
 			end
 			if infos[4].mask then --self.paintingBgTile then
-				level:refreshBackgroundTexels(xmin,ymin,xmax,ymax)
+				level:onUpdateBackgroundMap(xmin,ymin,xmax,ymax)
 			end
 		end
 		threads:add(thread)
@@ -419,14 +425,17 @@ do
 			end
 		
 			-- if we changed the fgTileMap then update the texels of the overmap
+			if self.paintingTileType then
+				level:onUpdateTileMap(xmin,ymin,xmax,ymax)
+			end
 			if self.paintingFgTile then
-				level:refreshFgTileTexels(xmin,ymin,xmax,ymax)
+				level:onUpdateFgTileMap(xmin,ymin,xmax,ymax)
 			end
 			if self.paintingBgTile then
-				level:refreshBgTileTexels(xmin,ymin,xmax,ymax)
+				level:onUpdateBgTileMap(xmin,ymin,xmax,ymax)
 			end
 			if self.paintingBackground then
-				level:refreshBackgroundTexels(xmin,ymin,xmax,ymax)
+				level:onUpdateBackgroundMap(xmin,ymin,xmax,ymax)
 			end
 		end,
 	}
@@ -610,10 +619,7 @@ local function doMoveWorld(dx, dy)
 			end
 		end
 	end
-	level:refreshTiles()	-- copy original into current buffer
-	level:refreshFgTileTexels(1,1, level.size[1], level.size[2])
-	level:refreshBgTileTexels(1,1, level.size[1], level.size[2])
-	level:refreshBackgroundTexels(1,1, level.size[1], level.size[2])
+	level:refreshTiles()	-- copy original into current buffer.  also call all onUpdate's.
 	-- move rooms?
 	do
 		local map = level.roomMap
@@ -1822,22 +1828,29 @@ function Editor:update()
 						end
 						
 						-- if we changed the fgTileMap then update the texels of the overmap
+						if self.paintingTileType then
+							level:onUpdateTileMap(
+								math.floor(x - tonumber(brushWidth-1)/2),
+								math.floor(y - tonumber(brushHeight-1)/2),
+								self.moveBBox.max[1] - self.moveBBox.min[1] + math.floor(x - tonumber(brushWidth-1)/2),
+								self.moveBBox.max[2] - self.moveBBox.min[2] + math.floor(y - tonumber(brushHeight-1)/2))
+						end
 						if self.paintingFgTile then
-							level:refreshFgTileTexels(
+							level:onUpdateFgTileMap(
 								math.floor(x - tonumber(brushWidth-1)/2),
 								math.floor(y - tonumber(brushHeight-1)/2),
 								self.moveBBox.max[1] - self.moveBBox.min[1] + math.floor(x - tonumber(brushWidth-1)/2),
 								self.moveBBox.max[2] - self.moveBBox.min[2] + math.floor(y - tonumber(brushHeight-1)/2))
 						end
 						if self.paintingBgTile then
-							level:refreshBgTileTexels(
+							level:onUpdateBgTileMap(
 								math.floor(x - tonumber(brushWidth-1)/2),
 								math.floor(y - tonumber(brushHeight-1)/2),
 								self.moveBBox.max[1] - self.moveBBox.min[1] + math.floor(x - tonumber(brushWidth-1)/2),
 								self.moveBBox.max[2] - self.moveBBox.min[2] + math.floor(y - tonumber(brushHeight-1)/2))
 						end
 						if self.paintingBackground then
-							level:refreshBackgroundTexels(
+							level:onUpdateBackgroundMap(
 								math.floor(x - tonumber(brushWidth-1)/2),
 								math.floor(y - tonumber(brushHeight-1)/2),
 								self.moveBBox.max[1] - self.moveBBox.min[1] + math.floor(x - tonumber(brushWidth-1)/2),
@@ -1889,22 +1902,29 @@ function Editor:update()
 						end
 
 						-- if we changed the fgTileMap then update the texels of the overmap
+						if self.paintingTileType then
+							level:onUpdateTileMap(
+								math.min(x1,x2),
+								math.min(y1,y2),
+								math.max(x1,x2),
+								math.max(y1,y2))
+						end
 						if self.paintingFgTile then
-							level:refreshFgTileTexels(
+							level:onUpdateFgTileMap(
 								math.min(x1,x2),
 								math.min(y1,y2),
 								math.max(x1,x2),
 								math.max(y1,y2))
 						end
 						if self.paintingBgTile then
-							level:refreshBgTileTexels(
+							level:onUpdateBgTileMap(
 								math.min(x1,x2),
 								math.min(y1,y2),
 								math.max(x1,x2),
 								math.max(y1,y2))
 						end
 						if self.paintingBackground then
-							level:refreshBackgroundTexels(
+							level:onUpdateBackgroundMap(
 								math.min(x1,x2),
 								math.min(y1,y2),
 								math.max(x1,x2),
