@@ -883,7 +883,10 @@ function Level:refreshTiles()
 	for _,field in ipairs{'tileMap', 'fgTileMap', 'bgTileMap', 'backgroundMap'} do
 		ffi.copy(self[field], self[field..'Original'], ffi.sizeof(self[field]))
 	end
-	-- TODO refreshTileTexelsForLayer also?
+	-- refreshTileTexelsForLayer 
+	self:refreshFgTileTexels(1,1,self.size[1],self.size[2])
+	self:refreshBgTileTexels(1,1,self.size[1],self.size[2])
+	self:refreshBackgroundTexels(1,1,self.size[1],self.size[2])
 end
 
 -- return mapTile x,y for tile x,y

@@ -365,8 +365,6 @@ function Hero:update(dt)
 
 	-- [[ create/remove objects based on our current room
 	if self.room ~= self.roomLast then
-		-- reload tiles from the original buffers (in case any were modified)
-		level:refreshTiles()
 		for _,spawnInfo in ipairs(level.spawnInfos) do
 			local spawnInfoRoom = level:getRoom(table.unpack(spawnInfo.pos))
 			if spawnInfoRoom == self.room then
@@ -377,6 +375,8 @@ function Hero:update(dt)
 				spawnInfo:removeObj()
 			end
 		end
+		-- reload tiles from the original buffers (in case any were modified)
+		level:refreshTiles()
 		self.roomLast = self.room
 	end
 	--]]
