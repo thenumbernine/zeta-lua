@@ -654,7 +654,8 @@ function Hero:update(dt)
 
 	-- hack for heat view for now
 	if not self.inputRunLast and self.inputRun then
-		level.showTemperature = not level.showTemperature
+--		level.showTemperature = not level.showTemperature
+		level.updateHeat = not level.updateHeat
 	end
 
 -- [[ if we just hit the ground then see if we're at max vel.  if not then reset the run meter

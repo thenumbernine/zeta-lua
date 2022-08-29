@@ -1,5 +1,77 @@
--- behavior for base.script.level subclasses
--- adds realtime heat modeling
+--[[
+behavior for base.script.level subclasses
+adds realtime heat modeling
+
+depends on TileType .temperature
+
+
+https://en.wikipedia.org/wiki/Heat_equation#Heat_conduction_in_non-homogeneous_anisotropic_media
+https://reference.wolfram.com/language/PDEModels/tutorial/HeatTransfer/HeatTransfer.html
+
+general form of conductivity:
+
+	ρ cp ∂T/∂t + ρ cp V ∇·T - ∇ · (k ∇T) = Q 
+	
+	ρ cp ∂T/∂t - ∇k · ∇T - k ΔT = Q 
+
+ρ in [kg / m^3]
+cp in [m^2 / (K s^2)]
+ρ cp in [kg / (K m s^2)]
+∂T/∂t in [K / s]
+ρ cp ∂T/∂t in [kg / (m s^3)]
+
+V in [m/s]
+∇·T in [K/m]
+ρ cp V ∇·T in [kg / (m s^3)]
+
+ΔT in [K / m^2]
+k ΔT must be in [kg / (m s^3)]
+so k in [kg m / (K s^3)]
+
+so Q in [W / m^3 = kg / (m s^3)]
+
+for:
+	k = thermal conductivity in 
+	cp = specific heat capacity at constant pressure [m^2 / (K s^2)]
+	ρ = matter-density in [kg / m^3]
+	T = temperature in [K]
+	Q = volumetric heat source i.e. heat flux per volume (W / m^3 = J/S / m^3 = kg / (m s^3))
+
+for uniform medium, assume ∇ k = 0 and Q = 0
+
+	∂T/∂t = k/(cp ρ) ΔT
+
+substitute α = k/(cp ρ) = thermal diffusivity
+
+	∂T/∂t = α ΔT
+
+for radiation too: (adding https://en.wikipedia.org/wiki/Stefan%E2%80%93Boltzmann_law)
+
+	∂T/∂t = 1/(cp ρ) (k ΔT - μ (T^4 - v^4))
+
+where v = temperature of surroundings 
+
+α = diffusivity table (in m^2/s): https://en.wikipedia.org/wiki/Thermal_diffusivity
+
+carbon at 25C:				2.165e-4
+aluminium:					9.7e-5
+iron:						2.3e-5
+steel, 1% carbon:			1.172e-5
+stainless steel at 27C:		4.2e-6
+silicon:					8.8e-5
+air at 300K:				1.9e-5
+quartz:						1.4e-6
+sandstone:					1.15e-6
+water vapor (1atm, 400k):	2.338e-5
+ice at 0C:					1.02e-6
+water at 25C:				1.43e-7
+silicon dioxide:			8.3e-7
+brick, common:				5.2e-7
+brick, adobe:				2.7e-7
+glass:						3.4e-7
+wood (yellow pine):			8.2e-8
+
+--]]
 local ffi = require 'ffi'
 local class = require 'ext.class'
 local table = require 'ext.table'
@@ -14,8 +86,8 @@ return function (parentClass)
 	local HeatLevelTemplate = class(parentClass)
 
 	-- how often in game-time to update the heat fbo 
-	local updateFreq = .1
-	local defaultTemperature = Temperature.CtoK(15)
+	HeatLevelTemplate.temperatureUpdateInterval = .1
+	HeatLevelTemplate.temperatureDefaultValue = Temperature.CtoK(15)
 	-- above ground it should be 10 C in Winter to 20 C in Summer
 
 	function HeatLevelTemplate:init(...)
@@ -34,23 +106,19 @@ return function (parentClass)
 			},
 	--]]
 	-- [[ sunset pic from https://blog.graphiq.com/finding-the-right-color-palettes-for-data-visualizations-fcd4e707a283#.inyxk2q43
-			table{
-				vec4f(22,31,86,255),
-				vec4f(34,54,152,255),
-				vec4f(87,49,108,255),
-				vec4f(156,48,72,255),
-				vec4f(220,60,57,255),
-				vec4f(254,96,50,255),
-				vec4f(255,188,46,255),
-				vec4f(255,255,55,255),
-			}:map(function(c,i)
-				return {(c/255):unpack()}
-			end),
+			{
+				{22/255,31/255,86/255,1},
+				{34/255,54/255,152/255,1},
+				{87/255,49/255,108/255,1},
+				{156/255,48/255,72/255,1},
+				{220/255,60/255,57/255,1},
+				{254/255,96/255,50/255,1},
+				{255/255,188/255,46/255,1},
+				{255/255,255/255,55/255,1},
+			},
 	--]]
 			true
 		)
-
-
 
 		self.temperatureMap = ffi.new('vec4f_t[?]', self.size[1] * self.size[2])
 		self:copyTileTemperatureToTemperatureMap(1,1,self.size[1],self.size[2])
@@ -80,12 +148,25 @@ void main() {
 ]],
 			fragmentCode = [[
 uniform vec2 du;	// 1/ texture size
+uniform float dt;	//step between updates
 varying vec2 pos;	//world coordinates
 varying vec2 tc;	//in [0,1]^2
 uniform sampler2D temperatureTex;
 uniform float tileSize;
 void main() {
-	gl_FragColor = texture2D(temperatureTex, tc);
+	// discrete laplacian
+	float T = texture2D(temperatureTex, tc).x;
+	float TxR = texture2D(temperatureTex, tc + vec2(0., du.y)).x;
+	float TxL = texture2D(temperatureTex, tc - vec2(0., du.y)).x;
+	float TyR = texture2D(temperatureTex, tc + vec2(du.x, 0.)).x;
+	float TyL = texture2D(temperatureTex, tc - vec2(du.x, 0.)).x;
+	float lapT = TxR + TxL + TyR + TyL - 4. * T;	//dx = dy = 1
+	// ∂T/∂t = α ΔT		[K/m^2]
+	float alpha = .1;	// TODO store this in temperatureMap and update it when tiles change?
+	// TODO another property -- Q -- the source energy ...
+	float dT_dt = alpha * lapT;
+	float Tnew = T + dT_dt * dt;
+	gl_FragColor = vec4(Tnew, 0., 0., 1.);
 }
 ]],
 			uniforms = {
@@ -127,73 +208,101 @@ void main() {
 		}
 	end
 
+	HeatLevelTemplate.updateHeat = false
+
 	function HeatLevelTemplate:update(dt)
 		HeatLevelTemplate.super.update(self, dt)
 
-do return end
 		-- now do FBO stuff
-		if game.t - self.lastHeatUpdateTime < updateFreq then return end
+		-- keep calculating and storing lastHeatUpdateTime even if we're not updating, so we don't accumulate an interval for too long
+		if game.time - self.lastHeatUpdateTime < self.temperatureUpdateInterval then return end
+		local updateDt = game.time - self.lastHeatUpdateTime
+		self.lastHeatUpdateTime = game.time
 
-		self.lastHeatUpdateTime = game.t
-
+		local player = game.players[1]
+		if not player then return end
+		if not self.updateHeat then return end
+--print('updating heat at time '..game.time)
+		
 		-- do update here
 		-- determine view bounds in tile space
-		local x1 = math.floor(self.viewBBox.min[1])
-		local x2 = math.ceil(self.viewBBox.max[1])
-		local y1 = math.floor(self.viewBBox.min[2])
-		local y2 = math.ceil(self.viewBBox.max[2])
+		local x1 = math.floor(player.viewBBox.min[1])
+		local x2 = math.ceil(player.viewBBox.max[1])
+		local y1 = math.floor(player.viewBBox.min[2])
+		local y2 = math.ceil(player.viewBBox.max[2])
+--print('initial viewBBox:', x1, y1, x2, y2)		
 		-- grow by 3x
-		local dx = x2 - x1
-		local dy = y2 - y1
-		x1 = x1 - dx
-		x2 = x2 + dx
-		y1 = y1 - dy
-		y2 = y2 + dy
+		local growWidth = x2 - x1
+		local growHeight = y2 - y1
+--print('initial viewBBox size', growWidth, growHeight)
+		x1 = x1 - growWidth
+		x2 = x2 + growWidth
+		y1 = y1 - growHeight
+		y2 = y2 + growHeight
+--print('after region grow viewBBox:', x1, y1, x2, y2)		
 		-- test bounds
-		if x2 < 0 or y2 < 0 or x1 >= self.size[1] or y1 >= self.size[2] then return end
+		if x2 < 0 or y2 < 0 or x1 >= self.size[1] or y1 >= self.size[2] then 
+--print('viewBBox oob so rejecting')			
+			return 
+		end
 		-- clamp bounds
 		x1 = math.max(x1, 0)
 		y1 = math.max(y1, 0)
 		x2 = math.min(x2, self.size[1]-1)
 		y2 = math.min(y2, self.size[2]-1)
+--print('after clamping viewBBox:', x1, y1, x2, y2)		
+		local viewWidth = x2 - x1 + 1
+		local viewHeight = y2 - y1 + 1
+--print('viewBBox size: ', viewWidth, viewHeight, 'center', xCenter, yCenter)		
 		-- setup fbo
 		-- set its viewport to the view bounds plus a bit ... maybe 2x or 3x size?
 		-- render the heat update shader
-		local fbo = self.temperaturePingPong.fbo
-		fbo:enable()
-		fbo.check()
-		fbo:use()
-		local viewWidth = x2-x1+1
-		local viewHeight = y2-y1+1
-		-- set viewport to simulation region
-		gl.glViewport(x1, y1, viewWidth, viewHeight)
-		-- since we're changing the viewport we have to update the projection too
-		-- notice we're drawing 1 pixel <-> 1 texel
-		local R = game.R
-		R:ortho(-viewWidth, viewWidth, -viewHeight, viewHeight, -100, 100)
-		R:viewPos(player.viewPos[1], player.viewPos[2])
-		self.diffuseTemperatureShader:use()
-		if self.diffuseTemperatureShader.uniforms.tileSize then
-			gl.glUniform1f(self.diffuseTemperatureShader.uniforms.tileSize.loc, self.tileSize)
-		end
-		self.temperaturePingPong:cur():bind(0)
-		-- TODO make sure the projection matrix is reset because we're changing the viewport
-		R:quad(
-			1, 1,
-			self.size[1],
-			self.size[2],
-			0,0,
-			1,1,
-			0,
-			1,1,1,1)
-		self.temperaturePingPong:cur():unbind(0)
-		self.diffuseTemperatureShader:useNone()
-		fbo:useNone()
-		fbo:disable()
+		self.temperaturePingPong:swap()
+		self.temperaturePingPong:draw{
+			-- set viewport to simulation region
+			viewport = {x1, y1, viewWidth, viewHeight},
+			callback = function()
+				-- since we're changing the viewport we have to update the projection too
+				-- notice we're drawing 1 pixel <-> 1 texel
+				local R = game.R
+			
+				-- [[
+				R:ortho(-.5*viewWidth, .5*viewWidth, -.5*viewHeight, .5*viewHeight, -100, 100)
+				local xCenter = (x1 + x2 + 1) * .5 + 1
+				local yCenter = (y1 + y2 + 1) * .5 + 1
+				R:viewPos(xCenter, yCenter)
+				--]]
+				--[[ hmm
+				R:ortho(x1,y1,x2,y2,-100,100)
+				R:viewPos(0, 0)
+				--]]
+				
+				self.diffuseTemperatureShader:use()
+				if self.diffuseTemperatureShader.uniforms.tileSize then
+					gl.glUniform1f(self.diffuseTemperatureShader.uniforms.tileSize.loc, self.tileSize)
+				end
+				if self.diffuseTemperatureShader.uniforms.dt then
+					gl.glUniform1f(self.diffuseTemperatureShader.uniforms.dt.loc, updateDt)
+				end
+				local temperatureTex = self.temperaturePingPong:prev()
+				temperatureTex:bind(0)
+				-- TODO make sure the projection matrix is reset because we're changing the viewport
+				R:quad(
+					1, 1,
+					self.size[1],
+					self.size[2],
+					0,0,
+					1,1,
+					0,
+					1,1,1,1)
+				temperatureTex:unbind(0)
+				self.diffuseTemperatureShader:useNone()
+			end,
+		}
 	end
 
 	-- TODO ...
-	HeatLevelTemplate.showTemperature = false
+	HeatLevelTemplate.showTemperature = true
 
 	function HeatLevelTemplate:draw(...)
 		HeatLevelTemplate.super.draw(self, ...)
@@ -269,7 +378,7 @@ do return end
 		for y=y1,y2 do
 			for x=x1,x2 do
 				local tileType = self:getTile(x,y)
-				local temp = tileType and tileType.temperature or defaultTemperature
+				local temp = tileType and tileType.temperature or self.temperatureDefaultValue
 				self.temperatureMap[(x-1)+self.size[1]*(y-1)] = vec4f(temp, 0, 0, 0)
 			end
 		end
