@@ -10,9 +10,9 @@ https://reference.wolfram.com/language/PDEModels/tutorial/HeatTransfer/HeatTrans
 
 general form of conductivity:
 
-	ρ cp (∂T/∂t + v ∇·T) - ∇ · (k ∇T) = Q 
+	ρ cp (∂T/∂t + v ∇·T) - ∇ · (k ∇T) = Q
 
-	ρ cp ∂T/∂t + ρ cp v ∇·T - ∇k · ∇T - k ΔT = Q 
+	ρ cp ∂T/∂t + ρ cp v ∇·T - ∇k · ∇T - k ΔT = Q
 
 ρ in [kg / m^3]
 cp in [m^2 / (K s^2)]
@@ -31,7 +31,7 @@ so k in [kg m / (K s^3)]
 so Q in [W / m^3 = kg / (m s^3)]
 
 for:
-	k = thermal conductivity in 
+	k = thermal conductivity in
 	cp = specific heat capacity at constant pressure [m^2 / (K s^2)]
 	ρ = matter-density in [kg / m^3]
 	T = temperature in [K]
@@ -51,7 +51,7 @@ for radiation too: (adding https://en.wikipedia.org/wiki/Stefan%E2%80%93Boltzman
 
 	∂T/∂t = 1/(cp ρ) (k ΔT + Q - μ (T^4 - v^4))
 
-where v = temperature of surroundings 
+where v = temperature of surroundings
 
 α = diffusivity table (in m^2/s): https://en.wikipedia.org/wiki/Thermal_diffusivity
 
@@ -76,16 +76,16 @@ wood (yellow pine):			8.2e-8
 
 ... relativistic heat?
 	
-	ρ cp (∂T/∂t + v ∇·T) - ∇k · ∇T - k ΔT = Q 
+	ρ cp (∂T/∂t + v ∇·T) - ∇k · ∇T - k ΔT = Q
 		... convert material derivative with 3-velocity to spacetime derivative with 4-velocity
 	ρ cp (∂T/∂t + v ∇·T) becomes ρ cp u^μ ∇_μ T
 	-k ΔT becomes -k (g^μν + u^μ u^ν) ∇_μ ∇_ν T
 	-∇k · ∇T becomes -(g^μν + u^μ u^ν) * ∇_μ k * ∇_ν T ... assuming a -+++ metric
-	ρ cp u^μ ∇_μ T 
+	ρ cp u^μ ∇_μ T
 		-(g^μν + u^μ u^ν) * ∇_μ k * ∇_ν T
-		- k g^μν ∇_μ ∇_ν T - k u^μ u^ν ∇_μ ∇_ν T = Q 
+		- k g^μν ∇_μ ∇_ν T - k u^μ u^ν ∇_μ ∇_ν T = Q
 	the two could be combined as before to make
-		-(g^μν + u^μ u^ν) ∇_μ (k ∇_ν T) 
+		-(g^μν + u^μ u^ν) ∇_μ (k ∇_ν T)
 	ρ cp u^μ ∇_μ T - (g^μν + u^μ u^ν) ∇_μ (k ∇_ν T) = Q
 	move our extra timelike derivative terms to the rhs:
 	ρ cp u^μ ∇_μ T - g^μν ∇_μ (k ∇_ν T) = Q + u^μ u^ν ∇_μ (k ∇_ν T)
@@ -103,7 +103,7 @@ ok so irl most heat comes from sun or from inside earth, and then the wind blows
 so i should probably add some fluid advection for my heat transport.
 but eventually it lends to a steady state
 so i want to have blocks like air dirt etc have default temperature values ... or everything has default temp values ...
-but then i want them to be a bit malleable too where neighboring temps can influence them 
+but then i want them to be a bit malleable too where neighboring temps can influence them
 
 --]]
 local ffi = require 'ffi'
@@ -116,10 +116,10 @@ local GLProgram = require 'gl.program'
 local Temperature = require 'base.script.temperature'
 local game = require 'base.script.singleton.game'
 
-return function (parentClass)
+return function(parentClass)
 	local HeatLevelTemplate = class(parentClass)
 
-	-- how often in game-time to update the heat fbo 
+	-- how often in game-time to update the heat fbo
 	HeatLevelTemplate.temperatureUpdateInterval = .1
 	HeatLevelTemplate.temperatureDefaultValue = Temperature.CtoK(15)
 	HeatLevelTemplate.temperatureDefault_Q_per_Cp_rho = 0
@@ -270,7 +270,7 @@ void main() {
 		local x2 = math.ceil(player.viewBBox.max[1])
 		local y1 = math.floor(player.viewBBox.min[2])
 		local y2 = math.ceil(player.viewBBox.max[2])
---print('initial viewBBox:', x1, y1, x2, y2)		
+--print('initial viewBBox:', x1, y1, x2, y2)
 		-- grow by 3x
 		local growWidth = x2 - x1
 		local growHeight = y2 - y1
@@ -279,21 +279,21 @@ void main() {
 		x2 = x2 + growWidth
 		y1 = y1 - growHeight
 		y2 = y2 + growHeight
---print('after region grow viewBBox:', x1, y1, x2, y2)		
+--print('after region grow viewBBox:', x1, y1, x2, y2)
 		-- test bounds
-		if x2 < 0 or y2 < 0 or x1 >= self.size[1] or y1 >= self.size[2] then 
---print('viewBBox oob so rejecting')			
-			return 
+		if x2 < 0 or y2 < 0 or x1 >= self.size[1] or y1 >= self.size[2] then
+--print('viewBBox oob so rejecting')
+			return
 		end
 		-- clamp bounds
 		x1 = math.max(x1, 0)
 		y1 = math.max(y1, 0)
 		x2 = math.min(x2, self.size[1]-1)
 		y2 = math.min(y2, self.size[2]-1)
---print('after clamping viewBBox:', x1, y1, x2, y2)		
+--print('after clamping viewBBox:', x1, y1, x2, y2)
 		local viewWidth = x2 - x1 + 1
 		local viewHeight = y2 - y1 + 1
---print('viewBBox size: ', viewWidth, viewHeight, 'center', xCenter, yCenter)		
+--print('viewBBox size: ', viewWidth, viewHeight, 'center', xCenter, yCenter)
 		-- setup fbo
 		-- set its viewport to the view bounds plus a bit ... maybe 2x or 3x size?
 		-- render the heat update shader
@@ -431,5 +431,5 @@ void main() {
 		end
 	end
 
-	return HeatLevelTemplate 
+	return HeatLevelTemplate
 end
