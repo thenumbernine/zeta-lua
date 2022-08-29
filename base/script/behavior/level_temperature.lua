@@ -10,9 +10,9 @@ https://reference.wolfram.com/language/PDEModels/tutorial/HeatTransfer/HeatTrans
 
 general form of conductivity:
 
-	ρ cp ∂T/∂t + ρ cp V ∇·T - ∇ · (k ∇T) = Q 
-	
-	ρ cp ∂T/∂t - ∇k · ∇T - k ΔT = Q 
+	ρ cp (∂T/∂t + v ∇·T) - ∇ · (k ∇T) = Q 
+
+	ρ cp ∂T/∂t + ρ cp v ∇·T - ∇k · ∇T - k ΔT = Q 
 
 ρ in [kg / m^3]
 cp in [m^2 / (K s^2)]
@@ -20,9 +20,9 @@ cp in [m^2 / (K s^2)]
 ∂T/∂t in [K / s]
 ρ cp ∂T/∂t in [kg / (m s^3)]
 
-V in [m/s]
+v in [m/s]
 ∇·T in [K/m]
-ρ cp V ∇·T in [kg / (m s^3)]
+ρ cp v ∇·T in [kg / (m s^3)]
 
 ΔT in [K / m^2]
 k ΔT must be in [kg / (m s^3)]
@@ -37,13 +37,15 @@ for:
 	T = temperature in [K]
 	Q = volumetric heat source i.e. heat flux per volume (W / m^3 = J/S / m^3 = kg / (m s^3))
 
-for uniform medium, assume ∇ k = 0 and Q = 0
+for uniform medium, assume ∇ k = 0
 
-	∂T/∂t = k/(cp ρ) ΔT
+	∂T/∂t = k/(cp ρ) ΔT + Q / (cp ρ)
 
 substitute α = k/(cp ρ) = thermal diffusivity
 
-	∂T/∂t = α ΔT
+	∂T/∂t = α ΔT + Q / (cp ρ)
+
+Q / (cp ρ) is in units [K/s]
 
 for radiation too: (adding https://en.wikipedia.org/wiki/Stefan%E2%80%93Boltzmann_law)
 
@@ -71,6 +73,29 @@ brick, adobe:				2.7e-7
 glass:						3.4e-7
 wood (yellow pine):			8.2e-8
 
+
+... relativistic heat?
+	
+	ρ cp (∂T/∂t + v ∇·T) - ∇k · ∇T - k ΔT = Q 
+		... convert material derivative with 3-velocity to spacetime derivative with 4-velocity
+	ρ cp (∂T/∂t + v ∇·T) becomes ρ cp u^μ ∇_μ T
+	-k ΔT becomes -k (g^μν + u^μ u^ν) ∇_μ ∇_ν T
+	-∇k · ∇T becomes -(g^μν + u^μ u^ν) * ∇_μ k * ∇_ν T ... assuming a -+++ metric
+	ρ cp u^μ ∇_μ T 
+		-(g^μν + u^μ u^ν) * ∇_μ k * ∇_ν T
+		- k g^μν ∇_μ ∇_ν T - k u^μ u^ν ∇_μ ∇_ν T = Q 
+	the two could be combined as before to make
+		-(g^μν + u^μ u^ν) ∇_μ (k ∇_ν T) 
+	ρ cp u^μ ∇_μ T - (g^μν + u^μ u^ν) ∇_μ (k ∇_ν T) = Q
+	move our extra timelike derivative terms to the rhs:
+	ρ cp u^μ ∇_μ T - g^μν ∇_μ (k ∇_ν T) = Q + u^μ u^ν ∇_μ (k ∇_ν T)
+
+	so can you say Q is the 2nd heat derivative in the timelike direction? Q = -u^μ u^ν ∇_μ (k ∇_ν T)
+	then things simplify to:
+	ρ cp u^μ ∇_μ T - g^μν ∇_μ (k ∇_ν T) = 0
+	ρ cp u^μ ∇_μ T = g^μν ∇_μ (k ∇_ν T)
+
+	or ... maybe I can't cancel so much in Q, maybe one of the pieces merges with ρ cp u^μ ∇_μ  ....
 --]]
 local ffi = require 'ffi'
 local class = require 'ext.class'
@@ -88,12 +113,13 @@ return function (parentClass)
 	-- how often in game-time to update the heat fbo 
 	HeatLevelTemplate.temperatureUpdateInterval = .1
 	HeatLevelTemplate.temperatureDefaultValue = Temperature.CtoK(15)
+	HeatLevelTemplate.temperatureDefault_Q_per_Cp_rho = 0
 	-- above ground it should be 10 C in Winter to 20 C in Summer
 
 	function HeatLevelTemplate:init(...)
 		HeatLevelTemplate.super.init(self, ...)
 
-		self.gradientTex = require 'gl.gradienttex'(256, 
+		self.gradientTex = require 'gl.gradienttex'(256,
 	--[[ rainbow or heatmap or whatever
 			{
 				{0,0,0,0},
@@ -107,14 +133,14 @@ return function (parentClass)
 	--]]
 	-- [[ sunset pic from https://blog.graphiq.com/finding-the-right-color-palettes-for-data-visualizations-fcd4e707a283#.inyxk2q43
 			{
-				{22/255,31/255,86/255,1},
-				{34/255,54/255,152/255,1},
-				{87/255,49/255,108/255,1},
-				{156/255,48/255,72/255,1},
-				{220/255,60/255,57/255,1},
-				{254/255,96/255,50/255,1},
-				{255/255,188/255,46/255,1},
-				{255/255,255/255,55/255,1},
+				{22/255, 31/255, 86/255, 1},
+				{34/255, 54/255, 152/255, 1},
+				{87/255, 49/255, 108/255, 1},
+				{156/255, 48/255, 72/255, 1},
+				{220/255, 60/255, 57/255, 1},
+				{254/255, 96/255, 50/255, 1},
+				{255/255, 188/255, 46/255, 1},
+				{255/255, 255/255, 55/255, 1},
 			},
 	--]]
 			true
@@ -155,18 +181,22 @@ uniform sampler2D temperatureTex;
 uniform float tileSize;
 void main() {
 	// discrete laplacian
-	float T = texture2D(temperatureTex, tc).x;
-	float TxR = texture2D(temperatureTex, tc + vec2(0., du.y)).x;
-	float TxL = texture2D(temperatureTex, tc - vec2(0., du.y)).x;
-	float TyR = texture2D(temperatureTex, tc + vec2(du.x, 0.)).x;
-	float TyL = texture2D(temperatureTex, tc - vec2(du.x, 0.)).x;
+	vec4 props = texture2D(temperatureTex, tc);
+	float T = props.r;
+	float Q_per_Cp_rho = props.g;
+	float TxR = texture2D(temperatureTex, tc + vec2(0., du.y)).r;
+	float TxL = texture2D(temperatureTex, tc - vec2(0., du.y)).r;
+	float TyR = texture2D(temperatureTex, tc + vec2(du.x, 0.)).r;
+	float TyL = texture2D(temperatureTex, tc - vec2(du.x, 0.)).r;
 	float lapT = TxR + TxL + TyR + TyL - 4. * T;	//dx = dy = 1
 	// ∂T/∂t = α ΔT		[K/m^2]
-	float alpha = .1;	// TODO store this in temperatureMap and update it when tiles change?
+	float alpha = 1.;	// TODO store this in temperatureMap and update it when tiles change?
 	// TODO another property -- Q -- the source energy ...
 	float dT_dt = alpha * lapT;
-	float Tnew = T + dT_dt * dt;
-	gl_FragColor = vec4(Tnew, 0., 0., 1.);
+	float Tnew = T + dT_dt * dt + Q_per_Cp_rho;
+	vec4 propsNew = props;
+	propsNew.r = Tnew;
+	gl_FragColor = propsNew;
 }
 ]],
 			uniforms = {
@@ -257,6 +287,7 @@ void main() {
 		-- setup fbo
 		-- set its viewport to the view bounds plus a bit ... maybe 2x or 3x size?
 		-- render the heat update shader
+		gl.glDisable(gl.GL_BLEND);
 		self.temperaturePingPong:swap()
 		self.temperaturePingPong:draw{
 			-- set viewport to simulation region
@@ -299,6 +330,7 @@ void main() {
 				self.diffuseTemperatureShader:useNone()
 			end,
 		}
+		gl.glEnable(gl.GL_BLEND);
 	end
 
 	-- TODO ...
@@ -360,6 +392,10 @@ void main() {
 		)
 	end
 
+	-- ok this should be done at some times (on init, on editor change)
+	-- but not others (in-game block changes, i.e. breaking blocks)
+	-- or maybe in both cases what I want is not the temp to change, but rather the heat source to change
+	--	but even then, upon editor/init I want the temp to initialize to a steady-state
 	function HeatLevelTemplate:onUpdateTileMap(x1,y1,x2,y2)
 		HeatLevelTemplate.super.onUpdateTileMap(self,x1,y1,x2,y2)
 		
@@ -379,7 +415,8 @@ void main() {
 			for x=x1,x2 do
 				local tileType = self:getTile(x,y)
 				local temp = tileType and tileType.temperature or self.temperatureDefaultValue
-				self.temperatureMap[(x-1)+self.size[1]*(y-1)] = vec4f(temp, 0, 0, 0)
+				local Q_per_Cp_rho = tileType and tileType.Q_per_Cp_rho or self.temperatureDefault_Q_per_Cp_rho
+				self.temperatureMap[(x-1)+self.size[1]*(y-1)] = vec4f(temp, Q_per_Cp_rho, 0, 0)
 			end
 		end
 	end
