@@ -49,7 +49,7 @@ Q / (cp ρ) is in units [K/s]
 
 for radiation too: (adding https://en.wikipedia.org/wiki/Stefan%E2%80%93Boltzmann_law)
 
-	∂T/∂t = 1/(cp ρ) (k ΔT - μ (T^4 - v^4))
+	∂T/∂t = 1/(cp ρ) (k ΔT + Q - μ (T^4 - v^4))
 
 where v = temperature of surroundings 
 
@@ -96,6 +96,15 @@ wood (yellow pine):			8.2e-8
 	ρ cp u^μ ∇_μ T = g^μν ∇_μ (k ∇_ν T)
 
 	or ... maybe I can't cancel so much in Q, maybe one of the pieces merges with ρ cp u^μ ∇_μ  ....
+
+
+
+ok so irl most heat comes from sun or from inside earth, and then the wind blows it around and that's how we have heat everywhere in our day to day lives.
+so i should probably add some fluid advection for my heat transport.
+but eventually it lends to a steady state
+so i want to have blocks like air dirt etc have default temperature values ... or everything has default temp values ...
+but then i want them to be a bit malleable too where neighboring temps can influence them 
+
 --]]
 local ffi = require 'ffi'
 local class = require 'ext.class'
@@ -182,6 +191,7 @@ uniform float tileSize;
 void main() {
 	// discrete laplacian
 	vec4 props = texture2D(temperatureTex, tc);
+	vec4 propsNew = props;
 	float T = props.r;
 	float Q_per_Cp_rho = props.g;
 	float TxR = texture2D(temperatureTex, tc + vec2(0., du.y)).r;
@@ -190,12 +200,12 @@ void main() {
 	float TyL = texture2D(temperatureTex, tc - vec2(du.x, 0.)).r;
 	float lapT = TxR + TxL + TyR + TyL - 4. * T;	//dx = dy = 1
 	// ∂T/∂t = α ΔT		[K/m^2]
-	float alpha = 1.;	// TODO store this in temperatureMap and update it when tiles change?
-	// TODO another property -- Q -- the source energy ...
-	float dT_dt = alpha * lapT;
-	float Tnew = T + dT_dt * dt + Q_per_Cp_rho;
-	vec4 propsNew = props;
-	propsNew.r = Tnew;
+	if (Q_per_Cp_rho == 0.) {		//for now, only allow diffusion into non-source materials.
+		float alpha = 1.;	// TODO store this in temperatureMap and update it when tiles change?
+		float dT_dt = alpha * lapT;
+		float Tnew = T + dT_dt * dt + Q_per_Cp_rho;
+		propsNew.r = Tnew;
+	}
 	gl_FragColor = propsNew;
 }
 ]],
