@@ -3,7 +3,7 @@
 -- and if I output it to a smaller res, messes with it
 -- so I'll resize it here
 local table = require 'ext.table'
-local os = require 'ext.os'
+local file = require 'ext.file'
 local box2 = require 'vec.box2'
 local Image = require 'image'
 
@@ -14,14 +14,14 @@ local targetSize = tonumber(arg[2]) or 16
 print('target size:',targetSize)
 
 local files = table()
-for f in os.listdir(dir) do
+for f in file(dir):dir() do
 	if f:match('%.png$') then
 		files:insert(f)
 	end
 end
 print('files',files:concat(' '))
 
-os.execute('mkdir resized')
+file'resized':mkdir()
 
 for _,file in ipairs(files) do
 	local image = Image(dir..'/'..file)
