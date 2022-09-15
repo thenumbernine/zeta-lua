@@ -3,13 +3,13 @@ local os = require 'ext.os'
 local table = require 'ext.table'
 
 local cmd = [[find . -name "*.png" -print0 | xargs -0 pngcrush -c 6 -ow -rem allb -reduce]]
-assert(0 == os.execute(cmd))
+assert(os.execute(cmd))
 
 local cmd = [[find . -name "*.png" -print0 | xargs -0 pngcrush -c 6 -srgb 3 -ow -rem cHRM -rem gAMA -rem iCCP -rem sRGB]]
-assert(0 == os.execute(cmd))
+assert(os.execute(cmd))
 
 local cmd = [[find . -name "*.png" -print0 | xargs -0 mogrify -strip -define png:color-type=6]]
-assert(0 == os.execute(cmd))
+assert(os.execute(cmd))
 
 local Image = require 'image'
 local image = Image'mario/maps/mine/tile.png'
