@@ -3,7 +3,7 @@ this is special.  it's not to be overridden, so I put the class in this file rat
 --]]
 local class = require 'ext.class'
 local table = require 'ext.table'
-local os = require 'ext.os'
+local file = require 'ext.file'
 local ModIO = class()
 
 -- find somewhere before anyone else requires this file
@@ -14,7 +14,7 @@ ModIO.search = table{'base'}
 function ModIO:find(fn)
 	for _,dir in ipairs(self.search) do
 		local fullfn = dir .. '/' .. fn
-		if os.fileexists(fullfn) then return fullfn end
+		if file(fullfn):exists() then return fullfn end
 	end
 end
 
@@ -24,7 +24,7 @@ function ModIO:require(includename)
 	for _,dir in ipairs(self.search) do
 		local filename = dir..'/'.. includename:gsub('%.', '/') .. '.lua'
 		--print('checking '..filename..'...')
-		if os.fileexists(filename) then
+		if file(filename):exists() then
 			--print('...found!')
 			return require(dir..'.'..includename)
 		end
