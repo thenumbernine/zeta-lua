@@ -1,9 +1,9 @@
 #!/usr/bin/env luajit
-local os = require 'ext.os'
+local file = require 'ext.file'
 local Image = require 'image'
-for dir in os.listdir'.' do
-	if os.isdir(dir) then	-- this will error if it fails ...
-		for f in os.listdir(dir) do
+for dir in file:dir() do
+	if file(dir):isdir() then	-- this will error if it fails ...
+		for f in file(dir):dir() do
 			if f:match'%.png$' then
 				local fn = dir..'/'..f
 				local image = Image(fn)
