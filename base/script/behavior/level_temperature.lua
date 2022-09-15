@@ -382,6 +382,7 @@ void main() {
 		-- now if we were modifying the tileIndex then update the heat too
 		if tileIndex then
 			self:copyTileTemperatureToTemperatureMap(x,y,x,y)
+			-- TODO don't do this if the change came from a break block
 			if not dontUpdateTexs then	-- TODO when is this set again?
 				self:onUpdateTemperatureMap(x,y,x,y)
 			end

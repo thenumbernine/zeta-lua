@@ -209,7 +209,7 @@ TODO serialize threads
 --[=[ serialize only player stats (and reset rooms)
 --]=]
 
-		file['zeta/save/save.txt'] = saveDataSerialized
+		file'zeta/save/save.txt':write(saveDataSerialized)
 
 		-- TODO matches base/script/singleton/class/glapp.lua ... consolidate
 		local arrayRef = class()

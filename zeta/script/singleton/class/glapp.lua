@@ -21,9 +21,9 @@ function ZetaApp:loadLevelConfig(save)
 			3,
 			'unsigned char'):save('zeta/maps/'..levelcfg.path..'/tile.png')
 		
-		file['zeta/maps/'..levelcfg.path..'/init.lua'] = file['zeta/maps/gen/init.lua']
-		--file['zeta/maps/'..levelcfg.path..'/init.lua'] = file['zeta/maps/gen/gen2.lua']
-		file['zeta/maps/'..levelcfg.path..'/texpack.png'] = file['zeta/maps/gen/texpack.png']
+		file('zeta/maps/'..levelcfg.path..'/init.lua'):write(file'zeta/maps/gen/init.lua':read())
+		--file('zeta/maps/'..levelcfg.path..'/init.lua'):write(file'zeta/maps/gen/gen2.lua':read())
+		file('zeta/maps/'..levelcfg.path..'/texpack.png'):write(file'zeta/maps/gen/texpack.png':read())
 	end
 
 	return levelcfg

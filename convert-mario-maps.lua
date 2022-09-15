@@ -5,6 +5,7 @@ local bit = require 'bit'
 local table = require 'ext.table'
 local string = require 'ext.string'
 local file = require 'ext.file'
+local fromlua = require 'ext.fromlua'
 local tolua = require 'ext.tolua'
 
 --[[ hmm ...
@@ -24,7 +25,7 @@ local parser = require 'parser'
 
 local tilePath = dir..'/tile.png'
 local origTilePath = '../zeta2d-original/'..dir..'/tile.png'
-assert(os.fileexists(origTilePath), "couldn't find the original tile file")
+assert(file(origTilePath):exists(), "couldn't find the original tile file")
 
 local oldSearchPath = table{'mario', 'base'}
 local newSearchPath = table{'mario', 'base'}
@@ -34,7 +35,7 @@ local newSearchPath = table{'mario', 'base'}
 local origTileTypes = table()
 for _,path in ipairs(oldSearchPath) do
 	local inc = '../zeta2d-original/'..path..'/script/tiles.lua'
-	local tree = parser.parse(file[inc])
+	local tree = parser.parse(file(inc):read())
 	local function rmap(x)
 		for k,v in pairs(x) do
 			if type(v) == 'table' then
@@ -59,7 +60,7 @@ for _,origTileType in ipairs(origTileTypes) do
 end
 print('got',#origTileTypes,'origTileTypes')
 
-local backgrounds = assert(load('return '..file['mario/script/backgrounds.lua']))()
+local backgrounds = fromlua(file'mario/script/backgrounds.lua':read())
 local backgroundName = assert(({
 	doors = 'cave',
 	fight = 'cave',
@@ -83,7 +84,7 @@ for i=#newSearchPath,1,-1 do
 	local ls = 
 		string.split(
 			string.trim(
-				file[newSearchPath[i]..'/script/tiletypes.lua']
+				file(newSearchPath[i]..'/script/tiletypes.lua'):read()
 			),
 			'\n'
 		)
@@ -212,8 +213,10 @@ newTileImage:save(dir..'/tile.png')
 fgTileImage:save(dir..'/tile-fg.png')
 bgTileImage:save(dir..'/tile-bg.png')
 backgroundImage:save(dir..'/background.png')
-file[dir..'/spawn.lua'] = '{\n'
+file(dir..'/spawn.lua'):write(
+	'{\n'
 	..spawnInfos:map(function(spawnInfo)
 		return '\t'..tolua(spawnInfo)..','
 	end):concat'\n'
 	..'}\n'
+)

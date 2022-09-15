@@ -1,10 +1,10 @@
 local ffi = require 'ffi'
 local bit = require 'bit'
-local os = require 'ext.os'
 local file = require 'ext.file'
 local class = require 'ext.class'
 local table = require 'ext.table'
 local tolua = require 'ext.tolua'
+local fromlua = require 'ext.fromlua'
 
 local ImGuiApp = require 'imguiapp'
 local sdl = require 'ffi.sdl'
@@ -133,7 +133,7 @@ function App:initGL(gl, glname)
 	( and - soon - any spritesheet chopping regions for frames)
 	--]]
 	for _,mod in ipairs(modio.search) do
-		local dirobj = file[mod..'/sprites']
+		local dirobj = file(mod..'/sprites'):read()
 		if dirobj then
 			for sprite in dirobj() do
 				animsys:load{name=sprite, dir=sprite}
@@ -142,7 +142,7 @@ function App:initGL(gl, glname)
 	end
 
 	for _,mod in ipairs(modio.search) do
-		if os.fileexists(mod..'/script/sprites.lua') then
+		if file(mod..'/script/sprites.lua'):exists() then
 			local spriteTable = require(mod..'.script.sprites')
 			for _,sprite in ipairs(spriteTable) do
 				animsys:load(sprite)
@@ -151,7 +151,7 @@ function App:initGL(gl, glname)
 	end
 	
 	for _,mod in ipairs(modio.search) do
-		if os.fileexists(mod..'/script/sounds.lua') then
+		if file(mod..'/script/sounds.lua'):exists() then
 			local soundTable = require(mod..'.script.sounds')
 			for _,sound in ipairs(soundTable) do
 				sounds:load(sound)
@@ -190,11 +190,11 @@ function App:initGL(gl, glname)
 		self.src = assert(args.src)
 	end
 	local save
-	if savefile and os.fileexists(savefile) then
+	if savefile and file(savefile):exists() then
 		local code = [[
 local arrayRef = ...
 local table = require 'ext.table'
-return ]]..file[savefile]
+return ]]..file(savefile):read()
 		save = assert(load(code))(arrayRef)
 
 		game:setSavePoint(save)
@@ -207,10 +207,10 @@ return ]]..file[savefile]
 	local serializeTypes = table()
 	for i=#modio.search,1,-1 do	-- start with lowest (base) first, for sequence sake
 		local mod = modio.search[i]
-		if os.fileexists(mod..'/script/tiletypes.lua') then
+		if file(mod..'/script/tiletypes.lua'):exists() then
 			tileTypes:append(require(mod..'.script.tiletypes'))
 		end
-		if os.fileexists(mod..'/script/spawntypes.lua') then
+		if file(mod..'/script/spawntypes.lua'):exists() then
 			local modSpawnTypes = require(mod..'.script.spawntypes')
 			spawnTypes:append(modSpawnTypes.spawn)
 			serializeTypes:append(modSpawnTypes.spawn)
@@ -295,7 +295,7 @@ function App:loadLevelConfig(save)
 	local levelcfg =
 		(save and save.levelcfg)
 		or modio.levelcfg
-		or (os.fileexists'levelcfg.lua' and assert(load('return '..file['levelcfg.lua']))())
+		or (file'levelcfg.lua':exists() and fromlua(file('levelcfg.lua'):read()))
 	assert(levelcfg, "failed to find levelcfg info in save file, modio, or levelcfg.lua file")
 	return levelcfg
 end
@@ -316,8 +316,8 @@ local inputKeyNames = table{
 
 local configFileName = 'config'
 local config
-if os.fileexists(configFileName) then
-	config = assert(load('return '..file[configFileName]))()
+if file(configFileName):exists() then
+	config = fromlua(file(configFileName):read())
 end
 if type(config) ~= 'table' then config = {} end
 if type(config.playerKeys) ~= 'table' then
@@ -643,7 +643,7 @@ function App:updateGUI(...)
 									playerIndex = playerIndex,
 									callback = function(ev)
 										config.playerKeys[playerIndex][inputKeyName] = ev
-										file[configFileName] = tolua(config, {indent=true})
+										file(configFileName):write(tolua(config, {indent=true}))
 										-- next resume
 										threads:add(function()
 											coroutine.yield()
@@ -672,7 +672,7 @@ function App:updateGUI(...)
 								playerIndex = playerIndex,
 								callback = function(ev)
 									config.playerKeys[playerIndex][inputKeyName] = ev
-									file[configFileName] = tolua(config, {indent=true})
+									file(configFileName):write(tolua(config, {indent=true}))
 								end,
 							}
 						end

@@ -1,6 +1,5 @@
 local class = require 'ext.class'
 local file = require 'ext.file'
-local io = require 'ext.io'
 local tolua = require 'ext.tolua'
 local game = require 'base.script.singleton.game'
 local texsys = require 'base.script.singleton.texsys'
@@ -21,10 +20,10 @@ function AnimationSystem:load(sprite)
 	
 	-- create implicit frames from all files
 	for _,mod in ipairs(modio.search) do
-		local dirobj = file[mod..'/'..dir]
+		local dirobj = file(mod..'/'..dir):read()
 		if dirobj then
 			for framefile in dirobj() do
-				local framename, ext = io.getfileext(framefile)
+				local framename, ext = file(framefile):getext()
 				ext = ext:lower()
 				if ext == 'png'
 				or ext == 'tif'
