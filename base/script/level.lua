@@ -13,6 +13,7 @@ local bit = require 'bit'
 local class = require 'ext.class'
 local table = require 'ext.table'
 local file = require 'ext.file'
+local fromlua = require 'ext.fromlua'
 local vec2 = require 'vec.vec2'
 local box2 = require 'vec.box2'
 local modio = require 'base.script.singleton.modio'
@@ -217,7 +218,6 @@ function Level:init(args)
 print('maptilesizepath', maptilesizepath) 	
 		if searchMapTileSizePath then
 print('exists')			
-			local fromlua = require 'ext.fromlua'
 			self.mapTileSize = vec2(table.unpack(
 				assert(fromlua(assert(file(searchMapTileSizePath):read())))
 			))

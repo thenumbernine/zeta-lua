@@ -24,7 +24,7 @@ function SavePoint:playerUse(player)
 		player:popupMessage('saving...')
 	end)
 
-	os.execute('mkdir zeta/save')
+	file'zeta/save':mkdir()
 
 
 	local SpawnInfo = require 'base.script.spawninfo'

@@ -18,7 +18,7 @@ function gcmem.free() end
 
 local mapName = ... or 'mine'
 local dir = 'mario/maps/'..mapName
-os.execute('mkdir '..dir)
+file(dir):mkdir()
 local box2 = require 'vec.box2'
 local Image = require 'image'
 local parser = require 'parser'

@@ -13,7 +13,7 @@ function ZetaApp:loadLevelConfig(save)
 		local seed = os.time()
 		print('generating seed '..seed)
 		levelcfg.path = 'gen'..seed
-		os.execute('mkdir zeta/maps/'..levelcfg.path)
+		file('zeta/maps/'..levelcfg.path):mkdir()
 		local Level = require 'base.script.level'
 		require 'image'(
 			Level.mapTileSize[1] * levelcfg.blocksWide,
