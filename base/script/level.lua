@@ -295,9 +295,14 @@ print('self.mapTileSize', self.mapTileSize)
 		self.bgtexpackFilename = modio:find(mappath..'/bgtexpack.png')
 		if not self.bgtexpackFilename then
 			self.bgtexpackFilename = modio:find'bgtexpack.png'
-			assert(self.bgtexpackFilename, "better put your background textures in a texpack, and define their regions in your mod's scripts/backgrounds.lua file")
 		end
-		self.bgtexpackImage = Image(self.bgtexpackFilename)
+		if not self.bgtexpackFilename then
+			-- fallback - no backgrounds
+			self.bgtexpackImage = Image(1024,1024,4,'unsigned char')
+			print("can't find bgtexpack.png anywhere -- using an empty image")
+		else
+			self.bgtexpackImage = Image(self.bgtexpackFilename)
+		end
 		self.bgtexpackTex = Tex2D{
 			image = self.bgtexpackImage,
 			minFilter = gl.GL_LINEAR,
@@ -695,10 +700,14 @@ void main() {
 				}
 			end
 		end
+		if totalPixels == 0 then
+			-- should I even keep going at this point?
+			error("no pixels found in any of your "..#table.keys(animsys.sprites).." sprites could be loaded.")
+		end
 		-- what percent error should we give it?
 		totalPixels = math.ceil(totalPixels * 1.5)
 		local spriteSheetWidth = math.ceil(math.sqrt(totalPixels))
-		
+
 		require 'base.script.rectpack'(rects, spriteSheetWidth, spriteSheetWidth, 512)
 		local spriteSheetImage = Image(spriteSheetWidth, spriteSheetWidth, 4, 'unsigned char')
 		for _,rect in ipairs(rects) do
