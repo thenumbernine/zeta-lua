@@ -133,9 +133,9 @@ function App:initGL(gl, glname)
 	( and - soon - any spritesheet chopping regions for frames)
 	--]]
 	for _,mod in ipairs(modio.search) do
-		local dirobj = file(mod..'/sprites'):read()
-		if dirobj then
-			for sprite in dirobj() do
+		local dirobj = file(mod..'/sprites')
+		if dirobj:exists() then
+			for sprite in dirobj:dir() do
 				animsys:load{name=sprite, dir=sprite}
 			end
 		end

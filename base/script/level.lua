@@ -679,8 +679,8 @@ void main() {
 
 
 
-
 		-- animation system debugging
+		-- and raytracer
 		-- write out all unique sprite textures
 		local animsys = require 'base.script.singleton.animsys'
 		local rects = table()
@@ -701,7 +701,7 @@ void main() {
 			end
 		end
 		if totalPixels == 0 then
-			-- should I even keep going at this point?
+			-- NOTICE this will error if the animation system fails to load
 			error("no pixels found in any of your "..#table.keys(animsys.sprites).." sprites could be loaded.")
 		end
 		-- what percent error should we give it?

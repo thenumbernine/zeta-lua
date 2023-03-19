@@ -20,9 +20,9 @@ function AnimationSystem:load(sprite)
 	
 	-- create implicit frames from all files
 	for _,mod in ipairs(modio.search) do
-		local dirobj = file(mod..'/'..dir):read()
-		if dirobj then
-			for framefile in dirobj() do
+		local dirobj = file(mod..'/'..dir)
+		if dirobj:exists() then
+			for framefile in dirobj:dir() do
 				local framename, ext = file(framefile):getext()
 				ext = ext:lower()
 				if ext == 'png'

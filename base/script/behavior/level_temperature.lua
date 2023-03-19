@@ -344,7 +344,7 @@ void main() {
 	end
 
 	-- TODO ...
-	HeatLevelTemplate.showTemperature = true
+	HeatLevelTemplate.showTemperature = false
 
 	function HeatLevelTemplate:draw(...)
 		HeatLevelTemplate.super.draw(self, ...)
