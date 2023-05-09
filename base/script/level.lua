@@ -35,7 +35,7 @@ end
 
 -- here's the data that gets copied to the GPU
 ffi.cdef[[
-typedef struct {
+typedef struct background_t {
 	float x, y, w, h;
 	float scaleX, scaleY;
 	float scrollX, scrollY;
@@ -56,7 +56,7 @@ so how to quickly encode the list of all tile objects into a texture?
 we would have to keep track of a list of all tiles that do have objects
 --]]
 ffi.cdef[[
-typedef struct {
+typedef struct visSprite_t {
 	float x, y, w, h;		//vertexes
 	
 	float tx, ty, tw, th;	//texture coords
