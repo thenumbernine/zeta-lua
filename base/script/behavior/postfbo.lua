@@ -82,7 +82,8 @@ return function(parentClass)
 					magFilter = gl.GL_NEAREST,
 				}
 				fbo = FBO()
-				fbo:setColorAttachmentTex2D(0, tex.id, tex.target, 0)
+				fbo:setColorAttachment(tex)
+				fbo:unbind()
 				glreport'here'
 			
 				renderShader = R:createShader{
