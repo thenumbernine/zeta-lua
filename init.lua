@@ -86,4 +86,4 @@ modio.levelcfg = {
 
 -- run main
 local main = modio:require 'script.main'
-main()
+return main()
