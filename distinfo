@@ -29,23 +29,23 @@ files = {
 	-- external project folders
 	-- only copy *.lua files? ... or at least don't copy .git files
 	['..'] = table{
-			'ext',
-			'ffi',
-			'template',
-			'glapp',
-			'imguiapp',
-			'vec',
-			'parser',
-			'image',
-			'audio',
-			'netrefl',
-			'resourcecache',
-			'threadmanager',
-			'simplexnoise',
-			'gui',
-		}:append(
-			ffi.os == 'Android' and {'gles2'} or {'gl'}
-		),
+		'ext',
+		'ffi',
+		'template',
+		'glapp',
+		'imguiapp',
+		'vec',
+		'parser',
+		'image',
+		'audio',
+		'netrefl',
+		'resourcecache',
+		'threadmanager',
+		'simplexnoise',
+		'gui',
+	}:append(
+		ffi.os == 'Android' and {'gles2'} or {'gl'}
+	),
 }
 
 -- binary libs needed for luajit
