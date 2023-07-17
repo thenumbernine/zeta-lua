@@ -12,7 +12,7 @@ local ffi = require 'ffi'
 local bit = require 'bit'
 local class = require 'ext.class'
 local table = require 'ext.table'
-local file = require 'ext.file'
+local path = require 'ext.path'
 local fromlua = require 'ext.fromlua'
 local vec2 = require 'vec.vec2'
 local box2 = require 'vec.box2'
@@ -219,7 +219,7 @@ print('maptilesizepath', maptilesizepath)
 		if searchMapTileSizePath then
 print('exists')			
 			self.mapTileSize = vec2(table.unpack(
-				assert(fromlua(assert(file(searchMapTileSizePath):read())))
+				assert(fromlua(assert(path(searchMapTileSizePath):read())))
 			))
 print('found self.mapTileSize', self.mapTileSize)
 		end
@@ -291,7 +291,7 @@ print('self.mapTileSize', self.mapTileSize)
 
 	-- load backgrounds here
 	do
-		self.backgrounds = table(assert(fromlua(assert(file(assert(modio:find('script/backgrounds.lua'))):read()))))
+		self.backgrounds = table(assert(fromlua(assert(path(assert(modio:find('script/backgrounds.lua'))):read()))))
 		self.bgtexpackFilename = modio:find(mappath..'/bgtexpack.png')
 		if not self.bgtexpackFilename then
 			self.bgtexpackFilename = modio:find'bgtexpack.png'
@@ -637,7 +637,7 @@ void main() {
 			},
 		}
 
-		local shaderCode = assert(file'base/script/raytrace.shader':read())
+		local shaderCode = assert(path'base/script/raytrace.shader':read())
 		self.levelSceneGraphShader = GLProgram{
 			vertexCode = table{
 				'#define VERTEX_SHADER 1',
@@ -825,7 +825,7 @@ void main() {
 		if spawnInfoFile then
 			spawnInfoFile = modio:find(spawnInfoFile)
 			if spawnInfoFile then
-				local spawnInfos = assert(fromlua(file(spawnInfoFile):read()))
+				local spawnInfos = assert(fromlua(path(spawnInfoFile):read()))
 				self:processSpawnInfoArgs(spawnInfos)	
 			end
 		end
@@ -834,7 +834,7 @@ void main() {
 	local roomsFile = args.roomsFile or (mappath and mappath..'/rooms.lua')
 	if roomsFile then roomsFile = modio:find(roomsFile) end
 	if roomsFile then
-		self.roomProps = assert(fromlua(file(roomsFile):read()))
+		self.roomProps = assert(fromlua(path(roomsFile):read()))
 	else
 		self.roomProps = table()
 	end
@@ -938,7 +938,7 @@ function Level:initialize()
 		local initFile = modio:find(self.initFile)
 		if initFile then
 			local sandbox = require 'base.script.singleton.sandbox' 
-			return sandbox(assert(file(initFile):read()))
+			return sandbox(assert(path(initFile):read()))
 		end
 	end
 end

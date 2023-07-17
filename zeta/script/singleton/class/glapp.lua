@@ -1,5 +1,5 @@
 local class = require 'ext.class'
-local file = require 'ext.file'
+local path = require 'ext.path'
 local App = require 'base.script.singleton.class.glapp'
 local ZetaApp = class(App)
 
@@ -13,7 +13,7 @@ function ZetaApp:loadLevelConfig(save)
 		local seed = os.time()
 		print('generating seed '..seed)
 		levelcfg.path = 'gen'..seed
-		file('zeta/maps/'..levelcfg.path):mkdir()
+		path('zeta/maps/'..levelcfg.path):mkdir()
 		local Level = require 'base.script.level'
 		require 'image'(
 			Level.mapTileSize[1] * levelcfg.blocksWide,
@@ -21,9 +21,9 @@ function ZetaApp:loadLevelConfig(save)
 			3,
 			'unsigned char'):save('zeta/maps/'..levelcfg.path..'/tile.png')
 		
-		file('zeta/maps/'..levelcfg.path..'/init.lua'):write(file'zeta/maps/gen/init.lua':read())
-		--file('zeta/maps/'..levelcfg.path..'/init.lua'):write(file'zeta/maps/gen/gen2.lua':read())
-		file('zeta/maps/'..levelcfg.path..'/texpack.png'):write(file'zeta/maps/gen/texpack.png':read())
+		path('zeta/maps/'..levelcfg.path..'/init.lua'):write(path'zeta/maps/gen/init.lua':read())
+		--path('zeta/maps/'..levelcfg.path..'/init.lua'):write(path'zeta/maps/gen/gen2.lua':read())
+		path('zeta/maps/'..levelcfg.path..'/texpack.png'):write(path'zeta/maps/gen/texpack.png':read())
 	end
 
 	return levelcfg

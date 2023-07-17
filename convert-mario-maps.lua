@@ -4,7 +4,7 @@ local ffi = require 'ffi'
 local bit = require 'bit'
 local table = require 'ext.table'
 local string = require 'ext.string'
-local file = require 'ext.file'
+local path = require 'ext.path'
 local fromlua = require 'ext.fromlua'
 local tolua = require 'ext.tolua'
 
@@ -18,14 +18,14 @@ function gcmem.free() end
 
 local mapName = ... or 'mine'
 local dir = 'mario/maps/'..mapName
-file(dir):mkdir()
+path(dir):mkdir()
 local box2 = require 'vec.box2'
 local Image = require 'image'
 local parser = require 'parser'
 
 local tilePath = dir..'/tile.png'
 local origTilePath = '../zeta2d-original/'..dir..'/tile.png'
-assert(file(origTilePath):exists(), "couldn't find the original tile file")
+assert(path(origTilePath):exists(), "couldn't find the original tile file")
 
 local oldSearchPath = table{'mario', 'base'}
 local newSearchPath = table{'mario', 'base'}
@@ -33,9 +33,9 @@ local newSearchPath = table{'mario', 'base'}
 -- gather all <mod>/script/tiles.lua
 -- replace 'require' calls with arg strings
 local origTileTypes = table()
-for _,path in ipairs(oldSearchPath) do
-	local inc = '../zeta2d-original/'..path..'/script/tiles.lua'
-	local tree = parser.parse(file(inc):read())
+for _,pathstr in ipairs(oldSearchPath) do
+	local inc = '../zeta2d-original/'..pathstr..'/script/tiles.lua'
+	local tree = parser.parse(path(inc):read())
 	local function rmap(x)
 		for k,v in pairs(x) do
 			if type(v) == 'table' then
@@ -60,7 +60,7 @@ for _,origTileType in ipairs(origTileTypes) do
 end
 print('got',#origTileTypes,'origTileTypes')
 
-local backgrounds = fromlua(file'mario/script/backgrounds.lua':read())
+local backgrounds = fromlua(path'mario/script/backgrounds.lua':read())
 local backgroundName = assert(({
 	doors = 'cave',
 	fight = 'cave',
@@ -84,7 +84,7 @@ for i=#newSearchPath,1,-1 do
 	local ls = 
 		string.split(
 			string.trim(
-				file(newSearchPath[i]..'/script/tiletypes.lua'):read()
+				path(newSearchPath[i]..'/script/tiletypes.lua'):read()
 			),
 			'\n'
 		)
@@ -213,7 +213,7 @@ newTileImage:save(dir..'/tile.png')
 fgTileImage:save(dir..'/tile-fg.png')
 bgTileImage:save(dir..'/tile-bg.png')
 backgroundImage:save(dir..'/background.png')
-file(dir..'/spawn.lua'):write(
+path(dir..'/spawn.lua'):write(
 	'{\n'
 	..spawnInfos:map(function(spawnInfo)
 		return '\t'..tolua(spawnInfo)..','

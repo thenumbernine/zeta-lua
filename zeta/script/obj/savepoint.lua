@@ -2,7 +2,7 @@ local class = require 'ext.class'
 local table = require 'ext.table'
 local string = require 'ext.string'
 local tolua = require 'ext.tolua'
-local file = require 'ext.file'
+local path = require 'ext.path'
 local vec2 = require 'vec.vec2'
 local vec4 = require 'vec.vec4'
 local box2 = require 'vec.box2'
@@ -24,7 +24,7 @@ function SavePoint:playerUse(player)
 		player:popupMessage('saving...')
 	end)
 
-	file'zeta/save':mkdir()
+	path'zeta/save':mkdir()
 
 
 	local SpawnInfo = require 'base.script.spawninfo'
@@ -209,7 +209,7 @@ TODO serialize threads
 --[=[ serialize only player stats (and reset rooms)
 --]=]
 
-		file'zeta/save/save.txt':write(saveDataSerialized)
+		path'zeta/save/save.txt':write(saveDataSerialized)
 
 		-- TODO matches base/script/singleton/class/glapp.lua ... consolidate
 		local arrayRef = class()

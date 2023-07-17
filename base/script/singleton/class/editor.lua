@@ -4,7 +4,7 @@ local class = require 'ext.class'
 local table = require 'ext.table'
 local math = require 'ext.math'
 local tolua = require 'ext.tolua'
-local file = require 'ext.file'
+local path = require 'ext.path'
 local vec2 = require 'vec.vec2'
 local vec3 = require 'vec.vec3'
 local vec4 = require 'vec.vec4'
@@ -900,7 +900,7 @@ function InitFileWindow:update()
 			ig.ImGuiInputTextFlags_AllowTabInput)
 		if ig.igButton('Save') then
 			local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
-			file(dir..'/init.lua'):write(self.buffer)
+			path(dir..'/init.lua'):write(self.buffer)
 			self.opened = false
 		end
 		ig.igSameLine()
@@ -914,7 +914,7 @@ end
 function InitFileWindow:open()
 	self.opened = true
 	local dir = modio.search[1]..'/maps/'..modio.levelcfg.path
-	self.buffer = file(dir..'/init.lua'):read() or ''
+	self.buffer = path(dir..'/init.lua'):read() or ''
 end
 
 
@@ -2302,15 +2302,15 @@ function Editor:saveMap()
 		end
 		local dest = dir..'/' .. info.dst
 		-- backup
-		if file(dest):exists() then
-			file(dir..'/~' .. info.dst):write(file(dest):read())
+		if path(dest):exists() then
+			path(dir..'/~' .. info.dst):write(path(dest):read())
 		end
 		image:save(dest)
 	end
 
 	-- save spawninfos
 	-- indent the first level of tables only.  no indent on nested tables.
-	file(modio.search[1]..'/maps/'..modio.levelcfg.path..'/spawn.lua'):write(
+	path(modio.search[1]..'/maps/'..modio.levelcfg.path..'/spawn.lua'):write(
 		'{\n'
 		..level.spawnInfos:map(function(spawnInfo)
 			local t = {}
@@ -2322,16 +2322,16 @@ function Editor:saveMap()
 		..'\n}'
 	)
 	--save room properties
-	file(modio.search[1]..'/maps/'..modio.levelcfg.path..'/rooms.lua'):write(tolua(level.roomProps))
+	path(modio.search[1]..'/maps/'..modio.levelcfg.path..'/rooms.lua'):write(tolua(level.roomProps))
 end
 
 function Editor:saveBackgrounds()
 	local dir = modio.search[1]..'/script/'
 	local dest = dir..'backgrounds.lua'
-	if file(dest):exists() then
-		file(dir..'/~backgrounds.lua'):write(file(dest):read())
+	if path(dest):exists() then
+		path(dir..'/~backgrounds.lua'):write(path(dest):read())
 	end
-	file(dest):write( 
+	path(dest):write( 
 		'{\n'
 		..game.level.backgrounds:map(function(background)
 			local t = {}
