@@ -1,5 +1,13 @@
 #!/usr/bin/env luajit
 
+-- TODO this variable is half hardwired into lua-gl and luajit-ffi-bindings projects ... I don't like how it is set up
+ffi_OpenGL = nil	-- for desktop GL
+--ffi_OpenGL = 'ffi.OpenGLES1'	-- for GLES1
+--ffi_OpenGL = 'ffi.OpenGLES2'	-- for GLES2
+-- GLES won't work so long as float buffers are working
+local gl = require 'gl'
+
+
 -- setup global env:
 local table = require 'ext.table'
 
