@@ -128,6 +128,21 @@ return function(parentClass)
 	function HeatLevelTemplate:init(...)
 		HeatLevelTemplate.super.init(self, ...)
 
+-- [[ biggg ugly hack / todo / gradient tex behavior / template / parent class modular 1d vs 2d ...
+-- to get GLES working
+-- but I'd have to change gl.gradienttex
+-- maybe I should?
+-- or maybe I should builtin to gl.tex1d fallback on gl.tex2d for ES?
+local res, GLTex1D = pcall(require, 'gl.tex1d')
+if not res then
+	local GLTex2D = require 'gl.tex2d'
+	package.loaded['gl.tex1d'] = GLTex2D	-- trick GradientTex into using Tex2D
+	local GradientTex = require 'gl.gradienttex'
+	GradientTex.height = 1
+	package.loaded['gl.tex1d'] = nil		-- restore
+end
+--]]
+
 		self.gradientTex = require 'gl.gradienttex'(256,
 	--[[ rainbow or heatmap or whatever
 			{

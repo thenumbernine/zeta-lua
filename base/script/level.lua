@@ -677,116 +677,118 @@ void main() {
 			},
 		}
 
-
-
-		-- animation system debugging
-		-- and raytracer
-		-- write out all unique sprite textures
-		local animsys = require 'base.script.singleton.animsys'
-		local rects = table()
-		local totalPixels = 0
-		for spriteName, sprite in pairs(animsys.sprites) do
-			for frameName,frame in pairs(sprite.frames) do
-				local tex = frame.tex
-				totalPixels = totalPixels + tex.width * tex.height
-				rects:insert{
-					sprite = spriteName,
-					frame = frameName,
-					tex = tex,
-					x = 0,
-					y = 0,
-					w = tex.width,
-					h = tex.height,
-				}
-			end
-		end
-		if totalPixels == 0 then
-			-- NOTICE this will error if the animation system fails to load
-			error("no pixels found in any of your "..#table.keys(animsys.sprites).." sprites could be loaded.")
-		end
-		-- what percent error should we give it?
-		totalPixels = math.ceil(totalPixels * 1.5)
-		local spriteSheetWidth = math.ceil(math.sqrt(totalPixels))
-
-		require 'base.script.rectpack'(rects, spriteSheetWidth, spriteSheetWidth, 512)
-		local spriteSheetImage = Image(spriteSheetWidth, spriteSheetWidth, 4, 'unsigned char')
-		for _,rect in ipairs(rects) do
-			--[[ color randomly
-			local vec3d = require 'vec-ffi.vec3d'
-			local r, g, b = (vec3d(math.random(), math.random(), math.random()):normalize() * 255):map(math.floor):unpack()
-			for y=rect.y,rect.y + rect.h-1 do
-				for x=rect.x,rect.x + rect.w-1 do
-					local index = spriteSheetImage.channels * (x + spriteSheetImage.width * y)
-					spriteSheetImage.buffer[0 + index] = r
-					spriteSheetImage.buffer[1 + index] = g
-					spriteSheetImage.buffer[2 + index] = b
-					if spriteSheetImage.channels == 4 then
-						spriteSheetImage.buffer[3 + index] = 255
-					end
+		-- I'm disabling this by default for now
+		local raytraceSprites = game.raytraceSprites
+		if raytraceSprites then
+			-- animation system debugging
+			-- and raytracer
+			-- write out all unique sprite textures
+			local animsys = require 'base.script.singleton.animsys'
+			local rects = table()
+			local totalPixels = 0
+			for spriteName, sprite in pairs(animsys.sprites) do
+				for frameName,frame in pairs(sprite.frames) do
+					local tex = frame.tex
+					totalPixels = totalPixels + tex.width * tex.height
+					rects:insert{
+						sprite = spriteName,
+						frame = frameName,
+						tex = tex,
+						x = 0,
+						y = 0,
+						w = tex.width,
+						h = tex.height,
+					}
 				end
 			end
-			--]]
-			-- [[ color with the sprites themselves
-			local srcTex = rect.tex
-			local srcData = ffi.new('unsigned char[?]', srcTex.width * srcTex.height * spriteSheetImage.channels)
-			local format = assert(({
-				[3] = gl.GL_RGB,
-				[4] = gl.GL_RGBA,
-			})[spriteSheetImage.channels], "couldn't determine format from # channels "..spriteSheetImage.channels)
-			srcTex:toCPU(srcData)
-			srcTex:unbind()
-			for y=0,rect.h-1 do
-				local dstY = y + rect.y
-				for x=0,rect.w-1 do
-					local dstX = x + rect.x
-					if dstX >= 0 and dstX < spriteSheetImage.width 
-					and dstY >= 0 and dstY < spriteSheetImage.height
-					then
-						local srcIndex = spriteSheetImage.channels * (x + rect.w * y)
-						local dstIndex = spriteSheetImage.channels * (dstX + spriteSheetImage.width * dstY)
-						for ch=0,spriteSheetImage.channels-1 do
-							spriteSheetImage.buffer[ch + dstIndex] = srcData[ch + srcIndex]
+			if totalPixels == 0 then
+				-- NOTICE this will error if the animation system fails to load
+				error("no pixels found in any of your "..#table.keys(animsys.sprites).." sprites could be loaded.")
+			end
+			-- what percent error should we give it?
+			totalPixels = math.ceil(totalPixels * 1.5)
+			local spriteSheetWidth = math.ceil(math.sqrt(totalPixels))
+
+			require 'base.script.rectpack'(rects, spriteSheetWidth, spriteSheetWidth, 512)
+			local spriteSheetImage = Image(spriteSheetWidth, spriteSheetWidth, 4, 'unsigned char')
+			for _,rect in ipairs(rects) do
+				--[[ color randomly
+				local vec3d = require 'vec-ffi.vec3d'
+				local r, g, b = (vec3d(math.random(), math.random(), math.random()):normalize() * 255):map(math.floor):unpack()
+				for y=rect.y,rect.y + rect.h-1 do
+					for x=rect.x,rect.x + rect.w-1 do
+						local index = spriteSheetImage.channels * (x + spriteSheetImage.width * y)
+						spriteSheetImage.buffer[0 + index] = r
+						spriteSheetImage.buffer[1 + index] = g
+						spriteSheetImage.buffer[2 + index] = b
+						if spriteSheetImage.channels == 4 then
+							spriteSheetImage.buffer[3 + index] = 255
 						end
-					else
-						error'here'
 					end
 				end
-			end		
+				--]]
+				-- [[ color with the sprites themselves
+				local srcTex = rect.tex
+				local srcData = ffi.new('unsigned char[?]', srcTex.width * srcTex.height * spriteSheetImage.channels)
+				local format = assert(({
+					[3] = gl.GL_RGB,
+					[4] = gl.GL_RGBA,
+				})[spriteSheetImage.channels], "couldn't determine format from # channels "..spriteSheetImage.channels)
+				srcTex:toCPU(srcData)
+				srcTex:unbind()
+				for y=0,rect.h-1 do
+					local dstY = y + rect.y
+					for x=0,rect.w-1 do
+						local dstX = x + rect.x
+						if dstX >= 0 and dstX < spriteSheetImage.width 
+						and dstY >= 0 and dstY < spriteSheetImage.height
+						then
+							local srcIndex = spriteSheetImage.channels * (x + rect.w * y)
+							local dstIndex = spriteSheetImage.channels * (dstX + spriteSheetImage.width * dstY)
+							for ch=0,spriteSheetImage.channels-1 do
+								spriteSheetImage.buffer[ch + dstIndex] = srcData[ch + srcIndex]
+							end
+						else
+							error'here'
+						end
+					end
+				end		
+				--]]
+			end
+			
+			-- save the rect positions in animsys
+			for _,rect in ipairs(rects) do
+				local frame = animsys.sprites[rect.sprite].frames[rect.frame]
+				frame.x = rect.x
+				frame.y = rect.y
+				frame.w = rect.w
+				frame.h = rect.h
+			end
+
+			--[[ debug write it out
+			print(require 'ext.tolua'(rects:mapi(function(rect)
+				rect = table(rect)
+				rect.tex = nil
+				return rect
+			end)))
 			--]]
+			-- [[ debug save it
+			spriteSheetImage:save'packedsprites.png'
+			--]]
+
+			assert(spriteSheetImage.channels == 4)
+			self.spriteSheetTex = Tex2D{
+				image = spriteSheetImage,
+				internalFormat = gl.GL_RGBA,
+				format = gl.GL_RGBA,
+				generateMipmap = true,
+				minFilter = gl.GL_LINEAR,
+				magFilter = gl.GL_NEAREST,	
+			}
 		end
-		
-		-- save the rect positions in animsys
-		for _,rect in ipairs(rects) do
-			local frame = animsys.sprites[rect.sprite].frames[rect.frame]
-			frame.x = rect.x
-			frame.y = rect.y
-			frame.w = rect.w
-			frame.h = rect.h
-		end
-
-		--[[ debug write it out
-		print(require 'ext.tolua'(rects:mapi(function(rect)
-			rect = table(rect)
-			rect.tex = nil
-			return rect
-		end)))
-		--]]
-		-- [[ debug save it
-		spriteSheetImage:save'packedsprites.png'
-		--]]
-
-		assert(spriteSheetImage.channels == 4)
-		self.spriteSheetTex = Tex2D{
-			image = spriteSheetImage,
-			internalFormat = gl.GL_RGBA,
-			format = gl.GL_RGBA,
-			generateMipmap = true,
-			minFilter = gl.GL_LINEAR,
-			magFilter = gl.GL_NEAREST,	
-		}
 
 
-
+		local op = require 'ext.op'
 		local glmaxs = {}
 		for _,symbol in ipairs{
 			'GL_MAX_TEXTURE_UNITS',					-- deprecated
@@ -795,8 +797,13 @@ void main() {
 			'GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS',	-- v.s. + f.s. + g.s. max textures
 			'GL_MAX_TEXTURE_SIZE',					-- max texture width & height
 		} do
-			glmaxs[symbol] = glGetInteger(gl[symbol])
-			print(symbol..' = '..glmaxs[symbol])
+			local k = op.safeindex(gl, symbol)
+			if k then
+				glmaxs[symbol] = glGetInteger(gl[symbol])
+				print(symbol..' = '..glmaxs[symbol])
+			else
+				print(symbol..' ... not defined')
+			end
 		end
 	
 	end

@@ -4,9 +4,9 @@
 ffi_OpenGL = nil	-- for desktop GL
 --ffi_OpenGL = 'ffi.OpenGLES1'	-- for GLES1
 --ffi_OpenGL = 'ffi.OpenGLES2'	-- for GLES2
+--ffi_OpenGL = 'ffi.OpenGLES3'	-- for GLES3
 -- GLES won't work so long as float buffers are working
 local gl = require 'gl'
-
 
 -- setup global env:
 local table = require 'ext.table'
@@ -44,11 +44,11 @@ modio.levelcfg = {
 	--music = 'music/overworld.wav',
 
 	--path = 'empty',
-	--path = 'test',
+	path = 'test',
 	--path = 'test2',
 	--path = 'doors',		-- FIXME
 	--path = 'fight',
-	path = 'mine',
+	--path = 'mine',
 	--path = 'mine2',
 	--path = 'pswitch-fluids',
 	--path = 'pswitch-platform',
