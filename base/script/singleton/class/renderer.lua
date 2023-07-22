@@ -67,19 +67,19 @@ out vec2 tc;
 
 uniform mat4 mvProjMat;
 
-uniform vec4 rect;
-uniform vec4 texrect;	//xy = texcoord offset, zw = texcoord size
-uniform vec4 centerAndRot;	//zw = cos(angle), sin(angle)
+uniform vec4 defaultRect;
+uniform vec4 defaultTexRect;	//xy = texcoord offset, zw = texcoord size
+uniform vec4 defaultCenterAndRot;	//zw = cos(angle), sin(angle)
 
 void main() {
-	tc = texrect.xy + texrect.zw * vertex;
+	tc = defaultTexRect.xy + defaultTexRect.zw * vertex;
 
-	vec2 rxy = vertex * rect.zw - centerAndRot.xy;
+	vec2 rxy = vertex * defaultRect.zw - defaultCenterAndRot.xy;
 	rxy = vec2(
-		rxy.x * centerAndRot.z - rxy.y * centerAndRot.w,
-		rxy.y * centerAndRot.z + rxy.x * centerAndRot.w
+		rxy.x * defaultCenterAndRot.z - rxy.y * defaultCenterAndRot.w,
+		rxy.y * defaultCenterAndRot.z + rxy.x * defaultCenterAndRot.w
 	);
-	rxy += centerAndRot.xy + rect.xy;
+	rxy += defaultCenterAndRot.xy + defaultRect.xy;
 	gl_Position = mvProjMat * vec4(rxy, 0., 1.);
 }
 ]],
@@ -91,15 +91,15 @@ in vec2 tc;
 
 out vec4 fragColor;
 
-uniform vec4 color;
+uniform vec4 defaultColor;
 uniform sampler2D tex;
 
 void main() {
-	fragColor = color * texture(tex, tc);
+	fragColor = defaultColor * texture(tex, tc);
 }
 ]],
 			uniforms = {
-				color = {1,1,1,1},
+				defaultColor = {1,1,1,1},
 				tex = 0,
 			},
 		}
@@ -139,6 +139,7 @@ void main() {
 			gl.glUniformMatrix4fv(shader.uniforms.mvProjMat.loc, 1, gl.GL_FALSE, self.mvProjMat.ptr)
 		end
 		if uniforms then
+			--[[
 			for k,v in pairs(uniforms) do
 				local loc = shader.uniforms[k].loc
 				if not loc then
@@ -164,6 +165,10 @@ void main() {
 					error('cant handle uniform type '..type(v))
 				end
 			end
+			--]]
+			-- [[
+			shader:setUniforms(uniforms)
+			--]]
 		end
 
 		local costh, sinth
@@ -174,18 +179,18 @@ void main() {
 		else
 			costh, sinth = 1, 0
 		end
-		-- and set uniforms ...
-		if shader.uniforms.color then
-			gl.glUniform4f(shader.uniforms.color.loc, r, g, b, a)
+		-- and set default shader uniforms ...
+		if shader.uniforms.defaultColor and r and g and b and a then
+			gl.glUniform4f(shader.uniforms.defaultColor.loc, r, g, b, a)
 		end
-		if shader.uniforms.rect then
-			gl.glUniform4f(shader.uniforms.rect.loc, x, y, w, h)
+		if shader.uniforms.defaultRect then
+			gl.glUniform4f(shader.uniforms.defaultRect.loc, x, y, w, h)
 		end
-		if shader.uniforms.texrect then
-			gl.glUniform4f(shader.uniforms.texrect.loc, tx, ty, tw, th)
+		if shader.uniforms.defaultTexRect then
+			gl.glUniform4f(shader.uniforms.defaultTexRect.loc, tx, ty, tw, th)
 		end
-		if shader.uniforms.centerAndRot then
-			gl.glUniform4f(shader.uniforms.centerAndRot.loc, rcx, rcy, costh, sinth)
+		if shader.uniforms.defaultCenterAndRot then
+			gl.glUniform4f(shader.uniforms.defaultCenterAndRot.loc, rcx, rcy, costh, sinth)
 		end
 
 		gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, false, 12, vertexes)

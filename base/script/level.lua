@@ -497,17 +497,19 @@ print('self.mapTileSize', self.mapTileSize)
 precision highp float;
 
 layout(location=0) in vec2 vertex;
-layout(location=1) in vec2 texcoord;
 
 out vec2 pos;
 out vec2 tc;
 
 uniform mat4 mvProjMat;
 
+uniform vec4 defaultRect;		//default shader rect.  x,y = pos, z,w = size
+uniform vec4 defaultTexRect;	//default shader texcoords.  xy = texcoord offset, zw = texcoord size
+
 void main() {
-	pos = vertex;
-	tc = texcoord;
-	gl_Position = mvProjMat * vec4(vertex, 0., 1.);
+	pos = defaultRect.xy + defaultRect.zw * vertex;
+	tc = defaultTexRect.xy + defaultTexRect.zw * vertex;
+	gl_Position = mvProjMat * vec4(pos, 0., 1.);
 }
 ]],
 			fragmentCode = [[
@@ -1173,35 +1175,32 @@ function Level:draw(R, viewBBox, playerPos)
 	-- separate renderers for foreground and background, and for each sprite
 	if not raytraceSprites then
 		do
-			local shader = self.levelBgShader
-			shader:use()	-- I could use the shader param but then I'd have to set uniforms as a table, which is slower
-			gl.glUniformMatrix4fv(shader.uniforms.mvProjMat.loc, 1, gl.GL_FALSE, R.mvProjMat.ptr)
-			if shader.uniforms.tileSize then
-				gl.glUniform1f(shader.uniforms.tileSize.loc, self.tileSize)
-			end
-			if shader.uniforms.viewMin then
-				gl.glUniform2f(shader.uniforms.viewMin.loc, bbox.min[1], bbox.min[2])
-			end
 			self.backgroundTex:bind(0)
 			self.bgTileTex:bind(1)
 			self.bgtexpackTex:bind(2)
 			self.texpackTex:bind(3)
 			self.backgroundStructTex:bind(4)
-
-			gl.glBegin(gl.GL_TRIANGLE_STRIP)
-			gl.glVertexAttrib2f(1,0,0)	gl.glVertex2f(1, 1)
-			gl.glVertexAttrib2f(1,1,0)	gl.glVertex2f(1+self.size[1], 1)
-			gl.glVertexAttrib2f(1,0,1)	gl.glVertex2f(1, 1+self.size[2])
-			gl.glVertexAttrib2f(1,1,1)	gl.glVertex2f(1+self.size[1], 1+self.size[2])
-			gl.glEnd()
-
+			
+			R:quad(
+				1,1,
+				self.size[1],self.size[2],
+				0,0,
+				1,1,
+				0,
+				1,1,1,1,
+				self.levelBgShader,
+				{
+					tileSize = self.tileSize,
+					viewMin = bbox.min,
+				},
+				0,0
+			)
+		
 			self.backgroundStructTex:unbind(4)
 			self.texpackTex:unbind(3)
 			self.bgtexpackTex:unbind(2)
 			self.bgTileTex:unbind(1)
 			self.backgroundTex:unbind(0)
-
-			shader:useNone()
 		end
 
 		-- draw objects
