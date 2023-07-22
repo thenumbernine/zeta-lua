@@ -69,7 +69,7 @@ modio.levelcfg = {
 }
 --]]
 
---[[ zeta
+-- [[ zeta
 modio.search:insert(1, 'zeta')
 --modio.search:insert'mario'	-- don't add this, it messes up the block types.
 modio.levelcfg = {
@@ -92,7 +92,7 @@ modio.levelcfg = {
 }
 --]]
 
--- [[ madness
+--[[ madness
 modio.search:insert(1, 'madness')
 modio.levelcfg = {
 	path = 'start',

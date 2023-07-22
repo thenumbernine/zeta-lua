@@ -1,6 +1,4 @@
-local behaviors = require 'base.script.behaviors'
-local ZetaLevel = behaviors(
-	require 'base.script.level',
+local ZetaLevel = require 'base.script.level':subbehavior(
 	require 'base.script.behavior.level_temperature'
 )
 

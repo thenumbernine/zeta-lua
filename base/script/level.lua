@@ -120,6 +120,9 @@ alignTileTemplates(x1,y1,x2,y2)		used by editor, by mod-specific objects, and in
 --]]
 local Level = class()
 
+-- also in base.script.obj.object
+Level.subbehavior = require 'base.script.behaviors'
+
 -- how many pixels wide and high a tile is
 -- used for sprites and for texpack tiles
 Level.tileSize = 16
