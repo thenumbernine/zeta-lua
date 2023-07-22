@@ -24,6 +24,11 @@ local vec4f = require 'vec-ffi.vec4f'
 local SpawnInfo = require 'base.script.spawninfo'
 local glreport = require 'gl.report'
 
+local matrix = require 'matrix.ffi'
+matrix.real = 'float'
+local projMat = matrix{4,4}:zeros()
+local mvMat = matrix{4,4}:zeros()
+local mvProjMat = matrix{4,4}:zeros()
 
 local gl
 
@@ -485,17 +490,30 @@ print('self.mapTileSize', self.mapTileSize)
 		-- render the background image (with scrolling effects) and the background tiles
 		self.levelBgShader = GLProgram{
 			vertexCode = [[
-varying vec2 pos;
-varying vec2 tc;
+#version 320 es
+precision highp float;
+
+uniform mat4 mvProjMat;
+
+layout(location=0) in vec2 vertex;
+layout(location=1) in vec2 texcoord;
+
+out vec2 pos;
+out vec2 tc;
 void main() {
-	pos = gl_Vertex.xy;
-	tc = gl_MultiTexCoord0.xy;
-	gl_Position = ftransform();
+	pos = vertex;
+	tc = texcoord;
+	gl_Position = mvProjMat * vec4(vertex, 0., 1.);
 }
 ]],
 			fragmentCode = [[
-varying vec2 pos;
-varying vec2 tc;
+#version 320 es
+precision highp float;
+
+in vec2 pos;
+in vec2 tc;
+
+out vec4 fragColor;
 
 uniform vec2 viewMin;	//used by bg for scrolling effect
 
@@ -523,20 +541,20 @@ void main() {
 	vec2 posInTile = pos - floor(pos);
 	posInTile.y = 1. - posInTile.y;		//because y is flipped in our image coordinate system
 
-	gl_FragColor = vec4(0.);
+	fragColor = vec4(0.);
 
 	// background color
-	float bgIndexV = texture2D(backgroundTex, tc).x;
+	float bgIndexV = texture(backgroundTex, tc).x;
 	float bgIndex = 255. * bgIndexV;
 	if (bgIndex > 0.) {
 		// lookup the background region from an array/texture somewhere ...
 		// it should specify x, y, w, h, scaleX, scaleY, scrollX, scrollY
 		// so 8 channels per background in all
 		float u = (bgIndex - .5) / backgroundStructTexSize;
-		vec4 xywh = texture2D(backgroundStructTex, vec2(.25, u));
+		vec4 xywh = texture(backgroundStructTex, vec2(.25, u));
 		vec2 xy = xywh.xy;
 		vec2 wh = xywh.zw;
-		vec4 scaleScroll = texture2D(backgroundStructTex, vec2(.75, u));
+		vec4 scaleScroll = texture(backgroundStructTex, vec2(.75, u));
 		vec2 scale = scaleScroll.xy;
 		vec2 scroll = scaleScroll.zw;
 
@@ -545,13 +563,13 @@ void main() {
 		uv /= scale;
 		uv = mod(uv, 1.);
 		uv = (uv * wh + xy) / bgtexpackTexSize;
-		vec4 backgroundColor = texture2D(bgtexpackTex, uv);
+		vec4 backgroundColor = texture(bgtexpackTex, uv);
 		
-		gl_FragColor.rgb = mix(gl_FragColor.rgb, backgroundColor.rgb, backgroundColor.a);
+		fragColor.rgb = mix(fragColor.rgb, backgroundColor.rgb, backgroundColor.a);
 	}
 	
 	// bg tile color
-	vec2 bgTileIndexV = texture2D(bgTileTex, tc).zw;
+	vec2 bgTileIndexV = texture(bgTileTex, tc).zw;
 	float bgTileIndex = 255. * (bgTileIndexV.x + 256. * bgTileIndexV.y);
 	if (bgTileIndex > 0.) {
 		--bgTileIndex;
@@ -560,13 +578,13 @@ void main() {
 		
 		// hmm, stamp stuff goes here, do I want to keep it?
 		
-		vec4 bgColor = texture2D(texpackTex, (vec2(ti, tj) + posInTile) / vec2(tilesWide, tilesHigh));
+		vec4 bgColor = texture(texpackTex, (vec2(ti, tj) + posInTile) / vec2(tilesWide, tilesHigh));
 		
-		gl_FragColor.rgb = mix(gl_FragColor.rgb, bgColor.rgb, bgColor.a);
+		fragColor.rgb = mix(fragColor.rgb, bgColor.rgb, bgColor.a);
 	}
 
 	//hmm, how to handle alpha, since this won't mix the same as applying these two layers separately
-	gl_FragColor.a = 1.;
+	fragColor.a = 1.;
 }
 ]],	
 			uniforms = {
@@ -1133,7 +1151,12 @@ function Level:draw(R, viewBBox, playerPos)
 	-- separate renderers for foreground and background, and for each sprite
 	if not raytraceSprites then
 		do	
+			gl.glGetFloatv(gl.GL_PROJECTION_MATRIX, projMat.ptr)
+			gl.glGetFloatv(gl.GL_MODELVIEW_MATRIX, mvMat.ptr)
+			mvProjMat:mul4x4(projMat, mvMat)
+
 			self.levelBgShader:use()	-- I could use the shader param but then I'd have to set uniforms as a table, which is slower
+			gl.glUniformMatrix4fv(self.levelBgShader.uniforms.mvProjMat.loc, 1, gl.GL_FALSE, mvProjMat.ptr)
 			if self.levelBgShader.uniforms.tileSize then
 				gl.glUniform1f(self.levelBgShader.uniforms.tileSize.loc, self.tileSize)
 			end

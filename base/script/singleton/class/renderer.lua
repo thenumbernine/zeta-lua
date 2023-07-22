@@ -108,7 +108,10 @@ do
 		gl.glColor4f(r,g,b,a)
 		gl.glBegin(gl.GL_QUADS)
 		for _,uv in ipairs(uvs) do
+			-- for old shaders
 			gl.glTexCoord2f(tx + tw * uv[1], ty + th * uv[2])
+			-- for new shaders
+			gl.glVertexAttrib2f(1, tx + tw * uv[1], ty + th * uv[2])
 			local rx, ry = w * uv[1], h * uv[2]
 			if angle then
 				rx, ry = rx - rcx, ry - rcy
