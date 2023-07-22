@@ -16,6 +16,10 @@ local oppositeSide = require 'base.script.oppositeside'
 
 local Object = class()
 
+--helper function
+--use as static so 'self' is the class
+Object.subbehavior = require 'base.script.behaviors'
+
 Object.useGravity = true
 Object.friction = 1		-- additive, not scalar
 Object.seq = 'stand'

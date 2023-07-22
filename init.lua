@@ -92,6 +92,13 @@ modio.levelcfg = {
 }
 --]]
 
+--[[ madness
+modio.search:insert(1, 'madness')
+modio.levelcfg = {
+	path = 'start',
+}
+--]]
+
 -- run main
 local main = modio:require 'script.main'
-return main()
+return main(gl)

@@ -212,10 +212,14 @@ function Level:init(args)
 		end
 		tileFile = searchTileFile
 	end
+	local tileImage
 	if not tileFile then
-		error("couldn't find file at "..mappath.."/tile.png")
+		print("couldn't find file at "..mappath.."/tile.png ... loading default instead")
+		tileImage = Image(32, 32, 4, 'unsigned char')
+		ffi.fill(tileImage.buffer, tileImage.channels * tileImage.width * tileImage.height * ffi.sizeof(tileImage.format))
+	else
+		tileImage = Image(tileFile)
 	end
-	local tileImage = Image(tileFile)
 	self.size = vec2(tileImage:size())
 
 	do
@@ -297,7 +301,12 @@ print('self.mapTileSize', self.mapTileSize)
 
 	-- load backgrounds here
 	do
-		self.backgrounds = table(assert(fromlua(assert(path(assert(modio:find('script/backgrounds.lua'))):read()))))
+		xpcall(function()
+			self.backgrounds = table(assert(fromlua(assert(path(assert(modio:find('script/backgrounds.lua'))):read()))))
+		end, function(err)
+			print(err..'\n'..debug.traceback())
+			self.backgrounds = table()
+		end)
 		self.bgtexpackFilename = modio:find(mappath..'/bgtexpack.png')
 		if not self.bgtexpackFilename then
 			self.bgtexpackFilename = modio:find'bgtexpack.png'
