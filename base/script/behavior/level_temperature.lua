@@ -134,7 +134,8 @@ return function(parentClass)
 -- maybe I should?
 -- or maybe I should builtin to gl.tex1d fallback on gl.tex2d for ES?
 local res, GLTex1D = pcall(require, 'gl.tex1d')
-if not res then
+if true then -- now that I'm using 320 es shaders, can't use texture1D
+--if not res then
 	local GLTex2D = require 'gl.tex2d'
 	package.loaded['gl.tex1d'] = GLTex2D	-- trick GradientTex into using Tex2D
 	local GradientTex = require 'gl.gradienttex'
@@ -188,31 +189,48 @@ end
 	
 		self.diffuseTemperatureShader = GLProgram{
 			vertexCode = [[
-varying vec2 pos;
-varying vec2 tc;
+#version 320 es
+precision highp float;
+
+layout(location=0) in vec2 vertex;
+layout(location=1) in vec2 texcoord;
+
+out vec2 pos;
+out vec2 tc;
+
+uniform mat4 mvProjMat;
+
 void main() {
-	pos = gl_Vertex.xy;
-	tc = gl_MultiTexCoord0.xy;
-	gl_Position = ftransform();
+	pos = vertex;
+	tc = texcoord;
+	gl_Position = mvProjMat * vec4(vertex, 0., 1.);
 }
 ]],
 			fragmentCode = [[
+#version 320 es
+precision highp float;
+
+in vec2 pos;	//world coordinates
+in vec2 tc;	//in [0,1]^2
+
+out vec4 fragColor;
+
 uniform vec2 du;	// 1/ texture size
 uniform float dt;	//step between updates
-varying vec2 pos;	//world coordinates
-varying vec2 tc;	//in [0,1]^2
+
 uniform sampler2D temperatureTex;
 uniform float tileSize;
+
 void main() {
 	// discrete laplacian
-	vec4 props = texture2D(temperatureTex, tc);
+	vec4 props = texture(temperatureTex, tc);
 	vec4 propsNew = props;
 	float T = props.r;
 	float Q_per_Cp_rho = props.g;
-	float TxR = texture2D(temperatureTex, tc + vec2(0., du.y)).r;
-	float TxL = texture2D(temperatureTex, tc - vec2(0., du.y)).r;
-	float TyR = texture2D(temperatureTex, tc + vec2(du.x, 0.)).r;
-	float TyL = texture2D(temperatureTex, tc - vec2(du.x, 0.)).r;
+	float TxR = texture(temperatureTex, tc + vec2(0., du.y)).r;
+	float TxL = texture(temperatureTex, tc - vec2(0., du.y)).r;
+	float TyR = texture(temperatureTex, tc + vec2(du.x, 0.)).r;
+	float TyL = texture(temperatureTex, tc - vec2(du.x, 0.)).r;
 	float lapT = TxR + TxL + TyR + TyL - 4. * T;	//dx = dy = 1
 	// ∂T/∂t = α ΔT		[K/m^2]
 	if (Q_per_Cp_rho == 0.) {		//for now, only allow diffusion into non-source materials.
@@ -221,7 +239,7 @@ void main() {
 		float Tnew = T + dT_dt * dt + Q_per_Cp_rho;
 		propsNew.r = Tnew;
 	}
-	gl_FragColor = propsNew;
+	fragColor = propsNew;
 }
 ]],
 			uniforms = {
@@ -232,28 +250,45 @@ void main() {
 	
 		self.displayTemperatureShader = GLProgram{
 			vertexCode = [[
-varying vec2 pos;
-varying vec2 tc;
+#version 320 es
+precision highp float;
+
+layout(location=0) in vec2 vertex;
+layout(location=1) in vec2 texcoord;
+
+out vec2 pos;
+out vec2 tc;
+
+uniform mat4 mvProjMat;
+
 void main() {
-	pos = gl_Vertex.xy;
-	tc = gl_MultiTexCoord0.xy;
-	gl_Position = ftransform();
+	pos = vertex;
+	tc = texcoord;
+	gl_Position = mvProjMat * vec4(vertex, 0., 1.);
 }
 ]],
 			fragmentCode = [[
-varying vec2 pos;	//world coordinates.   TODO why varying?  why not just tc * levelSize ?
-varying vec2 tc;	//in [0,1]^2
+#version 320 es
+precision highp float;
+
+in vec2 pos;	//world coordinates.   TODO why not just tc * levelSize ?
+in vec2 tc;	//in [0,1]^2
+
+out vec4 fragColor;
 
 uniform sampler2D temperatureTex;
-uniform sampler1D gradientTex;
+uniform sampler2D gradientTex;
 
 uniform vec2 temperatureMinMax;
 
 void main() {
-	float temperature = texture2D(temperatureTex, tc).x;
+	float temperature = texture(temperatureTex, tc).x;
 	float gradtc = (temperature - temperatureMinMax.x) / (temperatureMinMax.y - temperatureMinMax.x);
-	gl_FragColor = texture1D(gradientTex, gradtc);
-	gl_FragColor.a = .5;
+	//texture1D:
+	//fragColor = texture(gradientTex, gradtc);
+	//texture2D:
+	fragColor = texture(gradientTex, vec2(gradtc, .5));
+	fragColor.a = .5;
 }
 ]],
 			uniforms = {
@@ -333,12 +368,19 @@ void main() {
 				R:viewPos(0, 0)
 				--]]
 				
-				self.diffuseTemperatureShader:use()
-				if self.diffuseTemperatureShader.uniforms.tileSize then
-					gl.glUniform1f(self.diffuseTemperatureShader.uniforms.tileSize.loc, self.tileSize)
+				-- TODO replace this with matrix stuff in R
+				gl.glGetFloatv(gl.GL_PROJECTION_MATRIX, self.projMat.ptr)
+				gl.glGetFloatv(gl.GL_MODELVIEW_MATRIX, self.mvMat.ptr)
+				self.mvProjMat:mul4x4(self.projMat, self.mvMat)
+
+				local shader = self.diffuseTemperatureShader
+				shader:use()
+				gl.glUniformMatrix4fv(shader.uniforms.mvProjMat.loc, 1, gl.GL_FALSE, self.mvProjMat.ptr)
+				if shader.uniforms.tileSize then
+					gl.glUniform1f(shader.uniforms.tileSize.loc, self.tileSize)
 				end
-				if self.diffuseTemperatureShader.uniforms.dt then
-					gl.glUniform1f(self.diffuseTemperatureShader.uniforms.dt.loc, updateDt)
+				if shader.uniforms.dt then
+					gl.glUniform1f(shader.uniforms.dt.loc, updateDt)
 				end
 				local temperatureTex = self.temperaturePingPong:prev()
 				temperatureTex:bind(0)
@@ -352,7 +394,7 @@ void main() {
 					0,
 					1,1,1,1)
 				temperatureTex:unbind(0)
-				self.diffuseTemperatureShader:useNone()
+				shader:useNone()
 			end,
 		}
 		gl.glEnable(gl.GL_BLEND);
@@ -371,9 +413,11 @@ void main() {
 		local temperatureMax = 320	-- _0C_in_K + 200
 
 		local tempCurTex = self.temperaturePingPong:cur()
-		self.displayTemperatureShader:use()	-- I could use the shader param but then I'd have to set uniforms as a table, which is slower
-		if self.displayTemperatureShader.uniforms.temperatureMinMax then
-			gl.glUniform2f(self.displayTemperatureShader.uniforms.temperatureMinMax.loc, temperatureMin, temperatureMax)
+		local shader = self.displayTemperatureShader
+		shader:use()	-- I could use the shader param but then I'd have to set uniforms as a table, which is slower
+		gl.glUniformMatrix4fv(shader.uniforms.mvProjMat.loc, 1, gl.GL_FALSE, self.mvProjMat.ptr)
+		if shader.uniforms.temperatureMinMax then
+			gl.glUniform2f(shader.uniforms.temperatureMinMax.loc, temperatureMin, temperatureMax)
 		end
 		tempCurTex:bind(0)
 		self.gradientTex:bind(1)
@@ -388,7 +432,7 @@ void main() {
 			1,1,1,1)
 		self.gradientTex:unbind(1)
 		tempCurTex:unbind(0)
-		self.displayTemperatureShader:useNone()
+		shader:useNone()
 	end
 
 	function HeatLevelTemplate:setTile(...)

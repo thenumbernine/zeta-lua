@@ -26,9 +26,6 @@ local glreport = require 'gl.report'
 
 local matrix = require 'matrix.ffi'
 matrix.real = 'float'
-local projMat = matrix{4,4}:zeros()
-local mvMat = matrix{4,4}:zeros()
-local mvProjMat = matrix{4,4}:zeros()
 
 local gl
 
@@ -184,6 +181,10 @@ function Level:init(args)
 
 	-- store as a global
 	gl = game.R.gl
+
+	self.projMat = matrix{4,4}:zeros()
+	self.mvMat = matrix{4,4}:zeros()
+	self.mvProjMat = matrix{4,4}:zeros()
 
 	-- enum of tileMap values. 0 => nil 
 	self.tileTypes = assert(args.tileTypes)
@@ -493,13 +494,14 @@ print('self.mapTileSize', self.mapTileSize)
 #version 320 es
 precision highp float;
 
-uniform mat4 mvProjMat;
-
 layout(location=0) in vec2 vertex;
 layout(location=1) in vec2 texcoord;
 
 out vec2 pos;
 out vec2 tc;
+
+uniform mat4 mvProjMat;
+
 void main() {
 	pos = vertex;
 	tc = texcoord;
@@ -601,17 +603,31 @@ void main() {
 
 		self.levelFgShader = GLProgram{
 			vertexCode = [[
-varying vec2 pos;
-varying vec2 tc;
+#version 320 es
+precision highp float;
+
+layout(location=0) in vec2 vertex;
+layout(location=1) in vec2 texcoord;
+
+out vec2 pos;
+out vec2 tc;
+
+uniform mat4 mvProjMat;
+
 void main() {
-	pos = gl_Vertex.xy;
-	tc = gl_MultiTexCoord0.xy;
-	gl_Position = ftransform();
+	pos = vertex;
+	tc = texcoord;
+	gl_Position = mvProjMat * vec4(vertex, 0., 1.);
 }
 ]],
 			fragmentCode = [[
-varying vec2 pos;	//world coordinates.   TODO why varying?  why not just tc * levelSize ?
-varying vec2 tc;	//in [0,1]^2
+#version 320 es
+precision highp float;
+
+in vec2 pos;	//world coordinates.   TODO why varying?  why not just tc * levelSize ?
+in vec2 tc;	//in [0,1]^2
+
+out vec4 fragColor;
 
 uniform sampler2D fgTileTex;
 uniform sampler2D texpackTex;
@@ -626,10 +642,10 @@ void main() {
 	float tilesWide = texpackTexSize.x / tileSize;
 	float tilesHigh = texpackTexSize.y / tileSize;
 	
-	gl_FragColor = vec4(0.);
+	fragColor = vec4(0.);
 
 	// fg tile color
-	vec2 fgTileIndexV = texture2D(fgTileTex, tc).zw;	// z = lum = lo byte, w = alpha = hi byte
+	vec2 fgTileIndexV = texture(fgTileTex, tc).zw;	// z = lum = lo byte, w = alpha = hi byte
 	float fgTileIndex = 255. * (fgTileIndexV.x + 256. * fgTileIndexV.y);	// this looks too horrible to be correct
 	if (fgTileIndex > 0.) {	//0 = transparent
 		--fgTileIndex;
@@ -641,10 +657,10 @@ void main() {
 
 		// hmm, stamp stuff goes here, do I want to keep it?
 		
-		vec4 fgColor = texture2D(texpackTex, (vec2(ti, tj) + posInTile) / vec2(tilesWide, tilesHigh));
+		vec4 fgColor = texture(texpackTex, (vec2(ti, tj) + posInTile) / vec2(tilesWide, tilesHigh));
 		
-		gl_FragColor.rgb = mix(gl_FragColor.rgb, fgColor.rgb, 1. - gl_FragColor.a);
-		gl_FragColor.a = fgColor.a;
+		fragColor.rgb = mix(fragColor.rgb, fgColor.rgb, 1. - fragColor.a);
+		fragColor.a = fgColor.a;
 	}
 }
 ]],
@@ -658,11 +674,15 @@ void main() {
 		local shaderCode = assert(path'base/script/raytrace.shader':read())
 		self.levelSceneGraphShader = GLProgram{
 			vertexCode = table{
+				'#version 320 es',	-- must be first
+				'precision highp float;',	-- required for 320 es
 				'#define VERTEX_SHADER 1',
 				shaderCode,
 			}:concat'\n',
 
 			fragmentCode = table{
+				'#version 320 es',	-- must be first
+				'precision highp float;',	-- required for 320 es
 				'#define FRAGMENT_SHADER 1',
 				shaderCode
 			}:concat'\n',
@@ -1148,20 +1168,21 @@ function Level:draw(R, viewBBox, playerPos)
 	if ymin < 1 then ymin = 1 end
 	if ymax > self.size[2] then ymax = self.size[2] end
 
+	gl.glGetFloatv(gl.GL_PROJECTION_MATRIX, self.projMat.ptr)
+	gl.glGetFloatv(gl.GL_MODELVIEW_MATRIX, self.mvMat.ptr)
+	self.mvProjMat:mul4x4(self.projMat, self.mvMat)
+
 	-- separate renderers for foreground and background, and for each sprite
 	if not raytraceSprites then
 		do	
-			gl.glGetFloatv(gl.GL_PROJECTION_MATRIX, projMat.ptr)
-			gl.glGetFloatv(gl.GL_MODELVIEW_MATRIX, mvMat.ptr)
-			mvProjMat:mul4x4(projMat, mvMat)
-
-			self.levelBgShader:use()	-- I could use the shader param but then I'd have to set uniforms as a table, which is slower
-			gl.glUniformMatrix4fv(self.levelBgShader.uniforms.mvProjMat.loc, 1, gl.GL_FALSE, mvProjMat.ptr)
-			if self.levelBgShader.uniforms.tileSize then
-				gl.glUniform1f(self.levelBgShader.uniforms.tileSize.loc, self.tileSize)
+			local shader = self.levelBgShader
+			shader:use()	-- I could use the shader param but then I'd have to set uniforms as a table, which is slower
+			gl.glUniformMatrix4fv(shader.uniforms.mvProjMat.loc, 1, gl.GL_FALSE, self.mvProjMat.ptr)
+			if shader.uniforms.tileSize then
+				gl.glUniform1f(shader.uniforms.tileSize.loc, self.tileSize)
 			end
-			if self.levelBgShader.uniforms.viewMin then
-				gl.glUniform2f(self.levelBgShader.uniforms.viewMin.loc, bbox.min[1], bbox.min[2])
+			if shader.uniforms.viewMin then
+				gl.glUniform2f(shader.uniforms.viewMin.loc, bbox.min[1], bbox.min[2])
 			end
 			self.backgroundTex:bind(0)
 			self.bgTileTex:bind(1)
@@ -1181,7 +1202,7 @@ function Level:draw(R, viewBBox, playerPos)
 			self.bgtexpackTex:unbind(2)
 			self.bgTileTex:unbind(1)
 			self.backgroundTex:unbind(0)
-			self.levelBgShader:useNone()
+			shader:useNone()
 		end
 
 		-- draw objects
@@ -1193,9 +1214,11 @@ function Level:draw(R, viewBBox, playerPos)
 		end
 
 		do	 --if ibbox.max[1] - ibbox.min[1] > glapp.width / self.overmapZoomLevel then
-			self.levelFgShader:use()	-- I could use the shader param but then I'd have to set uniforms as a table, which is slower
-			if self.levelFgShader.uniforms.tileSize then
-				gl.glUniform1f(self.levelFgShader.uniforms.tileSize.loc, self.tileSize)
+			local shader = self.levelFgShader
+			shader:use()	-- I could use the shader param but then I'd have to set uniforms as a table, which is slower
+			gl.glUniformMatrix4fv(shader.uniforms.mvProjMat.loc, 1, gl.GL_FALSE, self.mvProjMat.ptr)
+			if shader.uniforms.tileSize then
+				gl.glUniform1f(shader.uniforms.tileSize.loc, self.tileSize)
 			end
 			self.fgTileTex:bind(0)
 			self.texpackTex:bind(1)
@@ -1209,12 +1232,13 @@ function Level:draw(R, viewBBox, playerPos)
 				1,1,1,1)
 			self.texpackTex:unbind(1)
 			self.fgTileTex:unbind(0)
-			self.levelFgShader:useNone()
+			shader:useNone()
 		end
 	else
 		local shader = self.levelSceneGraphShader
 		local uniforms = shader.uniforms
 		shader:use()
+		gl.glUniformMatrix4fv(shader.uniforms.mvProjMat.loc, 1, gl.GL_FALSE, self.mvProjMat.ptr)
 
 		if uniforms.viewBBox then
 			gl.glUniform4f(uniforms.viewBBox.loc, viewBBox.min[1], viewBBox.min[2], viewBBox.max[1], viewBBox.max[2])
