@@ -977,9 +977,8 @@ function Hero:updateMinimap()
 		)
 	else
 		-- GLES alternative ... ?  via draw buffer?  via framebuffer?
+		-- TODO levelFgShader too
 		gl.glViewport(0, 0, xmax - xmin + 1, ymax - ymin + 1)
-		local shader = level.levelBgShader
-		shader:use()
 		level.backgroundTex:bind(0)
 		level.bgTileTex:bind(1)
 		level.bgtexpackTex:bind(2)
@@ -992,13 +991,14 @@ function Hero:updateMinimap()
 			0,0,
 			1,1,
 			0,
-			1,1,1,1)
+			1,1,1,1,
+			level.levelBgShader
+		)
 		level.backgroundStructTex:unbind(4)
 		level.texpackTex:unbind(3)
 		level.bgtexpackTex:unbind(2)
 		level.bgTileTex:unbind(1)
 		level.backgroundTex:unbind(0)
-		shader:useNone()
 		gl.glCopyTexSubImage2D(
 			gl.GL_TEXTURE_2D,		-- GLenum target
 			0,						-- GLint level

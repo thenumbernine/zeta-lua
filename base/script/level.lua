@@ -611,17 +611,19 @@ void main() {
 precision highp float;
 
 layout(location=0) in vec2 vertex;
-layout(location=1) in vec2 texcoord;
 
 out vec2 pos;
 out vec2 tc;
 
 uniform mat4 mvProjMat;
 
+uniform vec4 defaultRect;		//default shader rect.  x,y = pos, z,w = size
+uniform vec4 defaultTexRect;	//default shader texcoords.  xy = texcoord offset, zw = texcoord size
+
 void main() {
-	pos = vertex;
-	tc = texcoord;
-	gl_Position = mvProjMat * vec4(vertex, 0., 1.);
+	pos = defaultRect.xy + defaultRect.zw * vertex;
+	tc = defaultTexRect.xy + defaultTexRect.zw * vertex;
+	gl_Position = mvProjMat * vec4(pos, 0., 1.);
 }
 ]],
 			fragmentCode = [[
@@ -1212,25 +1214,25 @@ function Level:draw(R, viewBBox, playerPos)
 		end
 
 		do	 --if ibbox.max[1] - ibbox.min[1] > glapp.width / self.overmapZoomLevel then
-			local shader = self.levelFgShader
-			shader:use()	-- I could use the shader param but then I'd have to set uniforms as a table, which is slower
-			gl.glUniformMatrix4fv(shader.uniforms.mvProjMat.loc, 1, gl.GL_FALSE, R.mvProjMat.ptr)
-			if shader.uniforms.tileSize then
-				gl.glUniform1f(shader.uniforms.tileSize.loc, self.tileSize)
-			end
 			self.fgTileTex:bind(0)
 			self.texpackTex:bind(1)
 
-			gl.glBegin(gl.GL_TRIANGLE_STRIP)
-			gl.glVertexAttrib2f(1,0,0)	gl.glVertex2f(1, 1)
-			gl.glVertexAttrib2f(1,1,0)	gl.glVertex2f(1+self.size[1], 1)
-			gl.glVertexAttrib2f(1,0,1)	gl.glVertex2f(1, 1+self.size[2])
-			gl.glVertexAttrib2f(1,1,1)	gl.glVertex2f(1+self.size[1], 1+self.size[2])
-			gl.glEnd()
+			R:quad(
+				1,1,
+				self.size[1],self.size[2],
+				0,0,
+				1,1,
+				0,
+				1,1,1,1,
+				self.levelFgShader,
+				{
+					tileSize = self.tileSize,
+				},
+				0,0
+			)
 
 			self.texpackTex:unbind(1)
 			self.fgTileTex:unbind(0)
-			shader:useNone()
 		end
 	else
 		local shader = self.levelSceneGraphShader
