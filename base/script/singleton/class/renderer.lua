@@ -139,36 +139,7 @@ void main() {
 			gl.glUniformMatrix4fv(shader.uniforms.mvProjMat.loc, 1, gl.GL_FALSE, self.mvProjMat.ptr)
 		end
 		if uniforms then
-			--[[
-			for k,v in pairs(uniforms) do
-				local loc = shader.uniforms[k].loc
-				if not loc then
-					error('tried to set unknown uniform '..k)
-				end
-				if type(v) == 'number' then
-					gl.glUniform1f(loc, v)
-				elseif type(v) == 'table' then
-					if #v == 3 then
-						for i=0,2 do
-							f4[i] = v[i+1]
-						end
-						gl.glUniform3fv(loc, 1, f4)
-					elseif #v == 4 then
-						for i=0,3 do
-							f4[i] = v[i+1]
-						end
-						gl.glUniform4fv(loc, 1, f4)
-					else
-						error('uniform cant handle table of length '..#v)
-					end
-				else
-					error('cant handle uniform type '..type(v))
-				end
-			end
-			--]]
-			-- [[
 			shader:setUniforms(uniforms)
-			--]]
 		end
 
 		local costh, sinth
