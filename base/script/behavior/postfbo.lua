@@ -5,7 +5,6 @@ local vec4i = require 'vec-ffi.vec4i'
 local vec2i = require 'vec-ffi.vec2i'
 local FBO = require 'gl.fbo'
 local GLTex2D = require 'gl.tex2d'
-local GLProgram = require 'gl.program'
 local glreport = require 'gl.report'
 
 -- behavior for base.script.singleton.class.game subclasses

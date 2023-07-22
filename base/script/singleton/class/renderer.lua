@@ -129,6 +129,7 @@ do
 	end
 end
 
+-- TODO I can get rid of this once I replace all gl->gles2 content, then I can just use the gles2 library with the typical gl renderer
 do
 	local GLES2Renderer = class(Renderer)
 	GLES2Renderer.glname = 'OpenGLES2'
