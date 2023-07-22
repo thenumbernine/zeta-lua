@@ -21,6 +21,16 @@ do
 		vec2(0,1),
 	}
 
+	local vertexes = ffi.new('float[12]',
+		0, 0, 0,
+		1, 0, 0,
+		0, 1, 0,
+		1, 1, 0
+	)
+	local tristrip = ffi.new('unsigned short[4]',
+		0,1,2,3
+	)
+
 	local GLTex2D
 	local GLProgram
 	local glreport
@@ -52,7 +62,6 @@ do
 precision highp float;
 
 layout(location=0) in vec2 vertex;
-layout(location=1) in vec2 texcoord;
 
 out vec2 tc;
 
@@ -63,7 +72,7 @@ uniform vec4 texrect;	//xy = texcoord offset, zw = texcoord size
 uniform vec4 centerAndRot;	//zw = cos(angle), sin(angle)
 
 void main() {
-	tc = texrect.xy + texrect.zw * texcoord;
+	tc = texrect.xy + texrect.zw * vertex;
 
 	vec2 rxy = vertex * rect.zw - centerAndRot.xy;
 	rxy = vec2(
@@ -179,12 +188,10 @@ void main() {
 			gl.glUniform4f(shader.uniforms.centerAndRot.loc, rcx, rcy, costh, sinth)
 		end
 
-		gl.glBegin(gl.GL_QUADS)
-		for _,uv in ipairs(uvs) do
-			gl.glVertexAttrib2f(1, uv[1], uv[2])
-			gl.glVertex2f(uv[1], uv[2])
-		end
-		gl.glEnd()
+		gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, false, 12, vertexes)
+		gl.glEnableVertexAttribArray(0)
+		gl.glDrawElements(gl.GL_TRIANGLE_STRIP,4,gl.GL_UNSIGNED_SHORT,tristrip)
+        gl.glDisableVertexAttribArray(0)
 
 		shader:useNone()
 	end
