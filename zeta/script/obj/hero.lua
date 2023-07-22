@@ -928,51 +928,87 @@ function Hero:cycleWeapon(dir)
 end
 --]]
 
+local hasCopyImageSubData
 function Hero:updateMinimap()
-	local gl = game.R.gl
+	local R = game.R
+	local gl = R.gl
+	if hasCopyImageSubData == nil then
+		hasCopyImageSubData = not not require 'ext.op'.safeindex(R.gl, 'glCopyImageSubData')
+	end
+	local level = game.level
 	local xmin = math.clamp(math.floor(self.viewBBox.min[1]), 0, self.minimapFgTex.width-1)
 	local xmax = math.clamp(math.ceil(self.viewBBox.max[1]), 0, self.minimapFgTex.width-1)
 	local ymin = math.clamp(math.floor(self.viewBBox.min[2]), 0, self.minimapFgTex.height-1)
 	local ymax = math.clamp(math.ceil(self.viewBBox.max[2]), 0, self.minimapFgTex.height-1)
-	local gl = game.R.gl
--- [[
-	gl.glCopyImageSubData(
-		game.level.bgTileTex.id,
-		game.level.bgTileTex.target,
-		0,
-		xmin,
-		ymin,
-		0,
-		self.minimapBgTex.id,
-		self.minimapBgTex.target,
-		0,
-		xmin,
-		ymin,
-		0,
-		xmax - xmin + 1,
-		ymax - ymin + 1,
-		1
-	)
---]]
--- [[
-	gl.glCopyImageSubData(
-		game.level.fgTileTex.id,
-		game.level.fgTileTex.target,
-		0,
-		xmin,
-		ymin,
-		0,
-		self.minimapFgTex.id,
-		self.minimapFgTex.target,
-		0,
-		xmin,
-		ymin,
-		0,
-		xmax - xmin + 1,
-		ymax - ymin + 1,
-		1
-	)
---]]
+	if hasCopyImageSubData then
+		gl.glCopyImageSubData(
+			game.level.bgTileTex.id,
+			game.level.bgTileTex.target,
+			0,
+			xmin,
+			ymin,
+			0,
+			self.minimapBgTex.id,
+			self.minimapBgTex.target,
+			0,
+			xmin,
+			ymin,
+			0,
+			xmax - xmin + 1,
+			ymax - ymin + 1,
+			1
+		)
+		gl.glCopyImageSubData(
+			game.level.fgTileTex.id,
+			game.level.fgTileTex.target,
+			0,
+			xmin,
+			ymin,
+			0,
+			self.minimapFgTex.id,
+			self.minimapFgTex.target,
+			0,
+			xmin,
+			ymin,
+			0,
+			xmax - xmin + 1,
+			ymax - ymin + 1,
+			1
+		)
+	else
+		-- GLES alternative ... ?  via draw buffer?  via framebuffer?
+		gl.glViewport(0, 0, xmax - xmin + 1, ymax - ymin + 1)
+		local shader = level.levelBgShader
+		shader:use()
+		level.backgroundTex:bind(0)
+		level.bgTileTex:bind(1)
+		level.bgtexpackTex:bind(2)
+		level.texpackTex:bind(3)
+		level.backgroundStructTex:bind(4)
+		R:quad(
+			1, 1,
+			level.size[1],
+			level.size[2],
+			0,0,
+			1,1,
+			0,
+			1,1,1,1)
+		level.backgroundStructTex:unbind(4)
+		level.texpackTex:unbind(3)
+		level.bgtexpackTex:unbind(2)
+		level.bgTileTex:unbind(1)
+		level.backgroundTex:unbind(0)
+		shader:useNone()
+		gl.glCopyTexSubImage2D(
+			gl.GL_TEXTURE_2D,		-- GLenum target
+			0,						-- GLint level
+			xmin,					-- GLint xoffset
+			ymin,					-- GLint yoffset
+			0,						-- GLint x
+			0,						-- GLint y
+			xmax - xmin + 1,		-- GLsizei width
+			ymax - ymin + 1)		-- GLsizei height
+	end
 end
 
 Hero.removeOnDie = false

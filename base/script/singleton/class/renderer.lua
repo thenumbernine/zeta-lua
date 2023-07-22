@@ -58,9 +58,20 @@ out vec2 tc;
 
 uniform mat4 mvProjMat;
 
+uniform vec4 rect;
+uniform vec4 texrect;	//xy = texcoord offset, zw = texcoord size
+uniform vec4 centerAndRot;	//zw = cos(angle), sin(angle)
+
 void main() {
-	tc = texcoord;
-	gl_Position = mvProjMat * vec4(vertex, 0., 1.);
+	tc = texrect.xy + texrect.zw * texcoord;
+
+	vec2 rxy = vertex * rect.zw - centerAndRot.xy;
+	rxy = vec2(
+		rxy.x * centerAndRot.z - rxy.y * centerAndRot.w,
+		rxy.y * centerAndRot.z + rxy.x * centerAndRot.w
+	);
+	rxy += centerAndRot.xy + rect.xy;
+	gl_Position = mvProjMat * vec4(rxy, 0., 1.);
 }
 ]],
 			fragmentCode = [[
@@ -151,24 +162,27 @@ void main() {
 			local radians = math.rad(angle)
 			costh = math.cos(radians)
 			sinth = math.sin(radians)
+		else
+			costh, sinth = 1, 0
 		end
 		-- and set uniforms ...
 		if shader.uniforms.color then
-			gl.glUniform4f(shader.uniforms.color.loc, r,g,b,a)
+			gl.glUniform4f(shader.uniforms.color.loc, r, g, b, a)
 		end
+		if shader.uniforms.rect then
+			gl.glUniform4f(shader.uniforms.rect.loc, x, y, w, h)
+		end
+		if shader.uniforms.texrect then
+			gl.glUniform4f(shader.uniforms.texrect.loc, tx, ty, tw, th)
+		end
+		if shader.uniforms.centerAndRot then
+			gl.glUniform4f(shader.uniforms.centerAndRot.loc, rcx, rcy, costh, sinth)
+		end
+
 		gl.glBegin(gl.GL_QUADS)
 		for _,uv in ipairs(uvs) do
-			-- for old shaders
-			gl.glTexCoord2f(tx + tw * uv[1], ty + th * uv[2])
-			-- for new shaders
-			gl.glVertexAttrib2f(1, tx + tw * uv[1], ty + th * uv[2])
-			local rx, ry = w * uv[1], h * uv[2]
-			if angle then
-				rx, ry = rx - rcx, ry - rcy
-				rx, ry = rx * costh - ry * sinth, rx * sinth + ry * costh
-				rx, ry = rx + rcx, ry + rcy
-			end
-			gl.glVertex2f(x + rx, y + ry)
+			gl.glVertexAttrib2f(1, uv[1], uv[2])
+			gl.glVertex2f(uv[1], uv[2])
 		end
 		gl.glEnd()
 
