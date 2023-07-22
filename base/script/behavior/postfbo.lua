@@ -87,21 +87,35 @@ return function(parentClass)
 			
 				renderShader = R:createShader{
 					vertexCode = [[
-varying vec4 color;
-varying vec2 tc;	//in pixels
+#version 320 es
+precision highp float;
 
+layout(location=0) in vec2 vertex;
+// location=1 <=> texcoord
+layout(location=2) in vec4 colorin;
+
+out vec4 color;
+out vec2 tc;	//in pixels
+
+uniform mat4 mvProjMat;
 uniform vec4 viewport;	//xy=xy, zw=wh
 
 void main() {
-	tc = gl_Vertex.xy * viewport.zw + .5 + viewport.xy;
+	tc = vertex.xy * viewport.zw + .5 + viewport.xy;
 
-	color = gl_Color;
-	gl_Position = ftransform();
+	color = colorin;
+	gl_Position = mvProjMat * vec4(vertex, 0., 1.);
 }
 ]],
 					fragmentCode = [[
-varying vec2 tc;	// in pixels
-varying vec4 color;
+#version 320 es
+precision highp float;
+
+in vec2 tc;	// in pixels
+in vec4 color;
+
+out vec4 fragColor;
+
 uniform sampler2D tex;
 
 /*
@@ -122,7 +136,7 @@ float lenSq(vec3 a) {
 
 void main() {
 #if 1	// debug: disable raytracing
-	gl_FragColor = texture2D(tex, (viewport.xy + tc) / viewport.zw);
+	fragColor = texture(tex, (viewport.xy + tc) / viewport.zw);
 	return;
 #endif
 
@@ -160,7 +174,7 @@ void main() {
 		vec2 oldraypos = raypos;
 		raypos += raydir * dlen;
 
-		vec4 sampleColor = texture2D(tex, (raypos + viewport.xy) / viewport.zw);
+		vec4 sampleColor = texture(tex, (raypos + viewport.xy) / viewport.zw);
 	
 		
 /* TODO 
@@ -206,15 +220,15 @@ add some extra render info into the buffer on how to transform the rays at each 
 		//opacity = 1.;
 
 		//now add color slope to raydir and normalize
-		float l0m = dot(grey, texture2D(tex, (raypos + vec2( 0., -1.) + viewport.xy) / viewport.zw).rgb);
-		float lm0 = dot(grey, texture2D(tex, (raypos + vec2(-1.,  0.) + viewport.xy) / viewport.zw).rgb);
-		float lp0 = dot(grey, texture2D(tex, (raypos + vec2( 1.,  0.) + viewport.xy) / viewport.zw).rgb);
-		float l0p = dot(grey, texture2D(tex, (raypos + vec2( 0.,  1.) + viewport.xy) / viewport.zw).rgb);
-		//float lmm = dot(grey, texture2D(tex, (raypos + vec2(-1., -1.) + viewport.xy) / viewport.zw).rgb);
-		//float lpm = dot(grey, texture2D(tex, (raypos + vec2( 1., -1.) + viewport.xy) / viewport.zw).rgb);
-		//float lmp = dot(grey, texture2D(tex, (raypos + vec2(-1.,  1.) + viewport.xy) / viewport.zw).rgb);
-		//float lpp = dot(grey, texture2D(tex, (raypos + vec2( 1.,  1.) + viewport.xy) / viewport.zw).rgb);
-		//float l00 = dot(grey, texture2D(tex, (raypos + vec2( 0.,  0.) + viewport.xy) / viewport.zw).rgb);
+		float l0m = dot(grey, texture(tex, (raypos + vec2( 0., -1.) + viewport.xy) / viewport.zw).rgb);
+		float lm0 = dot(grey, texture(tex, (raypos + vec2(-1.,  0.) + viewport.xy) / viewport.zw).rgb);
+		float lp0 = dot(grey, texture(tex, (raypos + vec2( 1.,  0.) + viewport.xy) / viewport.zw).rgb);
+		float l0p = dot(grey, texture(tex, (raypos + vec2( 0.,  1.) + viewport.xy) / viewport.zw).rgb);
+		//float lmm = dot(grey, texture(tex, (raypos + vec2(-1., -1.) + viewport.xy) / viewport.zw).rgb);
+		//float lpm = dot(grey, texture(tex, (raypos + vec2( 1., -1.) + viewport.xy) / viewport.zw).rgb);
+		//float lmp = dot(grey, texture(tex, (raypos + vec2(-1.,  1.) + viewport.xy) / viewport.zw).rgb);
+		//float lpp = dot(grey, texture(tex, (raypos + vec2( 1.,  1.) + viewport.xy) / viewport.zw).rgb);
+		//float l00 = dot(grey, texture(tex, (raypos + vec2( 0.,  0.) + viewport.xy) / viewport.zw).rgb);
 
 		// 1st order dx,dy
 		vec2 dl = vec2(.5 * (lp0 - lm0), .5 * (l0p - l0m));
@@ -251,7 +265,7 @@ add some extra render info into the buffer on how to transform the rays at each 
 		color.rgb += color.a * sampleColor.rgb;
 	}
 	
-	gl_FragColor = vec4(color.rgb, 1.);
+	fragColor = vec4(color.rgb, 1.);
 }
 ]],
 					uniforms = {
@@ -274,7 +288,6 @@ add some extra render info into the buffer on how to transform the rays at each 
 			-- [[ if our viewport size is not the original then reset our matrixes here:
 			local viewSize = self.viewSize
 			R:ortho(-viewSize, viewSize, -viewSize / aspectRatio, viewSize / aspectRatio, -100, 100)
-			gl.glMatrixMode(gl.GL_MODELVIEW)
 			--]]
 		end, 
 
@@ -285,14 +298,6 @@ add some extra render info into the buffer on how to transform the rays at each 
 			gl.glViewport(viewport:unpack())
 
 			-- render FBO here
-			
-			gl.glMatrixMode(gl.GL_PROJECTION)
-			gl.glPushMatrix()
-			gl.glMatrixMode(gl.GL_MODELVIEW)
-			gl.glPushMatrix()
-			
-			R:ortho(0, 1, 0, 1, -1, 1)
-			R:viewPos(0, 0)
 
 			-- where to find the render region in the fbo's texture, in pixels:
 			--[[
@@ -321,6 +326,7 @@ add some extra render info into the buffer on how to transform the rays at each 
 			local playerClientObj = self.playerClientObjs[playerIndex]
 
 			renderShader:use()
+			gl.glUniformMatrix4fv(renderShader.uniforms.mvProjMat.loc, 1, gl.GL_FALSE, R.identMat.ptr)
 			if renderShader.uniforms.viewSize then
 				gl.glUniform1f(renderShader.uniforms.viewSize.loc, self.viewSize)
 			end
@@ -333,6 +339,7 @@ add some extra render info into the buffer on how to transform the rays at each 
 					(player.pos[2] + 1.5 - player.viewBBox.min[2]) / (player.viewBBox.max[2] - player.viewBBox.min[2]))
 			end
 			tex:bind()
+			gl.glVertexAttrib4f(2, 1,1,1,1)
 			gl.glBegin(gl.GL_TRIANGLE_STRIP)
 			gl.glVertex2f(0, 0)
 			gl.glVertex2f(1, 0)
@@ -341,11 +348,6 @@ add some extra render info into the buffer on how to transform the rays at each 
 			gl.glEnd()
 			tex:unbind()
 			renderShader:useNone()
-
-			gl.glMatrixMode(gl.GL_PROJECTION)
-			gl.glPopMatrix()
-			gl.glMatrixMode(gl.GL_MODELVIEW)
-			gl.glPopMatrix()
 
 			if postDrawCallback then postDrawCallback(playerIndex, ...) end
 		

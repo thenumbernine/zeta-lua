@@ -3,6 +3,9 @@ local class = require 'ext.class'
 local vec2 = require 'vec.vec2'
 local modio = require 'base.script.singleton.modio'
 
+local matrix = require 'matrix.ffi'
+matrix.real = 'float'
+
 local Renderer = class()
 Renderer.requireClasses = {}
 
@@ -29,21 +32,65 @@ do
 		GLProgram = require 'gl.program'
 		glreport = require 'gl.report'
 
+		self.projMat = matrix{4,4}:zeros()
+		self.mvMat = matrix{4,4}:zeros()
+		self.mvProjMat = matrix{4,4}:zeros()
+
+		self.identMat = matrix{4,4}:zeros()
+		self.identMat:setIdent()
+
 		local texsys = modio:require 'script.singleton.texsys'
 		texsys:setVars(gl,GLTex2D,{
 			minFilter = gl.GL_NEAREST,
 			magFilter = gl.GL_NEAREST,
 		})
+
+		-- default shader
+		self.shader = GLProgram{
+			vertexCode = [[
+#version 320 es
+precision highp float;
+
+layout(location=0) in vec2 vertex;
+layout(location=1) in vec2 texcoord;
+
+out vec2 tc;
+
+uniform mat4 mvProjMat;
+
+void main() {
+	tc = texcoord;
+	gl_Position = mvProjMat * vec4(vertex, 0., 1.);
+}
+]],
+			fragmentCode = [[
+#version 320 es
+precision highp float;
+
+in vec2 tc;
+
+out vec4 fragColor;
+
+uniform vec4 color;
+uniform sampler2D tex;
+
+void main() {
+	fragColor = color * texture(tex, tc);
+}
+]],
+			uniforms = {
+				color = {1,1,1,1},
+				tex = 0,
+			},
+		}
 	end
-	function GLRenderer:ortho(a,b,c,d,e,f)
-		gl.glMatrixMode(gl.GL_PROJECTION)
-		gl.glLoadIdentity()
-		gl.glOrtho(a,b,c,d,e,f)
+	function GLRenderer:ortho(...)
+		self.projMat:setOrtho(...)
+		self.mvProjMat:mul4x4(self.projMat, self.mvMat)
 	end
 	function GLRenderer:viewPos(x,y)
-		gl.glMatrixMode(gl.GL_MODELVIEW)
-		gl.glLoadIdentity()
-		gl.glTranslatef(-x,-y,0)
+		self.mvMat:setTranslate(-x,-y,0)
+		self.mvProjMat:mul4x4(self.projMat, self.mvMat)
 	end
 	function GLRenderer:report(s)
 		glreport(s)
@@ -65,39 +112,40 @@ do
 	)
 		rcx = rcx or 0
 		rcy = rcy or 0
-		
-		if shader then
-			gl.glUseProgram(shader.id)
-			if uniforms then
-				for k,v in pairs(uniforms) do
-					local loc = shader.uniforms[k].loc
-					if not loc then
-						error('tried to set unknown uniform '..k)
-					end
-					if type(v) == 'number' then
-						gl.glUniform1f(loc, v)
-					elseif type(v) == 'table' then
-						if #v == 3 then
-							for i=0,2 do
-								f4[i] = v[i+1]
-							end
-							gl.glUniform3fv(loc, 1, f4)
-						elseif #v == 4 then
-							for i=0,3 do
-								f4[i] = v[i+1]
-							end
-							gl.glUniform4fv(loc, 1, f4)
-						else
-							error('uniform cant handle table of length '..#v)
+
+		shader = shader or self.shader
+		shader:use()
+		if shader.uniforms.mvProjMat then
+			gl.glUniformMatrix4fv(shader.uniforms.mvProjMat.loc, 1, gl.GL_FALSE, self.mvProjMat.ptr)
+		end
+		if uniforms then
+			for k,v in pairs(uniforms) do
+				local loc = shader.uniforms[k].loc
+				if not loc then
+					error('tried to set unknown uniform '..k)
+				end
+				if type(v) == 'number' then
+					gl.glUniform1f(loc, v)
+				elseif type(v) == 'table' then
+					if #v == 3 then
+						for i=0,2 do
+							f4[i] = v[i+1]
 						end
+						gl.glUniform3fv(loc, 1, f4)
+					elseif #v == 4 then
+						for i=0,3 do
+							f4[i] = v[i+1]
+						end
+						gl.glUniform4fv(loc, 1, f4)
 					else
-						error('cant handle uniform type '..type(v))
+						error('uniform cant handle table of length '..#v)
 					end
+				else
+					error('cant handle uniform type '..type(v))
 				end
 			end
-		else
-			gl.glEnable(gl.GL_TEXTURE_2D)
 		end
+
 		local costh, sinth
 		if angle then
 			local radians = math.rad(angle)
@@ -105,7 +153,9 @@ do
 			sinth = math.sin(radians)
 		end
 		-- and set uniforms ...
-		gl.glColor4f(r,g,b,a)
+		if shader.uniforms.color then
+			gl.glUniform4f(shader.uniforms.color.loc, r,g,b,a)
+		end
 		gl.glBegin(gl.GL_QUADS)
 		for _,uv in ipairs(uvs) do
 			-- for old shaders
@@ -121,11 +171,8 @@ do
 			gl.glVertex2f(x + rx, y + ry)
 		end
 		gl.glEnd()
-		if shader then
-			gl.glUseProgram(0)
-		else
-			gl.glDisable(gl.GL_TEXTURE_2D)
-		end
+
+		shader:useNone()
 	end
 end
 
@@ -176,7 +223,7 @@ varying vec2 tc;
 void main() {
 	tc = (texmat * pos).xy;
 	gl_Position = vtxmat * pos;
-} 
+}
 ]],
 			fragmentCode=[[
 precision mediump float;
@@ -185,7 +232,7 @@ uniform sampler2D tex;
 varying vec2 tc;
 void main() {
 	gl_FragColor = color * texture2D(tex, tc);
-} 
+}
 ]],
 			attributes={'pos'},
 			uniforms={tex=0},

@@ -116,11 +116,11 @@ end
 -- called by zeta/script/obj.item :playerGrab on the grabbed item and the first of each bin
 -- used to determine how items should be binned
 function Hero:itemBinMatches(a, b)
-	-- keycards have to be held uniquely. 
+	-- keycards have to be held uniquely.
 	-- (maybe group by color?)
-	-- (or maybe just give key cards names based on their color?)	
-	if require 'zeta.script.obj.keycard':isa(a) then return false end 
-	
+	-- (or maybe just give key cards names based on their color?)
+	if require 'zeta.script.obj.keycard':isa(a) then return false end
+
 	-- default group by metatable + name
 	return getmetatable(b) == getmetatable(a) and a.name == b.name
 end
@@ -131,14 +131,14 @@ function Hero:setHeld(other)
 rawset(self.holding, 'solidFlags', self.holdingLastSolidFlags)
 rawset(self.holding, 'touchFlags', self.holdingLastTouchFlags)
 rawset(self.holding, 'blockFlags', self.holdingLastBlockFlags)
-		
+
 		self.holding.vel[1] = self.vel[1]
 		self.holding.vel[2] = self.vel[2]
 -- without this, items fall through floor
 self.holding.pos[1] = self.pos[1]
 self.holding.pos[2] = self.pos[2]
 		self:hasKicked(self.holding)
-		
+
 		-- true for any Item subclass, who calls Item:playerGrab
 		for j=#self.items,1,-1 do
 			self.items[j]:removeObject(self.holding)
@@ -146,7 +146,7 @@ self.holding.pos[2] = self.pos[2]
 				self.items:remove(j)
 			end
 		end
-		
+
 		if self.weapon == self.holding then
 			self.weapon = nil	-- TODO switch to next weapon?
 		end
@@ -154,16 +154,16 @@ self.holding.pos[2] = self.pos[2]
 		self.holding.heldby = nil
 		self.holding = nil
 	end
-	
+
 	if other then
 		if other.heldby then
 --			if other.heldby == self then return end	-- we're already holding it?
 			other.heldby:setHeld(nil)	-- out of their hands!	... without the kick too
 		end
-	
+
 		self.holding = other
 		self.holding.heldby = self
-	
+
 -- clear collision flags
 -- this assumes only classes set flags and not objects
 -- TODO getters and setters for custom behavior per-object
@@ -192,7 +192,7 @@ function Hero:updateHeldPosition()
 		offset = self.holding.playerHoldOffsetDucking
 	end
 	offset = offset or {.625, .125}
-	
+
 	self.holding.drawMirror = self.drawMirror
 	local side
 	if self.climbing then
@@ -314,7 +314,7 @@ Hero.maxRunVel = 15	-- why are these different?
 Hero.timeToMaxSpeed = 1
 -- climb vel
 Hero.climbVel = 5
-				
+
 Hero.walkAccel = .5	-- ... plus friction ... to counteract friction ... ?
 Hero.airAccel = .75
 
@@ -392,7 +392,7 @@ function Hero:update(dt)
 	else
 		local targetPosX = self.pos[1]
 		local targetPosY = self.pos[2] + .15 * level.mapTileSize[2]
-			
+
 		if not (editor and editor.active) then
 			local viewSizeX = (self.viewBBox.max[1] - self.viewBBox.min[1]) / 2
 			local viewSizeY = (self.viewBBox.max[2] - self.viewBBox.min[2]) / 2
@@ -404,7 +404,7 @@ function Hero:update(dt)
 					self.pos[2] + level.mapTileSize[2] * dir[2])
 				different[side] = sideRoom ~= self.room
 			end
-			
+
 			local pushedRight, pushedLeft
 			if different.right then
 				local xmax = roomPosX * level.mapTileSize[1] + 1 - viewSizeX
@@ -423,7 +423,7 @@ function Hero:update(dt)
 			if pushedRight and pushedLeft then
 				targetPosX = (roomPosX - .5) * level.mapTileSize[1] + 1
 			end
-			
+
 			local pushedUp, pushedDown
 			if different.up then
 				local ymax = roomPosY * level.mapTileSize[2] + 1 - viewSizeY
@@ -443,13 +443,13 @@ function Hero:update(dt)
 				targetPosY = (roomPosY - .5) * level.mapTileSize[2] + 1
 			end
 		end
-		
+
 		self.viewPos[1] = self.viewPos[1] + .3 *  (targetPosX - self.viewPos[1])
 		self.viewPos[2] = self.viewPos[2] + .3 *  (targetPosY - self.viewPos[2])
 	end
 
 	self.inputRun = self.inputJumpAux
-		
+
 	if self.isClipping then return end
 
 	if self.climbing then
@@ -461,10 +461,10 @@ function Hero:update(dt)
 	else
 		self.useGravity = true
 	end
-	
+
 	-- reattach to world
 	Hero.super.update(self, dt)
-	
+
 	if self.pos[2] < -10 then
 		self:die()
 	end
@@ -477,9 +477,9 @@ function Hero:update(dt)
 		end
 		return
 	end
-	
+
 	if self.warping then return end
-	
+
 	if self.holding and self.holding.remove then
 		self:setHeld(nil)
 	end
@@ -490,7 +490,7 @@ function Hero:update(dt)
 --	if self.weapon and self.weapon.update then
 --		self.weapon:update(dt, self)
 --	end
-	
+
 	-- if we pushed the pickup-item button
 	-- TODO's ...
 	-- 1) make all items touch-to-pickup
@@ -564,13 +564,13 @@ function Hero:update(dt)
 			self.climbing = nil		-- move off of it to fall off!
 		end
 	end
-		
+
 	if self.collidedUp then
 		self.inputJumpTime = nil
 		self.vel[2] = 0
 	end
 
-	
+
 	--[[ check squish
 	do
 		local tile = level:getTile(self.pos[1] - level.pos[1], self.pos[2] - level.pos[2])
@@ -631,7 +631,7 @@ function Hero:update(dt)
 					then
 						self.speedBoostCharge = math.min(1, self.speedBoostCharge + dt)
 					end
-					
+
 					if self.onground and (self.inputLeftRight > 0) ~= (self.vel[1] > 0) then
 						self.inputMaxSpeedTime = nil
 						self.speedBoostCharge = nil
@@ -669,28 +669,28 @@ function Hero:update(dt)
 		end
 	end
 --]]
-	
+
 	do
 		local tile = level:getTile(self.pos[1] - level.pos[1], self.pos[2] - level.pos[2])
 		self.swimming = tile and tile.fluid and #tile.fluid > 0
 	end
-		
+
 	if self.onground or self.climbing or self.swimming then
 		if self.swimming then
 			if self.inputJump and (self.inputSwimTime + self.swimDelay < game.time) then
 				self:playSound('swim')
-			
+
 				self.onground = false
 				self.climbing = nil
 				self.inputJumpTime = game.time
 				self.jumpVel = -self.swimmingJumpVel
 				self.inputSwimTime = game.time
 			end
-		
+
 		elseif self.inputJump then
 			if not self.inputJumpLast and self.inputJumpTime < game.time then
 				self:playSound('jump')
-			
+
 				self.onground = false
 				self.climbing = nil
 				self.inputJumpTime = game.time
@@ -735,7 +735,7 @@ function Hero:update(dt)
 				--self.vel[2] = self.vel[2] * .5	-- to go slow
 				-- TODO instead of stopping while holding, remember who/where you're hooked onto, update with that, and only release upon (a) jump, or (b) ... either tapping again or releasing the grab button ... and allow this for collide-up as well as left and right
 				self.wallJumpEndTime = game.time + .15
-		
+
 				-- if you're grabbing and you push up, TODO animate this
 				if self.inputUpDown > 0 then
 					self.vel[1] = 0
@@ -784,7 +784,7 @@ function Hero:update(dt)
 			self:tryToStand()
 		end
 	end
-	
+
 	--[[ pushed up or down while jumping?
 	if not self.onground
 	and game.time > self.wallJumpEndTime
@@ -988,7 +988,7 @@ function Hero:die(damage, attacker, inflicter, side)
 	self.solidFlags = 0
 	self.touchFlags = 0
 	self.dead = true
-	
+
 	-- if we're respawning, keep items and weapon?
 	-- but really I should be restarting the whole level
 	--self.weapon = nil
@@ -996,7 +996,7 @@ function Hero:die(damage, attacker, inflicter, side)
 	--self.respawnTime = game.time + 1
 
 	setTimeout(1, game.reset, game)
-	
+
 	Hero.super.die(self, damage, attacker, inflicter, side)
 
 	self.sprite = false
@@ -1131,7 +1131,7 @@ function Hero:draw(R, viewBBox, holdOveride)
 	Hero.super.draw(self, R, viewBBox, holdOverride)
 
 	if self:findItem'speedbooster'
-	and self.speedBoostCharge > 0 
+	and self.speedBoostCharge > 0
 	then
 		local l = self.speedBoostCharge
 		local color = rawget(self, 'color')
@@ -1143,9 +1143,9 @@ function Hero:draw(R, viewBBox, holdOveride)
 			local speedEchoTick = math.floor(game.time * 20)
 			if speedEchoTick ~= self.speedEchoTick then
 				self.speedEchoTick = speedEchoTick
-			
+
 				-- get current frame ...
-				
+
 				local animsys = require 'base.script.singleton.animsys'
 				local sprite, seq, frameNumber = animsys:getInfo(self.sprite, self.seq, self.seqStartTime)
 				local freq = seq.freq or sprite.freq or 1
@@ -1168,7 +1168,7 @@ function Hero:draw(R, viewBBox, holdOveride)
 					end,
 				}
 			end
-			
+
 			local s = math.sin(game.time * 2 * math.pi) * .5 + .5
 			self.color = {0,.5,1,s}
 			self.drawScale = {1+.2*s, 1+.2*s}
@@ -1196,7 +1196,7 @@ function Hero:draw(R, viewBBox, holdOveride)
 					item:updateHeldPosition(R, viewBBox, true)
 				end
 				--else
-				
+
 				-- update all items positions
 				-- so that they don't leave the player's mapTile and get removed
 				-- looks like the overlay drawing doesn't use their pos anyways
@@ -1212,7 +1212,7 @@ end
 
 function Hero:drawHUD(R, viewBBox)
 	if Hero.super.drawHUD then Hero.super.drawHUD(self, R, viewBBox) end
-	
+
 	local gl = R.gl
 	-- TODO if start button pushed ...
 	-- then show inventory
@@ -1232,7 +1232,7 @@ function Hero:drawHUD(R, viewBBox)
 	R:quad(x+5.1, y-.9, 1.8*self.health/self.maxHealth, .5,
 		0,0,0,0,0,
 		1,0,0,.5)
-	
+
 	y=y+1
 	-- vel
 	if self:findItem'speedbooster' then
@@ -1369,14 +1369,14 @@ function Hero:drawHUD(R, viewBBox)
 			tx, ty, tw, th,
 			0, -- angle,
 			1,1,1,1)-- r,g,b,a,
-	
+
 		self.minimapFgTex:bind(0)
 		R:quad(
 			x, y, minimapHUDWidth, minimapHUDHeight,
 			tx, ty, tw, th,
 			0, -- angle,
 			1,1,1,1)-- r,g,b,a,
-		
+
 		Tex2D:unbind(1)
 		Tex2D:unbind(0)
 		level.levelFgShader:useNone()
@@ -1487,21 +1487,21 @@ function Hero:removeItem(removeItem, callback)
 			end
 			if found then
 				items:remove(j)
-				if #items == 0 then 
-					self.items:remove(i) 
+				if #items == 0 then
+					self.items:remove(i)
 					items = nil
 				end
 				local nextHeld
-				if self.weapon == item then 
-					self.weapon = nil 
-					if items then 
-						nextHeld = items[1] 
+				if self.weapon == item then
+					self.weapon = nil
+					if items then
+						nextHeld = items[1]
 					end
 				end
-				if item.heldby == self then 
-					item.heldby = nil 
-					if items then 
-						nextHeld = items[1] 
+				if item.heldby == self then
+					item.heldby = nil
+					if items then
+						nextHeld = items[1]
 					end
 				end
 				if nextHeld then

@@ -75,7 +75,7 @@ wood (yellow pine):			8.2e-8
 
 
 ... relativistic heat?
-	
+
 	ρ cp (∂T/∂t + v ∇·T) - ∇k · ∇T - k ΔT = Q
 		... convert material derivative with 3-velocity to spacetime derivative with 4-velocity
 	ρ cp (∂T/∂t + v ∇·T) becomes ρ cp u^μ ∇_μ T
@@ -168,9 +168,9 @@ return function(parentClass)
 			magFilter = gl.GL_LINEAR,
 			minFilter = gl.GL_NEAREST,
 		}
-	
+
 		self.lastHeatUpdateTime = game.time
-	
+
 		self.diffuseTemperatureShader = GLProgram{
 			vertexCode = [[
 #version 320 es
@@ -231,7 +231,7 @@ void main() {
 				temperatureTex = 0,
 			},
 		}
-	
+
 		self.displayTemperatureShader = GLProgram{
 			vertexCode = [[
 #version 320 es
@@ -297,7 +297,7 @@ void main() {
 		if not player then return end
 		if not self.updateHeat then return end
 --print('updating heat at time '..game.time)
-		
+
 		-- do update here
 		-- determine view bounds in tile space
 		local x1 = math.floor(player.viewBBox.min[1])
@@ -340,7 +340,7 @@ void main() {
 				-- since we're changing the viewport we have to update the projection too
 				-- notice we're drawing 1 pixel <-> 1 texel
 				local R = game.R
-			
+
 				-- [[
 				R:ortho(-.5*viewWidth, .5*viewWidth, -.5*viewHeight, .5*viewHeight, -100, 100)
 				local xCenter = (x1 + x2 + 1) * .5 + 1
@@ -351,15 +351,10 @@ void main() {
 				R:ortho(x1,y1,x2,y2,-100,100)
 				R:viewPos(0, 0)
 				--]]
-				
-				-- TODO replace this with matrix stuff in R
-				gl.glGetFloatv(gl.GL_PROJECTION_MATRIX, self.projMat.ptr)
-				gl.glGetFloatv(gl.GL_MODELVIEW_MATRIX, self.mvMat.ptr)
-				self.mvProjMat:mul4x4(self.projMat, self.mvMat)
 
 				local shader = self.diffuseTemperatureShader
 				shader:use()
-				gl.glUniformMatrix4fv(shader.uniforms.mvProjMat.loc, 1, gl.GL_FALSE, self.mvProjMat.ptr)
+				gl.glUniformMatrix4fv(shader.uniforms.mvProjMat.loc, 1, gl.GL_FALSE, R.mvProjMat.ptr)
 				if shader.uniforms.tileSize then
 					gl.glUniform1f(shader.uniforms.tileSize.loc, self.tileSize)
 				end
@@ -368,15 +363,14 @@ void main() {
 				end
 				local temperatureTex = self.temperaturePingPong:prev()
 				temperatureTex:bind(0)
-				-- TODO make sure the projection matrix is reset because we're changing the viewport
-				R:quad(
-					1, 1,
-					self.size[1],
-					self.size[2],
-					0,0,
-					1,1,
-					0,
-					1,1,1,1)
+
+				gl.glBegin(gl.GL_TRIANGLE_STRIP)
+				gl.glVertexAttrib2f(1,0,0)	gl.glVertex2f(1, 1)
+				gl.glVertexAttrib2f(1,1,0)	gl.glVertex2f(1+self.size[1], 1)
+				gl.glVertexAttrib2f(1,0,1)	gl.glVertex2f(1, 1+self.size[2])
+				gl.glVertexAttrib2f(1,1,1)	gl.glVertex2f(1+self.size[1], 1+self.size[2])
+				gl.glEnd()
+
 				temperatureTex:unbind(0)
 				shader:useNone()
 			end,
@@ -388,10 +382,11 @@ void main() {
 	HeatLevelTemplate.showTemperature = false
 
 	function HeatLevelTemplate:draw(...)
+		local R = game.R
 		HeatLevelTemplate.super.draw(self, ...)
-	
+
 		if not self.showTemperature then return end
-	
+
 		local _0C_in_K = Temperature._0C_in_K
 		local temperatureMin = 280	-- _0C_in_K - 100
 		local temperatureMax = 320	-- _0C_in_K + 200
@@ -399,21 +394,20 @@ void main() {
 		local tempCurTex = self.temperaturePingPong:cur()
 		local shader = self.displayTemperatureShader
 		shader:use()	-- I could use the shader param but then I'd have to set uniforms as a table, which is slower
-		gl.glUniformMatrix4fv(shader.uniforms.mvProjMat.loc, 1, gl.GL_FALSE, self.mvProjMat.ptr)
+		gl.glUniformMatrix4fv(shader.uniforms.mvProjMat.loc, 1, gl.GL_FALSE, R.mvProjMat.ptr)
 		if shader.uniforms.temperatureMinMax then
 			gl.glUniform2f(shader.uniforms.temperatureMinMax.loc, temperatureMin, temperatureMax)
 		end
 		tempCurTex:bind(0)
 		self.gradientTex:bind(1)
-		local R = game.R
-		R:quad(
-			1, 1,
-			self.size[1],
-			self.size[2],
-			0,0,
-			1,1,
-			0,
-			1,1,1,1)
+
+		gl.glBegin(gl.GL_TRIANGLE_STRIP)
+		gl.glVertexAttrib2f(1,0,0)	gl.glVertex2f(1, 1)
+		gl.glVertexAttrib2f(1,1,0)	gl.glVertex2f(1+self.size[1], 1)
+		gl.glVertexAttrib2f(1,0,1)	gl.glVertex2f(1, 1+self.size[2])
+		gl.glVertexAttrib2f(1,1,1)	gl.glVertex2f(1+self.size[1], 1+self.size[2])
+		gl.glEnd()
+
 		self.gradientTex:unbind(1)
 		tempCurTex:unbind(0)
 		shader:useNone()
@@ -452,7 +446,7 @@ void main() {
 	--	but even then, upon editor/init I want the temp to initialize to a steady-state
 	function HeatLevelTemplate:onUpdateTileMap(x1,y1,x2,y2)
 		HeatLevelTemplate.super.onUpdateTileMap(self,x1,y1,x2,y2)
-		
+
 		self:copyTileTemperatureToTemperatureMap(x1,y1,x2,y2)
 		self:onUpdateTemperatureMap(x1,y1,x2,y2)
 	end

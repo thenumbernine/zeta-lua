@@ -19,7 +19,7 @@ cmdline args for tweaking the environment / packages to get things working
 for i=1,select('#',...) do
 	local arg = select(i,...)
 
-	-- override audio system 
+	-- override audio system
 	-- see audio/currentsystem.lua for valid options
 	local audio = arg:match('^audio=(.*)$')
 	if audio then
@@ -53,10 +53,10 @@ modio.levelcfg = {
 	--path = 'pswitch-fluids',
 	--path = 'pswitch-platform',
 	--path = 'race',
-	
-	-- this path has a template.png file in it (mario/maps/level1/template.png) 
+
+	-- this path has a template.png file in it (mario/maps/level1/template.png)
 	--  so it doesn't need a "template = ..." to be uncommented
-	--path = 'level1',	
+	--path = 'level1',
 }
 --]]
 
