@@ -1,11 +1,10 @@
 #!/usr/bin/env luajit
 
 -- TODO this variable is half hardwired into lua-gl and luajit-ffi-bindings projects ... I don't like how it is set up
-ffi_OpenGL = nil	-- for desktop GL
---ffi_OpenGL = 'ffi.OpenGLES1'	-- for GLES1
---ffi_OpenGL = 'ffi.OpenGLES2'	-- for GLES2
---ffi_OpenGL = 'ffi.OpenGLES3'	-- for GLES3
--- GLES won't work so long as float buffers are working
+--ffi_OpenGL = nil	-- for desktop GL
+--ffi_OpenGL = 'ffi.OpenGLES1'	-- for GLES1		-- doesn't support shaders
+--ffi_OpenGL = 'ffi.OpenGLES2'	-- for GLES2		-- doesn't support float textures
+ffi_OpenGL = 'ffi.OpenGLES3'	-- for GLES3		-- works ... but I need to convert the font renderer to drawbuffers ... or convert the font render to just use cimgui
 local gl = require 'gl'
 
 -- [[ the old gui font system isn't modern gl compat so ...
