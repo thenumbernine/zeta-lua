@@ -177,17 +177,19 @@ return function(parentClass)
 precision highp float;
 
 layout(location=0) in vec2 vertex;
-layout(location=1) in vec2 texcoord;
 
 out vec2 pos;
 out vec2 tc;
 
 uniform mat4 mvProjMat;
 
+uniform vec4 defaultRect;
+uniform vec4 defaultTexRect;	//xy = texcoord offset, zw = texcoord size
+
 void main() {
-	pos = vertex;
-	tc = texcoord;
-	gl_Position = mvProjMat * vec4(vertex, 0., 1.);
+	pos = defaultRect.xy + defaultRect.zw * vertex;
+	tc = defaultTexRect.xy + defaultTexRect.zw * vertex;
+	gl_Position = mvProjMat * vec4(pos, 0., 1.);
 }
 ]],
 			fragmentCode = [[
@@ -238,17 +240,19 @@ void main() {
 precision highp float;
 
 layout(location=0) in vec2 vertex;
-layout(location=1) in vec2 texcoord;
 
 out vec2 pos;
 out vec2 tc;
 
 uniform mat4 mvProjMat;
 
+uniform vec4 defaultRect;
+uniform vec4 defaultTexRect;	//xy = texcoord offset, zw = texcoord size
+
 void main() {
-	pos = vertex;
-	tc = texcoord;
-	gl_Position = mvProjMat * vec4(vertex, 0., 1.);
+	pos = defaultRect.xy + defaultRect.zw * vertex;
+	tc = defaultTexRect.xy + defaultTexRect.zw * vertex;
+	gl_Position = mvProjMat * vec4(pos, 0., 1.);
 }
 ]],
 			fragmentCode = [[
@@ -351,28 +355,26 @@ void main() {
 				R:ortho(x1,y1,x2,y2,-100,100)
 				R:viewPos(0, 0)
 				--]]
-
-				local shader = self.diffuseTemperatureShader
-				shader:use()
-				gl.glUniformMatrix4fv(shader.uniforms.mvProjMat.loc, 1, gl.GL_FALSE, R.mvProjMat.ptr)
-				if shader.uniforms.tileSize then
-					gl.glUniform1f(shader.uniforms.tileSize.loc, self.tileSize)
-				end
-				if shader.uniforms.dt then
-					gl.glUniform1f(shader.uniforms.dt.loc, updateDt)
-				end
+				
 				local temperatureTex = self.temperaturePingPong:prev()
 				temperatureTex:bind(0)
 
-				gl.glBegin(gl.GL_TRIANGLE_STRIP)
-				gl.glVertexAttrib2f(1,0,0)	gl.glVertex2f(1, 1)
-				gl.glVertexAttrib2f(1,1,0)	gl.glVertex2f(1+self.size[1], 1)
-				gl.glVertexAttrib2f(1,0,1)	gl.glVertex2f(1, 1+self.size[2])
-				gl.glVertexAttrib2f(1,1,1)	gl.glVertex2f(1+self.size[1], 1+self.size[2])
-				gl.glEnd()
+				R:quad(
+					1,1,
+					self.size[1],self.size[2],
+					0,0,
+					1,1,
+					0,
+					1,1,1,1,
+					self.diffuseTemperatureShader,
+					{
+						tileSize = self.tileSize,
+						dt = updateDt,
+					},
+					0,0
+				)
 
 				temperatureTex:unbind(0)
-				shader:useNone()
 			end,
 		}
 		gl.glEnable(gl.GL_BLEND);
@@ -392,25 +394,25 @@ void main() {
 		local temperatureMax = 320	-- _0C_in_K + 200
 
 		local tempCurTex = self.temperaturePingPong:cur()
-		local shader = self.displayTemperatureShader
-		shader:use()	-- I could use the shader param but then I'd have to set uniforms as a table, which is slower
-		gl.glUniformMatrix4fv(shader.uniforms.mvProjMat.loc, 1, gl.GL_FALSE, R.mvProjMat.ptr)
-		if shader.uniforms.temperatureMinMax then
-			gl.glUniform2f(shader.uniforms.temperatureMinMax.loc, temperatureMin, temperatureMax)
-		end
 		tempCurTex:bind(0)
 		self.gradientTex:bind(1)
-
-		gl.glBegin(gl.GL_TRIANGLE_STRIP)
-		gl.glVertexAttrib2f(1,0,0)	gl.glVertex2f(1, 1)
-		gl.glVertexAttrib2f(1,1,0)	gl.glVertex2f(1+self.size[1], 1)
-		gl.glVertexAttrib2f(1,0,1)	gl.glVertex2f(1, 1+self.size[2])
-		gl.glVertexAttrib2f(1,1,1)	gl.glVertex2f(1+self.size[1], 1+self.size[2])
-		gl.glEnd()
+		
+		R:quad(
+			1,1,
+			self.size[1],self.size[2],
+			0,0,
+			1,1,
+			0,
+			1,1,1,1,
+			self.displayTemperatureShader,
+			{
+				temperatureMinMax = {temperatureMin, temperatureMax},
+			},
+			0,0
+		)
 
 		self.gradientTex:unbind(1)
 		tempCurTex:unbind(0)
-		shader:useNone()
 	end
 
 	function HeatLevelTemplate:setTile(...)

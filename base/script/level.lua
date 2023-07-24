@@ -1238,35 +1238,7 @@ function Level:draw(R, viewBBox, playerPos)
 			self.fgTileTex:unbind(0)
 		end
 	else
-		local shader = self.levelSceneGraphShader
-		local uniforms = shader.uniforms
-
-		shader:use()
-		gl.glUniformMatrix4fv(shader.uniforms.mvProjMat.loc, 1, gl.GL_FALSE, R.identMat.ptr)
-
-		if uniforms.viewBBox then
-			gl.glUniform4f(uniforms.viewBBox.loc, viewBBox.min[1], viewBBox.min[2], viewBBox.max[1], viewBBox.max[2])
-		end
-		if uniforms.texpackTexSizeInTiles then
-			gl.glUniform2f(
-				uniforms.texpackTexSizeInTiles.loc,
-				self.texpackTex.width / self.tileSize,
-				self.texpackTex.height / self.tileSize)
-		end
-		if uniforms.viewSize then
-			gl.glUniform1f(uniforms.viewSize.loc, game.viewSize)
-		end
-		if uniforms.eyePos then
-			gl.glUniform2f(uniforms.eyePos.loc, playerPos[1], playerPos[2] + 1.5)
-		end
-
 		gl.glGetIntegerv(gl.GL_VIEWPORT, viewport.s)
-		if uniforms.viewport then
-			gl.glUniform4f(uniforms.viewport.loc, viewport:unpack())
-		end
-		if uniforms.aspectRatioH_W then
-			gl.glUniform1f(uniforms.aspectRatioH_W.loc, tonumber(viewport.w) / tonumber(viewport.z))
-		end
 
 		self.fgTileTex:bind(0)					-- map from tile to fg tex in texpack
 		self.texpackTex:bind(1)					-- bg/fg tile texture data
@@ -1282,19 +1254,33 @@ function Level:draw(R, viewBBox, playerPos)
 
 		self.spriteSheetTex:bind(9)
 
-		gl.glBegin(gl.GL_TRIANGLE_STRIP)
-		gl.glVertex2f(-1, -1)
-		gl.glVertex2f(1, -1)
-		gl.glVertex2f(-1, 1)
-		gl.glVertex2f(1, 1)
-		gl.glEnd()
-
+		R:quad(
+			-1,-1,
+			2,2,
+			0,0,
+			1,1,
+			0,
+			1,1,1,1,
+			self.levelSceneGraphShader,
+			{
+				mvProjMat = R.identMat,
+				viewBBox = {viewBBox.min[1], viewBBox.min[2], viewBBox.max[1], viewBBox.max[2]},
+				texpackTexSizeInTiles = {
+					self.texpackTex.width / self.tileSize,
+					self.texpackTex.height / self.tileSize,
+				},
+				viewSize = game.viewSize,
+				eyePos = {playerPos[1], playerPos[2] + 1.5},
+				viewport = {viewport:unpack()},
+				aspectRatioH_W = tonumber(viewport.w) / tonumber(viewport.z),
+			},
+			0,0
+		)
+		
 		for i=9,0,-1 do
 			gl.glActiveTexture(gl.GL_TEXTURE0 + i)
 			gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
 		end
-
-		shader:useNone()
 	end
 end
 

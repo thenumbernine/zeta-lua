@@ -976,6 +976,9 @@ function Hero:updateMinimap()
 			1
 		)
 	else
+do return end	-- glreport errors here
+
+R:report'here'
 		-- GLES alternative ... ?  via draw buffer?  via framebuffer?
 		-- TODO levelFgShader too
 		gl.glViewport(0, 0, xmax - xmin + 1, ymax - ymin + 1)
@@ -1008,6 +1011,7 @@ function Hero:updateMinimap()
 			0,						-- GLint y
 			xmax - xmin + 1,		-- GLsizei width
 			ymax - ymin + 1)		-- GLsizei height
+R:report'here'
 	end
 end
 

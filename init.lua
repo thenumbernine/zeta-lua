@@ -8,6 +8,21 @@ ffi_OpenGL = nil	-- for desktop GL
 -- GLES won't work so long as float buffers are working
 local gl = require 'gl'
 
+-- [[ the old gui font system isn't modern gl compat so ...
+if ffi_OpenGL == 'ffi.OpenGLES3' then
+	local Font = require 'gui.font'
+	function Font:init() end
+	function Font:resetWidths() end
+	function Font:calcWidths() end
+	function Font:draw() end
+	function Font:drawUnpacked() end
+	local GUI = require 'gui'
+	package.loaded['gui.gui'] = GUI
+	function GUI:init() self.font = Font() end
+	function GUI:update() end
+end
+--]]
+
 -- setup global env:
 local table = require 'ext.table'
 
