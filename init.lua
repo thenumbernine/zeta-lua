@@ -1,11 +1,11 @@
 #!/usr/bin/env luajit
 
 -- TODO this variable is half hardwired into lua-gl and luajit-ffi-bindings projects ... I don't like how it is set up
---ffi_OpenGL = nil	-- for desktop GL
---ffi_OpenGL = 'ffi.OpenGLES1'	-- for GLES1		-- doesn't support shaders
---ffi_OpenGL = 'ffi.OpenGLES2'	-- for GLES2		-- doesn't support float textures
-ffi_OpenGL = 'ffi.OpenGLES3'	-- for GLES3		-- works ... but I need to convert the font renderer to drawbuffers ... or convert the font render to just use cimgui
-local gl = require 'gl'
+--local ffi_OpenGL = nil	-- for desktop GL
+--local ffi_OpenGL = 'ffi.OpenGLES1'	-- for GLES1		-- doesn't support shaders
+--local ffi_OpenGL = 'ffi.OpenGLES2'	-- for GLES2		-- doesn't support float textures
+local ffi_OpenGL = 'ffi.OpenGLES3'	-- for GLES3		-- works ... but I need to convert the font renderer to drawbuffers ... or convert the font render to just use cimgui
+local gl = require 'gl.setup'(ffi_OpenGL)
 
 -- [[ the old gui font system isn't modern gl compat so ...
 if ffi_OpenGL == 'ffi.OpenGLES3' then
@@ -114,5 +114,4 @@ modio.levelcfg = {
 --]]
 
 -- run main
-local main = modio:require 'script.main'
-return main(gl)
+return modio:require 'script.main'()
