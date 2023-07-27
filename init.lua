@@ -7,21 +7,6 @@
 local ffi_OpenGL = 'ffi.OpenGLES3'	-- for GLES3		-- works ... but I need to convert the font renderer to drawbuffers ... or convert the font render to just use cimgui
 local gl = require 'gl.setup'(ffi_OpenGL)
 
--- [[ the old gui font system isn't modern gl compat so ...
-if ffi_OpenGL == 'ffi.OpenGLES3' then
-	local Font = require 'gui.font'
-	function Font:init() end
-	function Font:resetWidths() end
-	function Font:calcWidths() end
-	function Font:draw() end
-	function Font:drawUnpacked() end
-	local GUI = require 'gui'
-	package.loaded['gui.gui'] = GUI
-	function GUI:init() self.font = Font() end
-	function GUI:update() end
-end
---]]
-
 -- setup global env:
 local table = require 'ext.table'
 
