@@ -1,11 +1,11 @@
 #!/usr/bin/env luajit
 
 -- TODO this variable is half hardwired into lua-gl and luajit-ffi-bindings projects ... I don't like how it is set up
---local ffi_OpenGL = nil	-- for desktop GL
---local ffi_OpenGL = 'ffi.OpenGLES1'	-- for GLES1		-- doesn't support shaders
---local ffi_OpenGL = 'ffi.OpenGLES2'	-- for GLES2		-- doesn't support float textures
-local ffi_OpenGL = 'ffi.OpenGLES3'	-- for GLES3		-- works ... but I need to convert the font renderer to drawbuffers ... or convert the font render to just use cimgui
-local gl = require 'gl.setup'(ffi_OpenGL)
+--require 'gl.setup'()				 	-- for desktop GL
+--require 'gl.setup' 'ffi.OpenGLES1'	-- for GLES1		-- doesn't support shaders
+--require 'gl.setup' 'ffi.OpenGLES2'	-- for GLES2		-- doesn't support float textures
+--require 'gl.setup' 'ffi.OpenGLES3' 	-- for GLES3		-- works ... but I need to convert the font renderer to drawbuffers ... or convert the font render to just use cimgui
+require 'gl.setup'(require 'ffi'.os ~= 'Windows' and 'ffi.OpenGLES3' or nil)
 
 -- setup global env:
 local table = require 'ext.table'
