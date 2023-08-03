@@ -232,7 +232,7 @@ void main() {
 				du = {1/self.size[1], 1/self.size[2]},
 				temperatureTex = 0,
 			},
-		}
+		}:useNone()
 
 		self.displayTemperatureShader = GLProgram{
 			vertexCode = [[
@@ -283,7 +283,7 @@ void main() {
 				temperatureTex = 0,
 				gradientTex = 1,
 			},
-		}
+		}:useNone()
 	end
 
 	HeatLevelTemplate.updateHeat = false

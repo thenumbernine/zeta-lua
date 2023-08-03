@@ -95,7 +95,7 @@ void main() {
 				defaultColor = {1,1,1,1},
 				tex = 0,
 			},
-		}
+		}:useNone()
 	end
 	function GLRenderer:ortho(...)
 		self.projMat:setOrtho(...)
@@ -109,7 +109,7 @@ void main() {
 		glreport(s)
 	end
 	function GLRenderer:createShader(args)
-		return GLProgram(args)
+		return GLProgram(args):useNone()
 	end
 	local f4 = ffi.new('float[4]')
 	function GLRenderer:quad(

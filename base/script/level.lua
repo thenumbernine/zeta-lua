@@ -606,7 +606,7 @@ void main() {
 				bgtexpackTexSize = {self.bgtexpackTex.width, self.bgtexpackTex.height},
 				backgroundStructTexSize = #self.backgrounds,
 			},
-		}
+		}:useNone()
 
 		self.levelFgShader = GLProgram{
 			vertexCode = [[
@@ -678,7 +678,7 @@ void main() {
 				texpackTex = 1,
 				texpackTexSize = {self.texpackTex.width, self.texpackTex.height},
 			},
-		}
+		}:useNone()
 
 		local shaderCode = assert(path'base/script/raytrace.shader':read())
 		self.levelSceneGraphShader = GLProgram{
@@ -722,7 +722,7 @@ void main() {
 
 				spriteSheetTex = 9,
 			},
-		}
+		}:useNone()
 
 		-- I'm disabling this by default for now
 		local raytraceSprites = game.raytraceSprites
