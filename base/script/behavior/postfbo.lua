@@ -81,8 +81,6 @@ return function(parentClass)
 					magFilter = gl.GL_NEAREST,
 				}
 				fbo = FBO()
-				fbo
-					:bind()
 					:setColorAttachment(tex)
 					:unbind()
 				glreport'here'
