@@ -136,7 +136,7 @@ function App:initGL(gl, glname)
 		local dirobj = path(mod..'/sprites')
 		if dirobj:exists() then
 			for sprite in dirobj:dir() do
-				animsys:load{name=sprite, dir=sprite}
+				animsys:load{name=sprite.path, dir=sprite.path}
 			end
 		end
 	end

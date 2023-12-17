@@ -23,7 +23,7 @@ function AnimationSystem:load(sprite)
 		local dirobj = path(mod..'/'..dir)
 		if dirobj:exists() then
 			for framefile in dirobj:dir() do
-				local framename, ext = path(framefile):getext()
+				local framename, ext = framefile:getext()
 				framename = framename.path
 				ext = ext:lower()
 				if ext == 'png'
