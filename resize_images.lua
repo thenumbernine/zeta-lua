@@ -15,8 +15,8 @@ print('target size:',targetSize)
 
 local files = table()
 for f in path(dir):dir() do
-	if f:match('%.png$') then
-		files:insert(f)
+	if f.path:match('%.png$') then
+		files:insert(f.path)
 	end
 end
 print('files',files:concat(' '))
