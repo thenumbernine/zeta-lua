@@ -24,6 +24,7 @@ function AnimationSystem:load(sprite)
 		if dirobj:exists() then
 			for framefile in dirobj:dir() do
 				local framename, ext = path(framefile):getext()
+				framename = framename.path
 				ext = ext:lower()
 				if ext == 'png'
 				or ext == 'tif'
