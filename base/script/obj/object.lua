@@ -1329,6 +1329,9 @@ function Object:playSound(name, volume, pitch)
 		end
 	end
 	if closestDistSq > game.maxAudioDist * game.maxAudioDist then return end
+	
+	local sound = sounds:load(name..'.wav')
+	if not sound then return end
 
 	-- clientside ...
 	local source = game:getNextAudioSource()
@@ -1337,7 +1340,6 @@ function Object:playSound(name, volume, pitch)
 		return
 	end
 
-	local sound = sounds:load(name..'.wav')
 	source:setBuffer(sound)
 	source.volume = volume	-- save for later
 	source:setGain((volume or 1) * game.audioConfig.effectVolume)

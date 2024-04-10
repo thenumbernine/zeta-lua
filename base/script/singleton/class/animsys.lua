@@ -75,7 +75,7 @@ function AnimationSystem:getInfo(spriteName, seqName, startTime)
 	if not sprite then error("failed to find sprite "..tostring(spriteName)) end
 	local seq = sprite.seqs[seqName]
 	if not seq then
-		print("failed to find sequence "..tostring(seqName))
+		print("failed to find sequence "..tostring(seqName).." in sprite "..tostring(spriteName))
 		seq = sprite.seqs.stand
 		if not seq then return end
 	end

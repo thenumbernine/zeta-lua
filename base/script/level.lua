@@ -297,9 +297,11 @@ print('self.mapTileSize', self.mapTileSize)
 
 	-- load backgrounds here
 	do
+		local fn = 'script/backgrounds.lua'
 		xpcall(function()
-			self.backgrounds = table(assert(fromlua(assert(path(assert(modio:find('script/backgrounds.lua'))):read()))))
+			self.backgrounds = table((assert(fromlua(assert(path(assert(modio:find(fn))):read())))))
 		end, function(err)
+			print('when loading '..fn)
 			print(err..'\n'..debug.traceback())
 			self.backgrounds = table()
 		end)

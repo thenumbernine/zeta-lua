@@ -456,11 +456,11 @@ function PickTileTypeWindow:radioButton(selected, index, callback)
 	-- no-texture renders solid white.  TODO replace with a completely blank textures.
 	local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex and tex.id or 0))
 	if ig.igImageButton(
+		'',	-- str_id
 		texIDPtr,
 		ig.ImVec2(32, 32), --size
 		ig.ImVec2(0, 1), --uv0
 		ig.ImVec2(1, 0), --uv1
-		-1,	-- frame_padding
 		index == selected and ig.ImVec4(1,1,0,.25) or ig.ImVec4(0,0,0,0))	-- bg_col
 	then
 		callback(index)
@@ -539,6 +539,7 @@ function PickTileWindow:update()
 	local y = math.clamp(math.floor(cursorY / tex.height * tilesHigh), 0, tilesHigh-1)
 
 	if ig.igImageButton(
+		'',	-- str_id
 		texIDPtr,
 		ig.ImVec2(tex.width, tex.height))	-- size
 	then
@@ -575,6 +576,7 @@ function PickTileWindow:openButton(hoverText, tileIndex, callback)
 	local ti = (tileIndex - 1) % tilesWide
 	local tj = (tileIndex - 1 - ti) / tilesWide
 	if ig.igImageButton(
+		'',	-- str_id
 		texIDPtr,
 		ig.ImVec2(32,32),	-- size
 		ig.ImVec2(ti/tilesWide, tj/tilesHigh),	-- uv0
@@ -1517,11 +1519,11 @@ function Editor:updateGUI()
 				end
 
 				if ig.igImageButton(
+					'',	-- str_id
 					texIDPtr,
 					ig.ImVec2(32, 32), --size
 					ig.ImVec2(bgx / tex.width, bgy / tex.height),	--uv0
 					ig.ImVec2((bgx + bgw) / tex.width, (bgy + bgh) / tex.height),	--uv1
-					-1,	-- frame_padding
 					i == self.selectedBackgroundIndex and ig.ImVec4(1,1,0,.25) or ig.ImVec4(0,0,0,0))	-- bg_col
 				then
 					self.selectedBackgroundIndex = i
@@ -1561,11 +1563,11 @@ function Editor:updateGUI()
 				local tex = sprite and animsys:getTex(sprite, 'stand', game.time)
 				local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex and tex.id or 0))
 				if ig.igImageButton(
+					'',	-- str_id
 					texIDPtr,
 					ig.ImVec2(32, 32), --size
 					ig.ImVec2(0, 0), --uv0
 					ig.ImVec2(1, 1), --uv1
-					-1,	-- frame_padding
 					i == self.selectedSpawnIndex and ig.ImVec4(1,1,0,.25) or ig.ImVec4(0,0,0,0))	-- bg_col
 				then
 					self.selectedSpawnIndex = i

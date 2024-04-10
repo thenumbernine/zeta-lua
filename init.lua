@@ -1,11 +1,11 @@
 #!/usr/bin/env luajit
 
 -- TODO this variable is half hardwired into lua-gl and luajit-ffi-bindings projects ... I don't like how it is set up
---require 'gl.setup'()				 	-- for desktop GL
+require 'gl.setup'()				 	-- for desktop GL
 --require 'gl.setup' 'OpenGLES1'	-- for GLES1		-- doesn't support shaders
 --require 'gl.setup' 'OpenGLES2'	-- for GLES2		-- doesn't support float textures
 --require 'gl.setup' 'OpenGLES3' 	-- for GLES3		-- works ... but I need to convert the font renderer to drawbuffers ... or convert the font render to just use cimgui
-require 'gl.setup'(require 'ffi'.os ~= 'Windows' and 'OpenGLES3' or nil)
+--require 'gl.setup'(require 'ffi'.os ~= 'Windows' and 'OpenGLES3' or nil)
 
 -- setup global env:
 local table = require 'ext.table'
@@ -68,7 +68,7 @@ modio.levelcfg = {
 }
 --]]
 
--- [[ zeta
+--[[ zeta
 modio.search:insert(1, 'zeta')
 --modio.search:insert'mario'	-- don't add this, it messes up the block types.
 modio.levelcfg = {
@@ -97,6 +97,15 @@ modio.levelcfg = {
 	path = 'start',
 }
 --]]
+
+-- [[ neko
+modio.search:insert(1, 'neko')
+modio.levelcfg = {
+	path = 'start',
+}
+--]]
+
+
 
 -- run main
 return modio:require 'script.main'()
