@@ -452,11 +452,12 @@ end
 function PickTileTypeWindow:radioButton(selected, index, callback)
 	local editor = self.editor
 	local tileTypeOption = editor.tileOptions[index]
+	if not tileTypeOption then return end -- when is this?
 	local tex = tileTypeOption.tex
 	-- no-texture renders solid white.  TODO replace with a completely blank textures.
 	local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex and tex.id or 0))
 	if ig.igImageButton(
-		'',	-- str_id
+		'PickTileTypeWindow',	-- str_id
 		texIDPtr,
 		ig.ImVec2(32, 32), --size
 		ig.ImVec2(0, 1), --uv0
@@ -539,7 +540,7 @@ function PickTileWindow:update()
 	local y = math.clamp(math.floor(cursorY / tex.height * tilesHigh), 0, tilesHigh-1)
 
 	if ig.igImageButton(
-		'',	-- str_id
+		'PickTileWindow:update',	-- str_id
 		texIDPtr,
 		ig.ImVec2(tex.width, tex.height))	-- size
 	then
@@ -576,7 +577,7 @@ function PickTileWindow:openButton(hoverText, tileIndex, callback)
 	local ti = (tileIndex - 1) % tilesWide
 	local tj = (tileIndex - 1 - ti) / tilesWide
 	if ig.igImageButton(
-		'',	-- str_id
+		'PickTileWindow:openButton',	-- str_id
 		texIDPtr,
 		ig.ImVec2(32,32),	-- size
 		ig.ImVec2(ti/tilesWide, tj/tilesHigh),	-- uv0
@@ -1519,7 +1520,7 @@ function Editor:updateGUI()
 				end
 
 				if ig.igImageButton(
-					'',	-- str_id
+					'paintingBackground',	-- str_id
 					texIDPtr,
 					ig.ImVec2(32, 32), --size
 					ig.ImVec2(bgx / tex.width, bgy / tex.height),	--uv0
@@ -1563,7 +1564,7 @@ function Editor:updateGUI()
 				local tex = sprite and animsys:getTex(sprite, 'stand', game.time)
 				local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex and tex.id or 0))
 				if ig.igImageButton(
-					'',	-- str_id
+					'editModeObjects',	-- str_id
 					texIDPtr,
 					ig.ImVec2(32, 32), --size
 					ig.ImVec2(0, 0), --uv0

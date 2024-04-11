@@ -101,7 +101,7 @@ local timescale = 1
 
 
 local R
-local App = class(ImGuiApp)
+local App = ImGuiApp:subclass()
 	-- closest resolution:
 App.width = winWidth or 768
 App.height = winHeight or 512
@@ -484,6 +484,9 @@ local fpsTime = 0
 local fpsFrames = 0
 function App:update(...)
 	R:report('update begin')
+
+	-- where does this usu go?
+	gui.mouse:update()
 
 	for _,player in ipairs(game.players) do
 		local x = 0
