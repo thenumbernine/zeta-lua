@@ -218,6 +218,7 @@ function Level:init(args)
 	end
 	self.size = vec2(tileImage:size())
 
+	-- hmm, ugly hack ...
 	do
 		local maptilesizepath = mappath..'/maptilesize.lua'
 		local searchMapTileSizePath = modio:find(maptilesizepath)
