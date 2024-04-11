@@ -1211,6 +1211,9 @@ function Level:draw(R, viewBBox, playerPos)
 			self.backgroundTex:unbind(0)
 		end
 
+		-- TODO what about tile types that have animated sprites?
+		-- hmmmmm
+
 		-- draw objects
 		for _,obj in ipairs(game.objs) do
 			if not obj.drawn then

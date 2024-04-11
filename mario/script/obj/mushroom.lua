@@ -1,7 +1,3 @@
-local class = require 'ext.class'
-local ItemObject  = require 'mario.script.obj.item'
-
-local Mushroom = class(ItemObject)
+local Mushroom = require 'mario.script.obj.item':subclass()
 Mushroom.sprite = 'mushroom'
-
 return Mushroom
