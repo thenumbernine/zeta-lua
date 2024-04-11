@@ -511,7 +511,18 @@ function Neko:update(dt)
 			end
 		end
 	end
-	
+
+	-- swinging on berries?
+	if self.inputJump and not self.onground and self.holding and self.holding.canSwing then
+		if not self.inputJumpLast and not jumpingOnSomething and self.inputJumpTime < game.time then
+			self:setHeld(nil)
+			self:playSound'jump'
+			self.climbing = nil
+			self.inputJumpTime = game.time
+			self.jumpVel = math.abs(self.vel[1]) * .3
+		end
+	end
+
 	-- test doors
 	if self.onground and self.inputUpDown > 0 and self.inputUpDownLast <= 0 and self.vel[1] == 0 then
 		for _,obj in ipairs(game.objs) do
