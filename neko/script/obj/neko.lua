@@ -100,7 +100,13 @@ function Neko:touch(other, side)
 	and not self.holding	-- and we're not holding anything atm
 	and other.canCarry		-- and we can carry the other object
 	and (not other.canBeHeldBy or other:canBeHeldBy(self))	-- ... refined "can carry" test
+
+	-- if you're holding a canSwing object and you jump, don't re-hold it for the next .1 seconds
+	-- implement this as canCarry? in canSwing ...
+	and (not other.canSwing or not (self.inputJumpTime >= game.time - .5 and self.inputJumpTime <= game.time))
+	
 	then
+		print'grabbing'
 		self:setHeld(other)
 	end
 	
@@ -487,7 +493,9 @@ function Neko:update(dt)
 	--]]
 	if self.onground or self.climbing or self.swimming then
 		if self.swimming then
-			if (self.inputJump or self.inputJumpAux) and (self.inputSwimTime + self.swimDelay < game.time) then
+			if (self.inputJump or self.inputJumpAux) 
+			and (self.inputSwimTime + self.swimDelay < game.time) 
+			then
 				self:playSound('swim')
 			
 				self.onground = false
@@ -497,7 +505,10 @@ function Neko:update(dt)
 				self.inputSwimTime = game.time
 			end
 		elseif self.inputJump or (self.holding and self.inputJumpAux) then
-			if not self.inputJumpLast and not jumpingOnSomething and self.inputJumpTime < game.time then
+			if not self.inputJumpLast 
+			and not jumpingOnSomething 
+			and self.inputJumpTime < game.time 
+			then
 				self:playSound('jump')
 			
 				self.onground = false
@@ -515,6 +526,7 @@ function Neko:update(dt)
 	-- swinging on berries?
 	if self.inputJump and not self.onground and self.holding and self.holding.canSwing then
 		if not self.inputJumpLast and not jumpingOnSomething and self.inputJumpTime < game.time then
+			print'swingjump'	
 			self:setHeld(nil)
 			self:playSound'jump'
 			self.climbing = nil
