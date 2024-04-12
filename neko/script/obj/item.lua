@@ -10,6 +10,8 @@ Item.canCarry = true
 Item.canSwing = true
 
 function Item:update(...)
+	if self.inInventory then return end
+
 	Item.super.update(self, ...)
 
 	local heldby = self.heldby
@@ -34,6 +36,11 @@ function Item:update(...)
 			self.pos[2] = self.pos[2] * (1 - s) + spawnInfo.pos[2] * s
 		end
 	end
+end
+
+function Item:draw(...)
+	if self.inInventory then return end
+	Item.super.draw(self, ...)
 end
 
 return Item

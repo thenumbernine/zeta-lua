@@ -1,3 +1,4 @@
+local table = require 'ext.table'
 local bit = require 'bit'
 local box2 = require 'vec.box2'
 local game = require 'base.script.singleton.game'
@@ -13,6 +14,7 @@ Neko.sprite = 'neko'
 Neko.inputUpDownLast = 0
 Neko.inputRun = false
 Neko.inputJumpTime = -1
+Neko.swingTime = -1
 Neko.inputMaxSpeedTime = 0
 
 Neko.maxRunVel = 10
@@ -23,8 +25,9 @@ Neko.pushPriority = 1
 
 function Neko:init(args)
 	Neko.super.init(self, args)
-
 	self.color = nil	-- don't override player color.  how about always?
+
+	self.items = table()
 end
 
 Neko.invincibleEndTime = -1
@@ -103,10 +106,9 @@ function Neko:touch(other, side)
 
 	-- if you're holding a canSwing object and you jump, don't re-hold it for the next .1 seconds
 	-- implement this as canCarry? in canSwing ...
-	and (not other.canSwing or not (self.inputJumpTime >= game.time - .5 and self.inputJumpTime <= game.time))
+	and (not other.canSwing or not (self.swingTime >= game.time - .5 and self.swingTime <= game.time))
 	
 	then
-		print'grabbing'
 		self:setHeld(other)
 	end
 	
@@ -526,11 +528,11 @@ function Neko:update(dt)
 	-- swinging on berries?
 	if self.inputJump and not self.onground and self.holding and self.holding.canSwing then
 		if not self.inputJumpLast and not jumpingOnSomething and self.inputJumpTime < game.time then
-			print'swingjump'	
 			self:setHeld(nil)
 			self:playSound'jump'
 			self.climbing = nil
 			self.inputJumpTime = game.time
+			self.swingTime = game.time
 			self.jumpVel = math.abs(self.vel[1]) * .3
 		end
 	end

@@ -101,6 +101,7 @@ modio.levelcfg = {
 -- [[ neko
 modio.search:insert(1, 'neko')
 modio.levelcfg = {
+	music = 'music/overworld.wav',
 	path = 'start',
 }
 --]]
