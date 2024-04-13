@@ -14,13 +14,19 @@ return {
 		name='neko',
 		dir='neko',
 		seqs={
-			walk={'stand','step1','step2', freq=8},
-			run={'stand','step1','step2', freq=16},
+			walk={'stand','step', freq=8},
+			run={'stand','step', freq=16},
 			climb={'climb1', 'climb2', freq=4},
-			climbfwd={'climbfwd1', 'climbfwd2', freq=4},
 			swimstroke={'swim2','swim3', freq=8},
 		},
 	},
+	{
+		name='rabbit',
+		dir='rabbit',
+	},
+	-- berries.
+	-- TODO palette renderer
+
 	{
 		name='berry_red',
 		dir='berry_red',

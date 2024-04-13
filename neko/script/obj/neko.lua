@@ -685,6 +685,17 @@ function Neko:respawn()
 	self:setPos(unpack(game:getStartPos()))
 end
 
+function Neko:popupMessage(text)
+	self.popupMessageCloseSysTime = game.sysTime + .3
+	self.popupMessageText = text
+	game.paused = true
+	repeat
+		coroutine.yield()
+	until not game.paused
+end
+
+
+
 function Neko:draw(R, viewBBox, holdOverride)
 
 	if self.invincibleEndTime >= game.time then
@@ -778,13 +789,12 @@ function Neko:drawHUD(R, viewBBox)
 	-- then show inventory
 	-- otherwise have 'l' and 'r' cycle ... weapons only?
 
-	local x = viewBBox.min[1]
-	local y = viewBBox.min[2]+1
+	local x = viewBBox.max[1]-5
+	local y = viewBBox.max[2]-2
 	-- draw gui
 	-- health:
 	y=y+1
 	gui.font:drawUnpacked(x, y, 1, -1, 'HP: '..self.health .. '/' .. self.maxHealth)
-	gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
 	-- hp
 	R:quad(x+5, y-1, 2, .7,
 		0,0,0,0,0,
@@ -798,7 +808,6 @@ function Neko:drawHUD(R, viewBBox)
 	local x = viewBBox.min[1]
 	local function drawInv(item, x, y, sel)
 		if sel then
-			gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
 			R:quad(
 				x+.5, y-1, 1, 1,
 				0,0,1,1,0,
@@ -829,13 +838,14 @@ function Neko:drawHUD(R, viewBBox)
 	if self.popupMessageText then
 		-- TODO use something other than game.paused?
 		-- or fix game.paused vs Object:draw so objects can't animate while the game is paused (specifically player, geemer, etc, but not terminal)
-		gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
+
 		R:quad(
 			viewBBox.min[1]+.7, viewBBox.min[2]+.7,	-- pos
 			viewBBox.max[1]-viewBBox.min[1]-1.6,
 			viewBBox.max[2]-viewBBox.min[2]-1.6, -- size
 			0,0,0,0,0,
 			0,0,0,.5)
+
 		gui.font:drawUnpacked(
 			viewBBox.min[1]+1, viewBBox.max[2]-1,	-- pos
 			1, -1,	-- fontSize
@@ -861,8 +871,6 @@ function Neko:drawHUD(R, viewBBox)
 			--end)
 		end
 	end
-
-	gl.glEnable(gl.GL_TEXTURE_2D)
 end
 
 return Neko

@@ -30,6 +30,7 @@ function Font:drawQuad(drawX, drawY, tx, ty, startWidth, finishWidth, fontSizeX,
 		ty / 16,
 		(finishWidth - startWidth) / 16,
 		1 / 16,
+		0,
 		self.colorR, self.colorG, self.colorB, self.colorA
 	)
 	self.tex:unbind()
