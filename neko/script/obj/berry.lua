@@ -98,9 +98,11 @@ function BerryShot:touch(other, side)
 	self.remove = true
 end
 
+
+
 -- for shooter:getShootPosVel
 Berry.shotSpeed = 30
-Berry.shotOffset = vec2(0, .45)
+Berry.shotOffset = vec2(0, 0)
 Berry.drawOffset = vec2(.5, .75)
 
 -- if the user selects the item from inventory and throws it
