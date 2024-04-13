@@ -24,16 +24,22 @@ return {
 	{
 		name='berry_red',
 		dir='berry_red',
-		seqs = {},
+		seqs = {
+			stand={'stand1','stand2','stand3', 'stand2', freq=4},
+		},
 	},
 	{
 		name='berry_pink',
 		dir='berry_pink',
-		seqs = {},
+		seqs = {
+			stand={'stand1','stand2','stand3', 'stand2', freq=4},
+		},
 	},
 	{
 		name='berry_green',
 		dir='berry_green',
-		seqs = {},
+		seqs = {
+			stand={'stand1','stand2','stand3', 'stand2', freq=4},
+		},
 	},
 }
