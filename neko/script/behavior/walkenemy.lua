@@ -65,9 +65,12 @@ local function walkEnemyBehavior(parentClass)
 		end
 	end
 
-	function WalkEnemyTemplate:playerBounce(other) self:die(other) end
-	function WalkEnemyTemplate:hitByShell(other) self:die(other) end
-	function WalkEnemyTemplate:hitByBlast(other) self:die(other) end
+	function WalkEnemyTemplate:playerBounce(other) 
+		-- mario-style: insta-kill
+		--self:die(other) 
+		-- or otherwise ? deal damage?  bounce? do nothing?
+		--other:takeDamage(self.damage, self, self, 'up')
+	end
 
 	return WalkEnemyTemplate
 end

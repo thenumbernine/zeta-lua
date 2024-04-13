@@ -98,7 +98,7 @@ function Neko:updateHeldPosition(holding)
 	holding.pos[1] = self.pos[1] + side * .625
 end
 
-Neko.extraBounceVel = 40
+Neko.extraBounceVel = 30
 Neko.idleBounceVel = 10
 
 function Neko:touch(other, side)
@@ -124,7 +124,7 @@ end
 
 function Neko:touchTile(tileType, side, n, x, y)
 	if tileType.damage then
-		self:hit()
+		self:takeDamage(tileType.damage, nil, nil, side)
 	end
 end
 
@@ -654,10 +654,6 @@ function Neko:hit()
 	if self.invincibleEndTime >= game.time then return end
 	self:die()
 end
-function Neko:hitByEnemy(other) self:hit(other) end
-function Neko:hitByShell(other) self:hit(other) end
-function Neko:hitByBlast(other) self:hit(other) end
-
 
 function Neko:die()
 	-- nothing atm
