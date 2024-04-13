@@ -24,16 +24,30 @@ local function walkEnemyBehavior(parentClass)
 		WalkEnemyTemplate.super.update(self, dt)
 		
 		if self.dead then return end
+	
+		local room = level:getRoomAtMapTilePos(level:getMapTilePos(self.pos:unpack()))
 		
 		if self.turnsAtLedge and self.onground then
-			local tileUnderLeft = level:getTile(self.pos[1] + self.bbox.min[1] - level.pos[1], self.pos[2] - .5 - level.pos[2])
-			if not tileUnderLeft or not tileUnderLeft.solid then
+			local x = self.pos[1] + self.bbox.min[1] - level.pos[1]
+			local y = self.pos[2] - .5 - level.pos[2]
+			local tileUnderLeft = level:getTile(x, y)
+			local roomUnderLeft = level:getRoomAtMapTilePos(level:getMapTilePos(x, y))
+			if not tileUnderLeft 
+			or not tileUnderLeft.solid 
+			or roomUnderLeft ~= room
+			then
 				self.dir = 1
 				self.drawMirror = false
 			end
 
-			local tileUnderRight = level:getTile(self.pos[1] + self.bbox.max[1] - level.pos[1], self.pos[2] - .5 - level.pos[2])
-			if not tileUnderRight or not tileUnderRight.solid then
+			local x = self.pos[1] + self.bbox.max[1] - level.pos[1]
+			local y = self.pos[2] - .5 - level.pos[2]
+			local tileUnderRight = level:getTile(x, y)
+			local roomUnderRight = level:getRoomAtMapTilePos(level:getMapTilePos(x, y))
+			if not tileUnderRight
+			or not tileUnderRight.solid
+			or roomUnderRight ~= room
+			then
 				self.dir = -1
 				self.drawMirror = true
 			end
