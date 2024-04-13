@@ -1,6 +1,4 @@
-local class = require 'ext.class'
-local Tile = require 'base.script.tile.tile'
-local Ladder = class(Tile)
+local Ladder = require 'base.script.tile.tile':subclass()
 Ladder.name = 'ladder'
 Ladder.canClimb = true
 return Ladder

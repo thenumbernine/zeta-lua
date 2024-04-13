@@ -1,6 +1,4 @@
-local class = require 'ext.class'
-local Object = require 'base.script.obj.object'
-local Start = class(Object)
+local Start = require 'base.script.obj.object':subclass()
 Start.solidFlags = 0
 Start.touchFlags = 0
 Start.blockFlags = 0

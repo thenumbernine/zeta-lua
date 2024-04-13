@@ -1,7 +1,5 @@
-local class = require 'ext.class'
-
 return function(parentClass)
-	local FluidLevelTemplate = class(parentClass)
+	local FluidLevelTemplate = parentClass:subclass()
 
 	function FluidLevelTemplate:initSpawn(...)
 		FluidLevelTemplate.super.initSpawn(self, ...)

@@ -1,6 +1,4 @@
-local class = require 'ext.class'
-local Tile = require 'base.script.tile.tile'
-local Water = class(Tile)
+local Water = require 'base.script.tile.tile':subclass()
 Water.name = 'water'
 Water.canSwim = true
 return Water

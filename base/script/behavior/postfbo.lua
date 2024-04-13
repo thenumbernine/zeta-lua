@@ -1,6 +1,5 @@
 -- behavior for game singleton class
 local ffi = require 'ffi'
-local class = require 'ext.class'
 local vec4i = require 'vec-ffi.vec4i'
 local vec2i = require 'vec-ffi.vec2i'
 local FBO = require 'gl.fbo'
@@ -9,7 +8,7 @@ local glreport = require 'gl.report'
 
 -- behavior for base.script.singleton.class.game subclasses
 return function(parentClass)
-	local PostFBOTemplate = class(parentClass)
+	local PostFBOTemplate = parentClass:subclass()
 
 	local fbo
 	local tex

@@ -107,7 +107,6 @@ but then i want them to be a bit malleable too where neighboring temps can influ
 
 --]]
 local ffi = require 'ffi'
-local class = require 'ext.class'
 local table = require 'ext.table'
 local gl = require 'gl'
 local vec4f = require 'vec-ffi.vec4f'
@@ -117,7 +116,7 @@ local Temperature = require 'base.script.temperature'
 local game = require 'base.script.singleton.game'
 
 return function(parentClass)
-	local HeatLevelTemplate = class(parentClass)
+	local HeatLevelTemplate = parentClass:subclass()
 
 	-- how often in game-time to update the heat fbo
 	HeatLevelTemplate.temperatureUpdateInterval = .1

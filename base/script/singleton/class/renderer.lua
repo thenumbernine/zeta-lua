@@ -10,7 +10,7 @@ local Renderer = class()
 Renderer.requireClasses = {}
 
 do
-	local GLRenderer = class(Renderer)
+	local GLRenderer = Renderer:subclass()
 	GLRenderer.glname = 'gl'
 	Renderer.requireClasses.gl = GLRenderer
 
