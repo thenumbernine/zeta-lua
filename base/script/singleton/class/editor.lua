@@ -1640,19 +1640,19 @@ function Editor:event(event)
 	self.isHandlingKeyboard = ig.igGetIO()[0].WantCaptureKeyboard
 
 	-- check for enable/disable
-	if event.type == sdl.SDL_KEYDOWN
-	or event.type == sdl.SDL_KEYUP
+	if event[0].type == sdl.SDL_KEYDOWN
+	or event[0].type == sdl.SDL_KEYUP
 	then
-		local buttonDown = event.type == sdl.SDL_KEYDOWN
-		if event.key.keysym.sym == 167
-		or event.key.keysym.sym == 96
+		local buttonDown = event[0].type == sdl.SDL_KEYDOWN
+		if event[0].key.keysym.sym == 167
+		or event[0].key.keysym.sym == 96
 		then	-- ` key for editor
 			if buttonDown and not self.isHandlingKeyboard then
 				self.active = not self.active
 				return true
 			end
-		elseif event.key.keysym.sym == sdl.SDLK_LSHIFT
-		or event.key.keysym.sym == sdl.SDLK_RSHIFT
+		elseif event[0].key.keysym.sym == sdl.SDLK_LSHIFT
+		or event[0].key.keysym.sym == sdl.SDLK_RSHIFT
 		then
 			self.shiftDown = buttonDown
 		end

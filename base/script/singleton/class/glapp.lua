@@ -108,13 +108,13 @@ App.height = winHeight or 512
 App.title = 'Zeta Engine'
 App.sdlInitFlags = bit.bor(sdl.SDL_INIT_VIDEO, sdl.SDL_INIT_JOYSTICK)
 
-function App:initGL(gl, glname)
-	App.super.initGL(self, gl, glname)
+function App:initGL()
+	App.super.initGL(self)
 	
 	local Renderer = modio:require 'script.singleton.class.renderer'
 	local rendererClass = Renderer.requireClasses[glname]
 	if not rendererClass then error("don't have support for "..tostring(glname)) end
-	R = rendererClass(gl)
+	R = rendererClass(require 'gl')
 	R:report('init begin')
 	
 	sdl.SDL_ShowCursor(sdl.SDL_DISABLE)
@@ -401,71 +401,71 @@ local function processEvent(press, ...)
 end
 
 
-function App:event(event, ...)
-	App.super.event(self, event, ...)
+function App:event(event)
+	App.super.event(self, event)
 	
 	if editor then
-		if editor:event(event) then return end
+		if editor:event(event[0]) then return end
 	end
 
 	if editor and editor.active and editor.isHandlingKeyboard then return end
 
-	if event.type == sdl.SDL_JOYHATMOTION then
-		--if event.jhat.value ~= 0 then
+	if event[0].type == sdl.SDL_JOYHATMOTION then
+		--if event[0].jhat.value ~= 0 then
 			-- TODO make sure all hat value bits are cleared
 			-- or keep track of press/release
 			for i=0,3 do
 				local dirbit = bit.lshift(1,i)
-				local press = bit.band(dirbit, event.jhat.value) ~= 0
-				processEvent(press, sdl.SDL_JOYHATMOTION, event.jhat.which, event.jhat.hat, dirbit)
+				local press = bit.band(dirbit, event[0].jhat.value) ~= 0
+				processEvent(press, sdl.SDL_JOYHATMOTION, event[0].jhat.which, event[0].jhat.hat, dirbit)
 			end
 			--[[
-			if event.jhat.value == sdl.SDL_HAT_CENTERED then
+			if event[0].jhat.value == sdl.SDL_HAT_CENTERED then
 				for i=0,3 do
 					local dirbit = bit.lshift(1,i)
-					processEvent(false, sdl.SDL_JOYHATMOTION, event.jhat.which, event.jhat.hat, dirbit)
+					processEvent(false, sdl.SDL_JOYHATMOTION, event[0].jhat.which, event[0].jhat.hat, dirbit)
 				end
 			end
 			--]]
 		--end
-	elseif event.type == sdl.SDL_JOYAXISMOTION then
+	elseif event[0].type == sdl.SDL_JOYAXISMOTION then
 		-- -1,0,1 depend on the axis press
-		local lr = math.floor(3 * (tonumber(event.jaxis.value) + 32768) / 65536) - 1
+		local lr = math.floor(3 * (tonumber(event[0].jaxis.value) + 32768) / 65536) - 1
 		local press = lr ~= 0
 		if not press then
 			-- clear both left and right movement
-			processEvent(press, sdl.SDL_JOYAXISMOTION, event.jaxis.which, event.jaxis.axis, -1)
-			processEvent(press, sdl.SDL_JOYAXISMOTION, event.jaxis.which, event.jaxis.axis, 1)
+			processEvent(press, sdl.SDL_JOYAXISMOTION, event[0].jaxis.which, event[0].jaxis.axis, -1)
+			processEvent(press, sdl.SDL_JOYAXISMOTION, event[0].jaxis.which, event[0].jaxis.axis, 1)
 		else
 			-- set movement for the lr direction
-			processEvent(press, sdl.SDL_JOYAXISMOTION, event.jaxis.which, event.jaxis.axis, lr)
+			processEvent(press, sdl.SDL_JOYAXISMOTION, event[0].jaxis.which, event[0].jaxis.axis, lr)
 		end
-	elseif event.type == sdl.SDL_JOYBUTTONDOWN or event.type == sdl.SDL_JOYBUTTONUP then
-		-- event.jbutton.state is 0/1 for up/down, right?
-		local press = event.type == sdl.SDL_JOYBUTTONDOWN
-		processEvent(press, sdl.SDL_JOYBUTTONDOWN, event.jbutton.which, event.jbutton.button)
-	elseif event.type == sdl.SDL_KEYDOWN or event.type == sdl.SDL_KEYUP then
-		local press = event.type == sdl.SDL_KEYDOWN
-		processEvent(press, sdl.SDL_KEYDOWN, event.key.keysym.sym)
+	elseif event[0].type == sdl.SDL_JOYBUTTONDOWN or event[0].type == sdl.SDL_JOYBUTTONUP then
+		-- event[0].jbutton.state is 0/1 for up/down, right?
+		local press = event[0].type == sdl.SDL_JOYBUTTONDOWN
+		processEvent(press, sdl.SDL_JOYBUTTONDOWN, event[0].jbutton.which, event[0].jbutton.button)
+	elseif event[0].type == sdl.SDL_KEYDOWN or event[0].type == sdl.SDL_KEYUP then
+		local press = event[0].type == sdl.SDL_KEYDOWN
+		processEvent(press, sdl.SDL_KEYDOWN, event[0].key.keysym.sym)
 	-- else mouse buttons?
 	-- else mouse motion / position?
 	end
 	
-	if event.type == sdl.SDL_MOUSEMOTION then
+	if event[0].type == sdl.SDL_MOUSEMOTION then
 		local player = game.clientConn.players[1]
 		local wx, wy = self:size()
-		player.mouseScreenPos[1] = event.button.x / wx
-		player.mouseScreenPos[2] = 1 - event.button.y / wy
+		player.mouseScreenPos[1] = event[0].button.x / wx
+		player.mouseScreenPos[2] = 1 - event[0].button.y / wy
 	end
 
 	--[[ slowdown effect
-	if event.key.keysym.sym == sdl.SDLK_BACKQUOTE then
+	if event[0].key.keysym.sym == sdl.SDLK_BACKQUOTE then
 		timescale = 1 - 4/5 * (press and 1 or 0)
 	end
 	--]]
 
-	if event.type == sdl.SDL_KEYDOWN then
-		if event.key.keysym.sym == sdl.SDLK_ESCAPE then
+	if event[0].type == sdl.SDL_KEYDOWN then
+		if event[0].key.keysym.sym == sdl.SDLK_ESCAPE then
 			-- TODO better system? 
 			if modalsOpened.controls then
 				modalsOpened.controls = false
@@ -474,7 +474,7 @@ function App:event(event, ...)
 			else
 				modalsOpened.main = not modalsOpened.main
 			end
-		elseif event.key.keysym.sym == sdl.SDLK_F2 then
+		elseif event[0].key.keysym.sym == sdl.SDLK_F2 then
 			game:reset()
 		end
 	end
