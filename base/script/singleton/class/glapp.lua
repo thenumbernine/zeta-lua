@@ -112,7 +112,7 @@ function App:initGL()
 	App.super.initGL(self)
 	
 	local Renderer = modio:require 'script.singleton.class.renderer'
-	local rendererClass = Renderer.requireClasses[glname]
+	local rendererClass = Renderer.requireClasses.gl
 	if not rendererClass then error("don't have support for "..tostring(glname)) end
 	R = rendererClass(require 'gl')
 	R:report('init begin')
