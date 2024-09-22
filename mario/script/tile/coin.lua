@@ -1,5 +1,5 @@
 local Tile = require 'base.script.tile.tile'
-local CoinTile = :subclass()
+local CoinTile = Tile:subclass()
 CoinTile.name = 'coin'
 CoinTile.sprite = 'coin'
 CoinTile.seq = 'stand'

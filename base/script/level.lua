@@ -300,7 +300,13 @@ print('self.mapTileSize', self.mapTileSize)
 	do
 		local fn = 'script/backgrounds.lua'
 		xpcall(function()
-			self.backgrounds = table((assert(fromlua(assert(path(assert(modio:find(fn))):read())))))
+			self.backgrounds = table(
+				(assert(fromlua(
+					assert(path(
+						assert(modio:find(fn), "failed to find in modio: "..tostring(fn))
+					):read(), "failed to read: "..tostring(fn))
+				), "failed to decypher lua: "..tostring(fn)))
+			)
 		end, function(err)
 			print('when loading '..fn)
 			print(err..'\n'..debug.traceback())

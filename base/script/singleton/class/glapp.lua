@@ -405,7 +405,7 @@ function App:event(event)
 	App.super.event(self, event)
 	
 	if editor then
-		if editor:event(event[0]) then return end
+		if editor:event(event) then return end
 	end
 
 	if editor and editor.active and editor.isHandlingKeyboard then return end
