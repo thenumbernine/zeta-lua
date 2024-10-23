@@ -51,7 +51,7 @@ do
 		-- default shader
 		self.shader = GLProgram{
 			vertexCode = [[
-#version 320 es
+#version 410
 precision highp float;
 
 layout(location=0) in vec2 vertex;
@@ -77,7 +77,7 @@ void main() {
 }
 ]],
 			fragmentCode = [[
-#version 320 es
+#version 410
 precision highp float;
 
 in vec2 tc;

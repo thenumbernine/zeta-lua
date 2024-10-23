@@ -50,8 +50,8 @@ for _,pathstr in ipairs(oldSearchPath) do
 	rmap(tree)
 	print()
 	print('inc',inc)
-	print('tree',tree)
-	origTileTypes:append(assert(load(tostring(tree)))())
+	print('tree',tree:toLua())
+	origTileTypes:append(assert(load(tree:toLua()))())
 end
 print()
 print'oldTileTypes'

@@ -86,7 +86,7 @@ return function(parentClass)
 			
 				renderShader = R:createShader{
 					vertexCode = [[
-#version 320 es
+#version 410
 precision highp float;
 
 layout(location=0) in vec2 vertex;
@@ -107,7 +107,7 @@ void main() {
 }
 ]],
 					fragmentCode = [[
-#version 320 es
+#version 410
 precision highp float;
 
 in vec2 tc;	// in pixels

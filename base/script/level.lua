@@ -499,7 +499,7 @@ print('self.mapTileSize', self.mapTileSize)
 		-- render the background image (with scrolling effects) and the background tiles
 		self.levelBgShader = GLProgram{
 			vertexCode = [[
-#version 320 es
+#version 410
 precision highp float;
 
 layout(location=0) in vec2 vertex;
@@ -519,7 +519,7 @@ void main() {
 }
 ]],
 			fragmentCode = [[
-#version 320 es
+#version 410
 precision highp float;
 
 in vec2 pos;
@@ -613,7 +613,7 @@ void main() {
 
 		self.levelFgShader = GLProgram{
 			vertexCode = [[
-#version 320 es
+#version 410
 precision highp float;
 
 layout(location=0) in vec2 vertex;
@@ -633,7 +633,7 @@ void main() {
 }
 ]],
 			fragmentCode = [[
-#version 320 es
+#version 410
 precision highp float;
 
 in vec2 pos;	//world coordinates.   TODO why varying?  why not just tc * levelSize ?
@@ -686,15 +686,15 @@ void main() {
 		local shaderCode = assert(path'base/script/raytrace.shader':read())
 		self.levelSceneGraphShader = GLProgram{
 			vertexCode = table{
-				'#version 320 es',	-- must be first
-				'precision highp float;',	-- required for 320 es
+				'#version 410',	-- must be first
+				'precision highp float;',
 				'#define VERTEX_SHADER 1',
 				shaderCode,
 			}:concat'\n',
 
 			fragmentCode = table{
-				'#version 320 es',	-- must be first
-				'precision highp float;',	-- required for 320 es
+				'#version 410',	-- must be first
+				'precision highp float;',
 				'#define FRAGMENT_SHADER 1',
 				shaderCode
 			}:concat'\n',

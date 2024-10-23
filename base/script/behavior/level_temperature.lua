@@ -172,7 +172,7 @@ return function(parentClass)
 
 		self.diffuseTemperatureShader = GLProgram{
 			vertexCode = [[
-#version 320 es
+#version 410
 precision highp float;
 
 layout(location=0) in vec2 vertex;
@@ -192,7 +192,7 @@ void main() {
 }
 ]],
 			fragmentCode = [[
-#version 320 es
+#version 410
 precision highp float;
 
 in vec2 pos;	//world coordinates
@@ -235,7 +235,7 @@ void main() {
 
 		self.displayTemperatureShader = GLProgram{
 			vertexCode = [[
-#version 320 es
+#version 410
 precision highp float;
 
 layout(location=0) in vec2 vertex;
@@ -255,7 +255,7 @@ void main() {
 }
 ]],
 			fragmentCode = [[
-#version 320 es
+#version 410
 precision highp float;
 
 in vec2 pos;	//world coordinates.   TODO why not just tc * levelSize ?
