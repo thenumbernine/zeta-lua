@@ -68,7 +68,7 @@ modio.levelcfg = {
 }
 --]]
 
---[[ zeta
+-- [[ zeta
 modio.search:insert(1, 'zeta')
 --modio.search:insert'mario'	-- don't add this, it messes up the block types.
 modio.levelcfg = {
@@ -98,7 +98,7 @@ modio.levelcfg = {
 }
 --]]
 
--- [[ neko
+--[[ neko
 modio.search:insert(1, 'neko')
 modio.levelcfg = {
 	music = 'music/overworld.wav',
