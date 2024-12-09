@@ -7,7 +7,9 @@ local behaviors = require 'base.script.behaviors'
 local dirs = require 'base.script.dirs'
 local Object = require 'base.script.obj.object'
 
-local Neko = behaviors(require 'base.script.obj.player'
+local Neko = behaviors(
+	require 'base.script.obj.player',
+	require 'neko.script.behavior.takesdamage'
 	--,require 'neko.script.behavior.kickable'
 )
 
@@ -649,10 +651,9 @@ function Neko:getShootPosVel(shot)
 	return pos, vel
 end
 
-
 function Neko:hit()
-	if self.invincibleEndTime >= game.time then return end
-	self:die()
+	-- TODO this for all takeDamage and not just player?
+	self.invincibleEndTime = game.time + 1
 end
 
 function Neko:die()
@@ -669,9 +670,12 @@ function Neko:die()
 	self.dead = true
 	self.respawnTime = game.time + 1
 	self.vel[1], self.vel[2] = 0, 20
+	
+--	Neko.super.die(self)
 end
 
 function Neko:respawn()
+	self.health = self.maxHealth
 	self.respawnTime = nil
 	self.solidFlags = nil
 	self.touchFlags = nil

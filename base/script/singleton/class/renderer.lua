@@ -20,7 +20,7 @@ do
 		0, 1, 0,
 		1, 1, 0
 	)
-	local tristrip = ffi.new('unsigned short[4]',
+	local tristrip = ffi.new('uint16_t[4]',
 		0,1,2,3
 	)
 

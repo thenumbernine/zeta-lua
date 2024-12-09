@@ -1616,7 +1616,16 @@ function Editor:updateGUI()
 				end
 			end
 		end
-
+		if ig.igButton'Enumerate All Rooms' then
+			local roomIndex = 1
+			for ry = 1,level.sizeInMapTiles[2] do
+				for rx = 1,level.sizeInMapTiles[1] do
+					level.roomMap[rx-1 + level.sizeInMapTiles[1]*(ry-1)] = roomIndex
+					roomIndex = roomIndex + 1
+				end
+			end	
+		end
+ 
 		self.selectedRoom = level.roomProps[self.selectedRoomIndex]
 		if not self.selectedRoom then
 			self.selectedRoom = {}

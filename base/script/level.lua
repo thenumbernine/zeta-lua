@@ -211,7 +211,7 @@ function Level:init(args)
 	local tileImage
 	if not tileFile then
 		print("couldn't find file at "..mappath.."/tile.png ... loading default instead")
-		tileImage = Image(32, 32, 4, 'unsigned char')
+		tileImage = Image(32, 32, 4, 'uint8_t')
 		ffi.fill(tileImage.buffer, tileImage.channels * tileImage.width * tileImage.height * ffi.sizeof(tileImage.format))
 	else
 		tileImage = Image(tileFile)
@@ -238,7 +238,7 @@ print('self.mapTileSize', self.mapTileSize)
 		math.ceil(self.size[1]/self.mapTileSize[1]),
 		math.ceil(self.size[2]/self.mapTileSize[2]))
 
-	self.tileMap = ffi.new('unsigned char[?]', self.size[1] * self.size[2])
+	self.tileMap = ffi.new('uint8_t[?]', self.size[1] * self.size[2])
 	for j=0,self.size[2]-1 do
 		for i=0,self.size[1]-1 do
 			self.tileMap[i+self.size[1]*j] = rgbAt(tileImage,i,self.size[2]-j-1)
@@ -248,9 +248,9 @@ print('self.mapTileSize', self.mapTileSize)
 	local fgTileFile = args.fgTileFile or (mappath and (mappath..'/tile-fg.png'))
 	if fgTileFile then fgTileFile = modio:find(fgTileFile) end
 	local fgTileImage = fgTileFile and Image(fgTileFile)
-	self.fgTileMap = ffi.new('unsigned short[?]', self.size[1] * self.size[2])
+	self.fgTileMap = ffi.new('uint16_t[?]', self.size[1] * self.size[2])
 	if not fgTileImage then
-		ffi.fill(self.fgTileMap, ffi.sizeof('unsigned short') * self.size[1] * self.size[2])
+		ffi.fill(self.fgTileMap, ffi.sizeof('uint16_t') * self.size[1] * self.size[2])
 	else
 		if vec2(fgTileImage:size()) ~= self.size then
 			print('expected tile-fg.png size '..vec2(fgTileImage:size())..' to match tile.png size '..self.size)
@@ -265,9 +265,9 @@ print('self.mapTileSize', self.mapTileSize)
 	local bgTileFile = args.bgTileFile or (mappath and (mappath..'/tile-bg.png'))
 	if bgTileFile then bgTileFile = modio:find(bgTileFile) end
 	local bgTileImage = bgTileFile and Image(bgTileFile)
-	self.bgTileMap = ffi.new('unsigned short[?]', self.size[1] * self.size[2])
+	self.bgTileMap = ffi.new('uint16_t[?]', self.size[1] * self.size[2])
 	if not bgTileImage then
-		ffi.fill(self.bgTileMap, ffi.sizeof('unsigned short') * self.size[1] * self.size[2])
+		ffi.fill(self.bgTileMap, ffi.sizeof'uint16_t' * self.size[1] * self.size[2])
 	else
 		assert(vec2(bgTileImage:size()) == self.size)
 		for j=0,self.size[2]-1 do
@@ -281,14 +281,17 @@ print('self.mapTileSize', self.mapTileSize)
 	local roomFile = args.roomFile or (mappath and (mappath..'/room.png'))
 	if roomFile then roomFile = modio:find(roomFile) end
 	local roomImage = roomFile and Image(roomFile)
-	self.roomMap = ffi.new('unsigned short[?]', self.sizeInMapTiles[1] * self.sizeInMapTiles[2])
-	if not roomImage then
-		ffi.fill(self.roomMap, ffi.sizeof('unsigned short') * self.sizeInMapTiles[1] * self.sizeInMapTiles[2])
-	else
-		assert(vec2(roomImage:size()) == self.sizeInMapTiles)
-		for j=0,self.sizeInMapTiles[2]-1 do
-			for i=0,self.sizeInMapTiles[1]-1 do
-				self.roomMap[i+self.sizeInMapTiles[1]*j] = rgbAt(roomImage,i,self.sizeInMapTiles[2]-j-1)
+	local roomMapVolume = self.sizeInMapTiles[1] * self.sizeInMapTiles[2]
+	self.roomMap = ffi.new('uint16_t[?]', roomMapVolume)
+	ffi.fill(self.roomMap, ffi.sizeof'uint16_t' * roomMapVolume)
+	if roomImage then
+		local roomImageSize = vec2(roomImage:size())
+		if roomImageSize ~= self.sizeInMapTiles then
+			print("WARNING: roomImage:size "..roomImageSize.." does not match level.sizeInMapTiles "..self.sizeInMapTiles)
+		end
+		for j=0,math.min(self.sizeInMapTiles[2], roomImageSize[2])-1 do
+			for i=0,math.min(self.sizeInMapTiles[1], roomImageSize[1])-1 do
+				self.roomMap[i+self.sizeInMapTiles[1]*j] = rgbAt(roomImage, i, roomImageSize[2]-j-1)
 			end
 		end
 	end
@@ -318,7 +321,7 @@ print('self.mapTileSize', self.mapTileSize)
 		end
 		if not self.bgtexpackFilename then
 			-- fallback - no backgrounds
-			self.bgtexpackImage = Image(1024,1024,4,'unsigned char')
+			self.bgtexpackImage = Image(1024,1024,4,'uint8_t')
 			print("can't find bgtexpack.png anywhere -- using an empty image")
 		else
 			self.bgtexpackImage = Image(self.bgtexpackFilename)
@@ -340,7 +343,7 @@ print('self.mapTileSize', self.mapTileSize)
 	local backgroundImage = backgroundFile and Image(backgroundFile)
 	-- convert index enumeration into background map
 	-- one-based, so zero is empty
-	self.backgroundMap = ffi.new('unsigned char[?]', self.size[1] * self.size[2])
+	self.backgroundMap = ffi.new('uint8_t[?]', self.size[1] * self.size[2])
 	if not backgroundImage then
 		ffi.fill(self.backgroundMap, self.size[1] * self.size[2])
 	else
@@ -537,8 +540,8 @@ uniform vec2 viewMin;	//used by bg for scrolling effect
 
 uniform float tileSize;
 
-uniform sampler2D backgroundTex;		// unsigned char, reference into backgroundStructTex
-uniform sampler2D bgTileTex;			// unsigned short <=> luminance_alpha, reference into texpackTex
+uniform sampler2D backgroundTex;		// uint8_t, reference into backgroundStructTex
+uniform sampler2D bgTileTex;			// uint16_t <=> luminance_alpha, reference into texpackTex
 
 uniform sampler2D texpackTex;			//bgTileTex uses this
 uniform vec2 texpackTexSize;
@@ -766,7 +769,7 @@ void main() {
 			local spriteSheetWidth = math.ceil(math.sqrt(totalPixels))
 
 			require 'base.script.rectpack'(rects, spriteSheetWidth, spriteSheetWidth, 512)
-			local spriteSheetImage = Image(spriteSheetWidth, spriteSheetWidth, 4, 'unsigned char')
+			local spriteSheetImage = Image(spriteSheetWidth, spriteSheetWidth, 4, 'uint8_t')
 			for _,rect in ipairs(rects) do
 				--[[ color randomly
 				local vec3d = require 'vec-ffi.vec3d'
@@ -785,7 +788,7 @@ void main() {
 				--]]
 				-- [[ color with the sprites themselves
 				local srcTex = rect.tex
-				local srcData = ffi.new('unsigned char[?]', srcTex.width * srcTex.height * spriteSheetImage.channels)
+				local srcData = ffi.new('uint8_t[?]', srcTex.width * srcTex.height * spriteSheetImage.channels)
 				local format = assert(({
 					[3] = gl.GL_RGB,
 					[4] = gl.GL_RGBA,

@@ -25,6 +25,12 @@ function Berry:update(...)
 		-- get in muh backpack
 		heldby:setHeld(nil)
 		heldby.items:insert(self)
+
+		-- hold after picking?
+		-- pro?  eh realism?  looks better?
+		-- con?  you don't immediately grab the next available branch/fruit after picking
+		--heldby.currentItem = self
+		
 		self.solidFlags = 0
 		self.blockFlags = 0
 		self.touchFlags = 0
@@ -82,7 +88,7 @@ function BerryShot:init(...)
 end
 
 BerryShot.solidFlags = BerryShot.SOLID_SHOT
-BerryShot.touchFlags = bit.bor(BerryShot.SOLID_WORLD, BerryShot.SOLID_YES, BerryShot.SOLID_NO)
+BerryShot.touchFlags = bit.bor(BerryShot.SOLID_WORLD, BerryShot.SOLID_YES)	-- don't SOLID_NO = don't block by items
 BerryShot.blockFlags = bit.bor(BerryShot.SOLID_WORLD, BerryShot.SOLID_YES)
 
 function BerryShot:touchTile(tileType, side, plane, x, y)
@@ -92,6 +98,11 @@ end
 function BerryShot:touch(other, side)
 	if self.remove then return true end
 	if other == self.shooter then return true end	-- don't hit shooter
+	
+	-- TODO don't rely on this for avoiding shot/berry collision ...
+	-- use the collision flags intead ...
+	if other and other:isa(Berry) then return true end	
+	
 	if other.takeDamage then
 		other:takeDamage(self.damage, self.shooter, self, side)
 	end

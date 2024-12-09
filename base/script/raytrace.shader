@@ -29,10 +29,10 @@ uniform vec2 levelSize;			//level size, in tiles
 uniform vec2 eyePos;			//position of player's eyes, in world coordinates
 
 // per-tile in the map:
-uniform sampler2D backgroundTex;			// unsigned char, reference into backgroundStructTex
-uniform sampler2D fgTileTex;				// unsigned char <=> luminance_alpha, reference into texpackTex
-uniform sampler2D bgTileTex;				// unsigned short <=> luminance_alpha, reference into texpackTex
-uniform sampler2D spriteListOffsetTileTex;	// unsigned short <=> luminance_alpha, reference to spriteListTex
+uniform sampler2D backgroundTex;			// uint8_t, reference into backgroundStructTex
+uniform sampler2D fgTileTex;				// uint8_t <=> luminance_alpha, reference into texpackTex
+uniform sampler2D bgTileTex;				// uint16_t <=> luminance_alpha, reference into texpackTex
+uniform sampler2D spriteListOffsetTileTex;	// uint16_t <=> luminance_alpha, reference to spriteListTex
 
 uniform sampler2D texpackTex;				// used by fgTileTex and bgTileTex 
 uniform vec2 texpackTexSizeInTiles;
@@ -43,7 +43,7 @@ uniform float backgroundStructTexSize;		// background_t <=> float4, stores all t
 uniform sampler2D bgtexpackTex;				// used by backgroundStructTex
 uniform vec2 bgtexpackTexSize;				// TODO bake this into the backgroundStruct data?
 
-uniform sampler2D spriteListTex;			// unsigned short <=> luminance_alpha, reference to visSpriteTex
+uniform sampler2D spriteListTex;			// uint16_t <=> luminance_alpha, reference to visSpriteTex
 uniform float spriteListMax;
 
 uniform sampler2D visSpriteTex;				// visSprite_t <=> float4, stores all the sprite info

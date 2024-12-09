@@ -1,0 +1,62 @@
+{
+	{pos={42.5, 75},spawn="neko.script.obj.berry_red"},
+	{pos={44.5, 70},spawn="neko.script.obj.berry_red"},
+	{pos={47.5, 71},spawn="neko.script.obj.berry_red"},
+	{pos={49.5, 72},spawn="neko.script.obj.berry_red"},
+	{pos={56.5, 73},spawn="neko.script.obj.berry_red"},
+	{pos={54.5, 75},spawn="neko.script.obj.berry_red"},
+	{pos={53.5, 77},spawn="neko.script.obj.berry_red"},
+	{pos={39.5, 75},spawn="neko.script.obj.berry_pink"},
+	{pos={51.5, 69},spawn="neko.script.obj.berry_pink"},
+	{pos={51.5, 68},spawn="neko.script.obj.berry_pink"},
+	{pos={56.5, 69},spawn="neko.script.obj.berry_pink"},
+	{pos={59.5, 76},spawn="neko.script.obj.berry_pink"},
+	{pos={45.5, 80},spawn="neko.script.obj.berry_pink"},
+	{pos={46.5, 77},spawn="neko.script.obj.berry_pink"},
+	{pos={43.5, 77},spawn="neko.script.obj.berry_green"},
+	{pos={50.5, 76},spawn="neko.script.obj.berry_green"},
+	{pos={57.5, 74},spawn="neko.script.obj.berry_green"},
+	{pos={59.5, 69},spawn="neko.script.obj.berry_green"},
+	{pos={48.5, 68},spawn="neko.script.obj.berry_green"},
+	{pos={60.5, 79},spawn="neko.script.obj.berry_green"},
+	{pos={57.5, 80},spawn="neko.script.obj.berry_green"},
+	{pos={54.5, 81},spawn="neko.script.obj.berry_green"},
+	{pos={51.5, 81},spawn="neko.script.obj.berry_green"},
+	{pos={48.5, 81},spawn="neko.script.obj.berry_green"},
+	{pos={41.5, 80},spawn="neko.script.obj.berry_green"},
+	{pos={50.5, 78},spawn="neko.script.obj.berry_green"},
+	{pos={48.5, 74},spawn="neko.script.obj.berry_green"},
+	{pos={50.5, 84},spawn="neko.script.obj.berry_green"},
+	{pos={48.5, 85},spawn="neko.script.obj.berry_green"},
+	{pos={53.5, 86},spawn="neko.script.obj.berry_green"},
+	{drawMirror=true,pos={60.5, 66},spawn="neko.script.obj.npc",text="This way to the well."},
+	{drawMirror=true,pos={92.5, 37},spawn="neko.script.obj.npc",text=[[
+Hey there.
+I'm Timmy.
+I am retarded.
+I fell in this well.
+Duuuurrrrrr....
+]]},
+	{pos={46.5, 66},spawn="neko.script.obj.npc"},
+	{pos={39.5, 84},spawn="neko.script.obj.npc"},
+	{pos={62.5, 84},spawn="neko.script.obj.npc",text="This way leads to TOWN B"},
+	{pos={45.5, 85},spawn="neko.script.obj.npc"},
+	{pos={34.5, 66},spawn="base.script.obj.start"},
+	{pos={43.5, 72},spawn="neko.script.obj.npc",text=[[
+I'm a map.
+TODO pick this up.
+And it says "go to town B".]]},
+	{pos={75.5, 86},spawn="neko.script.obj.rabbit"},
+	{pos={87.5, 86},spawn="neko.script.obj.rabbit"},
+	{pos={91.5, 66},spawn="neko.script.obj.mushroom"},
+	{pos={71.5, 66},spawn="neko.script.obj.mushroom"},
+	{pos={67.5, 68},spawn="neko.script.obj.berry_red"},
+	{pos={87.5, 69},spawn="neko.script.obj.berry_red"},
+	{pos={79.5, 76},spawn="neko.script.obj.berry_red"},
+	{pos={82.5, 79},spawn="neko.script.obj.berry_red"},
+	{pos={79.5, 81},spawn="neko.script.obj.berry_red"},
+	{pos={79.5, 84},spawn="neko.script.obj.berry_red"},
+	{pos={82.5, 84},spawn="neko.script.obj.berry_red"},
+	{pos={74.5, 88},spawn="neko.script.obj.berry_red"},
+	{pos={88.5, 89},spawn="neko.script.obj.berry_red"},
+}

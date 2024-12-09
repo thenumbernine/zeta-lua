@@ -5,12 +5,13 @@ local function walkEnemyBehavior(parentClass)
 
 	local WalkEnemyTemplate = behaviors(
 		parentClass
-		, require 'neko.script.behavior.takesdamage'
+		, require 'neko.script.behavior.hurtstotouch'
 	)
 
 	WalkEnemyTemplate.dir = -1
 	WalkEnemyTemplate.drawMirror = true	-- by default, to match initial dir
 	WalkEnemyTemplate.speed = 2
+	WalkEnemyTemplate.touchDamage = 1
 
 	function WalkEnemyTemplate:init(args)
 		args = table(args)
@@ -79,6 +80,7 @@ local function walkEnemyBehavior(parentClass)
 		end
 	end
 
+	-- TODO :touch still gets called and does damage to player regardless...
 	function WalkEnemyTemplate:playerBounce(other) 
 		-- mario-style: insta-kill
 		--self:die(other) 
