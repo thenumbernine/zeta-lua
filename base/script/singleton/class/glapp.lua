@@ -7,7 +7,7 @@ local tolua = require 'ext.tolua'
 local fromlua = require 'ext.fromlua'
 
 local ImGuiApp = require 'imguiapp'
-local sdl = require 'ffi.req' 'sdl'
+local sdl = require 'sdl'
 
 local AudioSource = require 'audio.source'
 local AudioBuffer = require 'audio.buffer'
