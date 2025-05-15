@@ -6,7 +6,7 @@ local table = require 'ext.table'
 local tolua = require 'ext.tolua'
 local fromlua = require 'ext.fromlua'
 
-local ImGuiApp = require 'imguiapp'
+local ImGuiApp = require 'imgui.app'
 local sdl = require 'sdl'
 
 local AudioSource = require 'audio.source'
