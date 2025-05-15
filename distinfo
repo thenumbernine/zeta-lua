@@ -3,11 +3,6 @@
 -- TODO make sure name has no spaces/symbols, or is properly escaped for all these cp commands: 
 name = 'Zeta'	-- or whatever you want to call the .app
 
--- uncomment one
-luaDistVer = 'luajit'
---local luaDistVer = 'lua5.3'
-
-
 -- args to pass the lua engine, including the filename to run
 luaArgs = {
 	'init.lua',	-- default
@@ -32,8 +27,10 @@ files = {
 		'ext',
 		'ffi',
 		'template',
+		'sdl',
+		'gl',
 		'glapp',
-		'imguiapp',
+		'imgui',
 		'vec',
 		'parser',
 		'image',
@@ -43,24 +40,21 @@ files = {
 		'threadmanager',
 		'simplexnoise',
 		'gui',
-	}:append(
-		ffi.os == 'Android' and {'gles2'} or {'gl'}
-	),
+	},
 }
 
 -- binary libs needed for luajit
 luajitLibs = {
-	win = {
-		'luajit',
-		'sdl',
+	Windows = {
+		'SDL2',
 		'png',
 		'z',	-- needed by png
-		'regal',	-- I thought I commented out my OpenGL loading of regal ...
+		'cimgui_sdl',
 	},
-	osx = {
-		'sdl',
-		'libpng',
-		'libalut',
-		'libimgui',
+	OSX = {
+		'SDL2',
+		'png',
+		'alut',
+		'cimgui_sdl',
 	},
 }
