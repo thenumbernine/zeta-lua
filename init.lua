@@ -1,12 +1,5 @@
 #!/usr/bin/env luajit
 
--- TODO this variable is half hardwired into lua-gl and luajit-ffi-bindings projects ... I don't like how it is set up
-require 'gl.setup'()				 	-- for desktop GL
---require 'gl.setup' 'OpenGLES1'	-- for GLES1		-- doesn't support shaders
---require 'gl.setup' 'OpenGLES2'	-- for GLES2		-- doesn't support float textures
---require 'gl.setup' 'OpenGLES3' 	-- for GLES3		-- works ... but I need to convert the font renderer to drawbuffers ... or convert the font render to just use cimgui
---require 'gl.setup'(require 'ffi'.os ~= 'Windows' and 'OpenGLES3' or nil)
-
 -- setup global env:
 local table = require 'ext.table'
 
@@ -14,7 +7,9 @@ numPlayers=numPlayers or 1
 
 --[[
 cmdline args for tweaking the environment / packages to get things working
+TODO use ext.cmdline?
 --]]
+local glname
 for i=1,select('#',...) do
 	local arg = select(i,...)
 
@@ -29,7 +24,18 @@ for i=1,select('#',...) do
 	if arg == 'editor=nil' then
 		package.loaded['base.script.singleton.editor'] = function() end
 	end
+
+	glname = arg:match'^gl=(.*)$'
 end
+
+
+require 'gl.setup'(glname)				-- nil for default to OpenGL:
+--require 'gl.setup' 'OpenGLES1'		-- for desktop OpenGL
+--require 'gl.setup' 'OpenGLES1'		-- for GLES1		-- doesn't support shaders
+--require 'gl.setup' 'OpenGLES2'		-- for GLES2		-- doesn't support float textures
+--require 'gl.setup' 'OpenGLES3' 	 	-- for GLES3		-- works ... except in stupid OSX ... and except in stupid Windows ... and I need to convert the font renderer to drawbuffers ... or convert the font render to just use cimgui
+--require 'gl.setup'(require 'ffi'.os ~= 'Windows' and 'OpenGLES3' or nil)
+
 
 -- setup mod order  (todo store dependencies and add them accordingly?)
 local modio = require 'base.script.singleton.modio'
