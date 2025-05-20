@@ -51,7 +51,6 @@ files = {
 	["base/script/tile/tile.lua"] = "zeta2d/base/script/tile/tile.lua",
 	["base/script/tile/water.lua"] = "zeta2d/base/script/tile/water.lua",
 	["base/script/tiletypes.lua"] = "zeta2d/base/script/tiletypes.lua",
-	["convert-mario-maps.lua"] = "zeta2d/convert-mario-maps.lua",
 	["distinfo"] = "zeta2d/distinfo",
 	["docs/images/pic-editor-1.png"] = "zeta2d/docs/images/pic-editor-1.png",
 	["docs/images/pic-editor-2.png"] = "zeta2d/docs/images/pic-editor-2.png",
