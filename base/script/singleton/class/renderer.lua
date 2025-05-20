@@ -47,12 +47,10 @@ do
 
 		-- default shader
 		self.shader = GLProgram{
+			version = 'latest',
+			precision = 'best',
 			vertexCode = [[
-#version 410
-precision highp float;
-
 layout(location=0) in vec2 vertex;
-
 out vec2 tc;
 
 uniform mat4 mvProjMat;
@@ -74,9 +72,6 @@ void main() {
 }
 ]],
 			fragmentCode = [[
-#version 410
-precision highp float;
-
 in vec2 tc;
 
 out vec4 fragColor;
