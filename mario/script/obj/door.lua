@@ -38,7 +38,7 @@ end
 
 function Door:playerLook(player)
 	if #self.dests == 0 then return end
-	local destx, desty = unpack(self.dests[self.destIndex])
+	local destx, desty = table.unpack(self.dests[self.destIndex])
 	self.destIndex = self.destIndex % #self.dests + 1
 	local level = game.level
 	destx, desty = destx + level.pos[1], desty + level.pos[2]

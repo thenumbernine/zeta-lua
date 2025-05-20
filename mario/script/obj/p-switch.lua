@@ -138,13 +138,13 @@ function PSwitch:floodFill(cx,cy)
 		local nextTiles = table()
 		for _,thisTile in ipairs(thisTiles) do
 		
-			local found = flipTile(unpack(thisTile))
+			local found = flipTile(table.unpack(thisTile))
 			
 			if found then
 				for _,dir in pairs(dirs) do
 					local nextTile = thisTile + dir
 					if not allTiles[tostring(nextTile)]
-					and findTile(unpack(nextTile)) then
+					and findTile(table.unpack(nextTile)) then
 					
 						allTiles[tostring(nextTile)] = true
 						nextTiles:insert(nextTile)
@@ -158,7 +158,7 @@ function PSwitch:floodFill(cx,cy)
 						local pushblock
 						if pushblockIndex <= #pushblocks then
 							pushblock = pushblocks[pushblockIndex]
-							pushblock:setPos(unpack(pushObjSrcPos))
+							pushblock:setPos(table.unpack(pushObjSrcPos))
 						else
 							pushblock = PushBlock{pos=pushObjSrcPos}
 							pushblocks:insert(pushblock)

@@ -1049,7 +1049,7 @@ function Hero:respawn()
 	self.blockFlags = nil
 	self.dead = nil
 	self.vel[1], self.vel[2] = 0,0
-	self:setPos(unpack(game:getStartPos()))
+	self:setPos(table.unpack(game:getStartPos()))
 end
 
 function Hero:hit(damage, attacker, inflicter, side)

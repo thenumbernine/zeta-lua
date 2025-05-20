@@ -1,5 +1,4 @@
 local table = require 'ext.table'
-local bit = require 'bit'
 local box2 = require 'vec.box2'
 local game = require 'base.script.singleton.game'
 local gui = require 'base.script.singleton.gui'
@@ -682,7 +681,7 @@ function Neko:respawn()
 	self.blockFlags = nil
 	self.dead = nil
 	self.vel[1], self.vel[2] = 0,0
-	self:setPos(unpack(game:getStartPos()))
+	self:setPos(table.unpack(game:getStartPos()))
 end
 
 function Neko:popupMessage(text)

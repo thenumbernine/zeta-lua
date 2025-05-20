@@ -1,4 +1,4 @@
-local bit = require 'bit'
+local table = require 'ext.table'
 local box2 = require 'vec.box2'
 local game = require 'base.script.singleton.game'
 local CoinTile = require 'mario.script.tile.coin'
@@ -24,7 +24,7 @@ function Mario:init(args)
 	Mario.super.init(self, args)
 	
 	if args.color then
-		self.color = {unpack(args.color)}
+		self.color = {table.unpack(args.color)}
 	end
 end
 
@@ -636,7 +636,7 @@ function Mario:respawn()
 	self.blockFlags = nil
 	self.dead = nil
 	self.vel[1], self.vel[2] = 0,0
-	self:setPos(unpack(game:getStartPos()))
+	self:setPos(table.unpack(game:getStartPos()))
 end
 
 function Mario:draw(R, viewBBox, holdOverride)

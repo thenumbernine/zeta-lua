@@ -1,4 +1,3 @@
-local bit = require 'bit'
 local vec2 = require 'vec.vec2'
 local box2 = require 'vec.box2'
 local MissileBlast = require 'zeta.script.obj.missileblast'

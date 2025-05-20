@@ -1,4 +1,5 @@
 local class = require 'ext.class'
+local table = require 'ext.table'
 local game = require 'base.script.singleton.game'
 local behaviors = require 'base.script.behaviors'
 
@@ -21,7 +22,7 @@ function BallnChain:init(args)
 	BallnChain.super.init(self, args)
 
 	self.angle = self.angle or math.random(360)
-	self.anchorPos = {unpack(self.pos)}
+	self.anchorPos = {table.unpack(self.pos)}
 end
 
 function BallnChain:update(dt)

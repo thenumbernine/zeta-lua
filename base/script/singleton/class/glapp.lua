@@ -1,5 +1,4 @@
 local ffi = require 'ffi'
-local bit = require 'bit'
 local path = require 'ext.path'
 local class = require 'ext.class'
 local table = require 'ext.table'

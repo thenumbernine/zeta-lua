@@ -1,4 +1,3 @@
-local bit = require 'bit'
 local class = require 'ext.class'
 local vec2 = require 'vec.vec2'
 local box2 = require 'vec.box2'

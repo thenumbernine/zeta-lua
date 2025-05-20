@@ -9,7 +9,6 @@ level is going to contain ...
 --]]
 
 local ffi = require 'ffi'
-local bit = require 'bit'
 local class = require 'ext.class'
 local table = require 'ext.table'
 local path = require 'ext.path'
@@ -910,7 +909,7 @@ function Level:processSpawnInfoArgs(spawnInfos)
 		end
 
 		assert(type(args.pos) == 'table')
-		args.pos = vec2(unpack(args.pos))
+		args.pos = vec2(table.unpack(args.pos))
 
 		local spawnInfo = SpawnInfo(args)
 		self.spawnInfos:insert(spawnInfo)	-- center on x and y

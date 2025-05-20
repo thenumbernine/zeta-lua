@@ -1,5 +1,4 @@
 local ffi = require 'ffi'
-local bit = require 'bit'
 local class = require 'ext.class'
 local table = require 'ext.table'
 local tolua = require 'ext.tolua'
@@ -1255,7 +1254,7 @@ function Object:draw(R, viewBBox, holdOverride)
 	if tex then tex:bind() end
 	local cr,cg,cb,ca
 	if self.color then
-		cr,cg,cb,ca = unpack(self.color)
+		cr,cg,cb,ca = table.unpack(self.color)
 	else
 		cr,cg,cb,ca = 1,1,1,1
 	end

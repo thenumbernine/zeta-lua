@@ -1,4 +1,3 @@
-local bit = require 'bit'
 local class = require 'ext.class'
 local box2 = require 'vec.box2'
 local Object = require 'base.script.obj.object'

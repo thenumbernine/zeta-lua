@@ -1,4 +1,5 @@
 local class = require 'ext.class'
+local table = require 'ext.table'
 local vec2 = require 'vec.vec2'
 local Object = require 'base.script.obj.object'
 local game = require 'base.script.singleton.game'
@@ -55,7 +56,7 @@ function SpritePieces:draw(R, viewBBox)
 		tex = animsys:getTex(self.sprite, self.seq or 'stand', self.seqStartTime)
 	end
 	if tex then tex:bind() end
-	local cr,cg,cb,ca = unpack(self.color)
+	local cr,cg,cb,ca = table.unpack(self.color)
 
 	local uBias, uScale
 	if self.drawMirror then
