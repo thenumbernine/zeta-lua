@@ -1,4 +1,5 @@
 local gl = require 'gl'
+--DEBUG(gl):local glreport = require 'gl.report'
 local class = require 'ext.class'
 local table = require 'ext.table'
 local assert = require 'ext.assert'
@@ -230,7 +231,9 @@ function Game:render(preDrawCallback, postDrawCallback)
 	local R = assert.index(self, 'R')
 	local windowWidth, windowHeight = glapp:size()
 	gl.glViewport(0, 0, windowWidth, windowHeight)
+--DEBUG(gl):assert(glreport('game:render'))
 	gl.glClear(gl.GL_COLOR_BUFFER_BIT)
+--DEBUG(gl):assert(glreport('game:render'))
 
 	local divY = math.ceil(math.sqrt(#self.clientConn.players))
 	local divX = math.ceil(#self.clientConn.players / divY)
@@ -245,12 +248,16 @@ function Game:render(preDrawCallback, postDrawCallback)
 		local aspectRatio = viewWidth / viewHeight
 
 		gl.glViewport(viewX * windowWidth / divX, viewY * windowHeight / divY, viewWidth, viewHeight)
+--DEBUG(gl):assert(glreport('game:render'))
 	
 		local viewSize = self.viewSize
 		R:ortho(-viewSize, viewSize, -viewSize / aspectRatio, viewSize / aspectRatio, -100, 100)
+--DEBUG(gl):assert(glreport('game:render'))
 		R:viewPos(player.viewPos[1], player.viewPos[2])
+--DEBUG(gl):assert(glreport('game:render'))
 		
 		if preDrawCallback then preDrawCallback(playerIndex) end
+--DEBUG(gl):assert(glreport('game:render'))
 		
 		-- assuming no scaling ...
 		player.viewBBox = box2(
@@ -261,8 +268,10 @@ function Game:render(preDrawCallback, postDrawCallback)
 		
 		
 		self.level:draw(R, player.viewBBox, player.pos)
+--DEBUG(gl):assert(glreport('game:render'))
 		if editor and editor.active then
 			editor:draw(R, player.viewBBox)
+--DEBUG(gl):assert(glreport('game:render'))
 		end
 		
 		-- clear draw flags
@@ -274,12 +283,15 @@ function Game:render(preDrawCallback, postDrawCallback)
 		end
 
 		if postDrawCallback then postDrawCallback(playerIndex) end
+--DEBUG(gl):assert(glreport('game:render'))
 	
 		-- draw player hud
 		if player.drawHUD then
 			player:drawHUD(R, player.viewBBox)
+--DEBUG(gl):assert(glreport('game:render'))
 		end
 	end
+--DEBUG(gl):assert(glreport('game:render'))
 end
 
 function Game:setSavePoint(savePoint)

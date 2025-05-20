@@ -1,3 +1,4 @@
+local GLProgram = require 'gl.program'
 local Game = require 'base.script.singleton.class.game'
 local teamColors = require 'base.script.teamcolors'
 local setTimeout = require 'base.script.settimeout'
@@ -49,7 +50,7 @@ end
 function MarioGame:glInit(R)
 	MarioGame.super.glInit(self, R)
 
-	local changeColorShader = R:createShader{
+	local changeColorShader = GLProgram{
 		version = 'latest',
 		precision = 'best'
 		vertexCode = [[

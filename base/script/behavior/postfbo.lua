@@ -3,6 +3,7 @@ local ffi = require 'ffi'
 local vec4i = require 'vec-ffi.vec4i'
 local vec2i = require 'vec-ffi.vec2i'
 local gl = require 'gl'
+local GLProgram = require 'gl.program'
 local FBO = require 'gl.fbo'
 local GLTex2D = require 'gl.tex2d'
 --DEBUG(gl):local glreport = require 'gl.report'
@@ -84,11 +85,10 @@ return function(parentClass)
 					:unbind()
 --DEBUG(gl):assert(glreport'here')
 			
-				renderShader = R:createShader{
+				renderShader = GLProgram{
+					version = 'latest',
+					precision = 'best',
 					vertexCode = [[
-#version 410
-precision highp float;
-
 layout(location=0) in vec2 vertex;
 // location=1 <=> texcoord
 layout(location=2) in vec4 colorin;
@@ -107,9 +107,6 @@ void main() {
 }
 ]],
 					fragmentCode = [[
-#version 410
-precision highp float;
-
 in vec2 tc;	// in pixels
 in vec4 color;
 

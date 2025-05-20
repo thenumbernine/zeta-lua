@@ -1,63 +1,49 @@
+local GLProgram = require 'gl.program'
+
 local function createChangeColorShader(R)
-	local changeColorShader
-	if R.glname == 'OpenGLES2' then	-- gles2
-		changeColorShader = R:createShader{
-			vertexCode = [[
-uniform mat4 vtxmat;
-uniform mat4 texmat;
-attribute vec4 pos;
-varying vec2 tc;
+	local changeColorShader = GLProgram{
+		version = 'latest',
+		precision = 'best'
+		vertexCode = [[
+in vec4 vertex;
+out vec2 tc;
+
+uniform mat4 mvProjMat;
+
+uniform vec4 defaultRect;
+uniform vec4 defaultTexRect;	//xy = texcoord offset, zw = texcoord size
+uniform vec4 defaultCenterAndRot;	//zw = cos(angle), sin(angle)
+
 void main() {
-	tc = (texmat * pos).xy;
-	gl_Position = vtxmat * pos;
+	tc = defaultTexRect.xy + defaultTexRect.zw * vertex;
+
+	vec2 rxy = vertex * defaultRect.zw - defaultCenterAndRot.xy;
+	rxy = vec2(
+		rxy.x * defaultCenterAndRot.z - rxy.y * defaultCenterAndRot.w,
+		rxy.y * defaultCenterAndRot.z + rxy.x * defaultCenterAndRot.w
+	);
+	rxy += defaultCenterAndRot.xy + defaultRect.xy;
+	gl_Position = mvProjMat * vec4(rxy, 0., 1.);
 }
 ]],
-			fragmentCode=[[
-precision mediump float;
+		fragmentCode=[[
+in vec2 tc;
+out vec4 fragColor;
 uniform vec4 color;
 uniform sampler2D tex;
-varying vec2 tc;
 uniform vec3 colorFrom;
 uniform float colorRange;
 void main() {
 	//TODO do distance in HSV ...
-	gl_FragColor = texture2D(tex, tc);
-	float colorDist = length(gl_FragColor.rgb - colorFrom);
+	fragColor = texture2D(tex, tc);
+	float colorDist = length(fragColor.rgb - colorFrom);
 	float lerp = clamp(0., 1. - colorDist / colorRange, 1.);
-	gl_FragColor = mix(gl_FragColor, color, lerp);
+	fragColor = mix(fragColor, color, lerp);
 }
 ]],
-			attributes={'pos'},
-			uniforms={'colorFrom','colorRange','vtxmat','texmat','color','tex'},
-		}	
-	else	-- default opengl
-		changeColorShader = R:createShader{
-			vertexCode = [[
-varying vec4 color;
-varying vec2 tc;
-void main() {
-	tc = gl_MultiTexCoord0.xy;
-	color = gl_Color;
-	gl_Position = ftransform();
-}
-]],
-			fragmentCode=[[
-varying vec2 tc;
-varying vec4 color;
-uniform sampler2D tex;
-uniform vec3 colorFrom;
-uniform float colorRange;
-void main() {
-	//TODO do distance in HSV ...
-	gl_FragColor = texture2D(tex, tc);
-	float colorDist = length(gl_FragColor.rgb - colorFrom);
-	float lerp = clamp(0., 1. - colorDist / colorRange, 1.);
-	gl_FragColor = mix(gl_FragColor, color, lerp);
-}
-]],
-			uniforms = {'tex', 'colorFrom', 'colorRange'},
-		}
-	end
+		uniforms={tex=0},
+	}
 	return changeColorShader
 end
+
 return createChangeColorShader

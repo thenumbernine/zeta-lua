@@ -1,3 +1,4 @@
+--DEBUG(gl):local glreport = require 'gl.report'
 local ffi = require 'ffi'
 local class = require 'ext.class'
 local vec2 = require 'vec.vec2'
@@ -10,27 +11,16 @@ local Renderer = class()
 Renderer.requireClasses = {}
 
 do
+	local gl = require 'gl'
+	local GLTex2D = require 'gl.tex2d'
+	local GLProgram = require 'gl.program'
+	local GLSceneObject = require 'gl.sceneobject'
+
 	local GLRenderer = Renderer:subclass()
 	GLRenderer.glname = 'gl'
 	Renderer.requireClasses.gl = GLRenderer
 
-	local vertexes = ffi.new('float[12]',
-		0, 0, 0,
-		1, 0, 0,
-		0, 1, 0,
-		1, 1, 0
-	)
-	local tristrip = ffi.new('uint16_t[4]',
-		0,1,2,3
-	)
-
-	local GLTex2D
-	local GLProgram
-	local gl
 	function GLRenderer:init(gl_)
-		gl = require 'gl'
-		GLTex2D = require 'gl.tex2d'
-		GLProgram = require 'gl.program'
 
 		self.projMat = matrix{4,4}:zeros()
 		self.mvMat = matrix{4,4}:zeros()
@@ -88,6 +78,23 @@ void main() {
 				tex = 0,
 			},
 		}:useNone()
+
+		self.drawObj = GLSceneObject{
+			program = self.shader,
+			vertexes = {
+				usage = gl.GL_STATIC_DRAW,
+				dim = 2,
+				data = {
+					0, 0,
+					1, 0,
+					0, 1,
+					1, 1,
+				},
+			},
+			geometry = {
+				mode = gl.GL_TRIANGLE_STRIP,
+			},
+		}
 	end
 	function GLRenderer:ortho(...)
 		self.projMat:setOrtho(...)
@@ -96,9 +103,6 @@ void main() {
 	function GLRenderer:viewPos(x,y)
 		self.mvMat:setTranslate(-x,-y,0)
 		self.mvProjMat:mul4x4(self.projMat, self.mvMat)
-	end
-	function GLRenderer:createShader(args)
-		return GLProgram(args):useNone()
 	end
 	local f4 = ffi.new('float[4]')
 	function GLRenderer:quad(
@@ -117,11 +121,14 @@ void main() {
 
 		shader = shader or self.shader
 		shader:use()
+--DEBUG(gl):assert(glreport('game:render'))
 		if shader.uniforms.mvProjMat then
 			gl.glUniformMatrix4fv(shader.uniforms.mvProjMat.loc, 1, gl.GL_FALSE, self.mvProjMat.ptr)
+--DEBUG(gl):assert(glreport('game:render'))
 		end
 		if uniforms then
 			shader:setUniforms(uniforms)
+--DEBUG(gl):assert(glreport('game:render'))
 		end
 
 		local costh, sinth
@@ -135,23 +142,28 @@ void main() {
 		-- and set default shader uniforms ...
 		if shader.uniforms.defaultColor and r and g and b and a then
 			gl.glUniform4f(shader.uniforms.defaultColor.loc, r, g, b, a)
+--DEBUG(gl):assert(glreport('game:render'))
 		end
 		if shader.uniforms.defaultRect then
 			gl.glUniform4f(shader.uniforms.defaultRect.loc, x, y, w, h)
+--DEBUG(gl):assert(glreport('game:render'))
 		end
 		if shader.uniforms.defaultTexRect then
 			gl.glUniform4f(shader.uniforms.defaultTexRect.loc, tx, ty, tw, th)
+--DEBUG(gl):assert(glreport('game:render'))
 		end
 		if shader.uniforms.defaultCenterAndRot then
 			gl.glUniform4f(shader.uniforms.defaultCenterAndRot.loc, rcx, rcy, costh, sinth)
+--DEBUG(gl):assert(glreport('game:render'))
 		end
 
-		gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, false, 0, vertexes)
-		gl.glEnableVertexAttribArray(0)
-		gl.glDrawElements(gl.GL_TRIANGLE_STRIP, 4, gl.GL_UNSIGNED_SHORT, tristrip)
-        gl.glDisableVertexAttribArray(0)
+		self.drawObj:draw{
+			program = shader,
+		}
+--DEBUG(gl):assert(glreport('game:render'))
 
-		shader:useNone()
+		--shader:useNone()
+--DEBUG(gl):assert(glreport('game:render'))
 	end
 end
 

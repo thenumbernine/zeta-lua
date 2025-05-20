@@ -171,10 +171,9 @@ return function(parentClass)
 		self.lastHeatUpdateTime = game.time
 
 		self.diffuseTemperatureShader = GLProgram{
+			version = 'latest',
+			precision = 'best',
 			vertexCode = [[
-#version 410
-precision highp float;
-
 layout(location=0) in vec2 vertex;
 
 out vec2 pos;
@@ -192,9 +191,6 @@ void main() {
 }
 ]],
 			fragmentCode = [[
-#version 410
-precision highp float;
-
 in vec2 pos;	//world coordinates
 in vec2 tc;	//in [0,1]^2
 
@@ -234,10 +230,9 @@ void main() {
 		}:useNone()
 
 		self.displayTemperatureShader = GLProgram{
+			version = 'latest',
+			precision = 'best',
 			vertexCode = [[
-#version 410
-precision highp float;
-
 layout(location=0) in vec2 vertex;
 
 out vec2 pos;
@@ -255,9 +250,6 @@ void main() {
 }
 ]],
 			fragmentCode = [[
-#version 410
-precision highp float;
-
 in vec2 pos;	//world coordinates.   TODO why not just tc * levelSize ?
 in vec2 tc;	//in [0,1]^2
 
