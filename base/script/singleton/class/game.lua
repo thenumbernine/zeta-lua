@@ -1,5 +1,7 @@
+local gl = require 'gl'
 local class = require 'ext.class'
 local table = require 'ext.table'
+local assert = require 'ext.assert'
 local coroutine = require 'ext.coroutine'
 local box2 = require 'vec.box2'
 local audio = require 'base.script.singleton.audio'
@@ -25,7 +27,6 @@ end
 -- this is run upon gl init
 function Game:glInit(R)
 	self.R = R
-	local gl = R.gl
 	gl.glClearColor(0,0,0,0)
 	gl.glEnable(gl.GL_BLEND)
 	gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
@@ -226,8 +227,7 @@ end
 function Game:render(preDrawCallback, postDrawCallback)
 	local glapp = require 'base.script.singleton.glapp'
 	local editor = require 'base.script.singleton.editor'()
-	local R = self.R
-	local gl = R.gl
+	local R = assert.index(self, 'R')
 	local windowWidth, windowHeight = glapp:size()
 	gl.glViewport(0, 0, windowWidth, windowHeight)
 	gl.glClear(gl.GL_COLOR_BUFFER_BIT)

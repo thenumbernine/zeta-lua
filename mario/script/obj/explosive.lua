@@ -1,3 +1,4 @@
+local gl = require 'gl'
 local class = require 'ext.class'
 local Object = require 'base.script.obj.object'
 local SpinParticle = require 'mario.script.obj.spinparticle'
@@ -37,7 +38,6 @@ function Explosive:update(dt)
 			tick.draw = function(self, R)
 				gui.font:drawUnpacked(self.pos[1], self.pos[2]+2, 1, -1, tostring(oldTick))
 				-- gui hasn't been R-integrated yet ...
-				local gl = R.gl
 				gl.glEnable(gl.GL_TEXTURE_2D)
 			end
 		end

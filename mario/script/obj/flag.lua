@@ -1,3 +1,4 @@
+local gl = require 'gl'
 local vec = require 'vec.vec2'
 local Object = require 'base.script.obj.object'
 local Mario = require 'mario.script.obj.mario'
@@ -52,7 +53,6 @@ function Flag:update(dt)
 					showWinner.draw = function(self, R)
 						gui.font:drawUnpacked(self.track.pos[1] - #self.text/2 + .5, self.track.pos[2]+3, 2, -2, self.text, 2, 2)
 						-- gui hasn't been R-integrated yet ...
-						local gl = R.gl
 						gl.glEnable(gl.GL_TEXTURE_2D)
 					end
 				elseif Flag:isa(obj) then
@@ -99,7 +99,6 @@ function Flag:draw(R, viewBBox, holdOverride)
 			local gui = require 'base.script.singleton.gui'
 			gui.font:drawUnpacked(self.heldby.pos[1]-1.5, self.heldby.pos[2]+3, 1, -1, timestr)
 			-- gui hasn't been R-integrated yet ...
-			local gl = R.gl	
 			gl.glEnable(gl.GL_TEXTURE_2D)
 		end
 	end

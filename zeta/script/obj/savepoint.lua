@@ -89,9 +89,8 @@ function SavePoint:playerUse(player)
 								local Tex2D = texsys.GLTex2D
 								assert(Tex2D:isa(v))
 								
-								local gl = game.R.gl
-								assert(v.format == gl.GL_LUMINANCE_ALPHA)
-								assert(v.internalFormat == gl.GL_LUMINANCE_ALPHA)
+								assert(v.format == gl.GL_RG)
+								assert(v.internalFormat == gl.GL_RG)
 								assert(v.type == gl.GL_UNSIGNED_BYTE)
 								local formatSize = 2	-- TODO deduce from format
 								
@@ -110,8 +109,8 @@ function SavePoint:playerUse(player)
 								return "require 'base.script.singleton.modio':require 'script.singleton.texsys'.GLTex2D{"
 										.."width="..v.width..', '
 										.."height="..v.height..', '
-										.."minFilter=require 'base.script.singleton.game'.R.gl.GL_NEAREST,"
-										.."magFilter=require 'base.script.singleton.game'.R.gl.GL_NEAREST,"
+										.."minFilter=require 'gl'.GL_NEAREST,"
+										.."magFilter=require 'gl'.GL_NEAREST,"
 										.."internalFormat="..v.internalFormat..', '
 										.."format="..v.format..', '
 										.."type="..v.type..', '

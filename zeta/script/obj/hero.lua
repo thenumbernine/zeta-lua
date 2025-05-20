@@ -25,6 +25,7 @@ when you pick up an item, you're holding it...
 	- carry
 
 --]]
+local gl = require 'gl'
 local table = require 'ext.table'
 local math = require 'ext.math'
 local vec2 = require 'vec.vec2'
@@ -78,7 +79,6 @@ function Hero:init(...)
 	local modio = require 'base.script.singleton.modio'
 	local texsys = modio:require 'script.singleton.texsys'
 	local level = game.level
-	local gl = game.R.gl
 	local Tex2D = texsys.GLTex2D
 	self.minimapFgTex = Tex2D{
 		width = level.fgTileTex.width,
@@ -931,9 +931,8 @@ end
 local hasCopyImageSubData
 function Hero:updateMinimap()
 	local R = game.R
-	local gl = R.gl
 	if hasCopyImageSubData == nil then
-		hasCopyImageSubData = not not require 'ext.op'.safeindex(R.gl, 'glCopyImageSubData')
+		hasCopyImageSubData = not not require 'ext.op'.safeindex(gl, 'glCopyImageSubData')
 	end
 	local level = game.level
 	local xmin = math.clamp(math.floor(self.viewBBox.min[1]), 0, self.minimapFgTex.width-1)
@@ -1176,7 +1175,6 @@ function Hero:draw(R, viewBBox, holdOveride)
 		local l = self.speedBoostCharge
 		local color = rawget(self, 'color')
 		self.color = {0,.5*l,l,1}
-		local gl = R.gl
 		gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE)
 		Hero.super.draw(self, R, viewBBox, holdOverride)
 		if l == 1 then
@@ -1253,7 +1251,6 @@ end
 function Hero:drawHUD(R, viewBBox)
 	if Hero.super.drawHUD then Hero.super.drawHUD(self, R, viewBBox) end
 
-	local gl = R.gl
 	-- TODO if start button pushed ...
 	-- then show inventory
 	-- otherwise have 'l' and 'r' cycle ... weapons only?

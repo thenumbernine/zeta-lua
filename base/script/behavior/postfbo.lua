@@ -2,9 +2,10 @@
 local ffi = require 'ffi'
 local vec4i = require 'vec-ffi.vec4i'
 local vec2i = require 'vec-ffi.vec2i'
+local gl = require 'gl'
 local FBO = require 'gl.fbo'
 local GLTex2D = require 'gl.tex2d'
-local glreport = require 'gl.report'
+--DEBUG(gl):local glreport = require 'gl.report'
 
 -- behavior for base.script.singleton.class.game subclasses
 return function(parentClass)
@@ -29,7 +30,6 @@ return function(parentClass)
 		end
 
 		local R = self.R
-		local gl = R.gl
 		
 		local glapp = require 'base.script.singleton.glapp'
 		local windowWidth, windowHeight = glapp:size()
@@ -82,7 +82,7 @@ return function(parentClass)
 				fbo = FBO()
 					:setColorAttachment(tex)
 					:unbind()
-				glreport'here'
+--DEBUG(gl):assert(glreport'here')
 			
 				renderShader = R:createShader{
 					vertexCode = [[
@@ -350,9 +350,9 @@ add some extra render info into the buffer on how to transform the rays at each 
 
 			if postDrawCallback then postDrawCallback(playerIndex, ...) end
 		
-			glreport'here'
+--DEBUG(gl):assert(glreport'here')
 		end, ...)
-		glreport'here'
+--DEBUG(gl):assert(glreport'here')
 	end
 
 	return PostFBOTemplate

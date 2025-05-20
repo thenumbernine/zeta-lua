@@ -107,11 +107,11 @@ vec4 applyTileForColor(vec4 fragColor, vec2 posInTile, vec2 tileIndexV) {
 }
 
 vec4 applyBgTileTex(vec4 fragColor, vec2 posInTile, vec2 mapTC) {
-	return applyTileForColor(fragColor, posInTile, texture(bgTileTex, mapTC).zw);
+	return applyTileForColor(fragColor, posInTile, texture(bgTileTex, mapTC).xy);
 }
 
 vec4 applyFgTileTex(vec4 fragColor, vec2 posInTile, vec2 mapTC) {
-	return applyTileForColor(fragColor, posInTile, texture(fgTileTex, mapTC).zw);
+	return applyTileForColor(fragColor, posInTile, texture(fgTileTex, mapTC).xy);
 }
 
 vec2 rot2D(vec2 v, float angle) {
@@ -124,8 +124,8 @@ vec2 rot2D(vec2 v, float angle) {
 vec4 applySprite(vec4 fragColor, vec2 pos, vec2 posInTile, vec2 mapTC) {
 	// raytrace through sprites at this tile
 	// 1-based, 0 == no sprites
-	//using GL_LUMINANCE_ALPHA:
-	//vec2 spriteListOffsetV = texture(spriteListOffsetTileTex, mapTC).zw;
+	//using GL_RG:
+	//vec2 spriteListOffsetV = texture(spriteListOffsetTileTex, mapTC).xy;
 	//float spriteListOffset = lumAlphaToUInt16(spriteListOffsetV);
 	//using GL_RGBA32F:
 	float spriteListOffset = texture(spriteListOffsetTileTex, mapTC).x;
@@ -152,8 +152,8 @@ vec4 applySprite(vec4 fragColor, vec2 pos, vec2 posInTile, vec2 mapTC) {
 	return vec4(1., 0., 1., 1.);
 #endif
 
-	//using GL_LUMINANCE_ALPHA:
-	//vec2 spriteListCountV = texture(spriteListTex, vec2(.5, (spriteListOffset + .5) / spriteListMax)).zw;
+	//using GL_RG:
+	//vec2 spriteListCountV = texture(spriteListTex, vec2(.5, (spriteListOffset + .5) / spriteListMax)).xy;
 	//float spriteListCount = lumAlphaToUInt16(spriteListCountV);
 	//using GL_RGBA32F:
 	float spriteListCount = texture(spriteListTex, vec2(.5, (spriteListOffset + .5) / spriteListMax)).x;
@@ -172,8 +172,8 @@ vec4 applySprite(vec4 fragColor, vec2 pos, vec2 posInTile, vec2 mapTC) {
 	spriteListOffset = spriteListOffset + 1.;
 	for (float i = 0.; i < spriteListCount; ++i) {
 		
-		//using GL_LUMINANCE_ALPHA:
-		//vec2 spriteIndexV = texture(spriteListTex, vec2(.5, (spriteListOffset + .5) / spriteListMax)).zw;
+		//using GL_RG:
+		//vec2 spriteIndexV = texture(spriteListTex, vec2(.5, (spriteListOffset + .5) / spriteListMax)).xy;
 		//float spriteIndex = lumAlphaToUInt16(spriteIndexV);
 		//using GL_RGBA32F:
 		float spriteIndex = texture(spriteListTex, vec2(.5, (spriteListOffset + .5) / spriteListMax)).x;

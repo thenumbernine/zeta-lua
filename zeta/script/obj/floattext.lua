@@ -1,3 +1,4 @@
+local gl = require 'gl'
 local Object = require 'base.script.obj.object'
 return function(args)
 	local gui = require 'base.script.singleton.gui'
@@ -14,7 +15,6 @@ return function(args)
 	tick.draw = function(self, R)
 		gui.font:drawUnpacked(self.pos[1], self.pos[2]+2, 1, -1, args.text)
 		-- gui hasn't been R-integrated yet ...
-		local gl = R.gl
 		gl.glEnable(gl.GL_TEXTURE_2D)
 	end
 end

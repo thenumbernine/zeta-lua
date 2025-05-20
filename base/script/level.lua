@@ -16,15 +16,13 @@ local path = require 'ext.path'
 local fromlua = require 'ext.fromlua'
 local vec2 = require 'vec.vec2'
 local box2 = require 'vec.box2'
+local gl = require 'gl'
 local modio = require 'base.script.singleton.modio'
 local game = require 'base.script.singleton.game'	-- this should exist by now, right?
 local Image = require 'image'
 local glapp = require 'base.script.singleton.glapp'
 local vec4f = require 'vec-ffi.vec4f'
 local SpawnInfo = require 'base.script.spawninfo'
-local glreport = require 'gl.report'
-
-local gl
 
 local int = ffi.new'int[1]'
 local function glGetInteger(symbol)
@@ -178,9 +176,6 @@ spawnFile contents are as follows:
 --]]
 function Level:init(args)
 	self.objsAtTile = table()
-
-	-- store as a global
-	gl = game.R.gl
 
 	-- enum of tileMap values. 0 => nil
 	self.tileTypes = assert(args.tileTypes)
@@ -381,13 +376,11 @@ print('self.mapTileSize', self.mapTileSize)
 	end
 
 	do
-		-- GL_LUMINANCE16 is more appropriate but not always supported, esp not always with 16 whole bits.
-		-- GL_LUMINANCE_ALPHA is more supported
 		self.fgTileTex = Tex2D{
-			internalFormat = gl.GL_LUMINANCE_ALPHA,
+			internalFormat = gl.GL_RG,
 			width = self.size[1],
 			height = self.size[2],
-			format = gl.GL_LUMINANCE_ALPHA,
+			format = gl.GL_RG,
 			type = gl.GL_UNSIGNED_BYTE,
 			data = self.fgTileMap,
 			minFilter = gl.GL_NEAREST,
@@ -395,10 +388,10 @@ print('self.mapTileSize', self.mapTileSize)
 		}
 
 		self.bgTileTex = Tex2D{
-			internalFormat = gl.GL_LUMINANCE_ALPHA,
+			internalFormat = gl.GL_RG,
 			width = self.size[1],
 			height = self.size[2],
-			format = gl.GL_LUMINANCE_ALPHA,
+			format = gl.GL_RG,
 			type = gl.GL_UNSIGNED_BYTE,
 			data = self.bgTileMap,
 			minFilter = gl.GL_NEAREST,
@@ -406,10 +399,10 @@ print('self.mapTileSize', self.mapTileSize)
 		}
 
 		self.backgroundTex = Tex2D{
-			internalFormat = gl.GL_LUMINANCE,
+			internalFormat = gl.GL_RED,
 			width = self.size[1],
 			height = self.size[2],
-			format = gl.GL_LUMINANCE,
+			format = gl.GL_RED,
 			type = gl.GL_UNSIGNED_BYTE,
 			data = self.backgroundMap,
 			minFilter = gl.GL_NEAREST,
@@ -450,7 +443,7 @@ print('self.mapTileSize', self.mapTileSize)
 		assert(self.backgroundStructTex.width == 2)		-- if it's not then change the lookups below
 
 
-		-- TODO for some reason on the sprite scenegraph stuff, GL_LUMINANCE_ALPHA isn't cutting it
+		-- TODO for some reason on the sprite scenegraph stuff, GL_RG isn't cutting it
 		-- even though it works fine for the tile info in the map
 		-- so figure out why, or make a few pathways depending on the graphics card's support?
 
@@ -590,7 +583,7 @@ void main() {
 	}
 
 	// bg tile color
-	vec2 bgTileIndexV = texture(bgTileTex, tc).zw;
+	vec2 bgTileIndexV = texture(bgTileTex, tc).xy;
 	float bgTileIndex = 255. * (bgTileIndexV.x + 256. * bgTileIndexV.y);
 	if (bgTileIndex > 0.) {
 		--bgTileIndex;
@@ -666,7 +659,7 @@ void main() {
 	fragColor = vec4(0.);
 
 	// fg tile color
-	vec2 fgTileIndexV = texture(fgTileTex, tc).zw;	// z = lum = lo byte, w = alpha = hi byte
+	vec2 fgTileIndexV = texture(fgTileTex, tc).xy;	// x = lo byte, y = hi byte
 	float fgTileIndex = 255. * (fgTileIndexV.x + 256. * fgTileIndexV.y);	// this looks too horrible to be correct
 	if (fgTileIndex > 0.) {	//0 = transparent
 		--fgTileIndex;
@@ -1102,13 +1095,13 @@ end
 -- TODO rename these to just 'refreshFgTile' etc ... and have the default behavior of refreshing be ... to update the texels
 -- or maybe instead of 'refresh', call it 'OnUpdate' ?
 function Level:onUpdateFgTileMap(x1,y1,x2,y2)
-	return self:refreshTileTexelsForLayer(x1, y1, x2, y2, self.fgTileMap, self.fgTileTex, gl.GL_LUMINANCE_ALPHA, gl.GL_UNSIGNED_BYTE)
+	return self:refreshTileTexelsForLayer(x1, y1, x2, y2, self.fgTileMap, self.fgTileTex, gl.GL_RG, gl.GL_UNSIGNED_BYTE)
 end
 function Level:onUpdateBgTileMap(x1,y1,x2,y2)
-	return self:refreshTileTexelsForLayer(x1, y1, x2, y2, self.bgTileMap, self.bgTileTex, gl.GL_LUMINANCE_ALPHA, gl.GL_UNSIGNED_BYTE)
+	return self:refreshTileTexelsForLayer(x1, y1, x2, y2, self.bgTileMap, self.bgTileTex, gl.GL_RG, gl.GL_UNSIGNED_BYTE)
 end
 function Level:onUpdateBackgroundMap(x1,y1,x2,y2)
-	return self:refreshTileTexelsForLayer(x1, y1, x2, y2, self.backgroundMap, self.backgroundTex, gl.GL_LUMINANCE, gl.GL_UNSIGNED_BYTE)
+	return self:refreshTileTexelsForLayer(x1, y1, x2, y2, self.backgroundMap, self.backgroundTex, gl.GL_RED, gl.GL_UNSIGNED_BYTE)
 end
 
 function Level:makeEmpty(x,y)
@@ -1476,7 +1469,7 @@ function Level:finalizeQuadRenderer()
 	-- TODO only upload individual tiles that are modified?
 	-- or TODO only upload the subrectangle that is modified?
 	-- [[ or ... upload the whole thing?
-	--gl.glTexSubImage2D(self.spriteListOffsetTileTex.target, 0, 0, 0, self.size[1], self.size[2], gl.GL_LUMINANCE_ALPHA, gl.GL_UNSIGNED_BYTE, self.spriteListOffsetTileMap)
+	--gl.glTexSubImage2D(self.spriteListOffsetTileTex.target, 0, 0, 0, self.size[1], self.size[2], gl.GL_RG, gl.GL_UNSIGNED_BYTE, self.spriteListOffsetTileMap)
 	gl.glTexSubImage2D(self.spriteListOffsetTileTex.target, 0, 0, 0, self.size[1], self.size[2], gl.GL_RGBA, gl.GL_FLOAT, self.spriteListOffsetTileMap)
 	--]]
 	self.spriteListOffsetTileTex:unbind()
@@ -1492,7 +1485,7 @@ print()
 
 	-- now we upload sprite list to the GPU
 	self.spriteListTex:bind()
-	--gl.glTexSubImage2D(self.spriteListTex.target, 0, 0, 0, 1, spriteListIndex, gl.GL_LUMINANCE_ALPHA, gl.GL_UNSIGNED_BYTE, self.spriteListData)
+	--gl.glTexSubImage2D(self.spriteListTex.target, 0, 0, 0, 1, spriteListIndex, gl.GL_RG, gl.GL_UNSIGNED_BYTE, self.spriteListData)
 	gl.glTexSubImage2D(self.spriteListTex.target, 0, 0, 0, 1, spriteListIndex, gl.GL_RGBA, gl.GL_FLOAT, self.spriteListData)
 	self.spriteListTex:unbind()
 

@@ -784,7 +784,6 @@ end
 function Neko:drawHUD(R, viewBBox)
 	if Neko.super.drawHUD then Neko.super.drawHUD(self, R, viewBBox) end
 
-	local gl = R.gl
 	-- TODO if start button pushed ...
 	-- then show inventory
 	-- otherwise have 'l' and 'r' cycle ... weapons only?

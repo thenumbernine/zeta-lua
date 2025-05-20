@@ -205,7 +205,6 @@ function Geemer:draw(R, viewBBox, ...)
 	end
 
 --[[ debug draw
-	local gl = R.gl
 	gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_LINE)
 	gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
 	R:quad(

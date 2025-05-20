@@ -6,8 +6,11 @@ local table = require 'ext.table'
 local tolua = require 'ext.tolua'
 local fromlua = require 'ext.fromlua'
 
+local sdl = require 'sdl.setup' '2'
+local gl = require 'gl.setup'()
+--DEBUG(gl):local glreport = require 'gl.report'
+
 local ImGuiApp = require 'imgui.app'
-local sdl = require 'sdl'
 
 local AudioSource = require 'audio.source'
 local AudioBuffer = require 'audio.buffer'
@@ -114,8 +117,8 @@ function App:initGL()
 	local Renderer = modio:require 'script.singleton.class.renderer'
 	local rendererClass = Renderer.requireClasses.gl
 	if not rendererClass then error("don't have support for "..tostring(glname)) end
-	R = rendererClass(require 'gl')
-	R:report('init begin')
+	R = rendererClass()
+--DEBUG(gl):assert(glreport('init begin'))
 	
 	sdl.SDL_ShowCursor(sdl.SDL_DISABLE)
 
@@ -286,7 +289,7 @@ return ]]..path(savefile):read()
 		end
 	end
 	
-	R:report('init end')
+--DEBUG(gl):assert(glreport('init end'))
 end
 
 function App:loadLevelConfig(save)
@@ -483,7 +486,7 @@ end
 local fpsTime = 0
 local fpsFrames = 0
 function App:update(...)
-	R:report('update begin')
+--DEBUG(gl):assert(glreport('update begin'))
 
 	-- where does this usu go?
 	gui.mouse:update()
@@ -553,14 +556,14 @@ function App:update(...)
 				-- and update the game!
 				game:update(fixedDeltaTime * timescale)
 
-				R:report('game:update')
+--DEBUG(gl):assert(glreport('game:update'))
 			end
 			--if skips > 0 then print(skips,'skips') end
 		end
 	end
 
 	game:render()
-	R:report('game:render')
+--DEBUG(gl):assert(glreport('game:render'))
 	
 	if editor then editor:update() end
 	gui:update()
@@ -568,7 +571,7 @@ function App:update(...)
 	
 	App.super.update(self, ...)
 	
-	R:report('update end')
+--DEBUG(gl):assert(glreport('update end'))
 end
 
 local function modalBegin(title, t, k)

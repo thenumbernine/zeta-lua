@@ -26,14 +26,11 @@ do
 
 	local GLTex2D
 	local GLProgram
-	local glreport
 	local gl
 	function GLRenderer:init(gl_)
-		self.gl = gl_
-		gl = gl_
+		gl = require 'gl'
 		GLTex2D = require 'gl.tex2d'
 		GLProgram = require 'gl.program'
-		glreport = require 'gl.report'
 
 		self.projMat = matrix{4,4}:zeros()
 		self.mvMat = matrix{4,4}:zeros()
@@ -43,7 +40,7 @@ do
 		self.identMat:setIdent()
 
 		local texsys = modio:require 'script.singleton.texsys'
-		texsys:setVars(gl,GLTex2D,{
+		texsys:setVars(gl, GLTex2D, {
 			minFilter = gl.GL_NEAREST,
 			magFilter = gl.GL_NEAREST,
 		})
@@ -105,9 +102,6 @@ void main() {
 		self.mvMat:setTranslate(-x,-y,0)
 		self.mvProjMat:mul4x4(self.projMat, self.mvMat)
 	end
-	function GLRenderer:report(s)
-		glreport(s)
-	end
 	function GLRenderer:createShader(args)
 		return GLProgram(args):useNone()
 	end
@@ -159,7 +153,7 @@ void main() {
 
 		gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, false, 0, vertexes)
 		gl.glEnableVertexAttribArray(0)
-		gl.glDrawElements(gl.GL_TRIANGLE_STRIP,4,gl.GL_UNSIGNED_SHORT,tristrip)
+		gl.glDrawElements(gl.GL_TRIANGLE_STRIP, 4, gl.GL_UNSIGNED_SHORT, tristrip)
         gl.glDisableVertexAttribArray(0)
 
 		shader:useNone()

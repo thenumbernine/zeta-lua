@@ -48,7 +48,6 @@ end
 
 function MarioGame:glInit(R)
 	MarioGame.super.glInit(self, R)
-	local gl = R.gl
 	
 	local changeColorShader
 	if R.glname == 'OpenGLES2' then	-- gles2
