@@ -62,7 +62,6 @@ files = {
 	["docs/images/pic6.png"] = "zeta2d/docs/images/pic6.png",
 	["docs/images/pic7.png"] = "zeta2d/docs/images/pic7.png",
 	["docs/images/pic8.png"] = "zeta2d/docs/images/pic8.png",
-	["fix-pngs.lua"] = "zeta2d/fix-pngs.lua",
 	["init.lua"] = "zeta2d/init.lua",
 	["mario/maps/fight/background.png"] = "zeta2d/mario/maps/fight/background.png",
 	["mario/maps/fight/room.png"] = "zeta2d/mario/maps/fight/room.png",
