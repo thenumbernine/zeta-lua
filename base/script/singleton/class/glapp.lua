@@ -4,9 +4,10 @@ local class = require 'ext.class'
 local table = require 'ext.table'
 local tolua = require 'ext.tolua'
 local fromlua = require 'ext.fromlua'
+local getTime = require 'ext.timer'.getTime
 
+local gl = require 'gl'
 local sdl = require 'sdl.setup'()
-local gl = require 'gl.setup'()
 --DEBUG(gl):local glreport = require 'gl.report'
 
 local ImGuiApp = require 'imgui.app'
@@ -30,8 +31,8 @@ local ig = require 'imgui'
 local gui	-- ... don't include til after opengl init
 local editor
 
-local sysThisTime = 0
-local sysLastTime = 0
+local sysThisTime = getTime()
+local sysLastTime = getTime()
 local frameAccumTime = 0
 local fixedDeltaTime = 1/50
 
@@ -68,16 +69,16 @@ netcom:addClientToServerCall{
 		local playerIndexes = table()
 		for i=1,#playerNames do
 			local playerName = playerNames[i]
-			
+
 			local playerServerObj = PlayerServerObject()
 			playerServerObj.name = playerName
 			playerServerObj.startIndex = playerIndex
 			playerServerObj.serverConn = serverConn
-			
+
 			-- this will be the index of the playerServerObj in the server's list
 			local playerIndex = #serverConn.server.playerServerObjs+1
 			playerIndexes[i] = playerIndex
-			
+
 			serverConn.server.playerServerObjs:insert(playerServerObj)
 		end
 		serverConn.playerIndexes = playerIndexes
@@ -112,13 +113,13 @@ App.sdlInitFlags = bit.bor(sdl.SDL_INIT_VIDEO, sdl.SDL_INIT_JOYSTICK)
 
 function App:initGL()
 	App.super.initGL(self)
-	
+
 	local Renderer = modio:require 'script.singleton.class.renderer'
 	local rendererClass = Renderer.requireClasses.gl
 	if not rendererClass then error("don't have support for "..tostring(glname)) end
 	R = rendererClass()
 --DEBUG(gl):assert(glreport('init begin'))
-	
+
 	sdl.SDL_HideCursor()
 
 	sdl.SDL_JoystickEventsEnabled()
@@ -153,7 +154,7 @@ function App:initGL()
 			end
 		end
 	end
-	
+
 	for _,mod in ipairs(modio.search) do
 		if path(mod..'/script/sounds.lua'):exists() then
 			local soundTable = require(mod..'.script.sounds')
@@ -162,7 +163,7 @@ function App:initGL()
 			end
 		end
 	end
-	
+
 	local clientConn, server, remoteClientConn = netcom:start{
 		port=12345,
 		onConnect = function(clientConn)
@@ -179,14 +180,14 @@ function App:initGL()
 		game.server = server
 	end
 
-	
+
 	game:glInit(R)
 
 
 	-- needs tob e done outside game atm because it modifies levelcfg ...
 	-- ... which is passed to game
 	local savefile = modio:find 'save/save.txt'
-	
+
 	-- TODO matches zetascript/obj/savepoint.lua ... consolidate
 	local arrayRef = class()
 	function arrayRef:init(args)
@@ -205,7 +206,7 @@ return ]]..path(savefile):read()
 	end
 
 	local levelcfg = self:loadLevelConfig(save)
-	
+
 	local tileTypes = table()
 	local spawnTypes = table()
 	local serializeTypes = table()
@@ -238,8 +239,8 @@ return ]]..path(savefile):read()
 	levelcfg.serializeTypes = serializeTypes
 
 	game:setLevel(levelcfg)
-	
-	
+
+
 	game.playerClientObjs = table()
 	game.onReset = function()
 		if server then
@@ -255,7 +256,7 @@ return ]]..path(savefile):read()
 				player.playerServerObj = playerServerObj
 			end
 		end
-		
+
 		-- TODO send client a command to do this
 		game.clientConn.players = table()
 		for i=1,#game.clientConn.playerIndexes do
@@ -272,7 +273,7 @@ return ]]..path(savefile):read()
 
 
 	netcom:addObject{name='game', object=game}
-	
+
 	-- don't include this til after opengl is initialized
 	gui = require 'base.script.singleton.gui'
 	editor = require 'base.script.singleton.editor'()
@@ -289,7 +290,7 @@ return ]]..path(savefile):read()
 			self.bgAudioSource:play()
 		end
 	end
-	
+
 --DEBUG(gl):assert(glreport('init end'))
 end
 
@@ -407,7 +408,7 @@ end
 
 function App:event(event)
 	App.super.event(self, event)
-	
+
 	if editor then
 		if editor:event(event) then return end
 	end
@@ -454,7 +455,7 @@ function App:event(event)
 	-- else mouse buttons?
 	-- else mouse motion / position?
 	end
-	
+
 	if event[0].type == sdl.SDL_EVENT_MOUSE_MOTION then
 		local player = game.clientConn.players[1]
 		local wx, wy = self:size()
@@ -463,14 +464,14 @@ function App:event(event)
 	end
 
 	--[[ slowdown effect
-	if event[0].key.key == sdl.SDLK_BACKQUOTE then
+	if event[0].key.key == sdl.SDLK_GRAVE then
 		timescale = 1 - 4/5 * (press and 1 or 0)
 	end
 	--]]
 
 	if event[0].type == sdl.SDL_EVENT_KEY_DOWN then
 		if event[0].key.key == sdl.SDLK_ESCAPE then
-			-- TODO better system? 
+			-- TODO better system?
 			if modalsOpened.controls then
 				modalsOpened.controls = false
 			elseif modalsOpened.audio then
@@ -483,7 +484,7 @@ function App:event(event)
 		end
 	end
 end
-	
+
 local fpsTime = 0
 local fpsFrames = 0
 function App:update(...)
@@ -497,12 +498,12 @@ function App:update(...)
 		if player.inputUp then x=x+1 end
 		if player.inputDown then x=x-1 end
 		player.inputUpDown = x
-		
+
 		local x = 0
 		if player.inputLeft then x=x-1 end
 		if player.inputRight then x=x+1 end
 		player.inputLeftRight = x
-	
+
 		-- has to be done here, because game.pause keeps the player loop from updating
 		if player.inputPause and not player.inputPauseLast then
 			game.paused = not game.paused
@@ -532,7 +533,7 @@ function App:update(...)
 
 	-- don't use these.  they're based on the sdl time.
 	sysLastTime = sysThisTime
-	sysThisTime = sdl.SDL_GetTicks() / 1000
+	sysThisTime = getTime()
 	local sysDeltaTime = sysThisTime - sysLastTime
 
 	-- use these. they're based on the game time, updated at the sdl clock rate.
@@ -542,18 +543,18 @@ function App:update(...)
 
 	if not (game.paused or modalsOpened.main) then
 	--if sysThisTime > 5 then
-	
+
 		frameAccumTime = frameAccumTime + sysDeltaTime
 		if frameAccumTime >= fixedDeltaTime then
-	
+
 			-- TODO gather input here ... or in event()
-			
+
 			-- update
 			local skips = -1
 			while frameAccumTime >= fixedDeltaTime do
 				skips = skips + 1
 				frameAccumTime = frameAccumTime - fixedDeltaTime
-				
+
 				-- and update the game!
 				game:update(fixedDeltaTime * timescale)
 
@@ -565,13 +566,13 @@ function App:update(...)
 
 	game:render()
 --DEBUG(gl):assert(glreport('game:render'))
-	
+
 	if editor then editor:update() end
 	gui:update()
 	threads:update()
-	
+
 	App.super.update(self, ...)
-	
+
 --DEBUG(gl):assert(glreport('update end'))
 end
 
@@ -588,7 +589,7 @@ end
 
 function App:updateGUI(...)
 	editor:updateGUI(...)
-	
+
 	if modalsOpened.main then
 		modalBegin('Main', modalsOpened, 'main')
 		if ig.igButton'Controls...' then
@@ -640,7 +641,7 @@ function App:updateGUI(...)
 		for playerIndex=1,numPlayers do
 			if modalsOpened.playerInput[playerIndex] then
 				modalBegin('Player '..playerIndex..' Input', modalsOpened.playerInput, playerIndex)
-					
+
 					local thread
 					if ig.igButton'Set All' then
 						thread = coroutine.create(function()
