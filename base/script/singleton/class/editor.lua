@@ -454,7 +454,7 @@ function PickTileTypeWindow:radioButton(selected, index, callback)
 	if not tileTypeOption then return end -- when is this?
 	local tex = tileTypeOption.tex
 	-- no-texture renders solid white.  TODO replace with a completely blank textures.
-	local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex and tex.id or 0))
+	local texIDPtr = ffi.cast('ImTextureID',tex and tex.id or 0)
 	if ig.igImageButton(
 		'PickTileTypeWindow',	-- str_id
 		texIDPtr,
@@ -519,7 +519,7 @@ function PickTileWindow:update()
 	ig.luatableBegin('Choose Tile...', self, 'opened')
 
 	local tex = game.level.texpackTex
-	local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
+	local texIDPtr = ffi.cast('ImTextureID',tex.id)
 	local level = game.level
 	local tilesWide = tex.width / level.tileSize
 	local tilesHigh = tex.height / level.tileSize
@@ -570,7 +570,7 @@ end
 function PickTileWindow:openButton(hoverText, tileIndex, callback)
 	local level = game.level
 	local tex = level.texpackTex
-	local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex.id))
+	local texIDPtr = ffi.cast('ImTextureID',tex.id)
 	local tilesWide = tex.width / level.tileSize
 	local tilesHigh = tex.height / level.tileSize
 	local ti = (tileIndex - 1) % tilesWide
@@ -1502,7 +1502,7 @@ function Editor:updateGUI()
 				local background = self.backgroundOptions[i].background
 				
 				local tex = level.bgtexpackTex
-				local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex and tex.id or 0))
+				local texIDPtr = ffi.cast('ImTextureID',tex and tex.id or 0)
 			
 				local bgx, bgy, bgw, bgh
 				if background.x and background.y and background.w and background.h then
@@ -1511,7 +1511,7 @@ function Editor:updateGUI()
 					bgw = background.w
 					bgh = background.h
 				else
-					texIDPtr = ffi.cast('void*', 0)
+					texIDPtr = ffi.cast('ImTextureID', 0)
 					bgx = 0
 					bgy = 0
 					bgw = tex.width
@@ -1561,7 +1561,7 @@ function Editor:updateGUI()
 				local sprite = spawnClass.sprite
 				-- can't animate, or we'll get back dif texIDs, and imgui won't distinguish what is clicked
 				local tex = sprite and animsys:getTex(sprite, 'stand', game.time)
-				local texIDPtr = ffi.cast('void*',ffi.cast('intptr_t',tex and tex.id or 0))
+				local texIDPtr = ffi.cast('ImTextureID',tex and tex.id or 0)
 				if ig.igImageButton(
 					'editModeObjects',	-- str_id
 					texIDPtr,
@@ -1696,7 +1696,7 @@ function Editor:update()
 		game.viewSize = nil
 		return
 	end
-	sdl.SDL_ShowCursor(sdl.SDL_ENABLE)
+	sdl.SDL_ShowCursor()
 
 	self.isHandlingMouse = ig.igGetIO()[0].WantCaptureMouse
 	if self.isHandlingMouse then return end
