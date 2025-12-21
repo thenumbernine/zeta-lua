@@ -4,7 +4,7 @@ local vec4i = require 'vec-ffi.vec4i'
 local vec2i = require 'vec-ffi.vec2i'
 local gl = require 'gl'
 local GLProgram = require 'gl.program'
-local FBO = require 'gl.fbo'
+local GLFramebuffer = require 'gl.framebuffer'
 local GLTex2D = require 'gl.tex2d'
 --DEBUG(gl):local glreport = require 'gl.report'
 
@@ -80,7 +80,7 @@ return function(parentClass)
 					--magFilter = gl.GL_LINEAR,
 					magFilter = gl.GL_NEAREST,
 				}
-				fbo = FBO()
+				fbo = GLFramebuffer()
 					:setColorAttachment(tex)
 					:unbind()
 --DEBUG(gl):assert(glreport'here')
