@@ -52,7 +52,7 @@ function MarioGame:glInit(R)
 
 	local changeColorShader = GLProgram{
 		version = 'latest',
-		precision = 'best'
+		precision = 'best',
 		vertexCode = [[
 in vec4 vertex;
 out vec2 tc;
