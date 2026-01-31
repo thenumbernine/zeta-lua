@@ -2,10 +2,8 @@
 local ffi = require 'ffi'
 local class = require 'ext.class'
 local vec2 = require 'vec.vec2'
+local vec4x4f = require 'vec-ffi.vec4x4f'
 local modio = require 'base.script.singleton.modio'
-
-local matrix = require 'matrix.ffi'
-matrix.real = 'float'
 
 local Renderer = class()
 Renderer.requireClasses = {}
@@ -22,12 +20,11 @@ do
 
 	function GLRenderer:init(gl_)
 
-		self.projMat = matrix{4,4}:zeros()
-		self.mvMat = matrix{4,4}:zeros()
-		self.mvProjMat = matrix{4,4}:zeros()
+		self.projMat = vec4x4f():setIdent()
+		self.mvMat = vec4x4f():setIdent()
+		self.mvProjMat = vec4x4f():setIdent()
 
-		self.identMat = matrix{4,4}:zeros()
-		self.identMat:setIdent()
+		self.identMat = vec4x4f():setIdent()
 
 		local texsys = modio:require 'script.singleton.texsys'
 		texsys:setVars(gl, GLTex2D, {

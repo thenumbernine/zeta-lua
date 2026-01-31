@@ -534,7 +534,6 @@ deps = {
 	"gui",
 	"image",
 	"imgui",
-	"matrix",
 	"netrefl",
 	"resourcecache",
 	"sdl",
