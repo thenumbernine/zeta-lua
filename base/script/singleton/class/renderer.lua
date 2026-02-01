@@ -120,7 +120,7 @@ void main() {
 		shader:use()
 --DEBUG(gl):assert(glreport('game:render'))
 		if shader.uniforms.mvProjMat then
-			gl.glUniformMatrix4fv(shader.uniforms.mvProjMat.loc, 1, gl.GL_FALSE, self.mvProjMat.ptr)
+			gl.glUniformMatrix4fv(shader.uniforms.mvProjMat.loc, 1, gl.GL_TRUE, self.mvProjMat.ptr)
 --DEBUG(gl):assert(glreport('game:render'))
 		end
 		if uniforms then

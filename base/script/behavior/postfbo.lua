@@ -322,7 +322,7 @@ add some extra render info into the buffer on how to transform the rays at each 
 			local playerClientObj = self.playerClientObjs[playerIndex]
 
 			renderShader:use()
-			gl.glUniformMatrix4fv(renderShader.uniforms.mvProjMat.loc, 1, gl.GL_FALSE, R.identMat.ptr)
+			gl.glUniformMatrix4fv(renderShader.uniforms.mvProjMat.loc, 1, gl.GL_TRUE, R.identMat.ptr)
 			if renderShader.uniforms.viewSize then
 				gl.glUniform1f(renderShader.uniforms.viewSize.loc, self.viewSize)
 			end
