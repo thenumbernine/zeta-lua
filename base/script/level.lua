@@ -449,8 +449,8 @@ print('self.mapTileSize', self.mapTileSize)
 		-- so figure out why, or make a few pathways depending on the graphics card's support?
 
 		-- offset into the sprite table
-		self.spriteListOffsetTileMap = ffi.new('vec4f_t[?]', self.size[1] * self.size[2])
-		ffi.fill(self.spriteListOffsetTileMap, ffi.sizeof'vec4f_t' * self.size[1] * self.size[2])
+		self.spriteListOffsetTileMap = ffi.new('vec4f[?]', self.size[1] * self.size[2])
+		ffi.fill(self.spriteListOffsetTileMap, ffi.sizeof'vec4f' * self.size[1] * self.size[2])
 
 		-- map from x,y to offset in spriteListData
 		self.spriteListOffsetTileTex = Tex2D{
@@ -468,7 +468,7 @@ print('self.mapTileSize', self.mapTileSize)
 		-- map to each entry in the visSprite_t table
 		self.spriteListMax = 512
 		--self.spriteListMax = 16
-		self.spriteListData = ffi.new('vec4f_t[?]', self.spriteListMax)
+		self.spriteListData = ffi.new('vec4f[?]', self.spriteListMax)
 		self.spriteListTex = Tex2D{
 			internalFormat = gl.GL_RGBA32F,
 			width = 1,
@@ -1340,7 +1340,7 @@ function Level:initQuadRenderer()
 	--have a map from each tile to an entry in the spriteListData table
 	-- TODO clear the whole thing?  or keep track of tiles and clear only them?
 	--  which is faster?
-	ffi.fill(self.spriteListOffsetTileMap, ffi.sizeof'vec4f_t' * self.size[1] * self.size[2])
+	ffi.fill(self.spriteListOffsetTileMap, ffi.sizeof'vec4f' * self.size[1] * self.size[2])
 end
 
 -- very similar to Object:link()

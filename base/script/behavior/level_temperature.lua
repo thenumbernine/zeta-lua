@@ -154,7 +154,7 @@ return function(parentClass)
 			true
 		)
 
-		self.temperatureMap = ffi.new('vec4f_t[?]', self.size[1] * self.size[2])
+		self.temperatureMap = ffi.new('vec4f[?]', self.size[1] * self.size[2])
 		self:copyTileTemperatureToTemperatureMap(1,1,self.size[1],self.size[2])
 
 		self.temperaturePingPong = GLPingPong{
