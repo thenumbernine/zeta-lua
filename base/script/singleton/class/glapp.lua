@@ -8,7 +8,6 @@ local getTime = require 'ext.timer'.getTime
 
 local gl = require 'gl'
 local sdl = require 'sdl.setup'()
---DEBUG(gl):local glreport = require 'gl.report'
 
 local ImGuiApp = require 'imgui.app'
 
@@ -118,7 +117,6 @@ function App:initGL()
 	local rendererClass = Renderer.requireClasses.gl
 	if not rendererClass then error("don't have support for "..tostring(glname)) end
 	R = rendererClass()
---DEBUG(gl):assert(glreport('init begin'))
 
 	sdl.SDL_HideCursor()
 
@@ -290,8 +288,6 @@ return ]]..path(savefile):read()
 			self.bgAudioSource:play()
 		end
 	end
-
---DEBUG(gl):assert(glreport('init end'))
 end
 
 function App:loadLevelConfig(save)
@@ -488,8 +484,6 @@ end
 local fpsTime = 0
 local fpsFrames = 0
 function App:update(...)
---DEBUG(gl):assert(glreport('update begin'))
-
 	-- where does this usu go?
 	gui.mouse:update()
 
@@ -557,23 +551,18 @@ function App:update(...)
 
 				-- and update the game!
 				game:update(fixedDeltaTime * timescale)
-
---DEBUG(gl):assert(glreport('game:update'))
 			end
 			--if skips > 0 then print(skips,'skips') end
 		end
 	end
 
 	game:render()
---DEBUG(gl):assert(glreport('game:render'))
 
 	if editor then editor:update() end
 	gui:update()
 	threads:update()
 
 	App.super.update(self, ...)
-
---DEBUG(gl):assert(glreport('update end'))
 end
 
 local function modalBegin(title, t, k)

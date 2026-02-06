@@ -17,7 +17,6 @@ local vec2 = require 'vec.vec2'
 local box2 = require 'vec.box2'
 local gl = require 'gl'
 local GLProgram = require 'gl.program'
---DEBUG(gl):local glreport = require 'gl.report'
 local modio = require 'base.script.singleton.modio'
 local game = require 'base.script.singleton.game'	-- this should exist by now, right?
 local Image = require 'image'
@@ -1106,13 +1105,11 @@ local viewport = vec4i()
 -- TODO just pass the client index
 function Level:draw(R, viewBBox, playerPos)
 	local patch = require 'base.script.patch'
---DEBUG(gl):assert(glreport('game:render'))
 
 	-- TODO how to toggle this ... hmmm
 	local raytraceSprites = game.raytraceSprites
 
 	local editor = require 'base.script.singleton.editor'()
---DEBUG(gl):assert(glreport('game:render'))
 	if editor.active then
 		raytraceSprites = false
 	end
@@ -1120,7 +1117,6 @@ function Level:draw(R, viewBBox, playerPos)
 	-- [[ raytracing
 	if raytraceSprites then
 		self:initQuadRenderer()
---DEBUG(gl):assert(glreport('game:render'))
 
 		local pushQuad = R.quad
 		R.quad = function(r, ...)
@@ -1130,7 +1126,6 @@ function Level:draw(R, viewBBox, playerPos)
 		for _,obj in ipairs(game.objs) do
 			if not obj.drawn then
 				obj:draw(R, viewBBox)
---DEBUG(gl):assert(glreport('game:render'))
 				obj.drawn = true
 			end
 		end
@@ -1138,7 +1133,6 @@ function Level:draw(R, viewBBox, playerPos)
 		R.quad = pushQuad
 
 		self:finalizeQuadRenderer()
---DEBUG(gl):assert(glreport('game:render'))
 
 		-- and now the visSpriteTex should have all the visSprite_t data
 		-- spriteListTex should have lookups into visSpriteTex
@@ -1178,16 +1172,11 @@ function Level:draw(R, viewBBox, playerPos)
 	if not raytraceSprites then
 		do
 			self.backgroundTex:bind(0)
---DEBUG(gl):assert(glreport('game:render'))
 			self.bgTileTex:bind(1)
---DEBUG(gl):assert(glreport('game:render'))
 			self.bgtexpackTex:bind(2)
---DEBUG(gl):assert(glreport('game:render'))
 			self.texpackTex:bind(3)
---DEBUG(gl):assert(glreport('game:render'))
 			self.backgroundStructTex:bind(4)
---DEBUG(gl):assert(glreport('game:render'))
-			
+
 			R:quad(
 				1,1,
 				self.size[1],self.size[2],
@@ -1202,18 +1191,12 @@ function Level:draw(R, viewBBox, playerPos)
 				},
 				0,0
 			)
---DEBUG(gl):assert(glreport('game:render'))
-		
+
 			self.backgroundStructTex:unbind(4)
---DEBUG(gl):assert(glreport('game:render'))
 			self.texpackTex:unbind(3)
---DEBUG(gl):assert(glreport('game:render'))
 			self.bgtexpackTex:unbind(2)
---DEBUG(gl):assert(glreport('game:render'))
 			self.bgTileTex:unbind(1)
---DEBUG(gl):assert(glreport('game:render'))
 			self.backgroundTex:unbind(0)
---DEBUG(gl):assert(glreport('game:render'))
 		end
 
 		-- TODO what about tile types that have animated sprites?
@@ -1223,16 +1206,13 @@ function Level:draw(R, viewBBox, playerPos)
 		for _,obj in ipairs(game.objs) do
 			if not obj.drawn then
 				obj:draw(R, viewBBox)
---DEBUG(gl):assert(glreport('game:render'))
 				obj.drawn = true
 			end
 		end
 
 		do	 --if ibbox.max[1] - ibbox.min[1] > glapp.width / self.overmapZoomLevel then
 			self.fgTileTex:bind(0)
---DEBUG(gl):assert(glreport('game:render'))
 			self.texpackTex:bind(1)
---DEBUG(gl):assert(glreport('game:render'))
 
 			R:quad(
 				1,1,
@@ -1247,40 +1227,26 @@ function Level:draw(R, viewBBox, playerPos)
 				},
 				0,0
 			)
---DEBUG(gl):assert(glreport('game:render'))
 
 			self.texpackTex:unbind(1)
---DEBUG(gl):assert(glreport('game:render'))
 			self.fgTileTex:unbind(0)
---DEBUG(gl):assert(glreport('game:render'))
 		end
 	else
 		gl.glGetIntegerv(gl.GL_VIEWPORT, viewport.s)
---DEBUG(gl):assert(glreport('game:render'))
 
 		self.fgTileTex:bind(0)					-- map from tile to fg tex in texpack
---DEBUG(gl):assert(glreport('game:render'))
 		self.texpackTex:bind(1)					-- bg/fg tile texture data
---DEBUG(gl):assert(glreport('game:render'))
 
 		self.backgroundTex:bind(2)				-- map from tile to backgroundStruct
---DEBUG(gl):assert(glreport('game:render'))
 		self.bgTileTex:bind(3)					-- map from tile to bg tex in texpack
---DEBUG(gl):assert(glreport('game:render'))
 		self.backgroundStructTex:bind(4)		-- backgroundStruct including map into bgtexpack
---DEBUG(gl):assert(glreport('game:render'))
 		self.bgtexpackTex:bind(5)				-- background texture data
---DEBUG(gl):assert(glreport('game:render'))
 
 		self.spriteListOffsetTileTex:bind(6)	-- map from tile to sprite list
---DEBUG(gl):assert(glreport('game:render'))
 		self.spriteListTex:bind(7)				-- map from sprite list to visSprite_t list
---DEBUG(gl):assert(glreport('game:render'))
 		self.visSpriteTex:bind(8)
---DEBUG(gl):assert(glreport('game:render'))
 
 		self.spriteSheetTex:bind(9)
---DEBUG(gl):assert(glreport('game:render'))
 
 		R:quad(
 			-1,-1,
@@ -1304,16 +1270,12 @@ function Level:draw(R, viewBBox, playerPos)
 			},
 			0,0
 		)
---DEBUG(gl):assert(glreport('game:render'))
-		
+
 		for i=9,0,-1 do
 			gl.glActiveTexture(gl.GL_TEXTURE0 + i)
---DEBUG(gl):assert(glreport('game:render'))
 			gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
---DEBUG(gl):assert(glreport('game:render'))
 		end
 	end
---DEBUG(gl):assert(glreport('game:render'))
 end
 
 

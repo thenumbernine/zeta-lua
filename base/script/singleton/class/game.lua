@@ -1,5 +1,4 @@
 local gl = require 'gl'
---DEBUG(gl):local glreport = require 'gl.report'
 local class = require 'ext.class'
 local table = require 'ext.table'
 local assert = require 'ext.assert'
@@ -42,7 +41,7 @@ Game.viewSize = 16
 
 function Game:init()
 	self:resetObjects()
-	
+
 	self.audioSources = table()
 	self.audioSourceIndex = 0
 	audio:setDistanceModel('linear clamped')
@@ -105,13 +104,13 @@ end
 function Game:update(dt)
 	-- don't pass so many variables?
 	self.deltaTime = dt
-	
+
 	-- add dt at update start instead of finish
 	--  so the last update's "game.time" matches the next render's "game.time"
 	self.time = self.time + dt
 
 	self.level:update(dt)
-	
+
 	for _,obj in ipairs(self.objs) do
 		obj:update(dt)
 	end
@@ -121,11 +120,11 @@ function Game:update(dt)
 		-- remove any objs
 	for i=#self.objs,1,-1 do
 		local obj = self.objs[i]
-		
+
 		if obj.pos[2] < -100 and obj.spawnInfo then	-- only remove it if it can respawn again
 			obj.remove = true
 		end
-		
+
 		if obj.remove then
 			self.objs:remove(i)
 			self:doRemoveObj(obj)
@@ -150,7 +149,7 @@ function Game:doRemoveObj(obj)
 	obj:unlink()
 	-- make sure it's not a player?
 	local spawnInfo = obj.spawnInfo
-	if spawnInfo then	-- unlink from spawnInfo 
+	if spawnInfo then	-- unlink from spawnInfo
 		-- unlink obj from spawnInfo
 		if spawnInfo.obj == obj then
 			spawnInfo.obj = nil
@@ -164,7 +163,7 @@ end
 
 function Game:resetObjects()
 	self.objs = table()	-- enumeration of all active ents
-	self.newObjs = table()	-- accumulated every frame so the objs array doesn't get manipulated while iterating 
+	self.newObjs = table()	-- accumulated every frame so the objs array doesn't get manipulated while iterating
 	self.players = table()
 	self.time = 0
 	self.sysTime = 0
@@ -178,14 +177,14 @@ end
 function Game:reset()
 	-- reset objects
 	self:resetObjects()
-	
+
 	-- remove old level
 	if self.level then self.level.done = true end
-	
+
 	-- reload level ...
 	local Level = modio:require 'script.level'
 	self.level = Level(self.levelcfg)
-	
+
 	-- init spawns separate after game.level is assigned (in case they want to reference it)
 	self.levelInitThread = self.level:initialize()
 
@@ -231,16 +230,14 @@ function Game:render(preDrawCallback, postDrawCallback)
 	local R = assert.index(self, 'R')
 	local windowWidth, windowHeight = glapp:size()
 	gl.glViewport(0, 0, windowWidth, windowHeight)
---DEBUG(gl):assert(glreport('game:render'))
 	gl.glClear(gl.GL_COLOR_BUFFER_BIT)
---DEBUG(gl):assert(glreport('game:render'))
 
 	local divY = math.ceil(math.sqrt(#self.clientConn.players))
 	local divX = math.ceil(#self.clientConn.players / divY)
 	for playerIndex=1,#self.clientConn.players do
 		local player = self.clientConn.players[playerIndex]
 		local playerClientObj = self.playerClientObjs[playerIndex]
-		
+
 		local viewX = (playerIndex - 1) % divX
 		local viewY = ((playerIndex - 1) - viewX) / divX
 		local viewWidth = windowWidth / divX - 1		-- leave a 1-px border between views
@@ -248,32 +245,26 @@ function Game:render(preDrawCallback, postDrawCallback)
 		local aspectRatio = viewWidth / viewHeight
 
 		gl.glViewport(viewX * windowWidth / divX, viewY * windowHeight / divY, viewWidth, viewHeight)
---DEBUG(gl):assert(glreport('game:render'))
-	
+
 		local viewSize = self.viewSize
 		R:ortho(-viewSize, viewSize, -viewSize / aspectRatio, viewSize / aspectRatio, -100, 100)
---DEBUG(gl):assert(glreport('game:render'))
 		R:viewPos(player.viewPos[1], player.viewPos[2])
---DEBUG(gl):assert(glreport('game:render'))
-		
+
 		if preDrawCallback then preDrawCallback(playerIndex) end
---DEBUG(gl):assert(glreport('game:render'))
-		
+
 		-- assuming no scaling ...
 		player.viewBBox = box2(
 			player.viewPos[1] - viewSize,
 			player.viewPos[2] - viewSize / aspectRatio,
 			player.viewPos[1] + viewSize,
 			player.viewPos[2] + viewSize / aspectRatio)
-		
-		
+
+
 		self.level:draw(R, player.viewBBox, player.pos)
---DEBUG(gl):assert(glreport('game:render'))
 		if editor and editor.active then
 			editor:draw(R, player.viewBBox)
---DEBUG(gl):assert(glreport('game:render'))
 		end
-		
+
 		-- clear draw flags
 		do
 			local objs = self.objs
@@ -283,15 +274,12 @@ function Game:render(preDrawCallback, postDrawCallback)
 		end
 
 		if postDrawCallback then postDrawCallback(playerIndex) end
---DEBUG(gl):assert(glreport('game:render'))
-	
+
 		-- draw player hud
 		if player.drawHUD then
 			player:drawHUD(R, player.viewBBox)
---DEBUG(gl):assert(glreport('game:render'))
 		end
 	end
---DEBUG(gl):assert(glreport('game:render'))
 end
 
 function Game:setSavePoint(savePoint)
@@ -317,7 +305,7 @@ function Game:loadFromSavePoint()
 	end
 	for k in pairs(self.newObjs) do
 		self.newObjs[k] = nil
-	end	
+	end
 	for _,spawnInfo in ipairs(self.level.spawnInfos) do
 		spawnInfo.obj = nil
 	end
@@ -330,7 +318,7 @@ function Game:loadFromSavePoint()
 	for k,v in pairs(save.session) do
 		self.session[k] = v
 	end
-	
+
 	self.time = save.time
 	self.sysTime = save.sysTime
 
@@ -376,10 +364,10 @@ function Game:loadFromSavePoint()
 					end
 				elseif type(v) == 'function' then
 					-- update upvalues within functions
-					-- TODO this assumes the upvalue of 'game' is the game.  
-					-- if you had: do local game = 2 obj.func = function() print(game) end end 
+					-- TODO this assumes the upvalue of 'game' is the game.
+					-- if you had: do local game = 2 obj.func = function() print(game) end end
 					--  then the upvalue would be incorrectly replaced
-					-- solution? in any non-class function (like states), don't use upvalues 
+					-- solution? in any non-class function (like states), don't use upvalues
 					--  instead require() locally
 					--  or just don't use member functions
 					local j = 1
@@ -432,7 +420,7 @@ function Game:loadFromSavePoint()
 
 	for _,keys in ipairs(spawnObjFields) do
 		local objIndex = keys:remove()
-		local dst = self.objs 
+		local dst = self.objs
 		while #keys > 1 do
 			dst = dst[keys:remove(1)]
 		end

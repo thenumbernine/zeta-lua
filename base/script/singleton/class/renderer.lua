@@ -1,4 +1,3 @@
---DEBUG(gl):local glreport = require 'gl.report'
 local ffi = require 'ffi'
 local class = require 'ext.class'
 local vec2 = require 'vec.vec2'
@@ -118,14 +117,11 @@ void main() {
 
 		shader = shader or self.shader
 		shader:use()
---DEBUG(gl):assert(glreport('game:render'))
 		if shader.uniforms.mvProjMat then
 			gl.glUniformMatrix4fv(shader.uniforms.mvProjMat.loc, 1, gl.GL_TRUE, self.mvProjMat.ptr)
---DEBUG(gl):assert(glreport('game:render'))
 		end
 		if uniforms then
 			shader:setUniforms(uniforms)
---DEBUG(gl):assert(glreport('game:render'))
 		end
 
 		local costh, sinth
@@ -139,28 +135,22 @@ void main() {
 		-- and set default shader uniforms ...
 		if shader.uniforms.defaultColor and r and g and b and a then
 			gl.glUniform4f(shader.uniforms.defaultColor.loc, r, g, b, a)
---DEBUG(gl):assert(glreport('game:render'))
 		end
 		if shader.uniforms.defaultRect then
 			gl.glUniform4f(shader.uniforms.defaultRect.loc, x, y, w, h)
---DEBUG(gl):assert(glreport('game:render'))
 		end
 		if shader.uniforms.defaultTexRect then
 			gl.glUniform4f(shader.uniforms.defaultTexRect.loc, tx, ty, tw, th)
---DEBUG(gl):assert(glreport('game:render'))
 		end
 		if shader.uniforms.defaultCenterAndRot then
 			gl.glUniform4f(shader.uniforms.defaultCenterAndRot.loc, rcx, rcy, costh, sinth)
---DEBUG(gl):assert(glreport('game:render'))
 		end
 
 		self.drawObj:draw{
 			program = shader,
 		}
---DEBUG(gl):assert(glreport('game:render'))
 
 		--shader:useNone()
---DEBUG(gl):assert(glreport('game:render'))
 	end
 end
 

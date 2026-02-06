@@ -6,7 +6,6 @@ local gl = require 'gl'
 local GLProgram = require 'gl.program'
 local GLFramebuffer = require 'gl.framebuffer'
 local GLTex2D = require 'gl.tex2d'
---DEBUG(gl):local glreport = require 'gl.report'
 
 -- behavior for base.script.singleton.class.game subclasses
 return function(parentClass)
@@ -21,26 +20,26 @@ return function(parentClass)
 	local drawbuffer = ffi.new'int[1]'
 
 	-- this flag is queried by base.script.level to see if it should use raytrace shaders for the sprites
-	PostFBOTemplate.raytraceSprites = true 
+	PostFBOTemplate.raytraceSprites = true
 
 	function PostFBOTemplate:render(preDrawCallback, postDrawCallback, ...)
-		
+
 		local editor = require 'base.script.singleton.editor'()
 		if editor.active then
 			return parentClass.render(self, preDrawCallback, postDrawCallback, ...)
 		end
 
 		local R = self.R
-		
+
 		local glapp = require 'base.script.singleton.glapp'
 		local windowWidth, windowHeight = glapp:size()
 		local aspectRatio = windowWidth / windowHeight
-		
-		PostFBOTemplate.super.render(self, 
+
+		PostFBOTemplate.super.render(self,
 
 		-- preDrawCallback
 		function(playerIndex, ...)
-			
+
 			gl.glGetIntegerv(gl.GL_VIEWPORT, viewport.s)
 			gl.glGetIntegerv(gl.GL_DRAW_BUFFER, drawbuffer)
 
@@ -61,12 +60,12 @@ return function(parentClass)
 			local targetFBOHeight = math.floor(texSize.x / aspectRatio)
 			--]]
 
-			if not fbo 
+			if not fbo
 			or texSize.x ~= targetFBOWidth
 			or texSize.y ~= targetFBOHeight
 			then
 				print('resizing post-processing fbo from '..texSize..' to '..targetFBOWidth..', '..targetFBOHeight..' for viewport '..viewport)
-				
+
 				texSize.x = targetFBOWidth
 				texSize.y = targetFBOHeight
 
@@ -83,8 +82,7 @@ return function(parentClass)
 				fbo = GLFramebuffer()
 					:setColorAttachment(tex)
 					:unbind()
---DEBUG(gl):assert(glreport'here')
-			
+
 				renderShader = GLProgram{
 					version = 'latest',
 					precision = 'best',
@@ -149,7 +147,7 @@ void main() {
 	//vec2 origin = viewport.xy + .5 * viewport.zw;
 	//origin.y += tileSizeInPixels;
 	vec2 origin = viewport.xy + eyePos * viewport.zw;
-	
+
 	vec2 raypos = origin;
 	vec2 rayvel = tc - origin;
 	float raylength = length(rayvel);
@@ -158,7 +156,7 @@ void main() {
 
 	//float numSteps = 100.;
 	float numSteps = max(1., rayLInfLength);
-	//numSteps = min(numSteps, 100.);	
+	//numSteps = min(numSteps, 100.);
 	//if I have to cap the raytrace steps, then that means there are samples I'm missing, so how about I scale my step randomly to make up for it?
 
 	vec4 color = vec4(1.);
@@ -171,9 +169,9 @@ void main() {
 		raypos += raydir * dlen;
 
 		vec4 sampleColor = texture(tex, (raypos + viewport.xy) / viewport.zw);
-	
-		
-/* TODO 
+
+
+/* TODO
 add some extra render info into the buffer on how to transform the rays at each point
 
 - transform ray direction (reflection/refraction effects)
@@ -195,19 +193,19 @@ add some extra render info into the buffer on how to transform the rays at each 
 
 		//vec3 reflectEffectSrcColor = vec3(0., 1., 0.);
 		vec3 reflectEffectSrcColor = vec3(0., 200., 0.) / 255.;
-		
+
 		float opacity = lenSq(sampleColor.rgb - effectSrcColor)
 		//+ lenSq(sampleColor.rgb - reflectEffectSrcColor)
 		;
-		
+
 		opacity -= .1;
 		opacity *= 3.;
 		opacity = clamp(opacity, 0., 1.);
 		//opacity = smoothstep(.1, .8, opacity);
-		
+
 		//float refractivity = 0.;
 		float refractivity = .05 * (1. - opacity);
-		
+
 		//opacity = 1. - sqrt(1. - opacity);	//pulls down, more at the bottom
 		//opacity *= opacity;					//pulls down, more at the top
 		//opacity = 1. - pow(1. - opacity, 1. / 8.);
@@ -230,7 +228,7 @@ add some extra render info into the buffer on how to transform the rays at each 
 		vec2 dl = vec2(.5 * (lp0 - lm0), .5 * (l0p - l0m));
 		// Sobel
 		//vec2 dl = vec2(.25 * (lpp - lmp + 2. * (lp0 -lm0) + lpm - lmm), .25 * (lpp - lpm + 2. * (l0p -l0m) + lmp - lmm));
-		
+
 		dl = normalize(dl);
 		//cheap I know
 		raydir = normalize(mix(raydir, raydir + dl, refractivity));
@@ -240,12 +238,12 @@ add some extra render info into the buffer on how to transform the rays at each 
 		if (lenSq(sampleColor.rgb - translateColor) < .01) {
 			raypos.y += tileSizeInPixels * 5.;
 		}
-		
+
 		//cheap reflections
 		if (lenSq(sampleColor.rgb - reflectEffectSrcColor) < .15) {
 			raydir = normalize(raydir - 2. * dl * dot(raydir, dl));
 			raypos = oldraypos + raydir * 2.;
-		
+
 			//and don't just reflect but also dim
 			opacity = .9;
 			sampleColor = vec4(0., 0., 0., 0.);
@@ -256,11 +254,11 @@ add some extra render info into the buffer on how to transform the rays at each 
 		//color.a = opacity;
 		color.a *= opacity;
 		//color.a = 1. - color.a * (1. - opacity);
-		
+
 		color.rgb *= 1. - color.a;
 		color.rgb += color.a * sampleColor.rgb;
 	}
-	
+
 	fragColor = vec4(color.rgb, 1.);
 }
 ]],
@@ -280,12 +278,12 @@ add some extra render info into the buffer on how to transform the rays at each 
 			fbo:bind()
 			gl.glDrawBuffer(gl.GL_COLOR_ATTACHMENT0)
 			gl.glClear(gl.GL_COLOR_BUFFER_BIT)
-		
+
 			-- [[ if our viewport size is not the original then reset our matrixes here:
 			local viewSize = self.viewSize
 			R:ortho(-viewSize, viewSize, -viewSize / aspectRatio, viewSize / aspectRatio, -100, 100)
 			--]]
-		end, 
+		end,
 
 		-- postDrawCallback
 		function(playerIndex, ...)
@@ -317,7 +315,7 @@ add some extra render info into the buffer on how to transform the rays at each 
 			--[[
 			local x, y, w, h = 0, 0, 1, 1
 			--]]
-		
+
 			local player = self.clientConn.players[playerIndex]
 			local playerClientObj = self.playerClientObjs[playerIndex]
 
@@ -346,10 +344,8 @@ add some extra render info into the buffer on how to transform the rays at each 
 			renderShader:useNone()
 
 			if postDrawCallback then postDrawCallback(playerIndex, ...) end
-		
---DEBUG(gl):assert(glreport'here')
+
 		end, ...)
---DEBUG(gl):assert(glreport'here')
 	end
 
 	return PostFBOTemplate
