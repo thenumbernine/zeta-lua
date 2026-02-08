@@ -772,8 +772,10 @@ void main() {
 					[3] = gl.GL_RGB,
 					[4] = gl.GL_RGBA,
 				})[spriteSheetImage.channels], "couldn't determine format from # channels "..spriteSheetImage.channels)
-				srcTex:toCPU(srcData)
-				srcTex:unbind()
+				srcTex
+					:bind()
+					:getImage(srcData)
+					:unbind()
 				for y=0,rect.h-1 do
 					local dstY = y + rect.y
 					for x=0,rect.w-1 do
@@ -1477,8 +1479,10 @@ print()
 
 --[[
 -- try to grab it again and see what comes out
-self.spriteListTex:toCPU(self.spriteListData)
-self.spriteListTex:unbind()
+self.spriteListTex
+	:bind()
+	:getImage(self.spriteListData)
+	:unbind()
 print('after upload: ')
 for i=0,spriteListIndex-1 do
 	io.write(' '..self.spriteListData[i])
