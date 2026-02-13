@@ -8,6 +8,7 @@ local getTime = require 'ext.timer'.getTime
 
 local gl = require 'gl'
 local sdl = require 'sdl.setup'()
+local Mouse = require 'sdl.mouse'
 
 local ImGuiApp = require 'imgui.app'
 
@@ -112,6 +113,7 @@ App.sdlInitFlags = bit.bor(sdl.SDL_INIT_VIDEO, sdl.SDL_INIT_JOYSTICK)
 
 function App:initGL()
 	App.super.initGL(self)
+	self.mouse = Mouse{app=self}
 
 	local Renderer = modio:require 'script.singleton.class.renderer'
 	local rendererClass = Renderer.requireClasses.gl
@@ -403,6 +405,7 @@ end
 
 
 function App:event(event)
+	self.mouse:event(event)
 	App.super.event(self, event)
 
 	if editor then
@@ -485,7 +488,7 @@ local fpsTime = 0
 local fpsFrames = 0
 function App:update(...)
 	-- where does this usu go?
-	gui.mouse:update()
+	self.mouse:update()
 
 	for _,player in ipairs(game.players) do
 		local x = 0
